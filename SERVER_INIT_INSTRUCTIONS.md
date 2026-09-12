@@ -90,7 +90,7 @@ Do **not** open port `8000`. Do **not** allow 5432 from the public internet.
 
 When a domain is pointed at this instance, install **Caddy** on the host, allow `80`/`443`, proxy to `127.0.0.1:5678`, rebind n8n to localhost, and remove 5678 from iptables/UFW and the OCI Security List.
 
-The VCN **Security List / NSG** must allow TCP 5678 (and later 80/443). Do not allow 8000 or 5432 there.
+The VCN **Security List / NSG** must allow TCP 80 and 443 for Caddy/Let's Encrypt (and TCP 5678 only during bootstrap). Do not allow 8000 or 5432 there. After HTTPS is live, remove 5678 from the cloud firewall.
 
 ### Step D: File Generation & Workspace Setup
 

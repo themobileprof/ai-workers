@@ -6,7 +6,7 @@ services:
       # Compose bridge gateway (host), not docker0 — docker0 is down when nothing uses the default bridge.
       - "host.docker.internal:172.28.0.1"
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     environment:
       TZ: ${GENERIC_TIMEZONE:-Africa/Lagos}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Africa/Lagos}
@@ -14,9 +14,10 @@ services:
       N8N_PORT: "5678"
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
       N8N_LISTEN_ADDRESS: "0.0.0.0"
-      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://127.0.0.1:5678/}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-https://workers.themobileprof.com/}
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      N8N_SECURE_COOKIE: "false"
+      N8N_SECURE_COOKIE: "true"
+      N8N_PROXY_HOPS: "1"
       EXECUTIONS_DATA_PRUNE: "true"
       EXECUTIONS_DATA_MAX_AGE: "72"
       EXECUTIONS_DATA_PRUNE_MAX_COUNT: "1000"
