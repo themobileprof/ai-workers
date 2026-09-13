@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nfunction deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nconst ORG_ID = deskSetting('zoho.organization_id', '939049468');\nconst PAID_THROUGH = deskSetting('zoho.paid_through_account_id', '1300646000000000361');\nconst DEFAULT_EXPENSE = deskSetting('zoho.default_expense_account_id', '1300646000000000460');\nconst TZ = deskSetting('company.timezone', 'Africa/Lagos');\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: DEFAULT_EXPENSE, keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.vendor_name, sd.description]\n    .filter(Boolean).join(' ').toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) return row.id;\n  }\n  return DEFAULT_EXPENSE;\n}\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) return String(raw).slice(0, 10);\n  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());\n}\nconst j = $('When executed by another workflow').first().json || {};\nconst sd = j.structured_data || j;\nconst action = String(j.action || sd.zoho_action || '').toLowerCase();\nconst amount = Number(j.amount ?? sd.amount ?? sd.base_amount);\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action)) {\n  return [{ json: { skip: true, action: 'none', audit_text: 'Zoho Books: nothing to do.' } }];\n}\nconst vendor = String(j.vendor_name || sd.vendor_name || sd.vendor || '').trim();\nconst customer = String(j.customer_name || sd.customer_name || '').trim() || vendor;\nreturn [{ json: {\n  skip: false,\n  action,\n  amount: Number.isFinite(amount) ? amount : 0,\n  currency: String(j.currency || sd.currency || 'NGN').toUpperCase(),\n  vendor_name: vendor,\n  customer_name: customer,\n  date: lagosDate(j.date || sd.date),\n  description: String(j.description || sd.notes || sd.expense_description || vendor || 'Ops').slice(0, 200),\n  account_id: pickAccount(Object.assign({}, sd, j)),\n  paid_through_account_id: PAID_THROUGH,\n  is_taxable: j.is_taxable_service === true || sd.is_taxable_service === true,\n  is_professional: j.is_professional_service === true || sd.is_professional_service === true,\n  reference: String(j.reference || sd.reference || sd.reference_number || '').trim().slice(0, 100),\n  lookup: String(j.lookup || sd.lookup || 'overview'),\n  organization_id: ORG_ID,\n  timezone: TZ\n} }];\n"
+        "jsCode": "\nfunction deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nconst ORG_ID = deskSetting('zoho.organization_id', '939049468');\nconst PAID_THROUGH = deskSetting('zoho.paid_through_account_id', '1300646000000000361');\nconst DEFAULT_EXPENSE = deskSetting('zoho.default_expense_account_id', '1300646000000000460');\nconst TZ = deskSetting('company.timezone', 'Africa/Lagos');\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: DEFAULT_EXPENSE, keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.vendor_name, sd.description]\n    .filter(Boolean).join(' ').toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) return row.id;\n  }\n  return DEFAULT_EXPENSE;\n}\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) return String(raw).slice(0, 10);\n  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());\n}\nconst j = $('When executed by another workflow').first().json || {};\nconst sd = j.structured_data || j;\nconst action = String(j.action || sd.zoho_action || '').toLowerCase();\nconst amount = Number(j.amount ?? sd.amount ?? sd.base_amount);\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action)) {\n  return [{ json: { skip: true, action: 'none', audit_text: 'Zoho Books: nothing to do.' } }];\n}\nconst vendor = String(j.vendor_name || sd.vendor_name || sd.vendor || '').trim();\nconst customer = String(j.customer_name || sd.customer_name || '').trim() || vendor;\nreturn [{ json: {\n  skip: false,\n  action,\n  amount: Number.isFinite(amount) ? amount : 0,\n  currency: String(j.currency || sd.currency || 'NGN').toUpperCase(),\n  vendor_name: vendor,\n  customer_name: customer,\n  customer_email: (function () {\n    const raw = String(j.email || j.customer_email || sd.email || sd.customer_email || '').trim().toLowerCase();\n    if (!raw || raw.indexOf('@') < 1 || raw.indexOf('.') < 0 || /\\s/.test(raw)) return '';\n    return raw.slice(0, 200);\n  })(),\n  date: lagosDate(j.date || sd.date),\n  description: String(j.description || sd.notes || sd.expense_description || vendor || 'Ops').slice(0, 200),\n  account_id: pickAccount(Object.assign({}, sd, j)),\n  paid_through_account_id: PAID_THROUGH,\n  is_taxable: j.is_taxable_service === true || sd.is_taxable_service === true,\n  is_professional: j.is_professional_service === true || sd.is_professional_service === true,\n  reference: String(j.reference || sd.reference || sd.reference_number || '').trim().slice(0, 100),\n  lookup: String(j.lookup || sd.lookup || 'overview'),\n  organization_id: ORG_ID,\n  timezone: TZ\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -704,7 +704,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.customer_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', customer_id: String(hit.contact_id) } }];\n}\nreturn [{ json: { ...p, mode: 'create', body: { contact_name: p.customer_name.slice(0, 200), contact_type: 'customer' } } }];\n"
+        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.customer_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', customer_id: String(hit.contact_id) } }];\n}\nconst body = { contact_name: p.customer_name.slice(0, 200), contact_type: 'customer' };\nif (p.customer_email) body.contact_persons = [{ email: p.customer_email, is_primary_contact: true }];\nreturn [{ json: { ...p, mode: 'create', body } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -855,7 +855,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst p = $('Ensure customer').item.json;\nconst res = $input.first().json || {};\nconst inv = res.invoice || {};\nif (res.code && res.code !== 0 && !inv.invoice_id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books invoice: ' + String(res.message || JSON.stringify(res)).slice(0, 400), code: res.code, message: res.message } }];\n}\nconst lines = [\n  'Draft invoice in Zoho Books ' + (inv.invoice_number || inv.invoice_id || ''),\n  'Customer ' + (p.customer_name || '') + ' \u00b7 total NGN ' + Number(inv.total || p.amount).toFixed(2) + ' \u00b7 status ' + (inv.status || 'draft'),\n  'Not emailed. Send it from Books when you want the customer to see it.',\n];\nif (p.tax_name) lines.push('VAT from Books: ' + p.tax_name);\nreturn [{ json: { kind: 'invoice', audit_text: lines.join('\\n'), invoice: inv, code: res.code, message: res.message } }];\n"
+        "jsCode": "\nconst p = $('Ensure customer').item.json;\nconst res = $('POST invoice').item.json || {};\nconst inv = res.invoice || {};\nif (res.code && res.code !== 0 && !inv.invoice_id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books invoice: ' + String(res.message || JSON.stringify(res)).slice(0, 400), code: res.code, message: res.message } }];\n}\nconst lines = [\n  'Invoice in Zoho Books ' + (inv.invoice_number || inv.invoice_id || ''),\n  'Customer ' + (p.customer_name || '') + ' \u00b7 total NGN ' + Number(inv.total || p.amount).toFixed(2) + ' \u00b7 status ' + (inv.status || 'draft'),\n];\nif (p.tax_name) lines.push('VAT from Books: ' + p.tax_name);\nif (!p.customer_email) lines.push('No customer email \u2014 Paystack link skipped.');\nreturn [{ json: {\n  kind: 'invoice',\n  audit_text: lines.join('\\n'),\n  invoice: inv,\n  customer_email: p.customer_email || '',\n  customer_name: p.customer_name || '',\n  customer_id: p.customer_id || (inv.customer_id || ''),\n  organization_id: p.organization_id,\n  description: p.description || '',\n  amount: p.amount,\n  code: res.code,\n  message: res.message\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -878,6 +878,207 @@
       ],
       "id": "bksWrt000000000000fal00001",
       "name": "Result fallback"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "={{ 'https://www.zohoapis.com/books/v3/invoices/' + $('POST invoice').item.json.invoice.invoice_id + '/status/sent' }}",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "={{ $('Ensure customer').item.json.organization_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2800,
+        480
+      ],
+      "id": "bksWrt000000000000msent001",
+      "name": "Mark invoice sent",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json || {};\nif (j.kind === 'error') {\n  return [{ json: { ...j, paystack: false } }];\n}\nconst email = String(j.customer_email || '').trim().toLowerCase();\nconst inv = j.invoice || {};\nconst naira = Number(inv.total);\nconst kobo = Number.isFinite(naira) ? Math.round(naira * 100) : 0;\nconst invoiceId = String(inv.invoice_id || '');\nlet audit = String(j.audit_text || '');\nif (!invoiceId) {\n  return [{ json: { ...j, paystack: false } }];\n}\nif (!email) {\n  return [{ json: { ...j, paystack: false, kobo: 0 } }];\n}\nif (!(kobo > 0)) {\n  audit += '\\nBooks total was 0 \u2014 no Paystack link.';\n  return [{ json: { ...j, paystack: false, audit_text: audit, kobo: 0 } }];\n}\nreturn [{ json: { ...j, paystack: true, kobo, naira, customer_email: email, zoho_invoice_id: invoiceId } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        480
+      ],
+      "id": "bksWrt000000000000pskgate1",
+      "name": "Paystack gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000pskif001c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.paystack }}",
+              "rightValue": ""
+            },
+            {
+              "id": "bksWrt000000000000pskif001d",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $env.PAYSTACK_SECRET_KEY }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        480
+      ],
+      "id": "bksWrt000000000000pskif001",
+      "name": "Need Paystack"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json || {};\nif (j.paystack) {\n  return [{ json: { ...j, audit_text: String(j.audit_text || '') + '\\nPAYSTACK_SECRET_KEY is not set on n8n \u2014 invoice is in Books only.' } }];\n}\nreturn [{ json: j }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        640
+      ],
+      "id": "bksWrt000000000000pskskp01",
+      "name": "Skip Paystack"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.paystack.co/customer",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAYSTACK_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $json.customer_email, first_name: String($json.customer_name || 'Customer').slice(0, 50) }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3760,
+        400
+      ],
+      "id": "bksWrt000000000000pskcus01",
+      "name": "POST Paystack customer",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Paystack gate').item.json;\nconst res = $input.first().json || {};\nconst data = res.data || {};\nconst code = data.customer_code || '';\nif (!code) {\n  return [{ json: { ...p, paystack: false, audit_text: String(p.audit_text || '') + '\\nPaystack: could not upsert customer. ' + String(res.message || JSON.stringify(res)).slice(0, 200) } }];\n}\nreturn [{ json: { ...p, paystack_customer_code: String(code) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        400
+      ],
+      "id": "bksWrt000000000000pskstp01",
+      "name": "Stamp Paystack customer"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.paystack.co/paymentrequest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.PAYSTACK_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const p = $json; const inv = p.invoice || {}; const kobo = p.kobo; const invoiceId = String(inv.invoice_id || ''); const invoiceNo = String(inv.invoice_number || invoiceId); return { customer: p.paystack_customer_code, currency: 'NGN', amount: kobo, description: 'Zoho ' + invoiceNo + ' ' + invoiceId, line_items: [{ name: String(p.description || invoiceNo).slice(0, 100), amount: kobo, quantity: 1 }], send_notification: true, draft: false, metadata: { zoho_invoice_id: invoiceId, zoho_customer_id: String(p.customer_id || ''), invoice_number: invoiceNo } }; })()) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        4240,
+        400
+      ],
+      "id": "bksWrt000000000000pskpr001",
+      "name": "POST payment request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Stamp Paystack customer').item.json;\nconst res = $input.first().json || {};\nconst data = res.data || {};\nconst code = String(data.request_code || '');\nlet audit = String(p.audit_text || '');\nif (res.status === false || !code) {\n  audit += '\\nPaystack: could not create payment request. ' + String(res.message || JSON.stringify(res)).slice(0, 200);\n  return [{ json: { ...p, audit_text: audit, paystack_request: data } }];\n}\nconst url = 'https://paystack.com/pay/' + code;\naudit += '\\nPay: ' + url;\naudit += '\\nPaystack ' + code;\nif (data.offline_reference) audit += ' \u00b7 bank ref ' + data.offline_reference;\nreturn [{ json: { ...p, audit_text: audit, paystack_request: data, paystack_url: url, paystack_request_code: code } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        400
+      ],
+      "id": "bksWrt000000000000pskstp02",
+      "name": "Stamp Paystack"
     }
   ],
   "connections": {
@@ -1205,7 +1406,7 @@
       "main": [
         [
           {
-            "node": "Result invoice",
+            "node": "Mark invoice sent",
             "type": "main",
             "index": 0
           }
@@ -1217,6 +1418,90 @@
         [
           {
             "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark invoice sent": {
+      "main": [
+        [
+          {
+            "node": "Result invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result invoice": {
+      "main": [
+        [
+          {
+            "node": "Paystack gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paystack gate": {
+      "main": [
+        [
+          {
+            "node": "Need Paystack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need Paystack": {
+      "main": [
+        [
+          {
+            "node": "POST Paystack customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Paystack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Paystack customer": {
+      "main": [
+        [
+          {
+            "node": "Stamp Paystack customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp Paystack customer": {
+      "main": [
+        [
+          {
+            "node": "POST payment request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST payment request": {
+      "main": [
+        [
+          {
+            "node": "Stamp Paystack",
             "type": "main",
             "index": 0
           }

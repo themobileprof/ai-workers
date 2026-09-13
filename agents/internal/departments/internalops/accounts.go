@@ -19,12 +19,13 @@ Return the department JSON envelope. structured_data MUST contain:
 - zoho_action: one of
   - expense — already-paid spend (receipt, "I paid", card/Paystack debit). Petty cash in Books.
   - bill — we were invoiced and still owe (contractor/vendor invoice on credit)
-  - invoice — we are billing a customer (draft only; not emailed)
+  - invoice — we are billing a customer (n8n marks it sent and sends a Paystack link when an email is present)
   - lookup — cash position, unpaid invoices/bills, recent spend, P&L
   - preview — hypothetical tax question, "do not record"
   - none — not a Books document
 - vendor_name (string, party we pay)
 - customer_name (string, party who pays us; for invoices)
+- email (string, customer email if the source contains one; NEVER invent an address)
 - base_amount (number, tax-exclusive, a single currency)
 - currency (NGN, USD, or GBP; default NGN)
 - transaction_type (expense | income | contractor_invoice)

@@ -133,6 +133,51 @@ func TestApplyIntentStripsLLMTaxAndSetsZohoAction(t *testing.T) {
 	}
 }
 
+func TestInvoiceEmailPassthrough(t *testing.T) {
+	resp := contract.Response{
+		Status: contract.StatusSuccess,
+		StructuredData: map[string]any{
+			"task_type":     "accounts",
+			"zoho_action":   "invoice",
+			"customer_name": "Apex Motors",
+			"base_amount":   250000.0,
+			"currency":      "NGN",
+			"email":         "billing@apexmotors.ng",
+		},
+	}
+	got := applyAccountsIntent(resp, true, "Raise an invoice to Apex Motors 250000 NGN billing@apexmotors.ng")
+	if got.StructuredData["email"] != "billing@apexmotors.ng" {
+		t.Fatalf("email=%v", got.StructuredData["email"])
+	}
+	if got.StructuredData["customer_email"] != "billing@apexmotors.ng" {
+		t.Fatalf("customer_email=%v", got.StructuredData["customer_email"])
+	}
+	if !strings.Contains(got.OutputText, "billing@apexmotors.ng") {
+		t.Fatalf("audit missing email: %s", got.OutputText)
+	}
+}
+
+func TestInvoiceJunkEmailDropped(t *testing.T) {
+	resp := contract.Response{
+		Status: contract.StatusSuccess,
+		StructuredData: map[string]any{
+			"task_type":     "accounts",
+			"zoho_action":   "invoice",
+			"customer_name": "Apex Motors",
+			"base_amount":   250000.0,
+			"currency":      "NGN",
+			"email":         "not-an-email",
+		},
+	}
+	got := applyAccountsIntent(resp, true, "Raise an invoice to Apex Motors 250000 NGN")
+	if _, ok := got.StructuredData["email"]; ok {
+		t.Fatalf("junk email kept: %v", got.StructuredData["email"])
+	}
+	if !strings.Contains(got.OutputText, "No customer email") {
+		t.Fatalf("audit: %s", got.OutputText)
+	}
+}
+
 func TestLegalPathUntouched(t *testing.T) {
 	resp := contract.Response{
 		Status:     contract.StatusSuccess,

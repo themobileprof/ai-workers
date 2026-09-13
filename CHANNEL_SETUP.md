@@ -44,8 +44,10 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-crm.json` | `smkCrmBooks00001` | no | GET Zoho Books contacts (read-only) |
 | `n8n/workflows/smoke-accounts.json` | `smkAccountsHttp01` | no | Manual POST accounts worker (hypothetical → preview, must not post) |
 | `n8n/workflows/smoke-books-lookup.json` | `smkBooksWrite0001` | no | Execute Books write with `lookup` (live P&L / unpaid) |
+| `n8n/workflows/smoke-paystack.json` | `smkPaystackHttp01` | no | GET Paystack `/balance` (needs `PAYSTACK_SECRET_KEY`; does not charge) |
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
-| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, draft invoice, lookup |
+| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup |
+| `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/crm` leads; `/approve` `/kill` email drafts |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes only for desk-allowlisted `/accounts` `/ops`; CRM upsert on high intent |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
@@ -96,14 +98,25 @@ To add a bookkeeper: add them on the desk with phone (234…) and `whatsapp_acco
 - Write path: `/accounts` or `/ops` → worker `structured_data.zoho_action` → sub-workflow **Books write** (`booksWriteDoc0001`).
   - `expense` — already paid: `POST /expenses` with `tax_id` from `GET /settings/taxes` (Zoho computes VAT).
   - `bill` — we owe a vendor: upsert vendor contact + `POST /bills` (unpaid). WHT is **not** a second expense; withhold on the vendor payment in Books.
-  - `invoice` — we bill a customer: upsert customer + `POST /invoices` as **draft**, not emailed.
+  - `invoice` — we bill a customer: upsert customer + `POST /invoices`, mark **sent**, then a Paystack Payment Request whose kobo amount is **Books `invoice.total` × 100** (never the LLM amount). Chat audit includes `https://paystack.com/pay/{request_code}`. No customer email → Books invoice only, no Paystack link.
   - `lookup` — `GET` unpaid invoices/bills, recent expenses, cash P&L (`/reports/profitandloss?cash_based=true`).
   - `preview` — hypothetical: apply the tax **percentage stored in Books**, post nothing.
-- Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.reports.READ`.
-- Telegram/WhatsApp reply is the audit trail (Books totals + document id).
+- Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.invoices.UPDATE`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.customerpayments.CREATE`, `ZohoBooks.customerpayments.READ`, `ZohoBooks.reports.READ`.
+- Telegram/WhatsApp reply is the audit trail (Books totals + document id + Paystack URL).
 - CRM path: `/crm` or high-intent growth/email → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
 - Defaults live on the desk (`zoho.organization_id`, `zoho.default_expense_account_id`, `zoho.paid_through_account_id`). Seeded values: org `939049468`, expense Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Keyword map still in Books write: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
+
+### Paystack (not Flutterwave)
+
+Paystack is the collector because Payment Requests are real AR objects (customer, line items, `offline_reference`, `charge.success` / `paymentrequest.success`) and NGN/NIBSS rails are first-class. Flutterwave is stronger for multi-country checkout, weaker for invoice reconciliation against Books. Do not run both.
+
+- Secret key lives in the VM `.env` as `PAYSTACK_SECRET_KEY` (n8n container only). Start with `sk_test_`. Never git. Never the Go worker.
+- Dashboard webhook (production, not test Listen): `https://workers.themobileprof.com/webhook/paystack-paid`. Caddy already sends `/webhook*` to n8n. Publish **Paystack paid** (`paystackPaid000001`).
+- n8n does **not** trust the webhook body. It re-queries `GET /transaction/verify/:reference` or `GET /paymentrequest/verify/:code`, then `POST /books/v3/customerpayments` against the Zoho invoice in Paystack metadata (`zoho_invoice_id`). Amount applied is `min(verified NGN, invoice.balance)`.
+- Optional desk setting `zoho.deposit_to_account_id` (a **Bank** account in Books, not Petty Cash). If unset, Zoho uses its default deposit account.
+- Specimen: `/accounts Invoice Apex Motors 250000 NGN for a 30-day pilot, bill billing@apexmotors.ng`.
+- Smoke: **Smoke: Paystack** is a balance GET. It must not create a charge.
 
 ### Email (Zoho Mail)
 

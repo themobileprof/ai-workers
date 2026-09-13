@@ -3,11 +3,11 @@
 <ol class="steps">
   <li>Allowlisted WhatsApp or any Telegram ops chat: <code>/accounts I paid Jumia 18500 for office paper today</code>.</li>
   <li>n8n reads <code>structured_data.zoho_action</code> and runs <strong>Books write</strong> (<code>booksWriteDoc0001</code>).</li>
-  <li>You get the audit trail on the same chat (expense / bill / draft invoice id, or a lookup summary).</li>
+  <li>You get the audit trail on the same chat (expense / bill / invoice id + Paystack link, or a lookup summary).</li>
   <li>Hypotheticals must say “do not record”. Smoke: <strong>Smoke: accounts HTTP</strong> — that sample is preview, must not post.</li>
 </ol>
 
-<p class="hint">Actions: <code>expense</code> (already paid) · <code>bill</code> (we owe) · <code>invoice</code> (draft we raise) · <code>lookup</code> (read Books) · <code>preview</code> (math in Books, post nothing).</p>
+<p class="hint">Actions: <code>expense</code> (already paid) · <code>bill</code> (we owe) · <code>invoice</code> (we raise; Paystack link if an email is present) · <code>lookup</code> (read Books) · <code>preview</code> (math in Books, post nothing).</p>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · paid receipt</p>
@@ -29,9 +29,9 @@
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 03 · draft we raise</p>
-  <p class="you-say"><code>/accounts Raise a draft invoice to Apex Motors 250000 NGN for a 30-day pilot</code></p>
-  <p class="expect"><code>zoho_action</code> invoice. Draft only — not emailed. Customer is upserted as a Books contact.</p>
+  <p class="spec-no">Specimen 03 · invoice we raise</p>
+  <p class="you-say"><code>/accounts Invoice Apex Motors 250000 NGN for a 30-day pilot, bill billing@apexmotors.ng</code></p>
+  <p class="expect"><code>zoho_action</code> invoice. n8n upserts the customer (with email), POSTs the invoice, marks it sent, then creates a Paystack Payment Request for <strong>Books total × 100 kobo</strong>. Chat audit includes <code>https://paystack.com/pay/{request_code}</code>. No email in the source → Books invoice only; never invent an address.</p>
 </section>
 
 <section class="specimen">
@@ -48,6 +48,11 @@
   "context_data": {}
 }</pre>
   <p class="expect"><code>zoho_action</code> preview. n8n applies the tax <em>percentage stored in Books</em> and posts nothing. If this ever creates an expense, that is a bug.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 06 · they paid</p>
+  <p class="expect">Paystack dashboard webhook <code>POST /webhook/paystack-paid</code>. n8n verifies the transaction (does not trust the body), then <code>POST /customerpayments</code> on the Zoho invoice from Paystack metadata. Duplicate webhooks are no-ops once Books balance is 0. Lookup then shows the invoice paid.</p>
 </section>
 
 <section class="later">

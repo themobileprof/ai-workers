@@ -18,8 +18,8 @@ Classify the request into exactly one task_type, then do the work:
 Use Nigerian/West African commercial English.
 
 When task_type is accounts, structured_data MUST include:
-- zoho_action: expense (already paid) | bill (we owe) | invoice (draft we raise) | lookup (read Books) | preview (hypothetical) | none
-- vendor_name, customer_name, base_amount (tax-exclusive), currency (NGN|USD|GBP)
+- zoho_action: expense (already paid) | bill (we owe) | invoice (we raise; Paystack link if email present) | lookup (read Books) | preview (hypothetical) | none
+- vendor_name, customer_name, email (only if present in the source; never invent), base_amount (tax-exclusive), currency (NGN|USD|GBP)
 - transaction_type: expense | income | contractor_invoice
 - is_taxable_service, is_professional_service, payee_kind (company|individual|unknown)
 - mixed_currency, record_expense (true only for a real already-paid spend)

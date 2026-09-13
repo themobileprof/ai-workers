@@ -36,6 +36,7 @@ type Extract struct {
 	ZohoAction            string
 	LookupKind            string
 	Reference             string
+	CustomerEmail         string
 }
 
 func parseExtract(sd map[string]any) Extract {
@@ -58,6 +59,7 @@ func parseExtract(sd map[string]any) Extract {
 		ZohoAction:            strings.ToLower(strings.TrimSpace(firstString(sd, "zoho_action"))),
 		LookupKind:            strings.ToLower(strings.TrimSpace(firstString(sd, "lookup", "lookup_kind"))),
 		Reference:             firstString(sd, "reference", "reference_number"),
+		CustomerEmail:         normalizeEmail(firstString(sd, "email", "customer_email")),
 	}
 	if major, ok := asFloat(sd["base_amount"]); ok {
 		e.BaseMinor = toMinor(major)
@@ -221,6 +223,13 @@ func overlayAccounts(sd map[string]any, e Extract, action, skip string) {
 	if e.CustomerName != "" {
 		sd["customer_name"] = e.CustomerName
 	}
+	if e.CustomerEmail != "" {
+		sd["email"] = e.CustomerEmail
+		sd["customer_email"] = e.CustomerEmail
+	} else {
+		delete(sd, "email")
+		delete(sd, "customer_email")
+	}
 	sd["currency"] = e.Currency
 	sd["transaction_type"] = e.TransactionType
 	sd["is_taxable_service"] = e.IsTaxableService
@@ -303,7 +312,14 @@ func formatAudit(e Extract, action, skip, llmNote string) string {
 	case actionBill:
 		b.WriteString("Zoho Books: WILL POST a vendor bill (we owe). Not marked paid. WHT is applied when you record the vendor payment in Books.")
 	case actionInvoice:
-		b.WriteString("Zoho Books: WILL CREATE a draft customer invoice. Not emailed.")
+		b.WriteString("Zoho Books: WILL CREATE a customer invoice (sent).")
+		if e.CustomerEmail != "" {
+			b.WriteString(" Paystack link to ")
+			b.WriteString(e.CustomerEmail)
+			b.WriteByte('.')
+		} else {
+			b.WriteString(" No customer email — Books only, no Paystack link.")
+		}
 	case actionLookup:
 		b.WriteString("Zoho Books: WILL READ unpaid invoices/bills, recent expenses, and cash P&L.")
 	case actionPreview:
@@ -410,6 +426,21 @@ func normalizePayee(s string) string {
 	default:
 		return "unknown"
 	}
+}
+
+func normalizeEmail(s string) string {
+	s = strings.TrimSpace(strings.ToLower(s))
+	at := strings.IndexByte(s, '@')
+	if at < 1 || at >= len(s)-3 {
+		return ""
+	}
+	if !strings.Contains(s[at+1:], ".") {
+		return ""
+	}
+	if strings.ContainsAny(s, " <>") {
+		return ""
+	}
+	return s
 }
 
 func firstString(sd map[string]any, keys ...string) string {

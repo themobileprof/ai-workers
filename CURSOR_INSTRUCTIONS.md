@@ -114,7 +114,7 @@ This is a **shared** machine, not a dedicated database server. Do not apply "25%
 
 ### C. Localized Nigerian/African context
 
-- **Accounts Agent:** Classifier only. Zoho Books is the ledger (VAT via `tax_id`, bills, invoices, P&L). Do not recompute tax in Go.
+- **Accounts Agent:** Classifier only. Zoho Books is the ledger (VAT via `tax_id`, bills, invoices, P&L). Paystack collects; Books is AR. Do not recompute tax in Go.
 - **Legal Agent:** Nigerian labour basics, CAC structures, CBN / NITDA-oriented compliance flags.
 - **Growth Agent:** African / emerging-market grant engines (Google for Startups Accelerator Africa, Tony Elumelu Foundation, USAID) and copy that still reads for international investors.
 
@@ -155,7 +155,7 @@ agents/
 ### Module mapping
 
 1. **`internalops` (Operations Room)**
-    - *Accounts:* LLM extracts vendor/amount/currency and chooses a Zoho document (`expense` paid, `bill` we owe, `invoice` draft we raise, `lookup`, `preview`). Extra HTTP route `/departments/accounts`. n8n is the Zoho client (`books-write` sub-workflow): taxes from `GET /settings/taxes`, writes with `tax_id`, reads unpaid invoices/bills and cash P&L. Telegram/WhatsApp is the audit trail. Do **not** compute VAT/WHT in Go — that duplicates Books.
+    - *Accounts:* LLM extracts vendor/amount/currency/email and chooses a Zoho document (`expense` paid, `bill` we owe, `invoice` we raise, `lookup`, `preview`). Extra HTTP route `/departments/accounts`. n8n is the Zoho **and** Paystack client (`books-write` + `paystack-paid`): taxes from `GET /settings/taxes`, invoice total from Books, Paystack amount in kobo from that total, webhook verifies then `POST /customerpayments`. Telegram/WhatsApp is the audit trail. Do **not** compute VAT/WHT in Go — that duplicates Books.
     - *Legal:* Contract risk, localized NDAs/SLAs, predatory-clause flags.
     - *Grant Hunting:* Startup metadata vs grant eligibility parameters.
 2. **`growth` (Front Office)**
