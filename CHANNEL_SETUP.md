@@ -80,15 +80,9 @@ Fastest loop. Proves inbound → worker → outbound on HTTPS.
 
 1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
 2. Message the bot once (so a `chat_id` exists), or create a private group, add the bot, send a message.
-3. n8n → **Credentials** → Telegram API → paste token.
-4. New workflow **Ops Telegram**:
-   - **Telegram Trigger** (updates: message)
-   - **Switch** or IF: if text starts with `/growth`, `/ops`, `/validate` pick the department URL; else default `growth` (sales/support).
-   - **Set** node (optional): `task_description` = `{{ $json.message.text }}`.
-   - HTTP Request as in section 0, using the Telegram JSON body (not the empty-input template).
-   - **Telegram** send message to `{{ $json.message.chat.id }}` with `{{ $json.output_text }}` from the HTTP node (`{{ $('HTTP Request').item.json.output_text }}`).
-5. **Publish** the workflow. Do not leave it on Listen-only.
-6. Confirm Telegram registered the production hook:
+3. n8n → **Credentials** → Telegram API → paste token. The repo workflow **Ops Telegram** (`n8n/workflows/ops-telegram.json`) is imported and published from there — do not rebuild the nodes by hand.
+4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/ops`, `/validate`. Groups default to community; 1:1 defaults to growth.
+5. Confirm Telegram registered the production hook:
 
 ```text
 https://api.telegram.org/bot<TOKEN>/getWebhookInfo
