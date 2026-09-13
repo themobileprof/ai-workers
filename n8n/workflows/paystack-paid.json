@@ -8,8 +8,11 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "paystack-paid",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {
+          "responseCode": 200,
+          "responseData": "noData"
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -23,7 +26,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst raw = $input.first().json || {};\nconst body = (raw.body && raw.event == null) ? raw.body : raw;\nconst event = String(body.event || '');\nconst data = body.data || {};\nconst allowed = event === 'charge.success' || event === 'paymentrequest.success';\nif (!allowed) {\n  return [{ json: { skip: true, reason: 'ignored event ' + (event || '(none)'), received: true } }];\n}\nlet verify_url = '';\nlet kind = '';\nif (event === 'charge.success') {\n  const ref = String(data.reference || '').trim();\n  if (!ref) return [{ json: { skip: true, reason: 'no transaction reference', received: true } }];\n  kind = 'transaction';\n  verify_url = 'https://api.paystack.co/transaction/verify/' + encodeURIComponent(ref);\n} else {\n  const code = String(data.request_code || data.id || '').trim();\n  if (!code) return [{ json: { skip: true, reason: 'no payment request code', received: true } }];\n  kind = 'paymentrequest';\n  verify_url = 'https://api.paystack.co/paymentrequest/verify/' + encodeURIComponent(code);\n}\nreturn [{ json: { skip: false, event, kind, verify_url, hint_invoice_id: String((data.metadata && data.metadata.zoho_invoice_id) || ''), received: true } }];\n"
+        "jsCode": "\nconst raw = $input.first().json || {};\nconst body = (raw.body && raw.event == null) ? raw.body : raw;\nconst event = String(body.event || '');\nconst data = body.data || {};\nconst allowed = event === 'charge.success' || event === 'paymentrequest.success';\nif (!allowed) {\n  return [];\n}\nlet verify_url = '';\nlet kind = '';\nif (event === 'charge.success') {\n  const ref = String(data.reference || '').trim();\n  if (!ref) return [];\n  kind = 'transaction';\n  verify_url = 'https://api.paystack.co/transaction/verify/' + encodeURIComponent(ref);\n} else {\n  const code = String(data.request_code || data.id || '').trim();\n  if (!code) return [];\n  kind = 'paymentrequest';\n  verify_url = 'https://api.paystack.co/paymentrequest/verify/' + encodeURIComponent(code);\n}\nreturn [{ json: { event, kind, verify_url, hint_invoice_id: String((data.metadata && data.metadata.zoho_invoice_id) || '') } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -33,41 +36,6 @@
       ],
       "id": "pskPaid0000000000parse001",
       "name": "Parse event"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "pskPaid0000000000ifskip01c",
-              "operator": {
-                "type": "boolean",
-                "operation": "false",
-                "singleValue": true
-              },
-              "leftValue": "={{ $json.skip }}",
-              "rightValue": ""
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        480,
-        0
-      ],
-      "id": "pskPaid0000000000ifskip01",
-      "name": "Should verify"
     },
     {
       "parameters": {
@@ -98,7 +66,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nfunction asMeta(raw) {\n  if (!raw) return {};\n  if (typeof raw === 'string') {\n    try { return JSON.parse(raw); } catch (e) { return {}; }\n  }\n  return raw;\n}\nconst parsed = $('Parse event').item.json;\nconst res = $input.first().json || {};\nconst data = res.data || {};\nif (res.status === false) {\n  return [{ json: { skip: true, reason: 'Paystack verify failed: ' + String(res.message || 'unknown'), received: true } }];\n}\nconst meta = asMeta(data.metadata);\nconst invoiceId = String(meta.zoho_invoice_id || parsed.hint_invoice_id || '').trim();\nconst paid = parsed.kind === 'transaction'\n  ? String(data.status || '').toLowerCase() === 'success'\n  : data.paid === true || String(data.status || '').toLowerCase() === 'success';\nif (!paid) {\n  return [{ json: { skip: true, reason: 'not paid after verify', received: true } }];\n}\nif (!invoiceId) {\n  return [{ json: { skip: true, reason: 'no zoho_invoice_id on Paystack metadata', received: true } }];\n}\nconst kobo = Number(data.amount);\nconst naira = Number.isFinite(kobo) ? kobo / 100 : 0;\nconst reference = String(data.reference || data.request_code || data.offline_reference || '').slice(0, 100);\nlet channel = String(data.channel || '').toLowerCase();\nlet payment_mode = 'others';\nif (channel === 'card') payment_mode = 'creditcard';\nelse if (channel === 'bank' || channel === 'bank_transfer' || parsed.kind === 'paymentrequest') payment_mode = 'banktransfer';\nconst paidAt = String(data.paid_at || data.paidAt || '').slice(0, 10);\nconst date = /^\\d{4}-\\d{2}-\\d{2}$/.test(paidAt)\n  ? paidAt\n  : new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\nreturn [{ json: {\n  skip: false,\n  received: true,\n  zoho_invoice_id: invoiceId,\n  zoho_customer_id: String(meta.zoho_customer_id || ''),\n  naira,\n  kobo,\n  reference,\n  payment_mode,\n  date,\n  paystack: data\n} }];\n"
+        "jsCode": "\nfunction asMeta(raw) {\n  if (!raw) return {};\n  if (typeof raw === 'string') {\n    try { return JSON.parse(raw); } catch (e) { return {}; }\n  }\n  return raw;\n}\nconst parsed = $('Parse event').item.json;\nconst res = $input.first().json || {};\nconst data = res.data || {};\nif (res.status === false) return [];\nconst meta = asMeta(data.metadata);\nconst invoiceId = String(meta.zoho_invoice_id || parsed.hint_invoice_id || '').trim();\nconst paid = parsed.kind === 'transaction'\n  ? String(data.status || '').toLowerCase() === 'success'\n  : data.paid === true || String(data.status || '').toLowerCase() === 'success';\nif (!paid || !invoiceId) return [];\nconst kobo = Number(data.amount);\nconst naira = Number.isFinite(kobo) ? kobo / 100 : 0;\nconst reference = String(data.reference || data.request_code || data.offline_reference || '').slice(0, 100);\nlet channel = String(data.channel || '').toLowerCase();\nlet payment_mode = 'others';\nif (channel === 'card') payment_mode = 'creditcard';\nelse if (channel === 'bank' || channel === 'bank_transfer' || parsed.kind === 'paymentrequest') payment_mode = 'banktransfer';\nconst paidAt = String(data.paid_at || data.paidAt || '').slice(0, 10);\nconst date = /^\\d{4}-\\d{2}-\\d{2}$/.test(paidAt)\n  ? paidAt\n  : new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\nreturn [{ json: {\n  zoho_invoice_id: invoiceId,\n  zoho_customer_id: String(meta.zoho_customer_id || ''),\n  naira,\n  kobo,\n  reference,\n  payment_mode,\n  date,\n  paystack: data\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -186,7 +154,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst p = $('Attach org').item.json;\nconst res = $input.first().json || {};\nconst inv = res.invoice || {};\nif (!inv.invoice_id) {\n  return [{ json: { skip: true, received: true, reason: 'Zoho invoice not found: ' + String(res.message || p.zoho_invoice_id) } }];\n}\nconst balance = Number(inv.balance);\nconst status = String(inv.status || '').toLowerCase();\nif (status === 'paid' || (Number.isFinite(balance) && balance <= 0)) {\n  return [{ json: { skip: true, received: true, reason: 'invoice already paid', invoice: inv } }];\n}\nconst apply = Number.isFinite(balance) ? Math.min(p.naira, balance) : p.naira;\nif (!(apply > 0)) {\n  return [{ json: { skip: true, received: true, reason: 'nothing to apply', invoice: inv } }];\n}\nconst body = {\n  customer_id: String(inv.customer_id || p.zoho_customer_id),\n  payment_mode: p.payment_mode || 'banktransfer',\n  amount: apply,\n  date: p.date,\n  reference_number: p.reference,\n  description: 'Paystack ' + p.reference,\n  invoices: [{ invoice_id: String(inv.invoice_id), amount_applied: apply }]\n};\nif (p.deposit_to_account_id) body.account_id = p.deposit_to_account_id;\nreturn [{ json: { skip: false, received: true, organization_id: p.organization_id, body, invoice: inv } }];\n"
+        "jsCode": "\nconst p = $('Attach org').item.json;\nconst res = $input.first().json || {};\nconst inv = res.invoice || {};\nif (!inv.invoice_id) return [];\nconst balance = Number(inv.balance);\nconst status = String(inv.status || '').toLowerCase();\nif (status === 'paid' || (Number.isFinite(balance) && balance <= 0)) return [];\nconst apply = Number.isFinite(balance) ? Math.min(p.naira, balance) : p.naira;\nif (!(apply > 0)) return [];\nconst body = {\n  customer_id: String(inv.customer_id || p.zoho_customer_id),\n  payment_mode: p.payment_mode || 'banktransfer',\n  amount: apply,\n  date: p.date,\n  reference_number: p.reference,\n  description: 'Paystack ' + p.reference,\n  invoices: [{ invoice_id: String(inv.invoice_id), amount_applied: apply }]\n};\nif (p.deposit_to_account_id) body.account_id = p.deposit_to_account_id;\nreturn [{ json: { organization_id: p.organization_id, body, invoice: inv } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -196,41 +164,6 @@
       ],
       "id": "pskPaid0000000000build001",
       "name": "Build Books payment"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "pskPaid0000000000ifpay01c",
-              "operator": {
-                "type": "boolean",
-                "operation": "false",
-                "singleValue": true
-              },
-              "leftValue": "={{ $json.skip }}",
-              "rightValue": ""
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        2160,
-        -80
-      ],
-      "id": "pskPaid0000000000ifpay01",
-      "name": "Should book"
     },
     {
       "parameters": {
@@ -283,54 +216,6 @@
       ],
       "id": "pskPaid0000000000done0001",
       "name": "Payment booked"
-    },
-    {
-      "parameters": {
-        "jsCode": "\nconst j = $input.first().json || {};\nreturn [{ json: { received: true, booked: false, reason: j.reason || 'skipped' } }];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2400,
-        80
-      ],
-      "id": "pskPaid0000000000skip0001",
-      "name": "Ack skip"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "pskPaid0000000000ifver01c",
-              "operator": {
-                "type": "boolean",
-                "operation": "false",
-                "singleValue": true
-              },
-              "leftValue": "={{ $json.skip }}",
-              "rightValue": ""
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1080,
-        -80
-      ],
-      "id": "pskPaid0000000000ifver01",
-      "name": "Verified ok"
     }
   ],
   "connections": {
@@ -349,25 +234,7 @@
       "main": [
         [
           {
-            "node": "Should verify",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Should verify": {
-      "main": [
-        [
-          {
             "node": "Verify with Paystack",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Ack skip",
             "type": "main",
             "index": 0
           }
@@ -389,7 +256,7 @@
       "main": [
         [
           {
-            "node": "Verified ok",
+            "node": "Fetch desk settings",
             "type": "main",
             "index": 0
           }
@@ -433,25 +300,7 @@
       "main": [
         [
           {
-            "node": "Should book",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Should book": {
-      "main": [
-        [
-          {
             "node": "POST customer payment",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Ack skip",
             "type": "main",
             "index": 0
           }
@@ -463,24 +312,6 @@
         [
           {
             "node": "Payment booked",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Verified ok": {
-      "main": [
-        [
-          {
-            "node": "Fetch desk settings",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Ack skip",
             "type": "main",
             "index": 0
           }
