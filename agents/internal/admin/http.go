@@ -55,7 +55,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"canRemove": canRemove,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -93,6 +93,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/settings", s.settingsGET)
 	mux.HandleFunc("GET /admin/settings/edit", s.settingsEditGET)
 	mux.HandleFunc("POST /admin/settings", s.settingsPOST)
+	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
 }
@@ -148,6 +149,14 @@ func (s *Server) loginPOST(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   7 * 24 * 3600,
 	})
 	http.Redirect(w, r, "/admin/", http.StatusSeeOther)
+}
+
+func (s *Server) workflowsGET(w http.ResponseWriter, r *http.Request) {
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	s.render(w, "workflows", pageData{Title: "n8n", Nav: "flows", User: u})
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {

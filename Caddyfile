@@ -8,7 +8,11 @@ workers.themobileprof.com {
 	handle /admin* {
 		reverse_proxy 127.0.0.1:8000
 	}
+	# Same-origin iframe from /admin/workflows. Other sites cannot embed n8n.
 	handle {
-		reverse_proxy 127.0.0.1:5678
+		reverse_proxy 127.0.0.1:5678 {
+			header_down -X-Frame-Options
+		}
+		header Content-Security-Policy "frame-ancestors 'self'"
 	}
 }

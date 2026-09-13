@@ -24,6 +24,7 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
 ┌──────────────────────────────────────────┐
 │  Caddy (host, Go) :443                   │
 │  /admin* → 127.0.0.1:8000  (desk UI)     │
+│  /admin/workflows iframes n8n (same origin) │
 │  everything else → 127.0.0.1:5678 (n8n)  │
 └──────────────────┬───────────────────────┘
                    ▼

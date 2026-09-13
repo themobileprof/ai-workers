@@ -9,6 +9,14 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
+body.framed {
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body.framed .grain { display: none; }
 body {
   font-family: "Newsreader", "Iowan Old Style", Georgia, serif;
   background: radial-gradient(1200px 600px at 10% -10%, #3a2a16 0%, transparent 50%),
@@ -70,6 +78,35 @@ nav a.on, nav a:hover { opacity: 1; border-color: var(--brass); }
 }
 .out button { background: transparent; color: var(--paper); border: 1px solid var(--rule); }
 main.sheet { padding: 2rem; max-width: 1100px; }
+main.canvas {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  max-width: none;
+  min-height: 0;
+}
+.frame-rail {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brass);
+  padding: 0.45rem 1.25rem;
+  border-bottom: 1px solid rgba(201, 184, 154, 0.25);
+}
+.frame-rail a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--brass); }
+.n8n-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  border: 0;
+  min-height: 0;
+  background: #0b0b0b;
+}
 main.gate {
   min-height: 100vh;
   display: grid;

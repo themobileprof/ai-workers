@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,700;1,6..72,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/static/desk.css">
 </head>
-<body>
+<body{{if eq .Nav "flows"}} class="framed"{{end}}>
   <div class="grain"></div>
   {{if .User}}
   <header class="mast">
@@ -24,13 +24,14 @@
       <a href="/admin/" {{if eq .Nav "home"}}class="on"{{end}}>Board</a>
       <a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>
       <a href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>Defaults</a>
+      <a href="/admin/workflows" {{if eq .Nav "flows"}}class="on"{{end}}>n8n</a>
     </nav>
     <form class="out" method="post" action="/admin/logout">
       <button type="submit">Sign out {{.User.Name}}</button>
     </form>
   </header>
   {{end}}
-  <main class="{{if .User}}sheet{{else}}gate{{end}}">
+  <main class="{{if eq .Nav "flows"}}canvas{{else if .User}}sheet{{else}}gate{{end}}">
     {{if .Flash}}<p class="flash">{{.Flash}}</p>{{end}}
     {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
     {{template "content" .}}
