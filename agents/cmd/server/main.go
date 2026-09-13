@@ -12,6 +12,7 @@ import (
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
+	"github.com/samuel/ai-workers/agents/internal/departments/crm"
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/internalops"
 	"github.com/samuel/ai-workers/agents/internal/departments/productdev"
@@ -37,13 +38,14 @@ func main() {
 			"status":       "ok",
 			"llm_ready":    completerErr == nil,
 			"llm_provider": strings.ToLower(os.Getenv("LLM_PROVIDER")),
-			"departments":  []string{"internal-ops", "growth", "product-dev", "community"},
+			"departments":  []string{"internal-ops", "growth", "product-dev", "community", "crm"},
 		})
 	})
 	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, internalops.Handle))
 	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, growth.Handle))
 	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, productdev.Handle))
 	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, community.Handle))
+	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, crm.Handle))
 
 	srv := &http.Server{
 		Addr:              addr,

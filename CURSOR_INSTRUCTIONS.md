@@ -33,7 +33,7 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
                    ▼
 ┌──────────────────────────────────────────┐
 │  agents  (Go static binary, Docker)      │
-│  internalops | growth | productdev       │
+│  internalops | growth | crm | productdev │
 └──────────────────────────────────────────┘
 
 n8n ──TCP 5432──► PostgreSQL (host systemd, not Docker)
@@ -140,6 +140,7 @@ agents/
   internal/llm/          # Completer + OpenAI / Anthropic / DeepSeek
   internal/departments/internalops/
   internal/departments/growth/
+  internal/departments/crm/
   internal/departments/productdev/
   internal/departments/community/
 ```
@@ -152,10 +153,12 @@ agents/
     - *Grant Hunting:* Startup metadata vs grant eligibility parameters.
 2. **`growth` (Front Office)**
     - *Marketing:* Platform-customized social copy (Twitter/X, LinkedIn) with local market context.
-    - *Sales & Support:* Incoming queries (WhatsApp Business / live chat); calendar booking metadata on high intent.
-3. **`community` (Community Manager)**
+    - *Sales & Support:* Incoming queries (WhatsApp Business / live chat); calendar booking metadata on high intent. High-intent chats set `record_lead` so n8n can upsert a Zoho Books contact.
+3. **`crm` (Pipeline)**
+    - Qualify, update, follow up, pipeline stages. Extra HTTP route on the same Go process (`/departments/crm`), not a new container. n8n writes Zoho **Books contacts** (existing OAuth). Do not add a Zoho CRM credential unless they buy Zoho CRM.
+4. **`community` (Community Manager)**
     - *Welcome, FAQ, moderation, announcements, engagement.* Public chat personality for WhatsApp/Telegram groups and `/community` DMs. Not sales and not ops. Set `escalate_to_founder` when a human must step in.
-4. **`productdev` (Engineering Lab)**
+5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
     - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL). n8n holds project state; the worker only proposes. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`.
@@ -179,7 +182,7 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
 - Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,growth,product-dev,community}`. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,growth,product-dev,community,crm}`. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

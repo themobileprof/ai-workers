@@ -1,0 +1,324 @@
+{
+  "id": "crmUpsertCont0001",
+  "name": "CRM upsert contact",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1trig00001",
+      "name": "When executed by another workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json || {};\nlet email = String(j.email || '').trim().toLowerCase();\nif (email && !email.includes('@')) email = '';\nlet phone = String(j.phone || '').replace(/[^\\d+]/g, '');\nlet name = String(j.contact_name || j.name || '').trim();\nif (!name) {\n  if (email) name = email.split('@')[0];\n  else if (phone) name = 'WhatsApp ' + phone;\n}\nif (!name) {\n  return [{ json: { skip: true, text: 'No contact to save.' } }];\n}\nconst notes = ['CRM', j.pipeline_stage, j.next_action, j.notes, j.source].filter(Boolean).join(' | ').slice(0, 500);\nreturn [{\n  json: {\n    skip: false,\n    contact_name: name.slice(0, 200),\n    company_name: String(j.company_name || '').trim().slice(0, 200),\n    email,\n    phone,\n    notes,\n    pipeline_stage: String(j.pipeline_stage || 'new')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1norm00001",
+      "name": "Normalize contact"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1a2b3d4-e5f6-7890-crm1skip0000c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1skip00001",
+      "name": "Skip empty"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -120
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1pass00001",
+      "name": "Pass skip"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify(Object.assign({ organization_id: '939049468', per_page: 5 }, $json.email ? { email: $json.email } : ($json.phone ? { phone: $json.phone } : { contact_name: $json.contact_name }))) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        80
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1get000001",
+      "name": "Search contacts",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = $('Normalize contact').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nlet hit = list[0];\nif (incoming.email) {\n  hit = list.find((c) => String(c.email || '').toLowerCase() === incoming.email) || hit;\n}\nif (hit && hit.contact_id) {\n  const prev = String(hit.notes || '').trim();\n  const notes = [prev, incoming.notes].filter(Boolean).join('\\n').slice(0, 2000);\n  return [{ json: { mode: 'update', contact_id: String(hit.contact_id), contact_name: incoming.contact_name, company_name: incoming.company_name, email: incoming.email, phone: incoming.phone, notes } }];\n}\nconst body = {\n  contact_name: incoming.contact_name,\n  contact_type: 'customer',\n  notes: incoming.notes\n};\nif (incoming.company_name) body.company_name = incoming.company_name;\nif (incoming.email || incoming.phone) {\n  const person = { first_name: incoming.contact_name.split(/\\s+/)[0] || incoming.contact_name, is_primary_contact: true };\n  if (incoming.email) person.email = incoming.email;\n  if (incoming.phone) person.phone = incoming.phone;\n  body.contact_persons = [person];\n  if (incoming.email) body.email = incoming.email;\n  if (incoming.phone) body.phone = incoming.phone;\n}\nreturn [{ json: { mode: 'create', body } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        80
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1pick00001",
+      "name": "Create or update"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1a2b3d4-e5f6-7890-crm1mode0000c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "update"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        80
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1mode00001",
+      "name": "Exists already"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "PUT",
+        "url": "={{ 'https://www.zohoapis.com/books/v3/contacts/' + $json.contact_id }}",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contact_name: $json.contact_name, company_name: $json.company_name || undefined, notes: $json.notes }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1put000001",
+      "name": "PUT contact",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        200
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1post00001",
+      "name": "POST contact",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When executed by another workflow": {
+      "main": [
+        [
+          {
+            "node": "Normalize contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize contact": {
+      "main": [
+        [
+          {
+            "node": "Skip empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip empty": {
+      "main": [
+        [
+          {
+            "node": "Pass skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search contacts": {
+      "main": [
+        [
+          {
+            "node": "Create or update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update": {
+      "main": [
+        [
+          {
+            "node": "Exists already",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exists already": {
+      "main": [
+        [
+          {
+            "node": "PUT contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

@@ -1,0 +1,420 @@
+{
+  "id": "emailOutbox000001",
+  "name": "Email outbox",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxtrig0001",
+      "name": "When executed by another workflow"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxswstore",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "store",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxswsend0",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxswkill0",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "kill",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxswitch01",
+      "name": "Action"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nconst pending = {\n  to: String(j.to || '').trim(),\n  subject: String(j.subject || 'Re: (no subject)').trim(),\n  text: String(j.text || '').trim(),\n  from_original: String(j.from_original || j.to || '').trim(),\n  subject_original: String(j.subject_original || '').trim()\n};\ns.pending = pending;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nconst chat_id = String(s.ops_chat_id || '');\nlet body = [\n  'Draft reply for info@',\n  'From: ' + pending.from_original,\n  'Subject: ' + pending.subject_original,\n  '',\n  pending.text,\n  '',\n  '/approve to send. /kill to drop. One pending draft at a time.'\n].join('\\n');\nif (body.length > 4000) body = body.slice(0, 3990) + '\u2026';\nreturn [{ json: { chat_id, text: body, has_chat: Boolean(chat_id) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        -200
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxstore001",
+      "name": "Store draft"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxifchat0c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.has_chat }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        -200
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxifchat01",
+      "name": "Has ops chat"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        -280
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxtg000001",
+      "name": "Notify ops",
+      "credentials": {
+        "telegramApi": {
+          "id": "GD7WqGif3v6QlSbc",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst pending = s.pending;\nif (!pending || !pending.to || !pending.text) {\n  return [{ json: { empty: true, text: 'No pending email draft.' } }];\n}\nreturn [{ json: { empty: false, to: pending.to, subject: pending.subject, text: pending.text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        40
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxload0001",
+      "name": "Load pending"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxifpend0c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.empty }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        40
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxifpend01",
+      "name": "Has pending"
+    },
+    {
+      "parameters": {
+        "fromEmail": "TheMobileProf <info@themobileprof.com>",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1000,
+        160
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxsmtp0001",
+      "name": "Send approved email",
+      "credentials": {
+        "smtp": {
+          "id": "cvlEAE8BvvQ87wew",
+          "name": "Zoho Mail info@"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst pending = s.pending || {};\ns.pending = null;\nreturn [{ json: { sent: true, to: pending.to, text: 'Sent to ' + (pending.to || 'the sender') + '.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        160
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxclear001",
+      "name": "Clear pending"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst had = Boolean(s.pending && s.pending.to);\ns.pending = null;\nreturn [{ json: { killed: had, empty: !had, text: had ? 'Dropped the pending draft.' : 'No pending email draft.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        240
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxkill0001",
+      "name": "Drop pending"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nreturn [{ json: j }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        400
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxchat0001",
+      "name": "Remember chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -40
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxpass0001",
+      "name": "Pass through"
+    }
+  ],
+  "connections": {
+    "When executed by another workflow": {
+      "main": [
+        [
+          {
+            "node": "Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action": {
+      "main": [
+        [
+          {
+            "node": "Store draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Drop pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Remember chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store draft": {
+      "main": [
+        [
+          {
+            "node": "Has ops chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has ops chat": {
+      "main": [
+        [
+          {
+            "node": "Notify ops",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Load pending": {
+      "main": [
+        [
+          {
+            "node": "Has pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has pending": {
+      "main": [
+        [
+          {
+            "node": "Pass through",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send approved email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send approved email": {
+      "main": [
+        [
+          {
+            "node": "Clear pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

@@ -64,7 +64,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth \u2014 sales and support',\n        '/cm or /community \u2014 community manager',\n        '/ops \u2014 accounts, legal, grants (real expenses post to Zoho)',\n        '/validate \u2014 product validation',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];"
+        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth \u2014 sales and support',\n        '/crm \u2014 qualify or update a lead',\n        '/cm or /community \u2014 community manager',\n        '/ops \u2014 accounts, legal, grants (real expenses post to Zoho)',\n        '/validate \u2014 product validation',\n        '/approve \u2014 send the pending info@ draft',\n        '/kill \u2014 drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -104,7 +104,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        720,
+        840,
         0
       ],
       "id": "d7e8f901-2345-4abc-9def-telegrif0002",
@@ -132,7 +132,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -171,7 +171,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361'; // Petty Cash\nconst DEFAULT_EXPENSE = '1300646000000000460'; // Other Expenses\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\n\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.description]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) {\n      return row.id;\n    }\n  }\n  return DEFAULT_EXPENSE;\n}\n\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) {\n    return String(raw).slice(0, 10);\n  }\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\n\nconst worker = $input.first().json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst amount = Number(sd.amount);\nconst task = String(sd.task_type || '').toLowerCase();\nconst recordFlag = sd.record_expense === true || sd.record_expense === 'true';\nconst record_zoho = prep.department === 'internal-ops'\n  && worker.status === 'success'\n  && task === 'accounts'\n  && recordFlag\n  && Number.isFinite(amount)\n  && amount > 0;\n\nconst vendor = String(sd.vendor || sd.vendor_name || '').trim();\nconst descParts = [vendor, sd.description || prep.task_description].filter(Boolean);\nlet description = descParts.join(' \u2014 ').slice(0, 100);\nif (!description) {\n  description = 'Ops expense';\n}\n\nconst zoho_expense = record_zoho ? {\n  account_id: pickAccount(sd),\n  paid_through_account_id: PAID_THROUGH,\n  date: lagosDate(sd.date),\n  amount,\n  description,\n} : null;\n\nif (zoho_expense) {\n  const ref = String(sd.reference || sd.reference_number || '').trim().slice(0, 100);\n  if (ref) {\n    zoho_expense.reference_number = ref;\n  }\n}\n\nreturn [{ json: { ...worker, record_zoho, zoho_expense, organization_id: ORG_ID } }];\n"
+        "jsCode": "const ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361'; // Petty Cash\nconst DEFAULT_EXPENSE = '1300646000000000460'; // Other Expenses\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\n\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.description]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) {\n      return row.id;\n    }\n  }\n  return DEFAULT_EXPENSE;\n}\n\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) {\n    return String(raw).slice(0, 10);\n  }\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\n\nconst worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst amount = Number(sd.amount);\nconst task = String(sd.task_type || '').toLowerCase();\nconst recordFlag = sd.record_expense === true || sd.record_expense === 'true';\nconst record_zoho = prep.department === 'internal-ops'\n  && worker.status === 'success'\n  && task === 'accounts'\n  && recordFlag\n  && Number.isFinite(amount)\n  && amount > 0;\n\nconst vendor = String(sd.vendor || sd.vendor_name || '').trim();\nconst descParts = [vendor, sd.description || prep.task_description].filter(Boolean);\nlet description = descParts.join(' \u2014 ').slice(0, 100);\nif (!description) {\n  description = 'Ops expense';\n}\n\nconst zoho_expense = record_zoho ? {\n  account_id: pickAccount(sd),\n  paid_through_account_id: PAID_THROUGH,\n  date: lagosDate(sd.date),\n  amount,\n  description,\n} : null;\n\nif (zoho_expense) {\n  const ref = String(sd.reference || sd.reference_number || '').trim().slice(0, 100);\n  if (ref) {\n    zoho_expense.reference_number = ref;\n  }\n}\n\nreturn [{ json: { ...worker, record_zoho, zoho_expense, organization_id: ORG_ID } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -255,6 +255,265 @@
         280
       ],
       "id": "d7e8f901-2345-4abc-9def-telegrzoho003"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst chat_id = String(j.chat_id || (j.context_data && j.context_data.chat_id) || '');\nreturn [{ json: { ...j, action: 'set_chat', chat_id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrchat001",
+      "name": "Stamp set_chat"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "emailOutbox000001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrexec001",
+      "name": "Remember ops chat"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrcmd000c",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.ops_action }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        -120
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcmd0001",
+      "name": "Ops command"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrapp000c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.ops_action }}",
+              "rightValue": "approve"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        -200
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrapp0001",
+      "name": "Approve send"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nreturn [{ json: { ...j, action: 'send' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -280
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrsnd0001",
+      "name": "Stamp send"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "emailOutbox000001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        -280
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrexec002",
+      "name": "Run outbox send"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nreturn [{ json: { ...j, action: 'kill' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -80
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrkll0001",
+      "name": "Stamp kill"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "emailOutbox000001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        -80
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrexec003",
+      "name": "Run outbox kill"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json || {};\nconst prep = $('Prepare task').item.json;\nconst chat_id = String(prep.chat_id || (prep.context_data && prep.context_data.chat_id) || '');\nlet text = String(r.text || '').trim();\nif (r.sent) text = 'Sent to ' + (r.to || 'the sender') + '.';\nelse if (r.killed) text = 'Dropped the pending draft.';\nelse if (r.empty) text = 'No pending email draft.';\nif (!text) text = 'No pending email draft.';\nreturn [{ json: { chat_id, text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        -160
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcmdfmt1",
+      "name": "Format command"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst ctx = prep.context_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst intent = Number(sd.intent_score);\nconst recordFlag = sd.record_lead === true || sd.record_lead === 'true';\nconst record_crm = worker.status === 'success' && (\n  prep.department === 'crm' ||\n  recordFlag ||\n  (Number.isFinite(intent) && intent >= 0.6)\n);\nlet phone = String(sd.phone || '').trim();\nif (!phone && ctx.channel === 'whatsapp' && ctx.from && /^\\d{8,}$/.test(String(ctx.from))) {\n  phone = String(ctx.from);\n}\nlet email = String(sd.email || '').trim();\nif (!email && ctx.channel === 'email' && ctx.from && String(ctx.from).includes('@')) {\n  email = String(ctx.from);\n}\nlet contact_name = String(sd.contact_name || sd.name || '').trim();\nif (!contact_name && ctx.username) contact_name = String(ctx.username);\nconst crm_contact = record_crm ? {\n  contact_name,\n  company_name: String(sd.company_name || '').trim(),\n  email,\n  phone,\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: String(sd.notes || '').trim(),\n  source: ctx.channel || 'ops',\n  task_type: task\n} : null;\nreturn [{ json: { ...worker, record_crm, crm_contact } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        160
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrm0001",
+      "name": "Decide CRM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrcrm000c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.record_crm }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1140,
+        40
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrm0002",
+      "name": "Record in CRM"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $input.first().json.crm_contact || {} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        -80
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrm0003",
+      "name": "Stamp CRM"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "crmUpsertCont0001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        -80
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrm0004",
+      "name": "Run CRM upsert",
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -284,7 +543,7 @@
       "main": [
         [
           {
-            "node": "Help only",
+            "node": "Stamp set_chat",
             "type": "main",
             "index": 0
           }
@@ -295,7 +554,7 @@
       "main": [
         [
           {
-            "node": "Send Telegram",
+            "node": "Ops command",
             "type": "main",
             "index": 0
           }
@@ -313,7 +572,7 @@
       "main": [
         [
           {
-            "node": "Decide Zoho",
+            "node": "Decide CRM",
             "type": "main",
             "index": 0
           }
@@ -365,6 +624,170 @@
         [
           {
             "node": "Format reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp set_chat": {
+      "main": [
+        [
+          {
+            "node": "Remember ops chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remember ops chat": {
+      "main": [
+        [
+          {
+            "node": "Help only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ops command": {
+      "main": [
+        [
+          {
+            "node": "Approve send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approve send": {
+      "main": [
+        [
+          {
+            "node": "Stamp send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stamp kill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp send": {
+      "main": [
+        [
+          {
+            "node": "Run outbox send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp kill": {
+      "main": [
+        [
+          {
+            "node": "Run outbox kill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run outbox send": {
+      "main": [
+        [
+          {
+            "node": "Format command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run outbox kill": {
+      "main": [
+        [
+          {
+            "node": "Format command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format command": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide CRM": {
+      "main": [
+        [
+          {
+            "node": "Record in CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record in CRM": {
+      "main": [
+        [
+          {
+            "node": "Stamp CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Decide Zoho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp CRM": {
+      "main": [
+        [
+          {
+            "node": "Run CRM upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run CRM upsert": {
+      "main": [
+        [
+          {
+            "node": "Decide Zoho",
             "type": "main",
             "index": 0
           }

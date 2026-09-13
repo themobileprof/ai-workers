@@ -8,7 +8,7 @@ n8n is the only public door. Agents still talk over HTTP JSON. Chat apps are inb
 | WhatsApp | Customers, community, field intern | One Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,growth,product-dev,community}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,growth,product-dev,community,crm}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>`. Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
@@ -27,8 +27,9 @@ Keep this section in sync with every channel change. IDs are not secrets.
 | Telegram account | `telegramApi` | `GD7WqGif3v6QlSbc` | Ops Telegram |
 | WhatsApp OAuth account | `whatsAppTriggerApi` | `Oaps5dWBa76PVrD9` | Customer WhatsApp trigger |
 | WhatsApp account | `whatsAppApi` | `TpVfkoyKY6eZDl87` | Customer WhatsApp send |
-| Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/ops` expense POST |
-| Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email (and later outbound) |
+| Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/ops` expenses; CRM contact upsert |
+| Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email; Email outbox approved sends |
+| Zoho Mail info@ IMAP | `imap` | `w6VyL4iDdwX5XgIM` | Inbound info@ |
 
 SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL, user `info@themobileprof.com`. App password stays in n8n only.
 
@@ -40,8 +41,12 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-community.json` | `smkCommHttp0001` | no | Manual POST community worker |
 | `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs + chart of accounts |
 | `n8n/workflows/smoke-email.json` | `smkEmailSmtp0001` | no | Send one text mail From/To `info@themobileprof.com` |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/ops` may POST Zoho expense |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; same prefixes; `/ops` may POST Zoho expense |
+| `n8n/workflows/smoke-crm.json` | `smkCrmBooks00001` | no | GET Zoho Books contacts (read-only) |
+| `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/ops` expenses; `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; same prefixes; `/ops` expenses; CRM upsert on high intent |
+| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
+| `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft → Telegram; upserts Books contact from sender |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
@@ -51,6 +56,7 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | --- | --- |
 | `/community` or `/cm` | community |
 | `/growth` | growth |
+| `/crm` | crm |
 | `/ops` | internal-ops |
 | `/validate` | product-dev |
 | none, 1:1 | growth |
@@ -60,6 +66,7 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
 - API: `https://www.zohoapis.com` (US DC). Org **TheMobileProf Technologies**, `organization_id` `939049468`, currency NGN.
 - Write path: `/ops` → worker `structured_data.record_expense` + numeric `amount` → `POST /books/v3/expenses`.
+- CRM path: `/crm` or high-intent growth/email → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
 - Defaults: expense account Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Also mapped: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
 
@@ -67,8 +74,11 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
 - Company address: **`info@themobileprof.com`**. From display name: `TheMobileProf`.
 - Outbound: n8n **Send Email** + credential `Zoho Mail info@`. Paid Zoho Mail SMTP is `smtppro.zoho.com` / `465` SSL (fallback `smtp.zoho.com` if a send fails).
-- Inbound: **not built**. Planned: IMAP (`imappro.zoho.com:993`) → Telegram draft → `/approve` → reply via the same SMTP. Do not auto-send.
-- Do not add a second public From (`workers@`, `hello@`) until inbound exists; one address is the company.
+- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → growth worker drafts a reply → **Email outbox** holds **one** pending draft → Telegram notify. Nothing is sent until `/approve` in Ops Telegram. `/kill` drops it. A new inbound mail overwrites the pending draft. The sender is upserted as a Zoho Books contact.
+- Skips mail From `info@themobileprof.com` (loop) and subjects matching `n8n smoke`.
+- Message the ops bot once (`/help`) after deploy so outbox learns `ops_chat_id`; otherwise the draft is still stored and `/approve` still works, but you will not get the Telegram card.
+- Replies are a new message with `Re:` subject (n8n SMTP does not set `In-Reply-To`).
+- Do not add a second public From (`workers@`, `hello@`); one address is the company.
 
 ---
 
@@ -146,7 +156,7 @@ https://api.telegram.org/bot<TOKEN>/getWebhookInfo
 
 `url` must contain `/webhook/` not `/webhook-test/`. `last_error_message` must be empty.
 
-Commands worth adding later: `/approve`, `/kill` for validation decisions — still n8n IF nodes, still one bot.
+`/approve` and `/kill` send or drop the pending **info@** draft. Validation GO/PIVOT/KILL can reuse the same commands later.
 
 ---
 
@@ -165,15 +175,14 @@ Credential **Zoho Mail info@** (`cvlEAE8BvvQ87wew`):
 
 **Smoke: send email** (`n8n/workflows/smoke-email.json`): open it in the UI and Execute. It sends a plain-text message From/To `info@themobileprof.com`. Check that inbox (and spam). It is inactive on purpose — do not publish.
 
-Later outbound (not imported yet): Telegram `/email` drafts via a department worker, then this same SMTP node sends. One Send Email path for the whole company — departments must not each open SMTP.
+Approved customer replies use the same SMTP node inside **Email outbox**. Departments must not each open SMTP.
 
-### Inbound (not built)
+### Inbound (live)
 
-After the smoke send works:
-
-- n8n **Email Trigger (IMAP)** on `info@` (poll; Zoho has no simple inbound webhook).
-- Strip HTML to text, HTTP POST `growth` (Switch later if a second address appears).
-- Telegram you a draft; `/approve` then n8n sends the reply From `info@`. No unattended LLM → send.
+1. Enable IMAP on the mailbox (Zoho Mail → Settings → Mail Accounts → IMAP).
+2. Credential **Zoho Mail info@ IMAP** (`w6VyL4iDdwX5XgIM`): `imappro.zoho.com`, `993`, SSL, user `info@themobileprof.com`, same app password as SMTP.
+3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Telegram should get a draft. `/approve` sends; `/kill` drops.
+4. First, `/help` the ops bot so it records your chat id.
 
 ---
 
@@ -201,6 +210,7 @@ On that number, n8n routes by prefix (then default **growth** for 1:1, **communi
 | --- | --- |
 | `/community` or `/cm` | community |
 | `/growth` | growth |
+| `/crm` | crm |
 | `/ops` | internal-ops |
 | `/validate` | product-dev |
 
@@ -232,7 +242,7 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 2. Telegram bot + Ops workflow + getWebhookInfo clean.
 3. **Smoke: send email** — Execute; confirm mail in `info@`.
 4. WhatsApp is already live; keep using prefixes.
-5. Email inbound + Telegram approve-before-send.
+5. Email inbound is live: mail `info@` → Telegram draft → `/approve`.
 6. Only then: intern mission on WhatsApp.
 
 If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker.

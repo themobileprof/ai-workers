@@ -1,0 +1,201 @@
+{
+  "id": "inbdEmailImap0001",
+  "name": "Inbound info@",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "format": "resolved",
+        "options": {
+          "customEmailConfig": "[\"UNSEEN\"]",
+          "forceReconnect": 20,
+          "trackLastMessageId": true
+        }
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imaptrig00001",
+      "name": "Email Trigger (IMAP)",
+      "credentials": {
+        "imap": {
+          "id": "w6VyL4iDdwX5XgIM",
+          "name": "Zoho Mail info@ IMAP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function addr(x) {\n  if (!x) return '';\n  if (typeof x === 'string') {\n    const m = x.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    return (m ? m[0] : x).trim();\n  }\n  if (x.text) return addr(x.text);\n  if (Array.isArray(x.value) && x.value[0]) return addr(x.value[0].address || x.value[0]);\n  if (x.address) return String(x.address).trim();\n  return String(x).trim();\n}\nconst m = $input.first().json || {};\nconst meta = m.metadata || {};\nconst from = addr(m.from || meta.from || m.fromAddress || '').toLowerCase();\nconst subject = String(m.subject || meta.subject || '').trim();\nlet body = String(m.textPlain || m.text || m.textAsHtml || '').trim();\nif (!body && (m.html || m.textHtml)) {\n  body = String(m.html || m.textHtml).replace(/<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nif (!from) return [];\nif (from === 'info@themobileprof.com') return [];\nif (/mailer-daemon|no-?reply|postmaster/i.test(from)) return [];\nif (/n8n smoke/i.test(subject)) return [];\nif (!body) body = '(empty body)';\nconst task_description = [\n  'Draft a short plain-text reply as TheMobileProf from info@themobileprof.com.',\n  'Do not claim the email was sent. No markdown. Keep it under 250 words.',\n  '',\n  'From: ' + from,\n  'Subject: ' + (subject || '(no subject)'),\n  '',\n  body.slice(0, 8000)\n].join('\\n');\nreturn [{\n  json: {\n    department: 'growth',\n    from,\n    subject,\n    task_description,\n    context_data: {\n      channel: 'email',\n      department: 'growth',\n      from,\n      subject\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapprep00001",
+      "name": "Prepare inbound"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/growth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        560,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imaphttp00001",
+      "name": "Call growth"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $input.first().json;\nconst prep = $('Prepare inbound').item.json;\nlet text = String(worker.output_text || 'Could not draft a reply.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet subject = prep.subject || '(no subject)';\nif (!/^re:\\s/i.test(subject)) subject = 'Re: ' + subject;\nreturn [{\n  json: {\n    action: 'store',\n    to: prep.from,\n    subject,\n    text,\n    from_original: prep.from,\n    subject_original: prep.subject\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapfmt000001",
+      "name": "Format draft"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "emailOutbox000001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapexec00001",
+      "name": "Store in outbox"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $('Call growth').item.json;\nconst prep = $('Prepare inbound').item.json;\nconst sd = worker.structured_data || {};\nlet email = String(sd.email || prep.from || '').trim();\nlet name = String(sd.contact_name || sd.name || '').trim();\nif (!name && email.includes('@')) name = email.split('@')[0];\nreturn [{ json: {\n  contact_name: name,\n  email,\n  phone: String(sd.phone || '').trim(),\n  company_name: String(sd.company_name || '').trim(),\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  notes: ('Inbound email: ' + (prep.subject || '')).slice(0, 500),\n  source: 'email'\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        160
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapcrm00001",
+      "name": "Stamp CRM"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "crmUpsertCont0001",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        940,
+        160
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapcrm00002",
+      "name": "Run CRM upsert",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Prepare inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare inbound": {
+      "main": [
+        [
+          {
+            "node": "Call growth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call growth": {
+      "main": [
+        [
+          {
+            "node": "Format draft",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Stamp CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format draft": {
+      "main": [
+        [
+          {
+            "node": "Store in outbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp CRM": {
+      "main": [
+        [
+          {
+            "node": "Run CRM upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}
