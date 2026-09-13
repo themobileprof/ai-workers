@@ -19,12 +19,39 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361';\nconst DEFAULT_EXPENSE = '1300646000000000460';\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.vendor_name, sd.description]\n    .filter(Boolean).join(' ').toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) return row.id;\n  }\n  return DEFAULT_EXPENSE;\n}\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) return String(raw).slice(0, 10);\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\nconst j = $input.first().json || {};\nconst sd = j.structured_data || j;\nconst action = String(j.action || sd.zoho_action || '').toLowerCase();\nconst amount = Number(j.amount ?? sd.amount ?? sd.base_amount);\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action)) {\n  return [{ json: { skip: true, action: 'none', audit_text: 'Zoho Books: nothing to do.' } }];\n}\nconst vendor = String(j.vendor_name || sd.vendor_name || sd.vendor || '').trim();\nconst customer = String(j.customer_name || sd.customer_name || '').trim() || vendor;\nreturn [{ json: {\n  skip: false,\n  action,\n  amount: Number.isFinite(amount) ? amount : 0,\n  currency: String(j.currency || sd.currency || 'NGN').toUpperCase(),\n  vendor_name: vendor,\n  customer_name: customer,\n  date: lagosDate(j.date || sd.date),\n  description: String(j.description || sd.notes || sd.expense_description || vendor || 'Ops').slice(0, 200),\n  account_id: pickAccount(Object.assign({}, sd, j)),\n  paid_through_account_id: PAID_THROUGH,\n  is_taxable: j.is_taxable_service === true || sd.is_taxable_service === true,\n  is_professional: j.is_professional_service === true || sd.is_professional_service === true,\n  reference: String(j.reference || sd.reference || sd.reference_number || '').trim().slice(0, 100),\n  lookup: String(j.lookup || sd.lookup || 'overview'),\n  organization_id: ORG_ID\n} }];\n"
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        120,
+        0
+      ],
+      "id": "bksWrt000000000000set00001",
+      "name": "Fetch desk settings",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nconst ORG_ID = deskSetting('zoho.organization_id', '939049468');\nconst PAID_THROUGH = deskSetting('zoho.paid_through_account_id', '1300646000000000361');\nconst DEFAULT_EXPENSE = deskSetting('zoho.default_expense_account_id', '1300646000000000460');\nconst TZ = deskSetting('company.timezone', 'Africa/Lagos');\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: DEFAULT_EXPENSE, keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.vendor_name, sd.description]\n    .filter(Boolean).join(' ').toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) return row.id;\n  }\n  return DEFAULT_EXPENSE;\n}\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) return String(raw).slice(0, 10);\n  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());\n}\nconst j = $('When executed by another workflow').first().json || {};\nconst sd = j.structured_data || j;\nconst action = String(j.action || sd.zoho_action || '').toLowerCase();\nconst amount = Number(j.amount ?? sd.amount ?? sd.base_amount);\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action)) {\n  return [{ json: { skip: true, action: 'none', audit_text: 'Zoho Books: nothing to do.' } }];\n}\nconst vendor = String(j.vendor_name || sd.vendor_name || sd.vendor || '').trim();\nconst customer = String(j.customer_name || sd.customer_name || '').trim() || vendor;\nreturn [{ json: {\n  skip: false,\n  action,\n  amount: Number.isFinite(amount) ? amount : 0,\n  currency: String(j.currency || sd.currency || 'NGN').toUpperCase(),\n  vendor_name: vendor,\n  customer_name: customer,\n  date: lagosDate(j.date || sd.date),\n  description: String(j.description || sd.notes || sd.expense_description || vendor || 'Ops').slice(0, 200),\n  account_id: pickAccount(Object.assign({}, sd, j)),\n  paid_through_account_id: PAID_THROUGH,\n  is_taxable: j.is_taxable_service === true || sd.is_taxable_service === true,\n  is_professional: j.is_professional_service === true || sd.is_professional_service === true,\n  reference: String(j.reference || sd.reference || sd.reference_number || '').trim().slice(0, 100),\n  lookup: String(j.lookup || sd.lookup || 'overview'),\n  organization_id: ORG_ID,\n  timezone: TZ\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
+        280,
         0
       ],
       "id": "bksWrt000000000000norm0001",
@@ -92,7 +119,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         }
@@ -275,7 +302,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', status: 'unpaid', per_page: 10 }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, status: 'unpaid', per_page: 10 }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -303,7 +330,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', status: 'unpaid', per_page: 10 }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, status: 'unpaid', per_page: 10 }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -331,7 +358,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, sort_column: 'date', sort_order: 'D' }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 5, sort_column: 'date', sort_order: 'D' }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -359,7 +386,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', from_date: String(new Date().getFullYear()) + '-01-01', to_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date()), cash_based: true }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, from_date: String(new Date().getFullYear()) + '-01-01', to_date: new Intl.DateTimeFormat('en-CA', { timeZone: ($json.timezone || 'Africa/Lagos') }).format(new Date()), cash_based: true }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -418,7 +445,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -465,7 +492,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, contact_type: 'vendor', contact_name_contains: $json.vendor_name }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 5, contact_type: 'vendor', contact_name_contains: $json.vendor_name }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -545,7 +572,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -610,7 +637,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -657,7 +684,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, contact_type: 'customer', contact_name_contains: $json.customer_name }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 5, contact_type: 'customer', contact_name_contains: $json.customer_name }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -737,7 +764,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -802,7 +829,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -858,7 +885,7 @@
       "main": [
         [
           {
-            "node": "Normalize",
+            "node": "Fetch desk settings",
             "type": "main",
             "index": 0
           }
@@ -1179,6 +1206,17 @@
         [
           {
             "node": "Result invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch desk settings": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
             "type": "main",
             "index": 0
           }

@@ -1,6 +1,6 @@
 # Channel setup (Telegram, WhatsApp, Email)
 
-n8n is the only public door. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
+n8n is the public door for webhooks. The company desk is a separate Caddy path (`/admin`). Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
@@ -12,7 +12,7 @@ Do not give each department its own WhatsApp or bot. n8n routes to the Go worker
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>`. Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
-Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, and license only.
+Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, license, the company desk DB, and `INTERNAL_API_TOKEN`.
 
 ---
 
@@ -47,7 +47,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
 | `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, draft invoice, lookup |
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/crm` leads; `/approve` `/kill` email drafts |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes only for allowlisted `/accounts` `/ops`; CRM upsert on high intent |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes only for desk-allowlisted `/accounts` `/ops`; CRM upsert on high intent |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft → Telegram; upserts Books contact from sender |
 
@@ -68,15 +68,25 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
 WhatsApp `/accounts` and `/ops` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books. Telegram ops is not gated (that chat is already private).
 
+### Company desk (admin UI)
+
+Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
+
+- Postgres database/role **`aiworkers`** (never the n8n database). Bootstrap: `scripts/bootstrap-admin-db.sh` on the VM.
+- Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
+- n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
+- n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings` for `zoho.organization_id`, paid-through / default expense accounts, and timezone. Chart-of-accounts keyword map stays in the workflow. If the fetch fails, those workflows fall back to the seeded ids below.
+- Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
+
 ### WhatsApp accounts allowlist
 
-Keep this list identical in `n8n/allowlists/whatsapp-accounts.json` and the Customer WhatsApp **Prepare task** node.
+Active desk users with the `whatsapp_accounts` capability. Edit them on **People**, not by re-importing the workflow. `n8n/allowlists/whatsapp-accounts.json` is documentation / last-resort seed only.
 
 | Number | Who |
 | --- | --- |
 | `2348033954301` | Founder personal WhatsApp |
 
-To add a bookkeeper: append the WhatsApp `wa_id` (country code, no `+`) to both places, re-import `customer-whatsapp.json`, publish, restart n8n.
+To add a bookkeeper: add them on the desk with phone (234…) and `whatsapp_accounts`. No n8n re-import.
 
 ### Zoho Books (not Mail)
 
@@ -90,7 +100,7 @@ To add a bookkeeper: append the WhatsApp `wa_id` (country code, no `+`) to both 
 - Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.reports.READ`.
 - Telegram/WhatsApp reply is the audit trail (Books totals + document id).
 - CRM path: `/crm` or high-intent growth/email → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
-- Defaults: expense account Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Also mapped: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
+- Defaults live on the desk (`zoho.organization_id`, `zoho.default_expense_account_id`, `zoho.paid_through_account_id`). Seeded values: org `939049468`, expense Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Keyword map still in Books write: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
 
 ### Email (Zoho Mail)

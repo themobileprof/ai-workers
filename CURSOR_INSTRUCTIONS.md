@@ -15,15 +15,16 @@ You have full creative and architectural freedom over how the inner software cod
 * **Orchestration Engine:** **n8n**, self-hosted in Docker. Visual router, webhook manager, event processor, cron scheduler, and execution log keeper. Stay on Node/n8n here — replacing it with a custom Go orchestrator loses the visual workflows this system is built around.
 * **System Database:** **PostgreSQL, native on the host** (systemd / apt — **not** a Docker container). n8n stores its backend and execution state here. Local beats a remote free tier (Supabase/Neon) for latency, connection-pool stability, and no cold starts.
 * **Execution Worker Fleet:** A **Go** HTTP service in Docker. n8n is the only caller. Do **not** publish the worker to the public internet.
-* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443 and reverse-proxies to n8n on localhost. WhatsApp/Telegram Cloud APIs need this.
+* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443 and reverse-proxies to n8n on localhost. **`/admin*`** is the exception: Caddy proxies that prefix to the Go agents process on `127.0.0.1:8000`. Do **not** proxy `/departments` or `/internal` to the public internet. WhatsApp/Telegram Cloud APIs need this.
 
 ```
 External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
         │
         ▼
 ┌──────────────────────────────────────────┐
-│  Caddy (host, Go) :443  — when domain    │
-│  bootstrap only: n8n published on :5678  │
+│  Caddy (host, Go) :443                   │
+│  /admin* → 127.0.0.1:8000  (desk UI)     │
+│  everything else → 127.0.0.1:5678 (n8n)  │
 └──────────────────┬───────────────────────┘
                    ▼
 ┌──────────────────────────────────────────┐
@@ -33,10 +34,11 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
                    ▼
 ┌──────────────────────────────────────────┐
 │  agents  (Go static binary, Docker)      │
-│  internalops | growth | crm | productdev │
+│  /departments/*  /internal/v1/*  /admin  │
 └──────────────────────────────────────────┘
 
-n8n ──TCP 5432──► PostgreSQL (host systemd, not Docker)
+n8n ──TCP 5432──► PostgreSQL n8n (host systemd, not Docker)
+agents ──TCP 5432──► PostgreSQL aiworkers (same host cluster, separate role/db)
                   5432 must never be in the OCI security list
 ```
 
@@ -102,7 +104,7 @@ This is a **shared** machine, not a dedicated database server. Do not apply "25%
 ### B. Network exposure
 
 - Bootstrap: publish **only** n8n (`5678`). Worker stays on `agent-network` with no `ports:` mapping.
-- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Worker still unpublished.
+- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Worker **departments** stay unpublished. Bind agents to `127.0.0.1:8000` so Caddy can serve `/admin` only.
 - Postgres `5432` is host-local + Docker subnet in `pg_hba.conf`. Not in UFW. Not in the OCI Security List / NSG.
 - n8n must have authentication enabled from first boot plus a stable `N8N_ENCRYPTION_KEY`.
 - Local UFW is not enough on OCI: the **VCN security list / NSG** must allow 22 and 5678 (then 80/443; drop 5678 from the cloud firewall once Caddy owns the edge). Never allow 8000 or 5432.
@@ -127,7 +129,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Workers are stateless. Persistence of agent outputs, if needed later, is an n8n workflow concern or a separate schema — not v1 coupling.
+The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts` (and settings) with `X-Internal-Token`.
 
 ### Layout
 
@@ -143,6 +145,7 @@ agents/
   internal/departments/crm/
   internal/departments/productdev/
   internal/departments/community/
+  internal/admin/          # company desk HTML + store (separate Postgres)
 ```
 
 ### Module mapping
@@ -182,7 +185,7 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
 - Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

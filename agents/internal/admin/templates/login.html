@@ -1,0 +1,12 @@
+{{define "content"}}
+<section class="login-card">
+  <p class="kicker">Restricted ledger</p>
+  <h1>Sign in to the desk</h1>
+  <p class="lede">Phone (234…) or email. This is not n8n — it holds people, WhatsApp accounts rights, and Zoho defaults.</p>
+  <form method="post" action="/admin/login" class="stack">
+    <label>Login<input name="login" autocomplete="username" required></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Enter</button>
+  </form>
+</section>
+{{end}}

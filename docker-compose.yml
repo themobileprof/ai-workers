@@ -31,6 +31,7 @@ services:
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_POSTGRESDB_POOL_SIZE: "5"
       DB_POSTGRESDB_SSL_ENABLED: "false"
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n/workflows:/home/node/workflows:ro
@@ -46,6 +47,11 @@ services:
     build:
       context: ./agents
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:172.28.0.1"
+    ports:
+      # Host-only so Caddy can proxy /admin. Not in UFW / OCI security list.
+      - "127.0.0.1:8000:8000"
     environment:
       PORT: "8000"
       GOMAXPROCS: "1"
@@ -53,6 +59,13 @@ services:
       LLM_MODEL: ${LLM_MODEL:-gpt-4.1-mini}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
+      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-}
+      ADMIN_BOOTSTRAP_NAME: ${ADMIN_BOOTSTRAP_NAME:-Samuel}
+      ADMIN_BOOTSTRAP_PHONE: ${ADMIN_BOOTSTRAP_PHONE:-2348033954301}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_COOKIE_SECURE: ${ADMIN_COOKIE_SECURE:-true}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     mem_limit: 256m
     memswap_limit: 256m
     expose:

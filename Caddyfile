@@ -4,5 +4,11 @@ workers.themobileprof.com {
 		output file /var/log/caddy/workers.log
 		format json
 	}
-	reverse_proxy 127.0.0.1:5678
+	# Public desk only. /departments and /internal stay off the internet.
+	handle /admin* {
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle {
+		reverse_proxy 127.0.0.1:5678
+	}
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samuel/ai-workers/agents/internal/admin"
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
 	"github.com/samuel/ai-workers/agents/internal/departments/crm"
@@ -33,11 +34,41 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	var adminReady bool
+	if dsn := strings.TrimSpace(os.Getenv("ADMIN_DATABASE_URL")); dsn != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		store, err := admin.Open(ctx, dsn)
+		cancel()
+		if err != nil {
+			log.Printf("admin db: %v", err)
+			admin.RegisterUnavailable(mux)
+		} else {
+			seedCtx, seedCancel := context.WithTimeout(context.Background(), 8*time.Second)
+			if err := store.Seed(seedCtx, os.Getenv("ADMIN_BOOTSTRAP_NAME"), os.Getenv("ADMIN_BOOTSTRAP_PHONE"), os.Getenv("ADMIN_BOOTSTRAP_EMAIL"), os.Getenv("ADMIN_BOOTSTRAP_PASSWORD")); err != nil {
+				log.Printf("admin seed: %v", err)
+			}
+			seedCancel()
+			desk, err := admin.New(store, os.Getenv("INTERNAL_API_TOKEN"))
+			if err != nil {
+				log.Printf("admin ui: %v", err)
+				store.Close()
+				admin.RegisterUnavailable(mux)
+			} else {
+				desk.Register(mux)
+				adminReady = true
+				log.Printf("admin desk enabled")
+			}
+		}
+	} else {
+		admin.RegisterUnavailable(mux)
+	}
+
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":       "ok",
 			"llm_ready":    completerErr == nil,
 			"llm_provider": strings.ToLower(os.Getenv("LLM_PROVIDER")),
+			"admin_ready":  adminReady,
 			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm"},
 		})
 	})

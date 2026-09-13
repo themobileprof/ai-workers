@@ -17,6 +17,33 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        140,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm0set00001",
+      "name": "Fetch desk settings",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "url": "https://www.zohoapis.com/books/v3/contacts",
@@ -26,7 +53,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ ($('Fetch desk settings').item.json || {})['zoho.organization_id'] || '939049468' }}"
             },
             {
               "name": "per_page",
@@ -56,6 +83,17 @@
   ],
   "connections": {
     "When clicking \u2018Execute workflow\u2019": {
+      "main": [
+        [
+          {
+            "node": "Fetch desk settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch desk settings": {
       "main": [
         [
           {

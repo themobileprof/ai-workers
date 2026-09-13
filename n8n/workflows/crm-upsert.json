@@ -19,12 +19,39 @@
     },
     {
       "parameters": {
-        "jsCode": "const j = $input.first().json || {};\nlet email = String(j.email || '').trim().toLowerCase();\nif (email && !email.includes('@')) email = '';\nlet phone = String(j.phone || '').replace(/[^\\d+]/g, '');\nlet name = String(j.contact_name || j.name || '').trim();\nif (!name) {\n  if (email) name = email.split('@')[0];\n  else if (phone) name = 'WhatsApp ' + phone;\n}\nif (!name) {\n  return [{ json: { skip: true, text: 'No contact to save.' } }];\n}\nconst notes = ['CRM', j.pipeline_stage, j.next_action, j.notes, j.source].filter(Boolean).join(' | ').slice(0, 500);\nreturn [{\n  json: {\n    skip: false,\n    contact_name: name.slice(0, 200),\n    company_name: String(j.company_name || '').trim().slice(0, 200),\n    email,\n    phone,\n    notes,\n    pipeline_stage: String(j.pipeline_stage || 'new')\n  }\n}];\n"
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        120,
+        0
+      ],
+      "id": "c1a2b3d4-e5f6-7890-crm1set00001",
+      "name": "Fetch desk settings",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nconst organization_id = deskSetting('zoho.organization_id', '939049468');\nconst j = $('When executed by another workflow').first().json || {};\nlet email = String(j.email || '').trim().toLowerCase();\nif (email && !email.includes('@')) email = '';\nlet phone = String(j.phone || '').replace(/[^\\d+]/g, '');\nlet name = String(j.contact_name || j.name || '').trim();\nif (!name) {\n  if (email) name = email.split('@')[0];\n  else if (phone) name = 'WhatsApp ' + phone;\n}\nif (!name) {\n  return [{ json: { skip: true, text: 'No contact to save.', organization_id } }];\n}\nconst notes = ['CRM', j.pipeline_stage, j.next_action, j.notes, j.source].filter(Boolean).join(' | ').slice(0, 500);\nreturn [{\n  json: {\n    skip: false,\n    organization_id,\n    contact_name: name.slice(0, 200),\n    company_name: String(j.company_name || '').trim().slice(0, 200),\n    email,\n    phone,\n    notes,\n    pipeline_stage: String(j.pipeline_stage || 'new')\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
+        280,
         0
       ],
       "id": "c1a2b3d4-e5f6-7890-crm1norm00001",
@@ -85,7 +112,7 @@
         "url": "https://www.zohoapis.com/books/v3/contacts",
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify(Object.assign({ organization_id: '939049468', per_page: 5 }, $json.email ? { email: $json.email } : ($json.phone ? { phone: $json.phone } : { contact_name: $json.contact_name }))) }}",
+        "jsonQuery": "={{ JSON.stringify(Object.assign({ organization_id: $json.organization_id, per_page: 5 }, $json.email ? { email: $json.email } : ($json.phone ? { phone: $json.phone } : { contact_name: $json.contact_name }))) }}",
         "options": {
           "timeout": 60000
         }
@@ -108,7 +135,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const incoming = $('Normalize contact').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nlet hit = list[0];\nif (incoming.email) {\n  hit = list.find((c) => String(c.email || '').toLowerCase() === incoming.email) || hit;\n}\nif (hit && hit.contact_id) {\n  const prev = String(hit.notes || '').trim();\n  const notes = [prev, incoming.notes].filter(Boolean).join('\\n').slice(0, 2000);\n  return [{ json: { mode: 'update', contact_id: String(hit.contact_id), contact_name: incoming.contact_name, company_name: incoming.company_name, email: incoming.email, phone: incoming.phone, notes } }];\n}\nconst body = {\n  contact_name: incoming.contact_name,\n  contact_type: 'customer',\n  notes: incoming.notes\n};\nif (incoming.company_name) body.company_name = incoming.company_name;\nif (incoming.email || incoming.phone) {\n  const person = { first_name: incoming.contact_name.split(/\\s+/)[0] || incoming.contact_name, is_primary_contact: true };\n  if (incoming.email) person.email = incoming.email;\n  if (incoming.phone) person.phone = incoming.phone;\n  body.contact_persons = [person];\n  if (incoming.email) body.email = incoming.email;\n  if (incoming.phone) body.phone = incoming.phone;\n}\nreturn [{ json: { mode: 'create', body } }];\n"
+        "jsCode": "\nconst incoming = $('Normalize contact').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nlet hit = list[0];\nif (incoming.email) {\n  hit = list.find((c) => String(c.email || '').toLowerCase() === incoming.email) || hit;\n}\nif (hit && hit.contact_id) {\n  const prev = String(hit.notes || '').trim();\n  const notes = [prev, incoming.notes].filter(Boolean).join('\\n').slice(0, 2000);\n  return [{ json: { mode: 'update', organization_id: incoming.organization_id, contact_id: String(hit.contact_id), contact_name: incoming.contact_name, company_name: incoming.company_name, email: incoming.email, phone: incoming.phone, notes } }];\n}\nconst body = {\n  contact_name: incoming.contact_name,\n  contact_type: 'customer',\n  notes: incoming.notes\n};\nif (incoming.company_name) body.company_name = incoming.company_name;\nif (incoming.email || incoming.phone) {\n  const person = { first_name: incoming.contact_name.split(/\\s+/)[0] || incoming.contact_name, is_primary_contact: true };\n  if (incoming.email) person.email = incoming.email;\n  if (incoming.phone) person.phone = incoming.phone;\n  body.contact_persons = [person];\n  if (incoming.email) body.email = incoming.email;\n  if (incoming.phone) body.phone = incoming.phone;\n}\nreturn [{ json: { mode: 'create', organization_id: incoming.organization_id, body } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -165,7 +192,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -204,7 +231,7 @@
           "parameters": [
             {
               "name": "organization_id",
-              "value": "939049468"
+              "value": "={{ $json.organization_id }}"
             }
           ]
         },
@@ -237,7 +264,7 @@
       "main": [
         [
           {
-            "node": "Normalize contact",
+            "node": "Fetch desk settings",
             "type": "main",
             "index": 0
           }
@@ -307,6 +334,17 @@
         [
           {
             "node": "POST contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch desk settings": {
+      "main": [
+        [
+          {
+            "node": "Normalize contact",
             "type": "main",
             "index": 0
           }

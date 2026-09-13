@@ -47,7 +47,11 @@ n8n will connect from a container using `host.docker.internal` (Compose `extra_h
    ```bash
    sudo -u postgres psql -c "CREATE USER n8n WITH PASSWORD 'CHANGE_ME';"
    sudo -u postgres psql -c "CREATE DATABASE n8n OWNER n8n;"
+   sudo -u postgres psql -c "CREATE USER aiworkers WITH PASSWORD 'CHANGE_ME';"
+   sudo -u postgres psql -c "CREATE DATABASE aiworkers OWNER aiworkers;"
    ```
+
+   The company desk uses **`aiworkers`**, never the n8n database. On an existing VM, `scripts/bootstrap-admin-db.sh` does this.
 
 2. Tune `/etc/postgresql/*/main/postgresql.conf` for a **shared** 6 GB box (not a dedicated DB server):
 
@@ -66,9 +70,12 @@ n8n will connect from a container using `host.docker.internal` (Compose `extra_h
 
    ```
    local   all    postgres     peer
-   host    n8n    n8n          127.0.0.1/32    scram-sha-256
-   host    n8n    n8n          ::1/128         scram-sha-256
-   host    n8n    n8n          172.16.0.0/12   scram-sha-256
+   host    n8n         n8n         127.0.0.1/32    scram-sha-256
+   host    n8n         n8n         ::1/128         scram-sha-256
+   host    n8n         n8n         172.16.0.0/12   scram-sha-256
+   host    aiworkers   aiworkers   127.0.0.1/32    scram-sha-256
+   host    aiworkers   aiworkers   ::1/128         scram-sha-256
+   host    aiworkers   aiworkers   172.16.0.0/12   scram-sha-256
    ```
 
 4. `sudo systemctl restart postgresql` and confirm `systemctl is-active postgresql`.
@@ -99,7 +106,7 @@ Create application files in this folder:
 1. `docker-compose.yml` with **two** services only:
 
    - **n8n** — pinned image tag (not `latest`); log pruning env vars; `N8N_ENCRYPTION_KEY`; Postgres at `host.docker.internal` mapped to the compose bridge gateway `172.28.0.1` (not Docker `host-gateway`/`docker0`, which is down when nothing uses the default bridge); memory limit **1536M**; publish `5678:5678`; join `agent-network`.
-   - **agents** (Go) — build `./agents` for **linux/arm64**; memory limit **256M**; `GOMAXPROCS=1`; **no** `ports:` mapping; join `agent-network`. n8n calls `http://agents:8000`.
+   - **agents** (Go) — build `./agents` for **linux/arm64**; memory limit **256M**; `GOMAXPROCS=1`; publish **`127.0.0.1:8000:8000`** so Caddy can proxy `/admin` only (not in UFW / OCI). Join `agent-network`. n8n calls `http://agents:8000`. Host Postgres `aiworkers` via `extra_hosts: host.docker.internal:172.28.0.1`.
 
    Do not add a `postgres` service. Do not add Caddy as a service. Do not use n8n queue mode / Redis.
 

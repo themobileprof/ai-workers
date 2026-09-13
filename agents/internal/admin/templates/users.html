@@ -1,0 +1,125 @@
+{{define "content"}}
+{{if .Adding}}
+<section class="hero">
+  <p class="kicker">Roster</p>
+  <h2>Add person</h2>
+  <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
+</section>
+<form class="person add" method="post" action="/admin/users">
+  <div class="fields">
+    <label>Name<input name="name" required></label>
+    <label>Phone<input name="phone" placeholder="234…"></label>
+    <label>Email<input name="email" type="email"></label>
+    <label>Role
+      <select name="role">
+        <option value="accounts">accounts</option>
+        <option value="operator">operator</option>
+        <option value="viewer">viewer</option>
+        <option value="owner">owner</option>
+      </select>
+    </label>
+    <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
+  </div>
+  <fieldset>
+    <legend>Capabilities</legend>
+    <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" checked> whatsapp_accounts</label>
+    <label class="chk"><input type="checkbox" name="cap" value="web_admin"> web_admin</label>
+    <label class="chk"><input type="checkbox" name="cap" value="zoho_write"> zoho_write</label>
+  </fieldset>
+  <div class="actions">
+    <button type="submit">Add</button>
+    <a class="ghost" href="/admin/users">Cancel</a>
+  </div>
+</form>
+{{else if .Editing}}
+<section class="hero">
+  <p class="kicker">Roster</p>
+  <h2>Amend {{.Editing.Name}}</h2>
+  <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
+</section>
+<form class="person" method="post" action="/admin/users/{{.Editing.ID}}">
+  <div class="fields">
+    <label>Name<input name="name" value="{{.Editing.Name}}" required></label>
+    <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
+    <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
+    <label>Role
+      <select name="role">
+        <option value="owner" {{if eq .Editing.Role "owner"}}selected{{end}}>owner</option>
+        <option value="accounts" {{if eq .Editing.Role "accounts"}}selected{{end}}>accounts</option>
+        <option value="operator" {{if eq .Editing.Role "operator"}}selected{{end}}>operator</option>
+        <option value="viewer" {{if eq .Editing.Role "viewer"}}selected{{end}}>viewer</option>
+      </select>
+    </label>
+    <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
+  </div>
+  <fieldset>
+    <legend>Capabilities</legend>
+    <label class="chk"><input type="checkbox" name="cap" value="web_admin" {{if has .Editing "web_admin"}}checked{{end}}> web_admin</label>
+    <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" {{if has .Editing "whatsapp_accounts"}}checked{{end}}> whatsapp_accounts</label>
+    <label class="chk"><input type="checkbox" name="cap" value="zoho_write" {{if has .Editing "zoho_write"}}checked{{end}}> zoho_write</label>
+    <label class="chk"><input type="checkbox" name="active" value="1" {{if .Editing.Active}}checked{{end}}> active</label>
+  </fieldset>
+  <div class="actions">
+    <button type="submit">Save</button>
+    <a class="ghost" href="/admin/users">Cancel</a>
+  </div>
+</form>
+{{if canRemove $.User .Editing $.OwnerCount}}
+<form class="person-delete" method="post" action="/admin/users/{{.Editing.ID}}/delete" onsubmit="return confirm('Strike this person from the roster?');">
+  <button class="danger" type="submit">Remove</button>
+</form>
+{{end}}
+{{else}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Roster</p>
+    <h2>People and permissions</h2>
+    <p class="lede">Names on the book. Open a card only when something needs changing.</p>
+  </div>
+  <a class="ghost" href="/admin/users/new">Add person</a>
+</section>
+{{if .Users}}
+<div class="ledger">
+<table class="roster">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Rights</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Users}}
+    <tr {{if not .Active}}class="dim"{{end}}>
+      <td>
+        <strong>{{.Name}}</strong>
+        {{if not .Active}}<span class="stamp">off</span>{{end}}
+      </td>
+      <td><code>{{.Phone}}</code></td>
+      <td>{{if .Email}}{{.Email}}{{else}}—{{end}}</td>
+      <td><span class="role">{{.Role}}</span></td>
+      <td class="caps">
+        {{range .Caps}}<span class="pill">{{.}}</span>{{end}}
+        {{if not .Caps}}—{{end}}
+      </td>
+      <td class="row-actions">
+        <a class="quiet" href="/admin/users/{{.ID}}">Amend</a>
+        {{if canRemove $.User . $.OwnerCount}}
+        <form class="inline" method="post" action="/admin/users/{{.ID}}/delete" onsubmit="return confirm('Strike this person from the roster?');">
+          <button class="quiet danger-text" type="submit">Remove</button>
+        </form>
+        {{end}}
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{else}}
+<p class="hint">Nobody on the roster yet.</p>
+{{end}}
+{{end}}
+{{end}}

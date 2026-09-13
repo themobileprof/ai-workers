@@ -1,0 +1,32 @@
+{{define "content"}}
+<section class="hero">
+  <p class="kicker">Tonight’s board</p>
+  <h2>Who can touch the books</h2>
+  <p class="lede">n8n still routes WhatsApp. This desk is the source of truth for the allowlist and seeded Zoho ids.</p>
+</section>
+<div class="grid-3">
+  <article class="stat">
+    <p class="kicker">People</p>
+    <p class="num">{{.UserCount}}</p>
+  </article>
+  <article class="stat">
+    <p class="kicker">WhatsApp accounts</p>
+    <p class="num">{{len .Allowlist}}</p>
+  </article>
+  <article class="stat">
+    <p class="kicker">Settings keys</p>
+    <p class="num">{{.SettingCount}}</p>
+  </article>
+</div>
+<section>
+  <h3>Live allowlist</h3>
+  <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>
+  {{if .Allowlist}}
+  <ul class="phones">
+    {{range .Allowlist}}<li><code>{{.}}</code></li>{{end}}
+  </ul>
+  {{else}}
+  <p class="hint">Empty — nobody on WhatsApp can reach /accounts until you grant the capability.</p>
+  {{end}}
+</section>
+{{end}}

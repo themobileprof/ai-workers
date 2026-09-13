@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,700;1,6..72,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/static/desk.css">
+</head>
+<body>
+  <div class="grain"></div>
+  {{if .User}}
+  <header class="mast">
+    <div class="brand">
+      <span class="mark">TMP</span>
+      <div>
+        <p class="kicker">TheMobileProf · Lagos</p>
+        <h1>Company desk</h1>
+      </div>
+    </div>
+    <nav>
+      <a href="/admin/" {{if eq .Nav "home"}}class="on"{{end}}>Board</a>
+      <a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>
+      <a href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>Defaults</a>
+    </nav>
+    <form class="out" method="post" action="/admin/logout">
+      <button type="submit">Sign out {{.User.Name}}</button>
+    </form>
+  </header>
+  {{end}}
+  <main class="{{if .User}}sheet{{else}}gate{{end}}">
+    {{if .Flash}}<p class="flash">{{.Flash}}</p>{{end}}
+    {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+    {{template "content" .}}
+  </main>
+</body>
+</html>

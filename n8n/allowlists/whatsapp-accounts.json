@@ -1,5 +1,5 @@
 {
-  "description": "WhatsApp numbers allowed to use /accounts and /ops. Digits with country code, no plus. Keep in sync with CHANNEL_SETUP.md and customer-whatsapp Prepare task.",
+  "description": "Last-resort WhatsApp numbers if the company desk fetch fails. Live source of truth is the desk People page (whatsapp_accounts capability).",
   "numbers": [
     "2348033954301"
   ]

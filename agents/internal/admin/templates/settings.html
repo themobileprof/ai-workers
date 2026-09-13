@@ -1,0 +1,49 @@
+{{define "content"}}
+{{if .Amend}}
+<section class="hero">
+  <p class="kicker">Seeds</p>
+  <h2>Amend defaults</h2>
+  <p class="lede"><a class="quiet" href="/admin/settings">Back to the list</a></p>
+</section>
+<form method="post" action="/admin/settings" class="settings">
+  {{range .Settings}}
+  <label>{{.Key}}<input name="{{.Key}}" value="{{.Value}}"></label>
+  {{end}}
+  <div class="actions">
+    <button type="submit">Save defaults</button>
+    <a class="ghost" href="/admin/settings">Cancel</a>
+  </div>
+</form>
+{{else}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Seeds</p>
+    <h2>Defaults</h2>
+    <p class="lede">WhatsApp allowlist still comes from people with <code>whatsapp_accounts</code>. n8n Books write and CRM upsert read these keys on every run. Seeded defaults can be amended, not struck.</p>
+  </div>
+  <a class="ghost" href="/admin/settings/edit">Amend</a>
+</section>
+{{if .Settings}}
+<div class="ledger">
+<table class="roster">
+  <thead>
+    <tr>
+      <th>Key</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Settings}}
+    <tr>
+      <td><code>{{.Key}}</code></td>
+      <td>{{.Value}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{else}}
+<p class="hint">No defaults seeded yet.</p>
+{{end}}
+{{end}}
+{{end}}
