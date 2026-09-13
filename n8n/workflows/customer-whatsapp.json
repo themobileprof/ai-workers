@@ -6,14 +6,19 @@
   "nodes": [
     {
       "parameters": {
-        "updates": ["messages"],
+        "updates": [
+          "messages"
+        ],
         "options": {
           "messageStatusUpdates": []
         }
       },
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "id": "7f3c2e14-b584-4d9a-9f01-c11e5e0aa001",
       "name": "WhatsApp Trigger",
       "webhookId": "whatsapp-customer",
@@ -52,7 +57,10 @@
       },
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.2,
-      "position": [260, 0],
+      "position": [
+        260,
+        0
+      ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560002",
       "name": "Only text messages"
     },
@@ -62,7 +70,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 0],
+      "position": [
+        500,
+        0
+      ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560003",
       "name": "Prepare task"
     },
@@ -79,17 +90,23 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
-      "position": [740, 0],
+      "position": [
+        740,
+        0
+      ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560004",
       "name": "Call department"
     },
     {
       "parameters": {
-        "jsCode": "const worker = $input.first().json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [980, 0],
+      "position": [
+        1700,
+        0
+      ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560005",
       "name": "Format reply"
     },
@@ -105,7 +122,10 @@
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
-      "position": [1220, 0],
+      "position": [
+        1940,
+        0
+      ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560006",
       "name": "Send WhatsApp",
       "credentials": {
@@ -114,6 +134,93 @@
           "name": "WhatsApp account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361'; // Petty Cash\nconst DEFAULT_EXPENSE = '1300646000000000460'; // Other Expenses\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\n\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.description]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) {\n      return row.id;\n    }\n  }\n  return DEFAULT_EXPENSE;\n}\n\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) {\n    return String(raw).slice(0, 10);\n  }\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\n\nconst worker = $input.first().json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst amount = Number(sd.amount);\nconst task = String(sd.task_type || '').toLowerCase();\nconst recordFlag = sd.record_expense === true || sd.record_expense === 'true';\nconst record_zoho = prep.department === 'internal-ops'\n  && worker.status === 'success'\n  && task === 'accounts'\n  && recordFlag\n  && Number.isFinite(amount)\n  && amount > 0;\n\nconst vendor = String(sd.vendor || sd.vendor_name || '').trim();\nconst descParts = [vendor, sd.description || prep.task_description].filter(Boolean);\nlet description = descParts.join(' \u2014 ').slice(0, 100);\nif (!description) {\n  description = 'Ops expense';\n}\n\nconst zoho_expense = record_zoho ? {\n  account_id: pickAccount(sd),\n  paid_through_account_id: PAID_THROUGH,\n  date: lagosDate(sd.date),\n  amount,\n  description,\n} : null;\n\nif (zoho_expense) {\n  const ref = String(sd.reference || sd.reference_number || '').trim().slice(0, 100);\n  if (ref) {\n    zoho_expense.reference_number = ref;\n  }\n}\n\nreturn [{ json: { ...worker, record_zoho, zoho_expense, organization_id: ORG_ID } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        0
+      ],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560007",
+      "name": "Decide Zoho"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "b1c2d3e4-f5a6-7890-abcd-ef123456000a",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.record_zoho }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "name": "Record in Zoho",
+      "position": [
+        1220,
+        0
+      ],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560008"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "https://www.zohoapis.com/books/v3/expenses",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.zoho_expense) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "name": "POST Zoho expense",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      },
+      "position": [
+        1460,
+        160
+      ],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560009"
     }
   ],
   "connections": {
@@ -154,7 +261,7 @@
       "main": [
         [
           {
-            "node": "Format reply",
+            "node": "Decide Zoho",
             "type": "main",
             "index": 0
           }
@@ -166,6 +273,46 @@
         [
           {
             "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Zoho": {
+      "main": [
+        [
+          {
+            "node": "Record in Zoho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record in Zoho": {
+      "main": [
+        [
+          {
+            "node": "POST Zoho expense",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Zoho expense": {
+      "main": [
+        [
+          {
+            "node": "Format reply",
             "type": "main",
             "index": 0
           }

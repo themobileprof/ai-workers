@@ -43,6 +43,15 @@ If you rebuild the node by hand instead:
 
 Execute step. You should see `status`, `output_text`, and `structured_data`. Swap the path for `/departments/internal-ops` or `/departments/product-dev` as needed.
 
+### Zoho Books (accounts write-back)
+
+OAuth lives in n8n **Credentials** as `Zoho Books` (generic OAuth2 API). Org id `939049468` is in the workflow JSON; it is not a secret.
+
+- **Smoke: Zoho Books** (`n8n/workflows/smoke-zoho-books.json`): Execute in the UI. It GETs organizations, then the chart of accounts. It does **not** create expenses.
+- **Ops Telegram** / **Customer WhatsApp**: after `/ops` → internal-ops, if the worker returns `structured_data.record_expense` with a numeric `amount`, n8n POSTs a Zoho expense (default account Other Expenses, paid through Petty Cash) and appends the expense id to the reply.
+
+Do not put Zoho tokens in `.env` or the Go worker.
+
 ### After a Trigger exists (Telegram / WhatsApp / Webhook)
 
 Then map fields. `context_data` must stay a JSON **object**, never a blank expression.
