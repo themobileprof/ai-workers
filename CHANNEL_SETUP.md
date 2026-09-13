@@ -16,6 +16,62 @@ Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgre
 
 ---
 
+## Live inventory
+
+Keep this section in sync with every channel change. IDs are not secrets.
+
+### n8n credentials
+
+| Name | Type | ID | Used by |
+| --- | --- | --- | --- |
+| Telegram account | `telegramApi` | `GD7WqGif3v6QlSbc` | Ops Telegram |
+| WhatsApp OAuth account | `whatsAppTriggerApi` | `Oaps5dWBa76PVrD9` | Customer WhatsApp trigger |
+| WhatsApp account | `whatsAppApi` | `TpVfkoyKY6eZDl87` | Customer WhatsApp send |
+| Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/ops` expense POST |
+| Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email (and later outbound) |
+
+SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL, user `info@themobileprof.com`. App password stays in n8n only.
+
+### Workflows in repo
+
+| File | n8n id | Active | What it does |
+| --- | --- | --- | --- |
+| `n8n/workflows/smoke-growth.json` | `smkGrwthHttp0001` | no | Manual POST growth worker |
+| `n8n/workflows/smoke-community.json` | `smkCommHttp0001` | no | Manual POST community worker |
+| `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs + chart of accounts |
+| `n8n/workflows/smoke-email.json` | `smkEmailSmtp0001` | no | Send one text mail From/To `info@themobileprof.com` |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/ops` may POST Zoho expense |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; same prefixes; `/ops` may POST Zoho expense |
+
+UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
+
+### Chat prefixes (Telegram + WhatsApp)
+
+| Message starts with | Department |
+| --- | --- |
+| `/community` or `/cm` | community |
+| `/growth` | growth |
+| `/ops` | internal-ops |
+| `/validate` | product-dev |
+| none, 1:1 | growth |
+| none, group | community |
+
+### Zoho Books (not Mail)
+
+- API: `https://www.zohoapis.com` (US DC). Org **TheMobileProf Technologies**, `organization_id` `939049468`, currency NGN.
+- Write path: `/ops` → worker `structured_data.record_expense` + numeric `amount` → `POST /books/v3/expenses`.
+- Defaults: expense account Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Also mapped: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
+- Do not put Zoho tokens in `.env` or the Go worker.
+
+### Email (Zoho Mail)
+
+- Company address: **`info@themobileprof.com`**. From display name: `TheMobileProf`.
+- Outbound: n8n **Send Email** + credential `Zoho Mail info@`. Paid Zoho Mail SMTP is `smtppro.zoho.com` / `465` SSL (fallback `smtp.zoho.com` if a send fails).
+- Inbound: **not built**. Planned: IMAP (`imappro.zoho.com:993`) → Telegram draft → `/approve` → reply via the same SMTP. Do not auto-send.
+- Do not add a second public From (`workers@`, `hello@`) until inbound exists; one address is the company.
+
+---
+
 ## 0. Shared pieces (do once)
 
 ### Prove the worker with static JSON
@@ -42,15 +98,6 @@ If you rebuild the node by hand instead:
 - Options → Timeout: at least `120000` ms (2 minutes)
 
 Execute step. You should see `status`, `output_text`, and `structured_data`. Swap the path for `/departments/internal-ops` or `/departments/product-dev` as needed.
-
-### Zoho Books (accounts write-back)
-
-OAuth lives in n8n **Credentials** as `Zoho Books` (generic OAuth2 API). Org id `939049468` is in the workflow JSON; it is not a secret.
-
-- **Smoke: Zoho Books** (`n8n/workflows/smoke-zoho-books.json`): Execute in the UI. It GETs organizations, then the chart of accounts. It does **not** create expenses.
-- **Ops Telegram** / **Customer WhatsApp**: after `/ops` → internal-ops, if the worker returns `structured_data.record_expense` with a numeric `amount`, n8n POSTs a Zoho expense (default account Other Expenses, paid through Petty Cash) and appends the expense id to the reply.
-
-Do not put Zoho tokens in `.env` or the Go worker.
 
 ### After a Trigger exists (Telegram / WhatsApp / Webhook)
 
@@ -103,26 +150,30 @@ Commands worth adding later: `/approve`, `/kill` for validation decisions — st
 
 ---
 
-## 2. Email outbound, then inbound
+## 2. Email (`info@themobileprof.com`)
 
-### Outbound (founder → customer)
+Stay on **Zoho Mail** (paid year). n8n uses SMTP, not the Zoho Mail API. Books OAuth is a different credential.
 
-Pick one provider. Resend or Amazon SES is simpler than raw Gmail SMTP (app passwords, blocking).
+### Outbound (live)
 
-1. Verify `themobileprof.com` (SPF, DKIM, a sending domain).
-2. n8n **Credentials** → SMTP or Resend API.
-3. Workflow **Send email**: From something like `workers@themobileprof.com` (or `hello@`). Body from the worker `output_text`. Attachments only when Accounts/Legal produced a file later.
-4. Trigger it from other workflows (grant copy, NDA draft, invoice note) — do not let every department SMTP itself.
+Credential **Zoho Mail info@** (`cvlEAE8BvvQ87wew`):
 
-### Inbound (customer emails you)
+1. Mailbox `info@themobileprof.com` exists in Zoho Mail Admin.
+2. App password from [Zoho Accounts](https://accounts.zoho.com/) → Security → App passwords (no spaces). Not the web login password.
+3. SMTP: `smtppro.zoho.com`, port `465`, SSL/TLS on, user `info@themobileprof.com`. Leave Client Host Name empty.
+4. IMAP must be enabled on the mailbox before inbound (Settings → Mail Accounts → IMAP). Server later: `imappro.zoho.com:993`.
 
-Do this after outbound works.
+**Smoke: send email** (`n8n/workflows/smoke-email.json`): open it in the UI and Execute. It sends a plain-text message From/To `info@themobileprof.com`. Check that inbox (and spam). It is inactive on purpose — do not publish.
 
-- Resend inbound, or Google Workspace “forward to webhook”, or Mailgun route → n8n **Webhook** production URL.
-- Strip HTML to text, HTTP POST `growth` (or Switch on To: address: `grants@` → internal-ops grant hunting).
-- Reply via the outbound credential so the thread stays on your domain.
+Later outbound (not imported yet): Telegram `/email` drafts via a department worker, then this same SMTP node sends. One Send Email path for the whole company — departments must not each open SMTP.
 
-Unattended inbox → LLM → send is how you get embarrassing mail. First version: Telegram notify **you** with the draft; you `/approve` then n8n sends.
+### Inbound (not built)
+
+After the smoke send works:
+
+- n8n **Email Trigger (IMAP)** on `info@` (poll; Zoho has no simple inbound webhook).
+- Strip HTML to text, HTTP POST `growth` (Switch later if a second address appears).
+- Telegram you a draft; `/approve` then n8n sends the reply From `info@`. No unattended LLM → send.
 
 ---
 
@@ -179,8 +230,8 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 
 1. Import **Smoke: growth HTTP** (`scripts/sync-n8n-workflows.sh`) and Execute it. Confirm `output_text`.
 2. Telegram bot + Ops workflow + getWebhookInfo clean.
-3. Email outbound to yourself.
-4. WhatsApp test number + one customer-style ping.
+3. **Smoke: send email** — Execute; confirm mail in `info@`.
+4. WhatsApp is already live; keep using prefixes.
 5. Email inbound + Telegram approve-before-send.
 6. Only then: intern mission on WhatsApp.
 

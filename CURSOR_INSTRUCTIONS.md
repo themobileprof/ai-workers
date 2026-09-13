@@ -171,7 +171,9 @@ Host packages required: Docker Engine + Compose v2 plugin, Git, native PostgreSQ
 
 ### n8n workflows as code
 
-Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.json` (stable `id` per file) and are imported with `scripts/sync-n8n-workflows.sh`. Credentials (Telegram, WhatsApp, SMTP) stay in the n8n UI / Postgres — never in git.
+Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.json` (stable `id` per file) and are imported with `scripts/sync-n8n-workflows.sh`. Credentials (Telegram, WhatsApp, Zoho Books OAuth, Zoho Mail SMTP) stay in the n8n UI / Postgres — never in git.
+
+**Channel register:** `CHANNEL_SETUP.md` is the living inventory of credential IDs, workflow IDs, prefixes, Zoho org/account ids, and the From address. Update it in the same change whenever you add or change a channel.
 
 - Compose mounts `./n8n/workflows` read-only at `/home/node/workflows`.
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).

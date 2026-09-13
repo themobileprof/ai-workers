@@ -1,0 +1,59 @@
+{
+  "id": "smkEmailSmtp0001",
+  "name": "Smoke: send email",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "4d5e6f70-8a91-4b2c-9d3e-emailtrig0001",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fromEmail": "TheMobileProf <info@themobileprof.com>",
+        "toEmail": "info@themobileprof.com",
+        "subject": "n8n smoke: Zoho Mail SMTP",
+        "emailFormat": "text",
+        "text": "If this arrived in the info@ inbox, n8n can send as info@themobileprof.com via Zoho Mail SMTP.\n\nThis is a manual smoke test. It is not a customer email.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [280, 0],
+      "id": "4d5e6f70-8a91-4b2c-9d3e-emailsend0001",
+      "name": "Send smoke to info@",
+      "credentials": {
+        "smtp": {
+          "id": "cvlEAE8BvvQ87wew",
+          "name": "Zoho Mail info@"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Send smoke to info@",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}
