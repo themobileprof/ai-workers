@@ -8,7 +8,7 @@ n8n is the only public door. Agents still talk over HTTP JSON. Chat apps are inb
 | WhatsApp | Customers, community, field intern | One Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,growth,product-dev,community,crm}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>`. Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
@@ -27,7 +27,7 @@ Keep this section in sync with every channel change. IDs are not secrets.
 | Telegram account | `telegramApi` | `GD7WqGif3v6QlSbc` | Ops Telegram |
 | WhatsApp OAuth account | `whatsAppTriggerApi` | `Oaps5dWBa76PVrD9` | Customer WhatsApp trigger |
 | WhatsApp account | `whatsAppApi` | `TpVfkoyKY6eZDl87` | Customer WhatsApp send |
-| Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/ops` expenses; CRM contact upsert |
+| Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/accounts` `/ops` expenses; CRM contact upsert |
 | Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email; Email outbox approved sends |
 | Zoho Mail info@ IMAP | `imap` | `w6VyL4iDdwX5XgIM` | Inbound info@ |
 
@@ -39,12 +39,15 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | --- | --- | --- | --- |
 | `n8n/workflows/smoke-growth.json` | `smkGrwthHttp0001` | no | Manual POST growth worker |
 | `n8n/workflows/smoke-community.json` | `smkCommHttp0001` | no | Manual POST community worker |
-| `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs + chart of accounts |
+| `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs, chart of accounts, taxes, unpaid invoices |
 | `n8n/workflows/smoke-email.json` | `smkEmailSmtp0001` | no | Send one text mail From/To `info@themobileprof.com` |
 | `n8n/workflows/smoke-crm.json` | `smkCrmBooks00001` | no | GET Zoho Books contacts (read-only) |
+| `n8n/workflows/smoke-accounts.json` | `smkAccountsHttp01` | no | Manual POST accounts worker (hypothetical → preview, must not post) |
+| `n8n/workflows/smoke-books-lookup.json` | `smkBooksWrite0001` | no | Execute Books write with `lookup` (live P&L / unpaid) |
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/ops` expenses; `/crm` leads; `/approve` `/kill` email drafts |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; same prefixes; `/ops` expenses; CRM upsert on high intent |
+| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, draft invoice, lookup |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes only for allowlisted `/accounts` `/ops`; CRM upsert on high intent |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft → Telegram; upserts Books contact from sender |
 
@@ -57,15 +60,35 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/community` or `/cm` | community |
 | `/growth` | growth |
 | `/crm` | crm |
+| `/accounts` | accounts |
 | `/ops` | internal-ops |
 | `/validate` | product-dev |
 | none, 1:1 | growth |
 | none, group | community |
 
+WhatsApp `/accounts` and `/ops` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books. Telegram ops is not gated (that chat is already private).
+
+### WhatsApp accounts allowlist
+
+Keep this list identical in `n8n/allowlists/whatsapp-accounts.json` and the Customer WhatsApp **Prepare task** node.
+
+| Number | Who |
+| --- | --- |
+| `2348033954301` | Founder personal WhatsApp |
+
+To add a bookkeeper: append the WhatsApp `wa_id` (country code, no `+`) to both places, re-import `customer-whatsapp.json`, publish, restart n8n.
+
 ### Zoho Books (not Mail)
 
 - API: `https://www.zohoapis.com` (US DC). Org **TheMobileProf Technologies**, `organization_id` `939049468`, currency NGN.
-- Write path: `/ops` → worker `structured_data.record_expense` + numeric `amount` → `POST /books/v3/expenses`.
+- Write path: `/accounts` or `/ops` → worker `structured_data.zoho_action` → sub-workflow **Books write** (`booksWriteDoc0001`).
+  - `expense` — already paid: `POST /expenses` with `tax_id` from `GET /settings/taxes` (Zoho computes VAT).
+  - `bill` — we owe a vendor: upsert vendor contact + `POST /bills` (unpaid). WHT is **not** a second expense; withhold on the vendor payment in Books.
+  - `invoice` — we bill a customer: upsert customer + `POST /invoices` as **draft**, not emailed.
+  - `lookup` — `GET` unpaid invoices/bills, recent expenses, cash P&L (`/reports/profitandloss?cash_based=true`).
+  - `preview` — hypothetical: apply the tax **percentage stored in Books**, post nothing.
+- Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.reports.READ`.
+- Telegram/WhatsApp reply is the audit trail (Books totals + document id).
 - CRM path: `/crm` or high-intent growth/email → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
 - Defaults: expense account Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Also mapped: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
@@ -147,7 +170,7 @@ Fastest loop. Proves inbound → worker → outbound on HTTPS.
 1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
 2. Message the bot once (so a `chat_id` exists), or create a private group, add the bot, send a message.
 3. n8n → **Credentials** → Telegram API → paste token. The repo workflow **Ops Telegram** (`n8n/workflows/ops-telegram.json`) is imported and published from there — do not rebuild the nodes by hand.
-4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/ops`, `/validate`. Groups default to community; 1:1 defaults to growth.
+4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/accounts`, `/ops`, `/validate`. Groups default to community; 1:1 defaults to growth.
 5. Confirm Telegram registered the production hook:
 
 ```text
@@ -211,7 +234,8 @@ On that number, n8n routes by prefix (then default **growth** for 1:1, **communi
 | `/community` or `/cm` | community |
 | `/growth` | growth |
 | `/crm` | crm |
-| `/ops` | internal-ops |
+| `/accounts` | accounts (allowlisted WhatsApp numbers only; others get community `access_denied`) |
+| `/ops` | internal-ops (same WhatsApp allowlist) |
 | `/validate` | product-dev |
 
 Telegram community uses the same worker path once a bot credential exists. Do not create a second WhatsApp number for community.

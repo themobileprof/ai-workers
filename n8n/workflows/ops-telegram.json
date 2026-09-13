@@ -64,7 +64,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth \u2014 sales and support',\n        '/crm \u2014 qualify or update a lead',\n        '/cm or /community \u2014 community manager',\n        '/ops \u2014 accounts, legal, grants (real expenses post to Zoho)',\n        '/validate \u2014 product validation',\n        '/approve \u2014 send the pending info@ draft',\n        '/kill \u2014 drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];"
+        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth \u2014 sales and support',\n        '/crm \u2014 qualify or update a lead',\n        '/cm or /community \u2014 community manager',\n        '/accounts \u2014 Books: paid expense, vendor bill, draft invoice, or lookup (unpaid/P&L)',\n        '/ops \u2014 accounts, legal, grants (real expenses post to Zoho)',\n        '/validate \u2014 product validation',\n        '/approve \u2014 send the pending info@ draft',\n        '/kill \u2014 drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts(?:@\\w+)?\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -132,7 +132,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -171,7 +171,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361'; // Petty Cash\nconst DEFAULT_EXPENSE = '1300646000000000460'; // Other Expenses\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\n\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.description]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) {\n      return row.id;\n    }\n  }\n  return DEFAULT_EXPENSE;\n}\n\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) {\n    return String(raw).slice(0, 10);\n  }\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\n\nconst worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst amount = Number(sd.amount);\nconst task = String(sd.task_type || '').toLowerCase();\nconst recordFlag = sd.record_expense === true || sd.record_expense === 'true';\nconst record_zoho = prep.department === 'internal-ops'\n  && worker.status === 'success'\n  && task === 'accounts'\n  && recordFlag\n  && Number.isFinite(amount)\n  && amount > 0;\n\nconst vendor = String(sd.vendor || sd.vendor_name || '').trim();\nconst descParts = [vendor, sd.description || prep.task_description].filter(Boolean);\nlet description = descParts.join(' \u2014 ').slice(0, 100);\nif (!description) {\n  description = 'Ops expense';\n}\n\nconst zoho_expense = record_zoho ? {\n  account_id: pickAccount(sd),\n  paid_through_account_id: PAID_THROUGH,\n  date: lagosDate(sd.date),\n  amount,\n  description,\n} : null;\n\nif (zoho_expense) {\n  const ref = String(sd.reference || sd.reference_number || '').trim().slice(0, 100);\n  if (ref) {\n    zoho_expense.reference_number = ref;\n  }\n}\n\nreturn [{ json: { ...worker, record_zoho, zoho_expense, organization_id: ORG_ID } }];\n"
+        "jsCode": "\nconst worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst accountsDept = prep.department === 'internal-ops' || prep.department === 'accounts';\nlet action = String(sd.zoho_action || '').toLowerCase();\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action) && (sd.record_expense === true || sd.record_expense === 'true')) {\n  action = 'expense';\n}\nconst record_zoho = accountsDept\n  && worker.status === 'success'\n  && task === 'accounts'\n  && allowed.includes(action);\n\nreturn [{ json: {\n  ...worker,\n  ...sd,\n  record_zoho,\n  action: record_zoho ? action : 'none',\n  amount: sd.amount,\n  vendor_name: sd.vendor_name || sd.vendor || '',\n  customer_name: sd.customer_name || '',\n  date: sd.date,\n  description: String(sd.notes || prep.task_description || '').slice(0, 200),\n  zoho_account_name: sd.zoho_account_name,\n  is_taxable_service: sd.is_taxable_service === true,\n  is_professional_service: sd.is_professional_service === true,\n  reference: sd.reference || sd.reference_number || '',\n  lookup: sd.lookup || 'overview',\n  currency: sd.currency || 'NGN'\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -219,37 +219,18 @@
     },
     {
       "parameters": {
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "method": "POST",
-        "url": "https://www.zohoapis.com/books/v3/expenses",
-        "sendQuery": true,
-        "specifyQuery": "keypair",
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "organization_id",
-              "value": "939049468"
-            }
-          ]
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "booksWriteDoc0001",
+          "mode": "id"
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.zoho_expense) }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "name": "POST Zoho expense",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "name": "Run Books write",
       "onError": "continueRegularOutput",
-      "credentials": {
-        "oAuth2Api": {
-          "id": "ByEtw1MmiDqYxQWI",
-          "name": "Zoho Books"
-        }
-      },
       "position": [
         1680,
         280
@@ -605,7 +586,7 @@
       "main": [
         [
           {
-            "node": "POST Zoho expense",
+            "node": "Run Books write",
             "type": "main",
             "index": 0
           }
@@ -619,7 +600,7 @@
         ]
       ]
     },
-    "POST Zoho expense": {
+    "Run Books write": {
       "main": [
         [
           {

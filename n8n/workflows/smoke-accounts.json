@@ -1,0 +1,53 @@
+{
+  "id": "smkAccountsHttp01",
+  "name": "Smoke: accounts HTTP",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "b2c3d4e5-f6a7-8901-bc23-de45f6789011",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/accounts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"task_description\": \"What is VAT and WHT on a 100000 NGN invoice from Acme Consulting Ltd for software development? Do not record this, it is a hypothetical.\",\n  \"context_data\": {}\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "id": "b2c3d4e5-f6a7-8901-bc23-de45f6789012",
+      "name": "Call accounts"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

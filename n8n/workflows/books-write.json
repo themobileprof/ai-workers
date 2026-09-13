@@ -1,0 +1,1196 @@
+{
+  "id": "booksWriteDoc0001",
+  "name": "Books write",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bksWrt000000000000trig0001",
+      "name": "When executed by another workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361';\nconst DEFAULT_EXPENSE = '1300646000000000460';\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.vendor_name, sd.description]\n    .filter(Boolean).join(' ').toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) return row.id;\n  }\n  return DEFAULT_EXPENSE;\n}\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) return String(raw).slice(0, 10);\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\nconst j = $input.first().json || {};\nconst sd = j.structured_data || j;\nconst action = String(j.action || sd.zoho_action || '').toLowerCase();\nconst amount = Number(j.amount ?? sd.amount ?? sd.base_amount);\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action)) {\n  return [{ json: { skip: true, action: 'none', audit_text: 'Zoho Books: nothing to do.' } }];\n}\nconst vendor = String(j.vendor_name || sd.vendor_name || sd.vendor || '').trim();\nconst customer = String(j.customer_name || sd.customer_name || '').trim() || vendor;\nreturn [{ json: {\n  skip: false,\n  action,\n  amount: Number.isFinite(amount) ? amount : 0,\n  currency: String(j.currency || sd.currency || 'NGN').toUpperCase(),\n  vendor_name: vendor,\n  customer_name: customer,\n  date: lagosDate(j.date || sd.date),\n  description: String(j.description || sd.notes || sd.expense_description || vendor || 'Ops').slice(0, 200),\n  account_id: pickAccount(Object.assign({}, sd, j)),\n  paid_through_account_id: PAID_THROUGH,\n  is_taxable: j.is_taxable_service === true || sd.is_taxable_service === true,\n  is_professional: j.is_professional_service === true || sd.is_professional_service === true,\n  reference: String(j.reference || sd.reference || sd.reference_number || '').trim().slice(0, 100),\n  lookup: String(j.lookup || sd.lookup || 'overview'),\n  organization_id: ORG_ID\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "bksWrt000000000000norm0001",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000skip0001c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "bksWrt000000000000skip0001",
+      "name": "Skip empty"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json || {};\nreturn [{ json: { kind: 'skip', audit_text: j.audit_text || 'Zoho Books: nothing to do.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -180
+      ],
+      "id": "bksWrt000000000000pass0001",
+      "name": "Pass skip"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/settings/taxes",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        80
+      ],
+      "id": "bksWrt000000000000tax00001",
+      "name": "GET taxes",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Normalize').item.json;\nif (p.skip) return [{ json: p }];\nconst taxes = ($input.first().json || {}).taxes || [];\nfunction scoreVAT(t) {\n  const n = String(t.tax_name || '').toLowerCase();\n  let s = 0;\n  if (n.includes('withhold') || n.includes('wht') || n.includes('tds')) s -= 5;\n  if (n.includes('vat')) s += 4;\n  if (Number(t.tax_percentage) === 7.5) s += 3;\n  if (Number(t.tax_percentage) > 0) s += 1;\n  return s;\n}\nconst ranked = taxes.slice().sort((a, b) => scoreVAT(b) - scoreVAT(a));\nconst vat = p.is_taxable ? (ranked[0] && scoreVAT(ranked[0]) > 0 ? ranked[0] : null) : null;\nreturn [{ json: {\n  ...p,\n  taxes,\n  tax_id: vat ? String(vat.tax_id) : '',\n  tax_name: vat ? String(vat.tax_name) : '',\n  tax_percentage: vat ? Number(vat.tax_percentage) : 0\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        80
+      ],
+      "id": "bksWrt000000000000atch0001",
+      "name": "Attach tax"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bksWrt000000000000swch0001r0",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "lookup",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lookup"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bksWrt000000000000swch0001r1",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "preview",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "preview"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bksWrt000000000000swch0001r2",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "expense",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "expense"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bksWrt000000000000swch0001r3",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "bill",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "bill"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bksWrt000000000000swch0001r4",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "invoice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invoice"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        80
+      ],
+      "id": "bksWrt000000000000swch0001",
+      "name": "Books action"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/invoices",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', status: 'unpaid', per_page: 10 }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1480,
+        -320
+      ],
+      "id": "bksWrt000000000000inv00001",
+      "name": "GET unpaid invoices",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/bills",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', status: 'unpaid', per_page: 10 }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1720,
+        -320
+      ],
+      "id": "bksWrt000000000000bil00001",
+      "name": "GET unpaid bills",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/expenses",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, sort_column: 'date', sort_order: 'D' }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1960,
+        -320
+      ],
+      "id": "bksWrt000000000000exp00001",
+      "name": "GET recent expenses",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/reports/profitandloss",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', from_date: String(new Date().getFullYear()) + '-01-01', to_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date()), cash_based: true }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2200,
+        -320
+      ],
+      "id": "bksWrt000000000000pnl00001",
+      "name": "GET cash P&L",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction money(n) {\n  const x = Number(n);\n  if (!Number.isFinite(x)) return '\u2014';\n  return 'NGN ' + x.toFixed(2);\n}\nfunction names(list, nameKey, extra) {\n  if (!Array.isArray(list) || !list.length) return '  (none)';\n  return list.slice(0, 5).map((row) => {\n    const n = row[nameKey] || row.vendor_name || row.customer_name || '';\n    const amt = row.balance ?? row.total ?? row.amount;\n    const extraBit = extra ? extra(row) : '';\n    return '  - ' + n + ' ' + money(amt) + extraBit;\n  }).join('\\n');\n}\nconst p = $('Attach tax').item.json;\nconst inv = $('GET unpaid invoices').item.json || {};\nconst bills = $('GET unpaid bills').item.json || {};\nconst exps = $('GET recent expenses').item.json || {};\nconst pnl = $('GET cash P&L').item.json || {};\nconst year = new Date().getFullYear();\nconst lines = ['Zoho Books snapshot (live API, not LLM)'];\nif (inv.code && inv.code !== 0) lines.push('Invoices: ' + inv.message);\nelse {\n  const list = inv.invoices || [];\n  lines.push('Unpaid invoices (' + list.length + ' on this page):');\n  lines.push(names(list, 'customer_name', (r) => r.invoice_number ? ' ' + r.invoice_number : ''));\n}\nif (bills.code && bills.code !== 0) lines.push('Bills: ' + bills.message);\nelse {\n  const list = bills.bills || [];\n  lines.push('Unpaid bills (' + list.length + ' on this page):');\n  lines.push(names(list, 'vendor_name', (r) => r.bill_number ? ' ' + r.bill_number : ''));\n}\nif (exps.code && exps.code !== 0) lines.push('Expenses: ' + exps.message);\nelse {\n  const list = exps.expenses || [];\n  lines.push('Recent expenses:');\n  lines.push(names(list, 'account_name', (r) => r.date ? ' ' + r.date : ''));\n}\nconst groups = pnl.profit_and_loss || pnl.profitandloss || [];\nif (pnl.code && pnl.code !== 0) {\n  lines.push('P&L: ' + pnl.message);\n} else if (Array.isArray(groups) && groups.length) {\n  lines.push('Cash P&L ' + year + ' YTD:');\n  for (const g of groups.slice(0, 8)) {\n    lines.push('  ' + (g.name || g.account_name || 'line') + ': ' + money(g.total ?? g.amount));\n  }\n} else if (pnl.total_income != null || pnl.net_profit != null) {\n  lines.push('Cash P&L ' + year + ' YTD: income ' + money(pnl.total_income) + ' \u00b7 net ' + money(pnl.net_profit));\n}\nlines.push('Tax table in Books: ' + (p.taxes || []).map((t) => t.tax_name + ' ' + t.tax_percentage + '%').join(', ') || '(none \u2014 add VAT in Settings)');\nreturn [{ json: { kind: 'lookup', audit_text: lines.join('\\n') } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        -320
+      ],
+      "id": "bksWrt000000000000lkp00001",
+      "name": "Result lookup"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $input.first().json;\nconst rate = Number(p.tax_percentage) || 0;\nconst vat = Math.round(p.amount * rate) / 100;\nconst lines = [\n  'Zoho Books preview (not posted)',\n  'Base: NGN ' + Number(p.amount).toFixed(2),\n];\nif (p.tax_id) {\n  lines.push('VAT from Books Settings: ' + p.tax_name + ' ' + rate + '% = NGN ' + vat.toFixed(2));\n  lines.push('Gross if posted exclusive: NGN ' + (p.amount + vat).toFixed(2));\n} else {\n  lines.push('No VAT tax_id in Books Settings \u2014 add VAT under Settings \u2192 Taxes so posts can carry tax.');\n}\nif (p.is_professional) {\n  lines.push('Professional fee: withhold WHT when recording the vendor payment in Books. Not a second ledger here.');\n}\nreturn [{ json: { kind: 'preview', audit_text: lines.join('\\n'), tax_name: p.tax_name, tax_percentage: rate } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        -80
+      ],
+      "id": "bksWrt000000000000prv00001",
+      "name": "Result preview"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/expenses",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const p = $json; const b = { account_id: p.account_id, paid_through_account_id: p.paid_through_account_id, date: p.date, amount: p.amount, description: p.description, is_inclusive_tax: false }; if (p.tax_id) b.tax_id = p.tax_id; if (p.reference) b.reference_number = p.reference; return b; })()) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1480,
+        80
+      ],
+      "id": "bksWrt000000000000pex00001",
+      "name": "POST expense",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst exp = res.expense || {};\nif (res.code && res.code !== 0 && !exp.expense_id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books expense: ' + String(res.message || JSON.stringify(res)).slice(0, 400), code: res.code, message: res.message } }];\n}\nconst taxAmt = Number(exp.tax_amount || exp.tax_total || 0);\nconst total = Number(exp.total || exp.amount || p.amount);\nconst lines = [\n  'Recorded in Zoho Books as expense ' + (exp.expense_id || '') + (exp.expense_number ? ' (' + exp.expense_number + ')' : ''),\n  'Base NGN ' + Number(p.amount).toFixed(2) + (p.tax_name ? ' + ' + p.tax_name + ' NGN ' + taxAmt.toFixed(2) : ' (no tax_id)'),\n  'Books total NGN ' + total.toFixed(2),\n];\nif (p.is_professional) lines.push('If WHT applies, withhold it on the vendor payment in Books.');\nreturn [{ json: { kind: 'expense', audit_text: lines.join('\\n'), expense: exp, code: res.code, message: res.message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        80
+      ],
+      "id": "bksWrt000000000000rex00001",
+      "name": "Result expense"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, contact_type: 'vendor', contact_name_contains: $json.vendor_name }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1480,
+        240
+      ],
+      "id": "bksWrt000000000000gvn00001",
+      "name": "Search vendor",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.vendor_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', vendor_id: String(hit.contact_id), vendor_existing: hit.contact_name } }];\n}\nreturn [{ json: { ...p, mode: 'create', body: { contact_name: p.vendor_name.slice(0, 200), contact_type: 'vendor' } } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        240
+      ],
+      "id": "bksWrt000000000000evn00001",
+      "name": "Ensure vendor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000ivn00001c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "create"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1960,
+        240
+      ],
+      "id": "bksWrt000000000000ivn00001",
+      "name": "Vendor missing"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2200,
+        160
+      ],
+      "id": "bksWrt000000000000pvn00001",
+      "name": "POST vendor",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Ensure vendor').item.json;\nconst res = $input.first().json || {};\nconst id = (res.contact && res.contact.contact_id) || res.contact_id || p.vendor_id;\nif (!id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books: could not create vendor. ' + String(res.message || JSON.stringify(res)).slice(0, 300), code: res.code, message: res.message } }];\n}\nreturn [{ json: { ...p, vendor_id: String(id) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        160
+      ],
+      "id": "bksWrt000000000000svn00001",
+      "name": "Stamp vendor"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn [{ json: $('Ensure vendor').item.json }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        320
+      ],
+      "id": "bksWrt000000000000uvn00001",
+      "name": "Use vendor"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/bills",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const p = $json; const line = { name: p.description.slice(0, 100) || 'Service', account_id: p.account_id, rate: p.amount, quantity: 1 }; if (p.tax_id) line.tax_id = p.tax_id; const b = { vendor_id: p.vendor_id, date: p.date, line_items: [line], is_inclusive_tax: false }; if (p.reference) b.reference_number = p.reference; return b; })()) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2680,
+        240
+      ],
+      "id": "bksWrt000000000000pbl00001",
+      "name": "POST bill",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Ensure vendor').item.json;\nconst res = $input.first().json || {};\nconst bill = res.bill || {};\nif (res.code && res.code !== 0 && !bill.bill_id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books bill: ' + String(res.message || JSON.stringify(res)).slice(0, 400), code: res.code, message: res.message } }];\n}\nconst taxAmt = Number((bill.taxes && bill.taxes[0] && bill.taxes[0].tax_amount) || bill.tax_total || 0);\nconst lines = [\n  'Recorded in Zoho Books as bill ' + (bill.bill_id || '') + (bill.bill_number ? ' (' + bill.bill_number + ')' : ''),\n  'Vendor ' + (p.vendor_name || '') + ' \u00b7 due NGN ' + Number(bill.balance || bill.total || p.amount).toFixed(2),\n];\nif (p.tax_name) lines.push('VAT from Books: ' + p.tax_name + (taxAmt ? ' NGN ' + taxAmt.toFixed(2) : ''));\nif (p.is_professional) lines.push('Unpaid. Withhold WHT when you record the vendor payment in Books \u2014 do not duplicate WHT as an expense.');\nelse lines.push('Unpaid. Pay it in Books when cash leaves.');\nreturn [{ json: { kind: 'bill', audit_text: lines.join('\\n'), bill, code: res.code, message: res.message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        240
+      ],
+      "id": "bksWrt000000000000rbl00001",
+      "name": "Result bill"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: '939049468', per_page: 5, contact_type: 'customer', contact_name_contains: $json.customer_name }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1480,
+        480
+      ],
+      "id": "bksWrt000000000000gcu00001",
+      "name": "Search customer",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.customer_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', customer_id: String(hit.contact_id) } }];\n}\nreturn [{ json: { ...p, mode: 'create', body: { contact_name: p.customer_name.slice(0, 200), contact_type: 'customer' } } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        480
+      ],
+      "id": "bksWrt000000000000ecu00001",
+      "name": "Ensure customer"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000icu00001c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "create"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1960,
+        480
+      ],
+      "id": "bksWrt000000000000icu00001",
+      "name": "Customer missing"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2200,
+        400
+      ],
+      "id": "bksWrt000000000000pcu00001",
+      "name": "POST customer",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Ensure customer').item.json;\nconst res = $input.first().json || {};\nconst id = (res.contact && res.contact.contact_id) || res.contact_id || p.customer_id;\nif (!id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books: could not create customer. ' + String(res.message || JSON.stringify(res)).slice(0, 300), code: res.code, message: res.message } }];\n}\nreturn [{ json: { ...p, customer_id: String(id) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        400
+      ],
+      "id": "bksWrt000000000000scu00001",
+      "name": "Stamp customer"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn [{ json: $('Ensure customer').item.json }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        560
+      ],
+      "id": "bksWrt000000000000ucu00001",
+      "name": "Use customer"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/invoices",
+        "options": {
+          "timeout": 60000
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const p = $json; const line = { name: p.description.slice(0, 100) || 'Service', rate: p.amount, quantity: 1 }; if (p.tax_id) line.tax_id = p.tax_id; return { customer_id: p.customer_id, date: p.date, line_items: [line], is_inclusive_tax: false }; })()) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2680,
+        480
+      ],
+      "id": "bksWrt000000000000pin00001",
+      "name": "POST invoice",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst p = $('Ensure customer').item.json;\nconst res = $input.first().json || {};\nconst inv = res.invoice || {};\nif (res.code && res.code !== 0 && !inv.invoice_id) {\n  return [{ json: { kind: 'error', audit_text: 'Zoho Books invoice: ' + String(res.message || JSON.stringify(res)).slice(0, 400), code: res.code, message: res.message } }];\n}\nconst lines = [\n  'Draft invoice in Zoho Books ' + (inv.invoice_number || inv.invoice_id || ''),\n  'Customer ' + (p.customer_name || '') + ' \u00b7 total NGN ' + Number(inv.total || p.amount).toFixed(2) + ' \u00b7 status ' + (inv.status || 'draft'),\n  'Not emailed. Send it from Books when you want the customer to see it.',\n];\nif (p.tax_name) lines.push('VAT from Books: ' + p.tax_name);\nreturn [{ json: { kind: 'invoice', audit_text: lines.join('\\n'), invoice: inv, code: res.code, message: res.message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        480
+      ],
+      "id": "bksWrt000000000000rin00001",
+      "name": "Result invoice"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json || {};\nreturn [{ json: { kind: 'skip', audit_text: j.audit_text || 'Zoho Books: nothing to do.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        640
+      ],
+      "id": "bksWrt000000000000fal00001",
+      "name": "Result fallback"
+    }
+  ],
+  "connections": {
+    "When executed by another workflow": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Skip empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip empty": {
+      "main": [
+        [
+          {
+            "node": "Pass skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET taxes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET taxes": {
+      "main": [
+        [
+          {
+            "node": "Attach tax",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach tax": {
+      "main": [
+        [
+          {
+            "node": "Books action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Books action": {
+      "main": [
+        [
+          {
+            "node": "GET unpaid invoices",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Result preview",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST expense",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search vendor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Result fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET unpaid invoices": {
+      "main": [
+        [
+          {
+            "node": "GET unpaid bills",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET unpaid bills": {
+      "main": [
+        [
+          {
+            "node": "GET recent expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET recent expenses": {
+      "main": [
+        [
+          {
+            "node": "GET cash P&L",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET cash P&L": {
+      "main": [
+        [
+          {
+            "node": "Result lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST expense": {
+      "main": [
+        [
+          {
+            "node": "Result expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search vendor": {
+      "main": [
+        [
+          {
+            "node": "Ensure vendor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure vendor": {
+      "main": [
+        [
+          {
+            "node": "Vendor missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vendor missing": {
+      "main": [
+        [
+          {
+            "node": "POST vendor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use vendor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST vendor": {
+      "main": [
+        [
+          {
+            "node": "Stamp vendor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp vendor": {
+      "main": [
+        [
+          {
+            "node": "POST bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use vendor": {
+      "main": [
+        [
+          {
+            "node": "POST bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST bill": {
+      "main": [
+        [
+          {
+            "node": "Result bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search customer": {
+      "main": [
+        [
+          {
+            "node": "Ensure customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure customer": {
+      "main": [
+        [
+          {
+            "node": "Customer missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer missing": {
+      "main": [
+        [
+          {
+            "node": "POST customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST customer": {
+      "main": [
+        [
+          {
+            "node": "Stamp customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp customer": {
+      "main": [
+        [
+          {
+            "node": "POST invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use customer": {
+      "main": [
+        [
+          {
+            "node": "POST invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST invoice": {
+      "main": [
+        [
+          {
+            "node": "Result invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

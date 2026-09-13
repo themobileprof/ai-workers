@@ -109,7 +109,7 @@ This is a **shared** machine, not a dedicated database server. Do not apply "25%
 
 ### C. Localized Nigerian/African context
 
-- **Accounts Agent:** VAT and WHT, Paystack / Flutterwave / Moniepoint payment notifications.
+- **Accounts Agent:** Classifier only. Zoho Books is the ledger (VAT via `tax_id`, bills, invoices, P&L). Do not recompute tax in Go.
 - **Legal Agent:** Nigerian labour basics, CAC structures, CBN / NITDA-oriented compliance flags.
 - **Growth Agent:** African / emerging-market grant engines (Google for Startups Accelerator Africa, Tony Elumelu Foundation, USAID) and copy that still reads for international investors.
 
@@ -148,7 +148,7 @@ agents/
 ### Module mapping
 
 1. **`internalops` (Operations Room)**
-    - *Accounts:* Parse receipt text/images, categorize expenses, extract vendors, compute local tax splits.
+    - *Accounts:* LLM extracts vendor/amount/currency and chooses a Zoho document (`expense` paid, `bill` we owe, `invoice` draft we raise, `lookup`, `preview`). Extra HTTP route `/departments/accounts`. n8n is the Zoho client (`books-write` sub-workflow): taxes from `GET /settings/taxes`, writes with `tax_id`, reads unpaid invoices/bills and cash P&L. Telegram/WhatsApp is the audit trail. Do **not** compute VAT/WHT in Go — that duplicates Books.
     - *Legal:* Contract risk, localized NDAs/SLAs, predatory-clause flags.
     - *Grant Hunting:* Startup metadata vs grant eligibility parameters.
 2. **`growth` (Front Office)**
@@ -157,7 +157,7 @@ agents/
 3. **`crm` (Pipeline)**
     - Qualify, update, follow up, pipeline stages. Extra HTTP route on the same Go process (`/departments/crm`), not a new container. n8n writes Zoho **Books contacts** (existing OAuth). Do not add a Zoho CRM credential unless they buy Zoho CRM.
 4. **`community` (Community Manager)**
-    - *Welcome, FAQ, moderation, announcements, engagement.* Public chat personality for WhatsApp/Telegram groups and `/community` DMs. Not sales and not ops. Set `escalate_to_founder` when a human must step in.
+    - *Welcome, FAQ, moderation, announcements, engagement.* Public chat personality for WhatsApp/Telegram groups and `/community` DMs. Not sales and not ops. Set `escalate_to_founder` when a human must step in. On WhatsApp, unauthorized `/accounts` or `/ops` is `access_denied` from this department — accounts never runs.
 5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
@@ -182,7 +182,7 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
 - Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,growth,product-dev,community,crm}`. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

@@ -1,0 +1,6 @@
+{
+  "description": "WhatsApp numbers allowed to use /accounts and /ops. Digits with country code, no plus. Keep in sync with CHANNEL_SETUP.md and customer-whatsapp Prepare task.",
+  "numbers": [
+    "2348033954301"
+  ]
+}

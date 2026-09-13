@@ -72,6 +72,84 @@
           "name": "Zoho Books"
         }
       }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/settings/taxes",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        840,
+        0
+      ],
+      "id": "3c1a9e20-7b14-4f0a-9d2c-a1b2c3d4e504",
+      "name": "GET taxes",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/invoices",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "organization_id",
+              "value": "939049468"
+            },
+            {
+              "name": "status",
+              "value": "unpaid"
+            },
+            {
+              "name": "per_page",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "3c1a9e20-7b14-4f0a-9d2c-a1b2c3d4e505",
+      "name": "GET unpaid invoices",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -91,6 +169,28 @@
         [
           {
             "node": "GET chart of accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET chart of accounts": {
+      "main": [
+        [
+          {
+            "node": "GET taxes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET taxes": {
+      "main": [
+        [
+          {
+            "node": "GET unpaid invoices",
             "type": "main",
             "index": 0
           }

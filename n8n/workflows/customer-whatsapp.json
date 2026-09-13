@@ -66,7 +66,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = (event.messages || [])[0] || {};\nlet text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nif (!text) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nconst groupId = msg.group_id || (event.metadata && event.metadata.group_id) || '';\nconst chatKind = groupId ? 'group' : 'dm';\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)\\b\\s*/i, dest: 'community' },\n  { re: /^\\/ops\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nconst context_data = {\n  channel: 'whatsapp',\n  chat_kind: chatKind,\n  department,\n  from,\n  wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n  phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857'\n};\nif (groupId) {\n  context_data.group_id = groupId;\n}\nreturn [{ json: { department, task_description: text, context_data } }];"
+        "jsCode": "\nconst ACCOUNTS_ALLOWED = [\n  '2348033954301', // founder personal WhatsApp \u2014 keep in sync with n8n/allowlists/whatsapp-accounts.json\n];\n\nfunction waDigits(s) {\n  let d = String(s || '').replace(/\\D/g, '');\n  if (d.startsWith('00')) d = d.slice(2);\n  if (d.length === 11 && d.startsWith('0')) d = '234' + d.slice(1);\n  if (d.length === 10 && (d.startsWith('7') || d.startsWith('8') || d.startsWith('9'))) d = '234' + d;\n  return d;\n}\n\nfunction isAccountsAllowed(from) {\n  const d = waDigits(from);\n  if (!d) return false;\n  return ACCOUNTS_ALLOWED.some((n) => {\n    const a = waDigits(n);\n    return a === d || (a && d.endsWith(a)) || (d && a.endsWith(d));\n  });\n}\n\nconst event = $input.first().json;\nconst msg = (event.messages || [])[0] || {};\nlet text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nif (!text) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nconst groupId = msg.group_id || (event.metadata && event.metadata.group_id) || '';\nconst chatKind = groupId ? 'group' : 'dm';\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm\\b\\s*/i, dest: 'crm' }\n];\nlet requested = department;\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    requested = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nconst accountsDesk = requested === 'accounts' || requested === 'internal-ops';\nconst accounts_authorized = isAccountsAllowed(from);\nlet accounts_denied = false;\nif (accountsDesk && !accounts_authorized) {\n  accounts_denied = true;\n  department = 'community';\n  text = 'Write a WhatsApp DM to this person in second person. They are not authorized for the company accounting desk. Do not repeat amounts, vendors, or tax questions. Suggest /growth or /cm.';\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nconst context_data = {\n  channel: 'whatsapp',\n  chat_kind: chatKind,\n  department,\n  requested_department: requested,\n  from,\n  wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n  phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857',\n  accounts_authorized,\n  accounts_denied\n};\nif (groupId) {\n  context_data.group_id = groupId;\n}\nreturn [{ json: { department, task_description: text, context_data } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -99,7 +99,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -137,7 +137,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ORG_ID = '939049468';\nconst PAID_THROUGH = '1300646000000000361'; // Petty Cash\nconst DEFAULT_EXPENSE = '1300646000000000460'; // Other Expenses\nconst ACCOUNTS = [\n  { id: '1300646000000000400', keys: ['office supplies', 'stationery', 'printer', 'paper'] },\n  { id: '1300646000000000403', keys: ['advertis', 'marketing', 'ads', 'boost'] },\n  { id: '1300646000000032023', keys: ['lodging', 'hotel', 'airbnb', 'accommodation'] },\n  { id: '1300646000000000460', keys: ['other expenses', 'other', 'misc'] },\n  { id: '1300646000000035005', keys: ['uncategor'] },\n];\n\nfunction pickAccount(sd) {\n  const hay = [sd.zoho_account_name, sd.account_name, sd.category, sd.vendor, sd.description]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase();\n  for (const row of ACCOUNTS) {\n    if (row.keys.some((k) => hay.includes(k))) {\n      return row.id;\n    }\n  }\n  return DEFAULT_EXPENSE;\n}\n\nfunction lagosDate(raw) {\n  if (raw && /^\\d{4}-\\d{2}-\\d{2}/.test(String(raw))) {\n    return String(raw).slice(0, 10);\n  }\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date());\n}\n\nconst worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst amount = Number(sd.amount);\nconst task = String(sd.task_type || '').toLowerCase();\nconst recordFlag = sd.record_expense === true || sd.record_expense === 'true';\nconst record_zoho = prep.department === 'internal-ops'\n  && worker.status === 'success'\n  && task === 'accounts'\n  && recordFlag\n  && Number.isFinite(amount)\n  && amount > 0;\n\nconst vendor = String(sd.vendor || sd.vendor_name || '').trim();\nconst descParts = [vendor, sd.description || prep.task_description].filter(Boolean);\nlet description = descParts.join(' \u2014 ').slice(0, 100);\nif (!description) {\n  description = 'Ops expense';\n}\n\nconst zoho_expense = record_zoho ? {\n  account_id: pickAccount(sd),\n  paid_through_account_id: PAID_THROUGH,\n  date: lagosDate(sd.date),\n  amount,\n  description,\n} : null;\n\nif (zoho_expense) {\n  const ref = String(sd.reference || sd.reference_number || '').trim().slice(0, 100);\n  if (ref) {\n    zoho_expense.reference_number = ref;\n  }\n}\n\nreturn [{ json: { ...worker, record_zoho, zoho_expense, organization_id: ORG_ID } }];\n"
+        "jsCode": "\nconst worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst accountsDept = prep.department === 'internal-ops' || prep.department === 'accounts';\nlet action = String(sd.zoho_action || '').toLowerCase();\nconst allowed = ['expense', 'bill', 'invoice', 'lookup', 'preview'];\nif (!allowed.includes(action) && (sd.record_expense === true || sd.record_expense === 'true')) {\n  action = 'expense';\n}\nconst ctx = prep.context_data || {};\nconst waOk = ctx.channel !== 'whatsapp' || ctx.accounts_authorized === true;\nconst record_zoho = accountsDept\n  && waOk\n  && worker.status === 'success'\n  && task === 'accounts'\n  && allowed.includes(action);\n\nreturn [{ json: {\n  ...worker,\n  ...sd,\n  record_zoho,\n  action: record_zoho ? action : 'none',\n  amount: sd.amount,\n  vendor_name: sd.vendor_name || sd.vendor || '',\n  customer_name: sd.customer_name || '',\n  date: sd.date,\n  description: String(sd.notes || prep.task_description || '').slice(0, 200),\n  zoho_account_name: sd.zoho_account_name,\n  is_taxable_service: sd.is_taxable_service === true,\n  is_professional_service: sd.is_professional_service === true,\n  reference: sd.reference || sd.reference_number || '',\n  lookup: sd.lookup || 'overview',\n  currency: sd.currency || 'NGN'\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -185,37 +185,18 @@
     },
     {
       "parameters": {
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "method": "POST",
-        "url": "https://www.zohoapis.com/books/v3/expenses",
-        "sendQuery": true,
-        "specifyQuery": "keypair",
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "organization_id",
-              "value": "939049468"
-            }
-          ]
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "booksWriteDoc0001",
+          "mode": "id"
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.zoho_expense) }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "name": "POST Zoho expense",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "name": "Run Books write",
       "onError": "continueRegularOutput",
-      "credentials": {
-        "oAuth2Api": {
-          "id": "ByEtw1MmiDqYxQWI",
-          "name": "Zoho Books"
-        }
-      },
       "position": [
         1460,
         160
@@ -224,7 +205,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst ctx = prep.context_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst intent = Number(sd.intent_score);\nconst recordFlag = sd.record_lead === true || sd.record_lead === 'true';\nconst record_crm = worker.status === 'success' && (\n  prep.department === 'crm' ||\n  recordFlag ||\n  (Number.isFinite(intent) && intent >= 0.6)\n);\nlet phone = String(sd.phone || '').trim();\nif (!phone && ctx.channel === 'whatsapp' && ctx.from && /^\\d{8,}$/.test(String(ctx.from))) {\n  phone = String(ctx.from);\n}\nlet email = String(sd.email || '').trim();\nif (!email && ctx.channel === 'email' && ctx.from && String(ctx.from).includes('@')) {\n  email = String(ctx.from);\n}\nlet contact_name = String(sd.contact_name || sd.name || '').trim();\nif (!contact_name && ctx.username) contact_name = String(ctx.username);\nconst crm_contact = record_crm ? {\n  contact_name,\n  company_name: String(sd.company_name || '').trim(),\n  email,\n  phone,\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: String(sd.notes || '').trim(),\n  source: ctx.channel || 'ops',\n  task_type: task\n} : null;\nreturn [{ json: { ...worker, record_crm, crm_contact } }];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst ctx = prep.context_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst intent = Number(sd.intent_score);\nconst recordFlag = sd.record_lead === true || sd.record_lead === 'true';\nconst denied = ctx.accounts_denied === true;\nconst record_crm = worker.status === 'success' && !denied && (\n  prep.department === 'crm' ||\n  recordFlag ||\n  (Number.isFinite(intent) && intent >= 0.6)\n);\nlet phone = String(sd.phone || '').trim();\nif (!phone && ctx.channel === 'whatsapp' && ctx.from && /^\\d{8,}$/.test(String(ctx.from))) {\n  phone = String(ctx.from);\n}\nlet email = String(sd.email || '').trim();\nif (!email && ctx.channel === 'email' && ctx.from && String(ctx.from).includes('@')) {\n  email = String(ctx.from);\n}\nlet contact_name = String(sd.contact_name || sd.name || '').trim();\nif (!contact_name && ctx.username) contact_name = String(ctx.username);\nconst crm_contact = record_crm ? {\n  contact_name,\n  company_name: String(sd.company_name || '').trim(),\n  email,\n  phone,\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: String(sd.notes || '').trim(),\n  source: ctx.channel || 'ops',\n  task_type: task\n} : null;\nreturn [{ json: { ...worker, record_crm, crm_contact } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -375,7 +356,7 @@
       "main": [
         [
           {
-            "node": "POST Zoho expense",
+            "node": "Run Books write",
             "type": "main",
             "index": 0
           }
@@ -389,7 +370,7 @@
         ]
       ]
     },
-    "POST Zoho expense": {
+    "Run Books write": {
       "main": [
         [
           {

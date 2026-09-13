@@ -38,10 +38,11 @@ func main() {
 			"status":       "ok",
 			"llm_ready":    completerErr == nil,
 			"llm_provider": strings.ToLower(os.Getenv("LLM_PROVIDER")),
-			"departments":  []string{"internal-ops", "growth", "product-dev", "community", "crm"},
+			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm"},
 		})
 	})
 	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, internalops.Handle))
+	mux.HandleFunc("POST /departments/accounts", departmentHandler(completer, completerErr, internalops.HandleAccounts))
 	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, growth.Handle))
 	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, productdev.Handle))
 	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, community.Handle))
