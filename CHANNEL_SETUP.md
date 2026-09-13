@@ -5,10 +5,10 @@ n8n is the only public door. Agents still talk over HTTP JSON. Chat apps are inb
 | Channel | Role | Identity |
 | --- | --- | --- |
 | Telegram | You (ops room): watch jobs, approve, poke a department | One bot, one private chat or group |
-| WhatsApp | Customers + field intern | One Business number |
+| WhatsApp | Customers, community, field intern | One Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,growth,product-dev}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,growth,product-dev,community}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>`. Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
@@ -140,6 +140,17 @@ HTTPS is already in place. WhatsApp Cloud API still needs a Meta app.
 6. For messages you send first (outside the 24h window) you need a **template** approved in WhatsApp Manager. Session replies inside 24h can be free-form.
 
 Use the test number first. Move to a real Nigerian number when the test loop works. One number = the company.
+
+On that number, n8n routes by prefix (then default **growth** for 1:1, **community** for group chats):
+
+| Message starts with | Department |
+| --- | --- |
+| `/community` or `/cm` | community |
+| `/growth` | growth |
+| `/ops` | internal-ops |
+| `/validate` | product-dev |
+
+Telegram community uses the same worker path once a bot credential exists. Do not create a second WhatsApp number for community.
 
 Intern field missions: same number, or a second **internal** WhatsApp later. Do not mix intern debriefs and customer support in one thread without a prefix (`MISSION:` vs customer).
 

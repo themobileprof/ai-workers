@@ -58,7 +58,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = (event.messages || [])[0] || {};\nconst text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nif (!text) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nreturn [{\n  json: {\n    task_description: text,\n    context_data: {\n      channel: 'whatsapp',\n      from,\n      wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n      phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857'\n    }\n  }\n}];"
+        "jsCode": "const event = $input.first().json;\nconst msg = (event.messages || [])[0] || {};\nlet text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nif (!text) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nconst groupId = msg.group_id || (event.metadata && event.metadata.group_id) || '';\nconst chatKind = groupId ? 'group' : 'dm';\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)\\b\\s*/i, dest: 'community' },\n  { re: /^\\/ops\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth\\b\\s*/i, dest: 'growth' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nconst context_data = {\n  channel: 'whatsapp',\n  chat_kind: chatKind,\n  department,\n  from,\n  wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n  phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857'\n};\nif (groupId) {\n  context_data.group_id = groupId;\n}\nreturn [{ json: { department, task_description: text, context_data } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -69,7 +69,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://agents:8000/departments/growth",
+        "url": "={{ 'http://agents:8000/departments/' + $json.department }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
@@ -81,11 +81,11 @@
       "typeVersion": 4.5,
       "position": [740, 0],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560004",
-      "name": "Call growth"
+      "name": "Call department"
     },
     {
       "parameters": {
-        "jsCode": "const growth = $input.first().json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(growth.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: growth.status || 'failed'\n  }\n}];"
+        "jsCode": "const worker = $input.first().json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -143,14 +143,14 @@
       "main": [
         [
           {
-            "node": "Call growth",
+            "node": "Call department",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Call growth": {
+    "Call department": {
       "main": [
         [
           {

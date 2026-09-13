@@ -1,0 +1,53 @@
+{
+  "id": "smkCommHttp0001",
+  "name": "Smoke: community HTTP",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "c1b2c3d4-e5f6-7890-ab12-cd34ef567801",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/community",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"task_description\": \"Welcome a new member who just joined the Lagos founders WhatsApp group and ask what they are building.\",\n  \"context_data\": {\n    \"channel\": \"whatsapp\",\n    \"chat_kind\": \"group\"\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "id": "c1b2c3d4-e5f6-7890-ab12-cd34ef567802",
+      "name": "Call community"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call community",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}
