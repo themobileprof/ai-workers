@@ -1,0 +1,49 @@
+<p class="lede">Front office. Answers customers, drafts <code>info@</code> replies, and writes social copy. It does not send mail or WhatsApp itself.</p>
+
+<ol class="steps">
+  <li>WhatsApp 1:1 with no prefix → growth. Or start with <code>/growth</code>.</li>
+  <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code></li>
+  <li>Email: send a real mail to <code>info@themobileprof.com</code>. Growth drafts. Telegram shows the card. <code>/approve</code> sends, <code>/kill</code> drops.</li>
+  <li>Manual smoke in n8n: <strong>Smoke: growth HTTP</strong> (<code>smkGrwthHttp0001</code>).</li>
+</ol>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · sales chat</p>
+  <p class="you-say">WhatsApp 1:1: <q>How much is the bookkeeping assistant for a mechanic workshop in Ikeja?</q></p>
+  <pre class="json">{
+  "task_description": "How much is the bookkeeping assistant for a mechanic workshop in Ikeja?",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "dm",
+    "from": "2348012345678",
+    "department": "growth"
+  }
+}</pre>
+  <p class="expect">You should see a short WhatsApp reply. If intent is high, <code>structured_data.record_lead</code> is true and n8n upserts a Zoho Books contact with that phone. Never invented emails.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · marketing copy</p>
+  <p class="you-say">Telegram: <code>/growth Write a short LinkedIn post about a WhatsApp bookkeeping assistant for Lagos mechanics.</code></p>
+  <pre class="json">{
+  "task_description": "Write a short LinkedIn post about a WhatsApp bookkeeping assistant for Lagos mechanics.",
+  "context_data": {}
+}</pre>
+  <p class="expect"><code>task_type</code> is <code>marketing</code>. Copy comes back in <code>output_text</code>. Nothing is posted to LinkedIn.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · inbound info@</p>
+  <p class="you-say">Mail from a human to <code>info@themobileprof.com</code> (not from info@, not subject “n8n smoke”).</p>
+  <p class="expect">Growth drafts a plain-text reply. Email outbox holds <strong>one</strong> pending draft. Ops Telegram gets the card. First <code>/help</code> the bot so it knows your chat id. <code>/approve</code> sends via Zoho Mail SMTP.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · scheduled social posts</p>
+  <p>There is no cron that publishes Growth copy to LinkedIn or X. When you wire that, add a specimen here: trigger → POST growth with <code>task_type</code> marketing → which credential sends → how a failed post looks.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · grant outbound campaigns</p>
+  <p>The worker can classify <code>grants_growth</code>, but nothing mails Tony Elumelu / Google for Startups from this path. When that is wired, write the sample (who triggers it, what <code>context_data</code> holds startup metadata, and whether email-outbox must approve).</p>
+</section>

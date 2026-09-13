@@ -1,0 +1,49 @@
+<p class="lede">Operations room. Same Go package as accounts, wider prompt: accounts, legal, grant hunting. Prefix <code>/ops</code> is live. Only the accounts branch writes Zoho.</p>
+
+<ol class="steps">
+  <li>Telegram or allowlisted WhatsApp: <code>/ops</code> plus the task.</li>
+  <li>If the worker classifies <code>task_type: accounts</code>, n8n uses the same Books write path as <code>/accounts</code>.</li>
+  <li>Legal and grant answers return as chat text only. No document store, no grant tracker.</li>
+</ol>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · accounts via /ops</p>
+  <p class="you-say"><code>/ops I paid Paystack 4500 NGN for the domain this morning</code></p>
+  <pre class="json">{
+  "task_description": "I paid Paystack 4500 NGN for the domain this morning",
+  "context_data": {
+    "channel": "telegram",
+    "department": "internal-ops"
+  }
+}</pre>
+  <p class="expect">Same as accounts: <code>zoho_action</code> expense → Books write → audit line on Telegram. WhatsApp still needs the allowlist.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · legal read (text only)</p>
+  <p class="you-say"><code>/ops Flag predatory clauses in this contractor NDA: …paste…</code></p>
+  <p class="expect"><code>task_type</code> legal. Nigerian labour / CAC / CBN-NITDA flags in <code>output_text</code>. Nothing is filed. Do not treat this as a lawyer.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · grant eligibility (text only)</p>
+  <p class="you-say"><code>/ops Are we eligible for Tony Elumelu Foundation this year? We are a Lagos tech startup, two founders, pre-revenue.</code></p>
+  <pre class="json">{
+  "task_description": "Are we eligible for Tony Elumelu Foundation this year? Lagos tech startup, two founders, pre-revenue.",
+  "context_data": {
+    "channel": "telegram",
+    "department": "internal-ops"
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> grant_hunting. Missing eligibility fields called out. No application is submitted.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · legal document store</p>
+  <p>When NDAs/SLAs are saved (Drive, Mail draft, or a desk table), add the specimen: where the file lives, who must <code>/approve</code>, and that the worker still must not invent case citations.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · grant pipeline</p>
+  <p>When grant hunting writes a deadline and a next action into n8n or the desk, add the specimen: which fields, timezone Africa/Lagos, and the reminder that actually fires.</p>
+</section>

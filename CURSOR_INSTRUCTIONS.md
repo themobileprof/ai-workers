@@ -15,7 +15,7 @@ You have full creative and architectural freedom over how the inner software cod
 * **Orchestration Engine:** **n8n**, self-hosted in Docker. Visual router, webhook manager, event processor, cron scheduler, and execution log keeper. Stay on Node/n8n here — replacing it with a custom Go orchestrator loses the visual workflows this system is built around.
 * **System Database:** **PostgreSQL, native on the host** (systemd / apt — **not** a Docker container). n8n stores its backend and execution state here. Local beats a remote free tier (Supabase/Neon) for latency, connection-pool stability, and no cold starts.
 * **Execution Worker Fleet:** A **Go** HTTP service in Docker. n8n is the only caller. Do **not** publish the worker to the public internet.
-* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443 and reverse-proxies to n8n on localhost. **`/admin*`** is the exception: Caddy proxies that prefix to the Go agents process on `127.0.0.1:8000`. Do **not** proxy `/departments` or `/internal` to the public internet. WhatsApp/Telegram Cloud APIs need this.
+* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443. Public `/` and `/site*` plus **`/admin*`** go to the Go agents process on `127.0.0.1:8000`. n8n editor is **`/n8n/`**. Inbound **`/webhook*`** still goes to n8n at the same URLs (WhatsApp/Telegram). Do **not** proxy `/departments` or `/internal` to the public internet.
 
 ```
 External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
@@ -23,9 +23,11 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
         ▼
 ┌──────────────────────────────────────────┐
 │  Caddy (host, Go) :443                   │
+│  /  /site* → 127.0.0.1:8000 (public)     │
 │  /admin* → 127.0.0.1:8000  (desk UI)     │
-│  /admin/workflows iframes n8n (same origin) │
-│  everything else → 127.0.0.1:5678 (n8n)  │
+│  /admin/workflows iframes /n8n/          │
+│  /webhook* unchanged → n8n               │
+│  /n8n + /rest /assets → 127.0.0.1:5678   │
 └──────────────────┬───────────────────────┘
                    ▼
 ┌──────────────────────────────────────────┐
@@ -35,7 +37,7 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
                    ▼
 ┌──────────────────────────────────────────┐
 │  agents  (Go static binary, Docker)      │
-│  /departments/*  /internal/v1/*  /admin  │
+│  GET /  /site*  /admin  /departments/*   │
 └──────────────────────────────────────────┘
 
 n8n ──TCP 5432──► PostgreSQL n8n (host systemd, not Docker)
@@ -105,7 +107,7 @@ This is a **shared** machine, not a dedicated database server. Do not apply "25%
 ### B. Network exposure
 
 - Bootstrap: publish **only** n8n (`5678`). Worker stays on `agent-network` with no `ports:` mapping.
-- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Worker **departments** stay unpublished. Bind agents to `127.0.0.1:8000` so Caddy can serve `/admin` only.
+- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Public `/` and `/site*` plus `/admin*` go to agents. Worker **departments** stay unpublished. Inbound n8n URLs **`/webhook*`** (WhatsApp, Telegram) stay at the same public paths. The n8n editor is **`/n8n/`**. Bind agents to `127.0.0.1:8000`.
 - Postgres `5432` is host-local + Docker subnet in `pg_hba.conf`. Not in UFW. Not in the OCI Security List / NSG.
 - n8n must have authentication enabled from first boot plus a stable `N8N_ENCRYPTION_KEY`.
 - Local UFW is not enough on OCI: the **VCN security list / NSG** must allow 22 and 5678 (then 80/443; drop 5678 from the cloud firewall once Caddy owns the edge). Never allow 8000 or 5432.
@@ -147,6 +149,7 @@ agents/
   internal/departments/productdev/
   internal/departments/community/
   internal/admin/          # company desk HTML + store (separate Postgres)
+                           # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
 
 ### Module mapping

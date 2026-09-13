@@ -1,0 +1,39 @@
+<p class="lede">Engineering lab. The HTTP route is live. <code>/validate</code> already reaches it. n8n does <strong>not</strong> persist hypotheses, intern missions, or GitHub payloads yet — so treat validation as a one-shot chat until that loop is wired.</p>
+
+<ol class="steps">
+  <li>Telegram or WhatsApp: <code>/validate Generate hypotheses for a WhatsApp books assistant for Lagos mechanics.</code></li>
+  <li>The worker infers <code>context_data.action</code> from the words, or you can set it explicitly in a smoke HTTP node.</li>
+  <li>Read <code>structured_data</code> in the n8n execution. Today it is not stored for the next turn.</li>
+</ol>
+
+<p class="hint">Actions: <code>generate_hypotheses</code> · <code>generate_plan</code> · <code>generate_mission</code> · <code>generate_interview_guide</code> · <code>analyse_evidence</code> · <code>update_hypothesis</code> · <code>recommend_next_experiment</code> · <code>generate_decision_report</code>.</p>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · hypotheses (prefix live)</p>
+  <p class="you-say"><code>/validate Generate hypotheses for a WhatsApp bookkeeping assistant sold to Lagos mechanic workshops.</code></p>
+  <pre class="json">{
+  "task_description": "Generate hypotheses for a WhatsApp bookkeeping assistant sold to Lagos mechanic workshops.",
+  "context_data": {
+    "channel": "telegram",
+    "department": "product-dev",
+    "action": "generate_hypotheses",
+    "product_description": "WhatsApp bookkeeping assistant for Lagos mechanic workshops."
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> product_validation, <code>action</code> generate_hypotheses, <code>prompt_version</code> v1. Reply is a proposal only. Behaviour beats opinions. Chat text is the only memory today.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · intern mission loop</p>
+  <p>CHANNEL_SETUP describes: n8n stores hypotheses → WhatsApp/email the intern a mission → intern debrief → <code>analyse_evidence</code> → GO/PIVOT/KILL. That state machine is not built. When it is, replace this box with specimens for each hop (where state lives, <code>MISSION:</code> vs customer threads, and that <code>/approve</code> / <code>/kill</code> stay for email drafts unless you reuse them on purpose).</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · GitHub product ops / QA</p>
+  <p>The worker can classify <code>product_ops_qa</code> (diffs, logs, redacted secrets). There is no GitHub webhook workflow. When you wire it, add the specimen: webhook URL, which events, how secrets are redacted to last 4 characters, and who gets the Telegram ping.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · customer success / churn</p>
+  <p><code>customer_success</code> wants cohort telemetry in <code>context_data</code>. Nothing sends usage numbers today. When a cron or warehouse dump exists, add the specimen: payload shape, <code>risk_score</code>, and which channel sends the retention copy (do not surprise customers on WhatsApp without a template).</p>
+</section>

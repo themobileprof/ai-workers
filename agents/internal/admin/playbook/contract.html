@@ -1,0 +1,36 @@
+<p class="lede">n8n is the only public door. The Go process listens on the Docker network at <code>http://agents:8000</code>. That URL is not a browser page. Caddy never publishes <code>/departments</code>.</p>
+
+<ol class="steps">
+  <li>Open <a href="/admin/workflows">n8n in the desk</a> (iframe of <code>/n8n/</code>) or Telegram/WhatsApp.</li>
+  <li>Chat prefixes strip the command, then POST JSON to the department path.</li>
+  <li>Read back <code>status</code>, <code>output_text</code> (what the human sees), and <code>structured_data</code> (what n8n acts on).</li>
+</ol>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · required body</p>
+  <p class="you-say">Every worker, every time</p>
+  <pre class="json">{
+  "task_description": "Plain language task.",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "dm"
+  }
+}</pre>
+  <p class="hint"><code>context_data</code> must be a JSON object. Empty is <code>{}</code>, never a blank expression. Timeout the HTTP node at 120 seconds.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · worker reply</p>
+  <pre class="json">{
+  "status": "success",
+  "output_text": "What the person reads on WhatsApp, Telegram, or email.",
+  "structured_data": {
+    "task_type": "sales_support"
+  }
+}</pre>
+</section>
+
+<section class="later">
+  <p class="stamp dark">When you add a worker</p>
+  <p>New department = one extra Go route, one catalog row in <code>docs.go</code>, and a file <code>playbook/{slug}.html</code>. Until that route is called from a published workflow, stamp the page <strong>Not wired</strong> and leave a later-box with the sample you will write on the day it ships.</p>
+</section>

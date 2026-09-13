@@ -1,0 +1,33 @@
+{{define "content"}}
+<div class="doc-split">
+  <aside class="doc-rail" aria-label="Playbook">
+    <a href="/admin/docs" class="on">Index</a>
+    {{range .Docs}}
+    <a href="{{.Href}}">{{.Title}}</a>
+    {{end}}
+  </aside>
+  <div class="playbook">
+    <section class="hero">
+      <p class="kicker">Field playbook</p>
+      <h2>How to use each worker</h2>
+      <p class="lede">Follow a page, send the specimen, check the reply. Workers that are only half-wired keep a red later-box so we write the real sample on the day the workflow ships.</p>
+    </section>
+    <ol class="doc-index">
+      {{range .Docs}}
+      <li class="doc-card">
+        <div class="doc-card-head">
+          <p class="kicker">{{.Kicker}}</p>
+          <span class="stamp {{if .Live}}ok{{else if .Partial}}brass{{else}}dark{{end}}">{{.WireLabel}}</span>
+        </div>
+        <h3><a href="{{.Href}}">{{.Title}}</a></h3>
+        <p>{{.Summary}}</p>
+        <p class="path"><code>{{.Path}}</code></p>
+        {{if .Prefixes}}
+        <p class="prefixes">{{range .Prefixes}}<span class="pill">{{.}}</span>{{end}}</p>
+        {{end}}
+      </li>
+      {{end}}
+    </ol>
+  </div>
+</div>
+{{end}}

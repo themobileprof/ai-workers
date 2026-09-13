@@ -1,0 +1,47 @@
+<p class="lede">Room voice. Welcome, FAQ, moderation, announcements. Not sales and not the books desk.</p>
+
+<ol class="steps">
+  <li>WhatsApp or Telegram <strong>group</strong> with no prefix → community.</li>
+  <li>DM: <code>/cm</code> or <code>/community</code> plus the ask.</li>
+  <li>Unauthorized WhatsApp <code>/accounts</code> or <code>/ops</code> is rewritten to community with <code>accounts_denied: true</code>. Books never runs.</li>
+  <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
+</ol>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · welcome a group</p>
+  <p class="you-say">Someone joins the Lagos founders WhatsApp group.</p>
+  <pre class="json">{
+  "task_description": "Welcome a new member who just joined the Lagos founders WhatsApp group and ask what they are building.",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "group"
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> welcome. Short phone-friendly reply. No markdown tables. <code>escalate_to_founder</code> false unless they need a human.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · access denied</p>
+  <p class="you-say">A WhatsApp number that is <em>not</em> on People → <code>whatsapp_accounts</code> sends <code>/accounts I paid MTN 15000</code>.</p>
+  <pre class="json">{
+  "task_description": "Write a WhatsApp DM to this person in second person. They are not authorized for the company accounting desk.",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "dm",
+    "accounts_denied": true,
+    "department": "community"
+  }
+}</pre>
+  <p class="expect">Fixed Go reply (no LLM): they cannot book expenses from that number. Suggest <code>/growth</code> or <code>/cm</code>. Amounts and vendors are not repeated. n8n does not call Books write.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · FAQ</p>
+  <p class="you-say">Group: <code>/cm When do we meet this month?</code></p>
+  <p class="expect"><code>task_type</code> faq. If the worker does not know the date, it says so and sets <code>escalate_to_founder</code> true. Telegram/WhatsApp just send <code>output_text</code> — there is no separate founder ping yet.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · founder ping on escalate</p>
+  <p>When you wire a Telegram card for <code>escalate_to_founder</code>, add the specimen: which chat id, what the card contains, and that community still replies in the original thread.</p>
+</section>

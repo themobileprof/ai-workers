@@ -34,6 +34,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	admin.RegisterPublic(mux)
 	var adminReady bool
 	if dsn := strings.TrimSpace(os.Getenv("ADMIN_DATABASE_URL")); dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)

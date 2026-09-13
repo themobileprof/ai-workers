@@ -42,6 +42,8 @@ type pageData struct {
 	UserCount    int
 	SettingCount int
 	Settings     []kv
+	Docs         []DocMeta
+	Doc          *DocPage
 }
 
 type kv struct {
@@ -50,12 +52,15 @@ type kv struct {
 }
 
 func New(store *Store, internalToken string) (*Server, error) {
+	if err := mustPlaybookFiles(); err != nil {
+		return nil, err
+	}
 	funcMap := template.FuncMap{
 		"has":       hasStoredCap,
 		"canRemove": canRemove,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -94,8 +99,31 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/settings/edit", s.settingsEditGET)
 	mux.HandleFunc("POST /admin/settings", s.settingsPOST)
 	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
+	mux.HandleFunc("GET /admin/docs", s.docsIndex)
+	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
+}
+
+func RegisterPublic(mux *http.ServeMux) {
+	mux.HandleFunc("GET /{$}", publicHome)
+	sub, err := fs.Sub(embedded, "static")
+	if err != nil {
+		log.Printf("public static: %v", err)
+		return
+	}
+	mux.Handle("GET /site/", http.StripPrefix("/site/", http.FileServer(http.FS(sub))))
+}
+
+func publicHome(w http.ResponseWriter, r *http.Request) {
+	b, err := embedded.ReadFile("templates/landing.html")
+	if err != nil {
+		http.Error(w, "landing missing", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(b)
 }
 
 func RegisterUnavailable(mux *http.ServeMux) {
@@ -157,6 +185,27 @@ func (s *Server) workflowsGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, "workflows", pageData{Title: "n8n", Nav: "flows", User: u})
+}
+
+func (s *Server) docsIndex(w http.ResponseWriter, r *http.Request) {
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	s.render(w, "docs", pageData{Title: "Docs", Nav: "docs", User: u, Docs: allDocs()})
+}
+
+func (s *Server) docsPage(w http.ResponseWriter, r *http.Request) {
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	page, ok := lookupDoc(r.PathValue("slug"))
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	s.render(w, "docs_page", pageData{Title: page.Title, Nav: "docs", User: u, Docs: allDocs(), Doc: &page})
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {

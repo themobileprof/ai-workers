@@ -1,0 +1,29 @@
+{{define "content"}}
+<div class="doc-split">
+  <aside class="doc-rail" aria-label="Playbook">
+    <a href="/admin/docs">Index</a>
+    {{range .Docs}}
+    <a href="{{.Href}}" {{if eq $.Doc.Slug .Slug}}class="on"{{end}}>{{.Title}}</a>
+    {{end}}
+  </aside>
+  <article class="playbook">
+    <header class="doc-head">
+      <p class="kicker">{{.Doc.Kicker}}</p>
+      <div class="doc-card-head">
+        <h2>{{.Doc.Title}}</h2>
+        <span class="stamp {{if .Doc.Live}}ok{{else if .Doc.Partial}}brass{{else}}dark{{end}}">{{.Doc.WireLabel}}</span>
+      </div>
+      <p class="path"><code>{{.Doc.Path}}</code></p>
+      {{if .Doc.Prefixes}}
+      <p class="prefixes">{{range .Doc.Prefixes}}<span class="pill">{{.}}</span>{{end}}</p>
+      {{end}}
+    </header>
+    {{.Doc.Body}}
+    <nav class="pager">
+      {{if .Doc.Prev}}<a href="{{.Doc.Prev.Href}}">← {{.Doc.Prev.Title}}</a>{{else}}<span></span>{{end}}
+      <a href="/admin/docs">Index</a>
+      {{if .Doc.Next}}<a href="{{.Doc.Next.Href}}">{{.Doc.Next.Title}} →</a>{{else}}<span></span>{{end}}
+    </nav>
+  </article>
+</div>
+{{end}}

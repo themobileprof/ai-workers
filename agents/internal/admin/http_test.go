@@ -3,6 +3,7 @@ package admin
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -33,9 +34,44 @@ func TestSameOrigin(t *testing.T) {
 	}
 }
 
+func TestPublicHome(t *testing.T) {
+	mux := http.NewServeMux()
+	RegisterPublic(mux)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "before you can pay for the rest of the company") {
+		t.Fatalf("landing %d", rec.Code)
+	}
+	logo := httptest.NewRecorder()
+	mux.ServeHTTP(logo, httptest.NewRequest(http.MethodGet, "/site/themobileprof_cloud.png", nil))
+	if logo.Code != http.StatusOK || logo.Body.Len() < 1000 {
+		t.Fatalf("logo %d len=%d", logo.Code, logo.Body.Len())
+	}
+}
+
 func TestTemplatesParse(t *testing.T) {
 	if _, err := New(nil, ""); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestPlaybookCatalog(t *testing.T) {
+	if err := mustPlaybookFiles(); err != nil {
+		t.Fatal(err)
+	}
+	page, ok := lookupDoc("growth")
+	if !ok || page.Path != "POST /departments/growth" || page.Prev == nil || page.Next == nil {
+		t.Fatalf("growth page %+v ok=%v", page.DocMeta, ok)
+	}
+	if _, ok := lookupDoc("missing"); ok {
+		t.Fatal("unknown slug")
+	}
+	if first := allDocs()[0]; first.Slug != "contract" || !first.Live() {
+		t.Fatalf("first page %s", first.Slug)
+	}
+	prod, ok := lookupDoc("product-dev")
+	if !ok || !prod.Partial() || !strings.Contains(string(prod.Body), "Not wired") {
+		t.Fatal("product-dev must stay a partial with later-boxes")
 	}
 }
 

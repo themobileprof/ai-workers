@@ -1,0 +1,56 @@
+<p class="lede">Classifier only. It names the Zoho document. Zoho Books owns VAT, WHT, and the ledger. WhatsApp <code>/accounts</code> is allowlisted on People.</p>
+
+<ol class="steps">
+  <li>Allowlisted WhatsApp or any Telegram ops chat: <code>/accounts I paid Jumia 18500 for office paper today</code>.</li>
+  <li>n8n reads <code>structured_data.zoho_action</code> and runs <strong>Books write</strong> (<code>booksWriteDoc0001</code>).</li>
+  <li>You get the audit trail on the same chat (expense / bill / draft invoice id, or a lookup summary).</li>
+  <li>Hypotheticals must say “do not record”. Smoke: <strong>Smoke: accounts HTTP</strong> — that sample is preview, must not post.</li>
+</ol>
+
+<p class="hint">Actions: <code>expense</code> (already paid) · <code>bill</code> (we owe) · <code>invoice</code> (draft we raise) · <code>lookup</code> (read Books) · <code>preview</code> (math in Books, post nothing).</p>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · paid receipt</p>
+  <p class="you-say"><code>/accounts Paid Shoprite 12500 NGN for office snacks on 13 Sep 2026</code></p>
+  <pre class="json">{
+  "task_description": "Paid Shoprite 12500 NGN for office snacks on 13 Sep 2026",
+  "context_data": {
+    "channel": "telegram",
+    "department": "accounts"
+  }
+}</pre>
+  <p class="expect"><code>zoho_action</code> expense, <code>record_expense</code> true, <code>currency</code> NGN, <code>vendor_name</code> Shoprite. n8n POST <code>/expenses</code> with <code>tax_id</code> from Zoho settings. Reply cites the expense id. Go output has <strong>no</strong> VAT arithmetic.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · we owe a vendor</p>
+  <p class="you-say"><code>/accounts Acme Consulting Ltd invoiced us 100000 NGN for software development, not yet paid</code></p>
+  <p class="expect"><code>zoho_action</code> bill. n8n upserts the vendor and POST unpaid bill. WHT is not a second expense — withhold on vendor payment in Books.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · draft we raise</p>
+  <p class="you-say"><code>/accounts Raise a draft invoice to Apex Motors 250000 NGN for a 30-day pilot</code></p>
+  <p class="expect"><code>zoho_action</code> invoice. Draft only — not emailed. Customer is upserted as a Books contact.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · lookup / cash position</p>
+  <p class="you-say"><code>/accounts What do we still owe, and cash P&amp;L?</code></p>
+  <p class="expect"><code>zoho_action</code> lookup. n8n GETs unpaid bills/invoices, recent expenses, cash P&amp;L. Nothing is written.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · hypothetical (must not post)</p>
+  <p class="you-say"><code>/accounts What is VAT and WHT on a 100000 NGN invoice from Acme Consulting Ltd? Do not record this.</code></p>
+  <pre class="json">{
+  "task_description": "What is VAT and WHT on a 100000 NGN invoice from Acme Consulting Ltd for software development? Do not record this, it is a hypothetical.",
+  "context_data": {}
+}</pre>
+  <p class="expect"><code>zoho_action</code> preview. n8n applies the tax <em>percentage stored in Books</em> and posts nothing. If this ever creates an expense, that is a bug.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · receipt photos</p>
+  <p>WhatsApp image → OCR → accounts is not wired. When it is, add the specimen: media download, what goes in <code>task_description</code> vs <code>context_data</code>, and that a failed OCR must not invent amounts.</p>
+</section>

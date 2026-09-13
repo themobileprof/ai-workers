@@ -4,11 +4,36 @@ workers.themobileprof.com {
 		output file /var/log/caddy/workers.log
 		format json
 	}
-	# Public desk only. /departments and /internal stay off the internet.
+
+	# Public landing. Must not prefix-match /webhook or /n8n.
+	@public path_regexp ^/($|site(/.*)?)$
+	handle @public {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# Company desk. /departments and /internal stay off the internet.
 	handle /admin* {
 		reverse_proxy 127.0.0.1:8000
 	}
-	# Same-origin iframe from /admin/workflows. Other sites cannot embed n8n.
+
+	# WhatsApp, Telegram, form waits. These public paths must not change.
+	@hooks {
+		path /webhook* /webhook-test* /webhook-waiting* /form*
+	}
+	handle @hooks {
+		reverse_proxy 127.0.0.1:5678
+	}
+
+	# Editor UI. n8n still thinks it lives at /; assets and /rest stay on the catch-all.
+	redir /n8n /n8n/ 308
+	handle_path /n8n/* {
+		reverse_proxy 127.0.0.1:5678 {
+			header_down -X-Frame-Options
+		}
+		header Content-Security-Policy "frame-ancestors 'self'"
+	}
+
+	# n8n REST, static assets, sign-in, websockets.
 	handle {
 		reverse_proxy 127.0.0.1:5678 {
 			header_down -X-Frame-Options

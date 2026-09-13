@@ -1,6 +1,6 @@
 # Channel setup (Telegram, WhatsApp, Email)
 
-n8n is the public door for webhooks. The company desk is a separate Caddy path (`/admin`). **n8n** in the desk mast iframes the n8n UI (n8n still has its own sign-in). Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
+n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/n8n/` (desk mast iframes it). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
@@ -10,7 +10,7 @@ n8n is the public door for webhooks. The company desk is a separate Caddy path (
 
 Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
-Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>`. Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
+Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/n8n/`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
 Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, license, the company desk DB, and `INTERNAL_API_TOKEN`.
 
@@ -76,7 +76,8 @@ Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`h
 - Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings` for `zoho.organization_id`, paid-through / default expense accounts, and timezone. Chart-of-accounts keyword map stays in the workflow. If the fetch fails, those workflows fall back to the seeded ids below.
-- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/` (same origin). n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it.
+- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/n8n/` (same origin). n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**.
+- **Docs** (`/admin/docs`) is the field playbook: sample uses per worker. Partial workers keep a later-box until the workflow is wired.
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
 
 ### WhatsApp accounts allowlist

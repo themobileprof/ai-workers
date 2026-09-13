@@ -1,0 +1,37 @@
+<p class="lede">Pipeline notes for a person or company. n8n upserts a <strong>Zoho Books contact</strong> on the existing Books OAuth. There is no Zoho CRM app.</p>
+
+<ol class="steps">
+  <li>WhatsApp or Telegram: <code>/crm Ada from Acme in Yaba asked for a demo. Phone 0803…</code></li>
+  <li>Growth or inbound email can also set <code>record_lead</code>. Same upsert path (<code>crmUpsertCont0001</code>).</li>
+  <li>Never invent email or phone. If WhatsApp <code>context_data.from</code> is digits, that is the phone.</li>
+</ol>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · qualify a lead</p>
+  <p class="you-say">Telegram: <code>/crm Chinedu from Apex Motors, Ikeja, wants the WhatsApp books assistant. WhatsApp 2348091112222.</code></p>
+  <pre class="json">{
+  "task_description": "Chinedu from Apex Motors, Ikeja, wants the WhatsApp books assistant. WhatsApp 2348091112222.",
+  "context_data": {
+    "channel": "telegram",
+    "department": "crm"
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> qualify_lead. <code>record_lead</code> true with <code>contact_name</code>, <code>company_name</code>, <code>phone</code>, <code>pipeline_stage</code>, <code>intent_score</code>, <code>next_action</code>. n8n POST/PUT Books <code>/contacts</code>. Reply includes a one-line audit that the contact was saved.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · auto from high-intent growth</p>
+  <p class="you-say">WhatsApp 1:1 (no /crm): someone names themselves and asks to start this week.</p>
+  <p class="expect">Growth may set <code>record_lead</code> or <code>intent_score &gt;= 0.6</code>. Customer WhatsApp and Ops Telegram both call the CRM upsert sub-workflow. Access-denied community replies do <em>not</em> upsert.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · update a record</p>
+  <p class="you-say"><code>/crm Apex Motors is now at proposal. They want a 30-day pilot, still 2348091112222.</code></p>
+  <p class="expect"><code>task_type</code> update_record or pipeline. Same upsert. Do not invent revenue.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · follow-up reminders</p>
+  <p>The worker can fill <code>next_action_by</code>. Nothing cron-pokes you on that date. When you wire a reminder (Telegram at 09:00 Africa/Lagos), add the specimen: where the date is stored, and that it must not double-text the customer.</p>
+</section>
