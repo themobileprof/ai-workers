@@ -16,6 +16,7 @@ services:
       N8N_LISTEN_ADDRESS: "0.0.0.0"
       N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-https://workers.themobileprof.com/}
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_LICENSE_ACTIVATION_KEY: ${N8N_LICENSE_ACTIVATION_KEY:-}
       N8N_SECURE_COOKIE: "true"
       N8N_PROXY_HOPS: "1"
       EXECUTIONS_DATA_PRUNE: "true"
@@ -32,6 +33,7 @@ services:
       DB_POSTGRESDB_SSL_ENABLED: "false"
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/workflows:ro
     mem_limit: 1536m
     memswap_limit: 1536m
     networks:

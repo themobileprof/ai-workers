@@ -155,6 +155,7 @@ agents/
 3. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
+    - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL). n8n holds project state; the worker only proposes. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`.
 
 ## 5. RECOMMENDED TECH STACK SPECIFICATIONS
 
@@ -164,6 +165,16 @@ agents/
 - n8n + Docker Compose v2 + native PostgreSQL.
 
 Host packages required: Docker Engine + Compose v2 plugin, Git, native PostgreSQL. Caddy only after DNS exists.
+
+### n8n workflows as code
+
+Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.json` (stable `id` per file) and are imported with `scripts/sync-n8n-workflows.sh`. Credentials (Telegram, WhatsApp, SMTP) stay in the n8n UI / Postgres — never in git.
+
+- Compose mounts `./n8n/workflows` read-only at `/home/node/workflows`.
+- Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
+- Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
+- Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,growth,product-dev}`. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

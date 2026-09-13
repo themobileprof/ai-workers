@@ -1,0 +1,53 @@
+{
+  "id": "smkGrwthHttp0001",
+  "name": "Smoke: growth HTTP",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "a1b2c3d4-e5f6-7890-ab12-cd34ef567801",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/growth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"task_description\": \"Write a short LinkedIn post about a WhatsApp bookkeeping assistant for Lagos mechanics.\",\n  \"context_data\": {}\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "id": "a1b2c3d4-e5f6-7890-ab12-cd34ef567802",
+      "name": "Call growth"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call growth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

@@ -1,0 +1,183 @@
+{
+  "id": "custWhatsApp0001",
+  "name": "Customer WhatsApp",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["messages"],
+        "options": {
+          "messageStatusUpdates": []
+        }
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "7f3c2e14-b584-4d9a-9f01-c11e5e0aa001",
+      "name": "WhatsApp Trigger",
+      "webhookId": "whatsapp-customer",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "Oaps5dWBa76PVrD9",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560001",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.messages[0].text.body }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [260, 0],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560002",
+      "name": "Only text messages"
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst msg = (event.messages || [])[0] || {};\nconst text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nif (!text) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nreturn [{\n  json: {\n    task_description: text,\n    context_data: {\n      channel: 'whatsapp',\n      from,\n      wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n      phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560003",
+      "name": "Prepare task"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/growth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [740, 0],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560004",
+      "name": "Call growth"
+    },
+    {
+      "parameters": {
+        "jsCode": "const growth = $input.first().json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(growth.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: growth.status || 'failed'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 0],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560005",
+      "name": "Format reply"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "={{ $json.phoneNumberId }}",
+        "recipientPhoneNumber": "={{ $json.to }}",
+        "messageType": "text",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [1220, 0],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560006",
+      "name": "Send WhatsApp",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "TpVfkoyKY6eZDl87",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Only text messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only text messages": {
+      "main": [
+        [
+          {
+            "node": "Prepare task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare task": {
+      "main": [
+        [
+          {
+            "node": "Call growth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call growth": {
+      "main": [
+        [
+          {
+            "node": "Format reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format reply": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}
