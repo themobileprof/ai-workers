@@ -30,8 +30,8 @@
 
 <section class="specimen">
   <p class="spec-no">Specimen 03 · invoice we raise</p>
-  <p class="you-say"><code>/accounts Invoice Apex Motors 250000 NGN for a 30-day pilot, bill billing@apexmotors.ng</code></p>
-  <p class="expect"><code>zoho_action</code> invoice. n8n upserts the customer (with email), POSTs the invoice, marks it sent, then creates a Paystack Payment Request for <strong>Books total × 100 kobo</strong>. Chat audit includes <code>https://paystack.com/pay/{request_code}</code>. No email in the source → Books invoice only; never invent an address.</p>
+  <p class="you-say"><code>/accounts Invoice Apex 250000 NGN for a 30-day pilot</code></p>
+  <p class="expect"><code>zoho_action</code> invoice. n8n searches Books customers for “Apex”. One unique hit → use that contact and the email already on it for Paystack. Several hits → ask for the full name, post nothing. No hit and no email → create the Books customer, invoice only (no Paystack link). Never invent an email.</p>
 </section>
 
 <section class="specimen">
@@ -55,7 +55,8 @@
   <p class="expect">Paystack dashboard webhook <code>POST /webhook/paystack-paid</code>. n8n verifies the transaction (does not trust the body), then <code>POST /customerpayments</code> on the Zoho invoice from Paystack metadata. Duplicate webhooks are no-ops once Books balance is 0. Lookup then shows the invoice paid.</p>
 </section>
 
-<section class="later">
-  <p class="stamp dark">Not wired · receipt photos</p>
-  <p>WhatsApp image → OCR → accounts is not wired. When it is, add the specimen: media download, what goes in <code>task_description</code> vs <code>context_data</code>, and that a failed OCR must not invent amounts.</p>
+<section class="specimen">
+  <p class="spec-no">Specimen 07 · snap a receipt</p>
+  <p class="you-say">Telegram: photo of a receipt (caption optional; unprefixed 1:1 snaps go to accounts). Allowlisted WhatsApp: <code>/accounts</code> plus the photo.</p>
+  <p class="expect">Gemini reads vendor, amount, date, and paid vs unpaid from the pixels. Caption is extra context. Same Books path as specimen 01. If the image is unreadable, <code>zoho_action</code> none — the bot asks, and must not invent figures.</p>
 </section>

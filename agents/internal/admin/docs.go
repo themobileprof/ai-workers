@@ -85,7 +85,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Books classifier",
 		Path:     "POST /departments/accounts",
 		Wire:     "live",
-		Summary:  "Extract vendor, amount, email, and Zoho document type. n8n posts to Books and Paystack. Go never computes VAT.",
+		Summary:  "Extract vendor, amount, email, and Zoho document type from text or a receipt photo (Gemini OCR). n8n posts to Books and Paystack. Go never computes VAT.",
 		Prefixes: []string{"/accounts"},
 	},
 	{

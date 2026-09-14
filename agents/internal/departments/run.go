@@ -21,10 +21,11 @@ Respond with a single JSON object and nothing else (no markdown fences). Shape:
 If the request cannot be completed, still return JSON with status "failed" and explain in output_text.
 `
 
-func Run(ctx context.Context, c llm.Completer, systemPrompt, userPrompt string) (contract.Response, error) {
+func Run(ctx context.Context, c llm.Completer, systemPrompt, userPrompt string, images ...llm.Image) (contract.Response, error) {
 	text, err := c.Complete(ctx, llm.Request{
 		System:   strings.TrimSpace(systemPrompt) + "\n" + jsonContract,
 		Messages: []llm.Message{{Role: "user", Content: userPrompt}},
+		Images:   images,
 	})
 	if err != nil {
 		return contract.Fail("LLM call failed: " + err.Error()), err

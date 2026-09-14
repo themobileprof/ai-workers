@@ -1,6 +1,6 @@
 # Channel setup (Telegram, WhatsApp, Email)
 
-n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/n8n/` (desk mast iframes it). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
+n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/home` (desk iframes it; `/n8n/` redirects there). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
@@ -70,6 +70,8 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
 WhatsApp `/accounts` and `/ops` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books. Telegram ops is not gated (that chat is already private).
 
+Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops`) are downloaded and OCR’d with Gemini. WhatsApp photos are OCR’d only for allowlisted `/accounts` or `/ops` — unprefixed customer photos stay growth. A failed read must not invent amounts.
+
 ### Company desk (admin UI)
 
 Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
@@ -78,7 +80,7 @@ Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`h
 - Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings` for `zoho.organization_id`, paid-through / default expense accounts, and timezone. Chart-of-accounts keyword map stays in the workflow. If the fetch fails, those workflows fall back to the seeded ids below.
-- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/n8n/` (same origin). n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**.
+- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**. Do **not** set `N8N_PATH`.
 - **Docs** (`/admin/docs`) is the field playbook: sample uses per worker. Partial workers keep a later-box until the workflow is wired.
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
 
@@ -98,7 +100,7 @@ To add a bookkeeper: add them on the desk with phone (234…) and `whatsapp_acco
 - Write path: `/accounts` or `/ops` → worker `structured_data.zoho_action` → sub-workflow **Books write** (`booksWriteDoc0001`).
   - `expense` — already paid: `POST /expenses` with `tax_id` from `GET /settings/taxes` (Zoho computes VAT).
   - `bill` — we owe a vendor: upsert vendor contact + `POST /bills` (unpaid). WHT is **not** a second expense; withhold on the vendor payment in Books.
-  - `invoice` — we bill a customer: upsert customer + `POST /invoices`, mark **sent**, then a Paystack Payment Request whose kobo amount is **Books `invoice.total` × 100** (never the LLM amount). Chat audit includes `https://paystack.com/pay/{request_code}`. No customer email → Books invoice only, no Paystack link.
+  - `invoice` — we bill a customer: search Books by **name** (a short name is enough). Unique match uses that contact and the **email already on it** for Paystack. Several matches → ask for the full name, post nothing. No match → create the contact; Paystack only if this message included an email. Never invent an address. Then `POST /invoices`, mark **sent**, Payment Request kobo = **Books `invoice.total` × 100**.
   - `lookup` — `GET` unpaid invoices/bills, recent expenses, cash P&L (`/reports/profitandloss?cash_based=true`).
   - `preview` — hypothetical: apply the tax **percentage stored in Books**, post nothing.
 - Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.invoices.UPDATE`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.customerpayments.CREATE`, `ZohoBooks.customerpayments.READ`, `ZohoBooks.reports.READ`.
@@ -115,7 +117,7 @@ Paystack is the collector because Payment Requests are real AR objects (customer
 - Dashboard webhook (production, not test Listen): `https://workers.themobileprof.com/webhook/paystack-paid`. Caddy already sends `/webhook*` to n8n. Publish **Paystack paid** (`paystackPaid000001`).
 - n8n does **not** trust the webhook body. It re-queries `GET /transaction/verify/:reference` or `GET /paymentrequest/verify/:code`, then `POST /books/v3/customerpayments` against the Zoho invoice in Paystack metadata (`zoho_invoice_id`). Amount applied is `min(verified NGN, invoice.balance)`.
 - Optional desk setting `zoho.deposit_to_account_id` (a **Bank** account in Books, not Petty Cash). If unset, Zoho uses its default deposit account.
-- Specimen: `/accounts Invoice Apex Motors 250000 NGN for a 30-day pilot, bill billing@apexmotors.ng`.
+- Specimen: `/accounts Invoice Apex 250000 NGN for a 30-day pilot` (email optional if Apex is already in Books).
 - Smoke: **Smoke: Paystack** is a balance GET. It must not create a charge.
 
 ### Email (Zoho Mail)

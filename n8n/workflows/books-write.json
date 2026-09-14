@@ -492,7 +492,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 5, contact_type: 'vendor', contact_name_contains: $json.vendor_name }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 15, contact_type: 'vendor', contact_name_contains: $json.vendor_name }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -512,7 +512,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.vendor_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', vendor_id: String(hit.contact_id), vendor_existing: hit.contact_name } }];\n}\nreturn [{ json: { ...p, mode: 'create', body: { contact_name: p.vendor_name.slice(0, 200), contact_type: 'vendor' } } }];\n"
+        "jsCode": "\nfunction scoreName(query, contactName) {\n  const n = String(query || '').toLowerCase().trim();\n  const c = String(contactName || '').toLowerCase().trim();\n  if (!n || n.length < 2) return 0;\n  if (c === n) return 4;\n  if (c.startsWith(n) || n.startsWith(c)) return 3;\n  if (c.includes(n) || n.includes(c)) return 2;\n  const tokens = n.split(/\\s+/).filter((t) => t.length >= 3);\n  if (tokens.some((t) => c.includes(t))) return 1;\n  return 0;\n}\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst scored = list.map((c) => ({ c, s: scoreName(p.vendor_name, c.contact_name) })).filter((x) => x.s > 0);\nscored.sort((a, b) => b.s - a.s);\nconst best = scored[0] ? scored[0].s : 0;\nconst top = scored.filter((x) => x.s === best);\nif (top.length > 1) {\n  const names = top.map((x) => x.c.contact_name).filter(Boolean).join(', ');\n  return [{ json: { ...p, mode: 'error', audit_text: 'Several Books vendors match \"' + p.vendor_name + '\": ' + names + '. Say the full name so I book the right one.' } }];\n}\nif (top.length === 1 && top[0].c.contact_id) {\n  const hit = top[0].c;\n  return [{ json: { ...p, mode: 'use', vendor_id: String(hit.contact_id), vendor_existing: hit.contact_name } }];\n}\nif (!String(p.vendor_name || '').trim()) {\n  return [{ json: { mode: 'error', audit_text: 'Bill needs a vendor name (a short name is enough if they are already in Books).' } }];\n}\nreturn [{ json: { ...p, mode: 'create', body: { contact_name: p.vendor_name.slice(0, 200), contact_type: 'vendor' } } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -684,7 +684,7 @@
         },
         "sendQuery": true,
         "specifyQuery": "json",
-        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 5, contact_type: 'customer', contact_name_contains: $json.customer_name }) }}"
+        "jsonQuery": "={{ JSON.stringify({ organization_id: $json.organization_id, per_page: 15, contact_type: 'customer', contact_name_contains: $json.customer_name }) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -704,7 +704,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst name = p.customer_name.toLowerCase();\nlet hit = list.find((c) => String(c.contact_name || '').toLowerCase() === name) || list[0];\nif (hit && hit.contact_id) {\n  return [{ json: { ...p, mode: 'use', customer_id: String(hit.contact_id) } }];\n}\nconst body = { contact_name: p.customer_name.slice(0, 200), contact_type: 'customer' };\nif (p.customer_email) body.contact_persons = [{ email: p.customer_email, is_primary_contact: true }];\nreturn [{ json: { ...p, mode: 'create', body } }];\n"
+        "jsCode": "\nfunction emailFrom(c) {\n  const direct = String(c.email || '').trim().toLowerCase();\n  if (direct.includes('@')) return direct;\n  const persons = Array.isArray(c.contact_persons) ? c.contact_persons : [];\n  for (const person of persons) {\n    const e = String(person.email || '').trim().toLowerCase();\n    if (e.includes('@')) return e;\n  }\n  return '';\n}\nfunction scoreName(query, contactName) {\n  const n = String(query || '').toLowerCase().trim();\n  const c = String(contactName || '').toLowerCase().trim();\n  if (!n || n.length < 2) return 0;\n  if (c === n) return 4;\n  if (c.startsWith(n) || n.startsWith(c)) return 3;\n  if (c.includes(n) || n.includes(c)) return 2;\n  const tokens = n.split(/\\s+/).filter((t) => t.length >= 3);\n  if (tokens.some((t) => c.includes(t))) return 1;\n  return 0;\n}\nconst p = $('Attach tax').item.json;\nconst res = $input.first().json || {};\nconst list = Array.isArray(res.contacts) ? res.contacts : [];\nconst scored = list.map((c) => ({ c, s: scoreName(p.customer_name, c.contact_name) })).filter((x) => x.s > 0);\nscored.sort((a, b) => b.s - a.s);\nconst best = scored[0] ? scored[0].s : 0;\nconst top = scored.filter((x) => x.s === best);\nif (top.length > 1) {\n  const names = top.map((x) => x.c.contact_name).filter(Boolean).join(', ');\n  return [{ json: { ...p, mode: 'error', audit_text: 'Several Books customers match \"' + p.customer_name + '\": ' + names + '. Say the full name so I bill the right one.' } }];\n}\nif (top.length === 1 && top[0].c.contact_id) {\n  const hit = top[0].c;\n  const email = p.customer_email || emailFrom(hit);\n  return [{ json: { ...p, mode: 'use', customer_id: String(hit.contact_id), customer_email: email, customer_name: hit.contact_name || p.customer_name } }];\n}\nif (!String(p.customer_name || '').trim()) {\n  return [{ json: { mode: 'error', audit_text: 'Invoice needs a customer name (a short name is enough if they are already in Books).' } }];\n}\nconst body = { contact_name: p.customer_name.slice(0, 200), contact_type: 'customer' };\nif (p.customer_email) body.contact_persons = [{ email: p.customer_email, is_primary_contact: true }];\nreturn [{ json: { ...p, mode: 'create', body } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1079,6 +1079,87 @@
       ],
       "id": "bksWrt000000000000pskstp02",
       "name": "Stamp Paystack"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000cerr0001c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "error"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        480
+      ],
+      "id": "bksWrt000000000000cerr0001",
+      "name": "Customer ambiguous"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "bksWrt000000000000verr0001c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "error"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        240
+      ],
+      "id": "bksWrt000000000000verr0001",
+      "name": "Vendor ambiguous"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json || {};\nreturn [{ json: { kind: 'error', audit_text: j.audit_text || 'Could not match a Books contact. Use a fuller name.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        640
+      ],
+      "id": "bksWrt000000000000fail0001",
+      "name": "Lookup failed"
     }
   ],
   "connections": {
@@ -1260,7 +1341,7 @@
       "main": [
         [
           {
-            "node": "Vendor missing",
+            "node": "Vendor ambiguous",
             "type": "main",
             "index": 0
           }
@@ -1344,7 +1425,7 @@
       "main": [
         [
           {
-            "node": "Customer missing",
+            "node": "Customer ambiguous",
             "type": "main",
             "index": 0
           }
@@ -1502,6 +1583,42 @@
         [
           {
             "node": "Stamp Paystack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer ambiguous": {
+      "main": [
+        [
+          {
+            "node": "Lookup failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customer missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vendor ambiguous": {
+      "main": [
+        [
+          {
+            "node": "Lookup failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Vendor missing",
             "type": "main",
             "index": 0
           }

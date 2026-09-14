@@ -22,15 +22,17 @@ import (
 
 func main() {
 	addr := listenAddr()
-	completer, completerErr := llm.New(llm.Config{
-		Provider: llm.ParseProvider(os.Getenv("LLM_PROVIDER")),
-		Model:    os.Getenv("LLM_MODEL"),
-		APIKey:   os.Getenv("LLM_API_KEY"),
-		BaseURL:  os.Getenv("LLM_BASE_URL"),
-		Timeout:  120 * time.Second,
-	})
+	textCfg, visionCfg := llm.ConfigsFromEnv()
+	textCfg.Timeout = 120 * time.Second
+	visionCfg.Timeout = 120 * time.Second
+	stack, completerErr := llm.NewStack(textCfg, visionCfg)
+	completer := stack.Completer
 	if completerErr != nil {
 		log.Printf("llm disabled until env is set: %v", completerErr)
+	} else if stack.VisionModel != "" {
+		log.Printf("llm text=%s/%s vision=%s", stack.Provider, stack.Model, stack.VisionModel)
+	} else {
+		log.Printf("llm text=%s/%s (no vision)", stack.Provider, stack.Model)
 	}
 
 	mux := http.NewServeMux()
@@ -68,7 +70,10 @@ func main() {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":       "ok",
 			"llm_ready":    completerErr == nil,
-			"llm_provider": strings.ToLower(os.Getenv("LLM_PROVIDER")),
+			"llm_provider": string(stack.Provider),
+			"llm_model":    stack.Model,
+			"vision_model": stack.VisionModel,
+			"vision_ready": stack.VisionModel != "",
 			"admin_ready":  adminReady,
 			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm"},
 		})
@@ -101,7 +106,7 @@ func departmentHandler(c llm.Completer, initErr error, fn func(context.Context, 
 			writeJSON(w, http.StatusServiceUnavailable, contract.Fail("LLM is not configured: "+errString(initErr)))
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		r.Body = http.MaxBytesReader(w, r.Body, 8<<20)
 		var req contract.Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, contract.Fail("invalid JSON: "+err.Error()))

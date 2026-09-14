@@ -24,14 +24,11 @@ workers.themobileprof.com {
 		reverse_proxy 127.0.0.1:5678
 	}
 
-	# Editor UI. n8n still thinks it lives at /; assets and /rest stay on the catch-all.
-	redir /n8n /n8n/ 308
-	handle_path /n8n/* {
-		reverse_proxy 127.0.0.1:5678 {
-			header_down -X-Frame-Options
-		}
-		header Content-Security-Policy "frame-ancestors 'self'"
-	}
+	# n8n's SPA reads window.location.pathname. /n8n/ therefore 404s even though
+	# the HTML 200s. Send the editor to routes n8n already knows (/home, /signin).
+	# Do not set N8N_PATH — that would prefix /webhook* and break Meta/Telegram.
+	redir /n8n /home 308
+	redir /n8n/ /home 308
 
 	# n8n REST, static assets, sign-in, websockets.
 	handle {

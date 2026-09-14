@@ -18,7 +18,7 @@ Classify the request into exactly one task_type, then do the work:
 Use Nigerian/West African commercial English.
 
 When task_type is accounts, structured_data MUST include:
-- zoho_action: expense (already paid) | bill (we owe) | invoice (we raise; Paystack link if email present) | lookup (read Books) | preview (hypothetical) | none
+- zoho_action: expense (already paid) | bill (we owe) | invoice (we raise; Books match by name, Paystack if an email exists on the contact or in the message) | lookup (read Books) | preview (hypothetical) | none
 - vendor_name, customer_name, email (only if present in the source; never invent), base_amount (tax-exclusive), currency (NGN|USD|GBP)
 - transaction_type: expense | income | contractor_invoice
 - is_taxable_service, is_professional_service, payee_kind (company|individual|unknown)
@@ -36,7 +36,12 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	if accountsOnly(data) {
 		return HandleAccounts(ctx, c, req)
 	}
-	resp, err := departments.Run(ctx, c, systemPrompt, departments.UserPrompt(req.TaskDescription, data))
+	images := departments.TakeImages(data)
+	user := departments.UserPrompt(req.TaskDescription, data)
+	if len(images) > 0 {
+		user = "An image is attached. If this is a receipt or invoice, read figures from the pixels. Do not invent amounts.\n\n" + user
+	}
+	resp, err := departments.Run(ctx, c, systemPrompt, user, images...)
 	if err != nil {
 		return resp, err
 	}

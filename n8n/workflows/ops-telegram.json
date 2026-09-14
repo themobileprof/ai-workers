@@ -36,7 +36,7 @@
             "typeValidation": "loose",
             "version": 2
           },
-          "combinator": "and",
+          "combinator": "or",
           "conditions": [
             {
               "id": "d7e8f901-2345-4abc-9def-telegrfilt001",
@@ -46,6 +46,26 @@
                 "singleValue": true
               },
               "leftValue": "={{ $json.message.text }}",
+              "rightValue": ""
+            },
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrfilt003",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.message.caption }}",
+              "rightValue": ""
+            },
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrfilt004",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.message.photo }}",
               "rightValue": ""
             }
           ]
@@ -64,7 +84,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth \u2014 sales and support',\n        '/crm \u2014 qualify or update a lead',\n        '/cm or /community \u2014 community manager',\n        '/accounts \u2014 Books: paid expense, vendor bill, invoice (Paystack link if email), or lookup',\n        '/ops \u2014 accounts, legal, grants (real expenses post to Zoho)',\n        '/validate \u2014 product validation',\n        '/approve \u2014 send the pending info@ draft',\n        '/kill \u2014 drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts(?:@\\w+)?\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];"
+        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text && msg.caption) text = String(msg.caption).trim();\nconst hasPhoto = Array.isArray(msg.photo) && msg.photo.length > 0;\nif (!text && !hasPhoto) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth — sales and support',\n        '/crm — qualify or update a lead',\n        '/cm or /community — community manager',\n        '/accounts — Books: expense, bill, invoice (name is enough if they are in Books), lookup, or a receipt photo (we read the figures).',\n        '/ops — accounts, legal, grants (real expenses post to Zoho)',\n        '/validate — product validation',\n        '/approve — send the pending info@ draft',\n        '/kill — drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts(?:@\\w+)?\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (hasPhoto && department === 'growth') {\n  department = 'accounts';\n}\nlet photo_file_id = '';\nif (hasPhoto) {\n  const last = msg.photo[msg.photo.length - 1] || {};\n  photo_file_id = String(last.file_id || '');\n}\nif (hasPhoto && !text) {\n  text = 'Read this receipt or invoice photo. Extract vendor or customer, amount, currency, date, and whether it is already paid. If the image is unreadable, ask for those fields and set zoho_action to none. Do not invent figures.';\n} else if (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || '',\n      photo_file_id\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -132,7 +152,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -495,6 +515,81 @@
       "id": "d7e8f901-2345-4abc-9def-telegrcrm0004",
       "name": "Run CRM upsert",
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrimg00c1",
+                "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $('Prepare task').item.json.context_data.photo_file_id }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        280
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrimg00if",
+      "name": "Has photo"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "fileId": "={{ $('Prepare task').item.json.context_data.photo_file_id }}",
+        "download": true,
+        "additionalFields": {
+          "mimeType": "image/jpeg"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        360
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrimg00dl",
+      "name": "Download photo",
+      "credentials": {
+        "telegramApi": {
+          "id": "GD7WqGif3v6QlSbc",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "telegram-ops-file"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prepare task').first().json;\nconst ctx = Object.assign({}, prep.context_data || {});\nconst item = $input.first();\nconst bins = item.binary || {};\nconst key = Object.keys(bins)[0];\nif (key && bins[key] && bins[key].data) {\n  ctx.has_image = true;\n  ctx.image_mime = bins[key].mimeType || 'image/jpeg';\n  ctx.image_base64 = bins[key].data;\n}\ndelete ctx.photo_file_id;\nreturn [{ json: { ...prep, context_data: ctx } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        360
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrimg00at",
+      "name": "Attach image"
     }
   ],
   "connections": {
@@ -542,7 +637,7 @@
         ],
         [
           {
-            "node": "Call department",
+            "node": "Has photo",
             "type": "main",
             "index": 0
           }
@@ -769,6 +864,46 @@
         [
           {
             "node": "Decide Zoho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has photo": {
+      "main": [
+        [
+          {
+            "node": "Download photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call department",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download photo": {
+      "main": [
+        [
+          {
+            "node": "Attach image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach image": {
+      "main": [
+        [
+          {
+            "node": "Call department",
             "type": "main",
             "index": 0
           }

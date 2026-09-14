@@ -19,13 +19,13 @@ Return the department JSON envelope. structured_data MUST contain:
 - zoho_action: one of
   - expense — already-paid spend (receipt, "I paid", card/Paystack debit). Petty cash in Books.
   - bill — we were invoiced and still owe (contractor/vendor invoice on credit)
-  - invoice — we are billing a customer (n8n marks it sent and sends a Paystack link when an email is present)
+  - invoice — we are billing a customer. n8n matches them in Books by name (a short name is enough). Paystack uses the email stored on that Books contact, or an email in this message. NEVER invent an address.
   - lookup — cash position, unpaid invoices/bills, recent spend, P&L
   - preview — hypothetical tax question, "do not record"
-  - none — not a Books document
-- vendor_name (string, party we pay)
-- customer_name (string, party who pays us; for invoices)
-- email (string, customer email if the source contains one; NEVER invent an address)
+  - none — not a Books document, or a photo/receipt with no usable figures
+- vendor_name (string, party we pay; a short or partial name is fine)
+- customer_name (string, party who pays us; a short or partial name is fine — n8n resolves it in Books)
+- email (string, only if the source contains one; NEVER invent; omit if unknown — Books may already have it)
 - base_amount (number, tax-exclusive, a single currency)
 - currency (NGN, USD, or GBP; default NGN)
 - transaction_type (expense | income | contractor_invoice)
@@ -39,13 +39,20 @@ Return the department JSON envelope. structured_data MUST contain:
 - lookup (optional: overview | unpaid | pnl | recent)
 - notes (short classifier comment with NO calculated figures)
 
+If an image is attached, read vendor/customer, amounts, dates, currency, and paid vs unpaid from the pixels. Caption text is extra context, not a substitute for the image. If the image is blurry or has no usable figures, set zoho_action to none and ask — NEVER invent amounts.
+
 task_type must be "accounts".
 output_text: one short line with no tax arithmetic.
 Do not include vat_amount, wht_amount, gross, or net.`
 
 func HandleAccounts(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	data := contract.ContextObject(req.ContextData)
-	resp, err := departments.Run(ctx, c, accountsExtractPrompt, departments.UserPrompt(req.TaskDescription, data))
+	images := departments.TakeImages(data)
+	user := departments.UserPrompt(req.TaskDescription, data)
+	if len(images) > 0 {
+		user = "An image is attached (receipt or invoice). Read figures from the image. Do not invent amounts.\n\n" + user
+	}
+	resp, err := departments.Run(ctx, c, accountsExtractPrompt, user, images...)
 	if resp.StructuredData == nil {
 		resp.StructuredData = map[string]any{}
 	}
