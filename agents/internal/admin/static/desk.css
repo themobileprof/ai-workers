@@ -341,14 +341,7 @@ a.ghost, .ghost {
 .person.add { border-style: dashed; }
 .person-head { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.8rem; }
 .role { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.75rem; color: var(--brass); }
-.stamp {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.7rem;
-  color: var(--stamp);
-  border: 1px solid var(--stamp);
-  padding: 0 0.3rem;
-  transform: rotate(-6deg);
-}
+.roster .stamp { transform: none; display: inline-block; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
 fieldset { border: 1px solid rgba(201, 184, 154, 0.25); margin: 0.8rem 0; }
 legend { color: var(--brass); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -460,6 +453,15 @@ pre.json {
   color: #efe6d2;
   border: 1px solid rgba(201, 184, 154, 0.22);
 }
+.proposal {
+  border: 1px dashed var(--brass);
+  padding: 1rem 1.1rem 1.15rem;
+  margin: 0 0 1.5rem;
+  background: rgba(26, 163, 224, 0.08);
+  max-width: 44rem;
+}
+.proposal h3 { margin: 0 0 0.4rem; font-size: 1.35rem; }
+.proposal .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.8rem 0 1rem; }
 .later {
   border: 1px dashed var(--stamp);
   padding: 0.95rem 1rem 0.85rem;

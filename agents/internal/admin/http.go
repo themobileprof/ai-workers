@@ -14,6 +14,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
 //go:embed templates/*.html static/*
@@ -25,7 +28,11 @@ type Server struct {
 	cookieSecure bool
 	pages        map[string]*template.Template
 	static       http.Handler
+	place        PlaceFunc
 }
+
+// PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
+type PlaceFunc func(ctx context.Context, req contract.Request) (contract.Response, error)
 
 type pageData struct {
 	Title         string
@@ -46,6 +53,14 @@ type pageData struct {
 	Docs          []DocMeta
 	Doc           *DocPage
 	Integrations  []Integration
+	Projects      []Project
+	Project       *Project
+	Stages        []stageSpec
+	Seats         []string
+	Roles         []string
+	Roster        []User
+	Journeys      []journeys.Journey
+	CanPlace      bool
 }
 
 type kv struct {
@@ -58,11 +73,13 @@ func New(store *Store, internalToken string) (*Server, error) {
 		return nil, err
 	}
 	funcMap := template.FuncMap{
-		"has":       hasStoredCap,
-		"canRemove": canRemove,
+		"has":        hasStoredCap,
+		"canRemove":  canRemove,
+		"stageLabel": stageLabel,
+		"gateLabel":  gateLabel,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -84,6 +101,12 @@ func New(store *Store, internalToken string) (*Server, error) {
 	}, nil
 }
 
+func (s *Server) WithPlacer(fn PlaceFunc) {
+	if s != nil {
+		s.place = fn
+	}
+}
+
 func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/static/", s.serveStatic)
 	mux.HandleFunc("GET /admin/login", s.loginGET)
@@ -91,6 +114,18 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/logout", s.logout)
 	mux.HandleFunc("GET /admin", s.home)
 	mux.HandleFunc("GET /admin/", s.home)
+	mux.HandleFunc("GET /admin/projects", s.projectsGET)
+	mux.HandleFunc("GET /admin/projects/new", s.projectNewGET)
+	mux.HandleFunc("GET /admin/projects/{id}", s.projectEditGET)
+	mux.HandleFunc("POST /admin/projects", s.projectsPOST)
+	mux.HandleFunc("POST /admin/projects/{id}", s.projectSave)
+	mux.HandleFunc("POST /admin/projects/{id}/delete", s.projectDelete)
+	mux.HandleFunc("POST /admin/projects/{id}/members", s.projectMemberAdd)
+	mux.HandleFunc("POST /admin/projects/{id}/members/{uid}/delete", s.projectMemberRemove)
+	mux.HandleFunc("POST /admin/projects/{id}/place", s.projectPlace)
+	mux.HandleFunc("POST /admin/projects/{id}/proposal/accept", s.projectProposalAccept)
+	mux.HandleFunc("POST /admin/projects/{id}/proposal/reject", s.projectProposalReject)
+	mux.HandleFunc("POST /admin/projects/{id}/proposal/amend", s.projectProposalAmend)
 	mux.HandleFunc("GET /admin/users", s.usersGET)
 	mux.HandleFunc("GET /admin/users/new", s.userNewGET)
 	mux.HandleFunc("GET /admin/users/{id}", s.userEditGET)
@@ -106,6 +141,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
+	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)
+	mux.HandleFunc("GET /internal/v1/journeys", s.internalJourneys)
+	mux.HandleFunc("POST /internal/v1/projects/{id}/proposal", s.internalProposal)
 }
 
 func RegisterPublic(mux *http.ServeMux) {
@@ -222,25 +260,6 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
-func (s *Server) home(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
-	if u == nil {
-		return
-	}
-	users, _ := s.store.ListUsers(r.Context())
-	allow, _ := s.store.WhatsAppAccounts(r.Context())
-	settings, _ := s.store.Settings(r.Context())
-	s.render(w, "home", pageData{
-		Title:        "Board",
-		Nav:          "home",
-		User:         u,
-		Users:        users,
-		Allowlist:    allow,
-		UserCount:    len(users),
-		SettingCount: len(settings),
-	})
-}
-
 func (s *Server) usersGET(w http.ResponseWriter, r *http.Request) {
 	u := s.requireAdmin(w, r)
 	if u == nil {
@@ -248,7 +267,7 @@ func (s *Server) usersGET(w http.ResponseWriter, r *http.Request) {
 	}
 	users, err := s.store.ListUsers(r.Context())
 	owners, _ := s.store.CountOwners(r.Context())
-	data := pageData{Title: "People", Nav: "users", User: u, Users: users, OwnerCount: owners}
+	data := pageData{Title: "People", Nav: "users", User: u, Users: users, OwnerCount: owners, Roles: deskRoles()}
 	if err != nil {
 		data.Error = err.Error()
 	}
@@ -260,7 +279,7 @@ func (s *Server) userNewGET(w http.ResponseWriter, r *http.Request) {
 	if u == nil {
 		return
 	}
-	s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true})
+	s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles()})
 }
 
 func (s *Server) userEditGET(w http.ResponseWriter, r *http.Request) {
@@ -278,7 +297,7 @@ func (s *Server) userEditGET(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	s.render(w, "users", pageData{Title: "Amend " + person.Name, Nav: "users", User: u, Editing: &person, OwnerCount: s.owners(r.Context())})
+	s.render(w, "users", pageData{Title: "Amend " + person.Name, Nav: "users", User: u, Editing: &person, OwnerCount: s.owners(r.Context()), Roles: deskRoles()})
 }
 
 func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
@@ -295,7 +314,7 @@ func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err := s.store.CreateUser(r.Context(), r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), r.Form["cap"])
 	if err != nil {
-		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Error: err.Error()})
+		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
@@ -326,11 +345,11 @@ func (s *Server) userSave(w http.ResponseWriter, r *http.Request) {
 	}
 	owners, _ := s.store.CountOwners(r.Context())
 	if err := lastOwnerLocked(person, r.FormValue("role"), active, owners); err != nil {
-		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Error: err.Error()})
+		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
 	if err := s.store.UpdateUser(r.Context(), id, r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), active, r.Form["cap"]); err != nil {
-		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Error: err.Error()})
+		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
@@ -352,7 +371,7 @@ func (s *Server) userDelete(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.DeleteUser(r.Context(), u, id); err != nil {
 		users, _ := s.store.ListUsers(r.Context())
 		owners, _ := s.store.CountOwners(r.Context())
-		s.render(w, "users", pageData{Title: "People", Nav: "users", User: u, Users: users, OwnerCount: owners, Error: err.Error()})
+		s.render(w, "users", pageData{Title: "People", Nav: "users", User: u, Users: users, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)

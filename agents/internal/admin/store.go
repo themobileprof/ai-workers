@@ -96,7 +96,10 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at TIMESTAMPTZ NOT NULL
 );
 `)
-	return err
+	if err != nil {
+		return err
+	}
+	return s.migrateProjects(ctx)
 }
 
 func (s *Store) Seed(ctx context.Context, name, phone, email, password string) error {
@@ -118,6 +121,11 @@ func (s *Store) Seed(ctx context.Context, name, phone, email, password string) e
 	}
 	for k, v := range defaultSettings() {
 		if err := s.seedSetting(ctx, k, v); err != nil {
+			return err
+		}
+	}
+	for _, p := range defaultProjects() {
+		if err := s.seedProject(ctx, p); err != nil {
 			return err
 		}
 	}
@@ -484,6 +492,9 @@ func friendlyDBErr(err error) error {
 	msg := err.Error()
 	if strings.Contains(msg, "users_phone_uq") {
 		return errors.New("that phone is already on the roster")
+	}
+	if strings.Contains(msg, "projects_slug") {
+		return errors.New("that project slug is already in use")
 	}
 	return err
 }

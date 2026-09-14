@@ -1,4 +1,4 @@
-<p class="lede">Engineering lab. The HTTP route is live. <code>/validate</code> already reaches it. n8n does <strong>not</strong> persist hypotheses, intern missions, or GitHub payloads yet — so treat validation as a one-shot chat until that loop is wired.</p>
+<p class="lede">Engineering lab. The HTTP route is live. <code>/validate</code> already reaches it. The desk <a href="/admin/projects">Projects</a> book is the bet. Journey placement proposes a gate; only Accept / Amend / Reject on the desk writes the stamp. Hypotheses and intern missions are still one-shot until that loop is stored on the project row.</p>
 
 <ol class="steps">
   <li>Telegram or WhatsApp: <code>/validate Generate hypotheses for a WhatsApp books assistant for Lagos mechanics.</code></li>
@@ -6,7 +6,7 @@
   <li>Read <code>structured_data</code> in the n8n execution. Today it is not stored for the next turn.</li>
 </ol>
 
-<p class="hint">Actions: <code>generate_hypotheses</code> · <code>generate_plan</code> · <code>generate_mission</code> · <code>generate_interview_guide</code> · <code>analyse_evidence</code> · <code>update_hypothesis</code> · <code>recommend_next_experiment</code> · <code>generate_decision_report</code>.</p>
+<p class="hint">Actions: <code>generate_hypotheses</code> · <code>generate_plan</code> · <code>generate_mission</code> · <code>generate_interview_guide</code> · <code>analyse_evidence</code> · <code>update_hypothesis</code> · <code>recommend_next_experiment</code> · <code>generate_decision_report</code> · <code>place_on_journey</code>.</p>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · hypotheses (prefix live)</p>
@@ -21,6 +21,24 @@
   }
 }</pre>
   <p class="expect"><code>task_type</code> product_validation, <code>action</code> generate_hypotheses, <code>prompt_version</code> v1. Reply is a proposal only. Behaviour beats opinions. Chat text is the only memory today.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · place on a journey (proposal only)</p>
+  <p class="you-say">Desk: open the project → <strong>Ask placement</strong>. Or Telegram: <code>/validate Place Mechazone on a journey</code> with <code>context_data.project</code>.</p>
+  <pre class="json">{
+  "task_description": "Place Mechazone on a catalog journey and gate. Do not write the committed stamp.",
+  "context_data": {
+    "channel": "desk",
+    "action": "place_on_journey",
+    "project": {
+      "slug": "mechazone",
+      "committed_journey": "shop_ledger",
+      "committed_gate": "design_partner"
+    }
+  }
+}</pre>
+  <p class="expect"><code>suggested_journey</code> and <code>suggested_gate</code> are catalog IDs. <code>cannot_write_stamp</code> true. Desk stores a proposal. Accept moves the stamp; Reject leaves it. n8n may <code>POST /internal/v1/projects/{id}/proposal</code> — that still does not commit.</p>
 </section>
 
 <section class="later">

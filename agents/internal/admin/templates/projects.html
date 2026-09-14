@@ -1,0 +1,253 @@
+{{define "content"}}
+{{if .Adding}}
+<section class="hero">
+  <p class="kicker">Incubation</p>
+  <h2>Open a project</h2>
+  <p class="lede"><a class="quiet" href="/admin/projects">Back to the book</a>. This is a bet under TheMobileProf Technologies, not a second company. Accounts and Legal stay on the parent.</p>
+</section>
+<form method="post" action="/admin/projects" class="settings">
+  <label>Name
+    <span class="hint">Working title. Customers still buy from TheMobileProf until you spin out.</span>
+    <input name="name" required>
+  </label>
+  <label>Slug
+    <span class="hint">Optional. Used in n8n <code>context_data</code> later. Blank becomes the name.</span>
+    <input name="slug" placeholder="mechanic-books">
+  </label>
+  <label>One-liner
+    <span class="hint">Who pays, for what pain. Required.</span>
+    <input name="one_liner" required placeholder="Lagos mechanic workshops pay for a WhatsApp books clerk.">
+  </label>
+  <label>Public URL
+    <span class="hint">The property people already type. Blank until there is one.</span>
+    <input name="url" placeholder="https://momlaunchpad.com">
+  </label>
+  <label>Stage
+    <span class="hint">Parked or killed override the gate. Otherwise stage follows the committed gate.</span>
+    <select name="stage">
+      {{range .Stages}}
+      <option value="{{.ID}}" {{if eq .ID "idea"}}selected{{end}}>{{.Label}} — {{.Help}}</option>
+      {{end}}
+    </select>
+  </label>
+  <label>Journey and gate
+    <span class="hint">Committed stamp. The agent may only propose; Accept moves this.</span>
+    <select name="placement">
+      <option value="">unset</option>
+      {{range $j := .Journeys}}
+      {{range $j.Gates}}
+      <option value="{{$j.ID}}/{{.ID}}">{{$j.Name}} — {{.Label}}</option>
+      {{end}}
+      {{end}}
+    </select>
+  </label>
+  <label>This week
+    <span class="hint">What the assigned human should finish. Cadence will nag from this later.</span>
+    <input name="notes" placeholder="Talk to five workshop owners on Ikeja.">
+  </label>
+  <div class="actions">
+    <button type="submit">Open project</button>
+    <a class="ghost" href="/admin/projects">Cancel</a>
+  </div>
+</form>
+{{else if .Project}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Incubation</p>
+    <h2>{{.Project.Name}}</h2>
+    <p class="lede">{{.Project.OneLiner}}</p>
+  </div>
+  <span class="stamp {{.Project.StageStamp}}">{{.Project.StageLabel}}</span>
+</section>
+{{if .Project.Proposal}}
+<section class="proposal">
+  <p class="kicker">Open proposal</p>
+  <h3>Agent has not moved the stamp</h3>
+  <p>{{.Project.Proposal.JourneyLabel}} → {{.Project.Proposal.GateLabel}} {{if .Project.Proposal.Confidence}}({{.Project.Proposal.Confidence}}%){{end}}</p>
+  <p>{{.Project.Proposal.Mission}}</p>
+  {{if .Project.Proposal.Rationale}}<p class="hint">{{.Project.Proposal.Rationale}}</p>{{end}}
+  <div class="actions">
+    <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/accept">
+      <button type="submit">Accept</button>
+    </form>
+    <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/reject">
+      <button class="ghost" type="submit">Reject</button>
+    </form>
+  </div>
+  <form method="post" action="/admin/projects/{{.Project.ID}}/proposal/amend" class="settings">
+    <label>Amend then stamp
+      <select name="placement" required>
+        {{range $j := $.Journeys}}
+        {{range $j.Gates}}
+        <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Proposal.Journey $j.ID) (eq $.Project.Proposal.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
+        {{end}}
+        {{end}}
+      </select>
+    </label>
+    <label>This week
+      <input name="mission" value="{{.Project.Proposal.Mission}}">
+    </label>
+    <button type="submit">Amend and commit</button>
+  </form>
+</section>
+{{end}}
+{{if .CanPlace}}
+<form method="post" action="/admin/projects/{{.Project.ID}}/place" class="person add">
+  <p class="hint">Ask placement. Writes a proposal only. Suggest evidence or a correction in the box.</p>
+  <label>Feedback for the agent
+    <input name="human_feedback" placeholder="We already have 12 paid Academy seats this month.">
+  </label>
+  <div class="actions">
+    <button type="submit">Ask placement</button>
+  </div>
+</form>
+{{else}}
+<p class="hint">Placement agent is off until the LLM env is set on this process.</p>
+{{end}}
+<form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
+  <label>Name
+    <input name="name" value="{{.Project.Name}}" required>
+  </label>
+  <label>Slug
+    <span class="hint"><code>{{.Project.Slug}}</code> is what n8n will send as <code>project</code>.</span>
+    <input name="slug" value="{{.Project.Slug}}" required>
+  </label>
+  <label>One-liner
+    <input name="one_liner" value="{{.Project.OneLiner}}" required>
+  </label>
+  <label>Public URL
+    <input name="url" value="{{.Project.URL}}" placeholder="https://">
+  </label>
+  <label>Stage
+    <select name="stage">
+      {{range $.Stages}}
+      <option value="{{.ID}}" {{if eq $.Project.Stage .ID}}selected{{end}}>{{.Label}} — {{.Help}}</option>
+      {{end}}
+    </select>
+  </label>
+  <label>Committed journey and gate
+    <span class="hint">Saving a different pair here is a human stamp and drops an open proposal.</span>
+    <select name="placement">
+      <option value="">unset</option>
+      {{range $j := $.Journeys}}
+      {{range $j.Gates}}
+      <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Journey $j.ID) (eq $.Project.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
+      {{end}}
+      {{end}}
+    </select>
+  </label>
+  <label>This week
+    <input name="notes" value="{{.Project.Notes}}">
+  </label>
+  <div class="actions">
+    <button type="submit">Save project</button>
+    <a class="ghost" href="/admin/projects">Back</a>
+  </div>
+</form>
+
+<section class="settings-block">
+  <h3>Face of this project</h3>
+  <p class="hint">Cofounder is the public face. Assistant helps that person. Owner and BDM see every project without sitting here. Seats are not directors of TheMobileProf.</p>
+  {{if .Project.Members}}
+  <div class="ledger">
+  <table class="roster">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Seat</th>
+        <th>Office role</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Project.Members}}
+      <tr>
+        <td><strong>{{.Name}}</strong>{{if .Phone}}<br><code>{{.Phone}}</code>{{end}}</td>
+        <td><span class="role">{{.Seat}}</span></td>
+        <td>{{.Role}}</td>
+        <td class="row-actions">
+          <form class="inline" method="post" action="/admin/projects/{{$.Project.ID}}/members/{{.UserID}}/delete" onsubmit="return confirm('Take this person off the project?');">
+            <button class="quiet danger-text" type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{else}}
+  <p class="hint">No face yet — you or the BDM are carrying it.</p>
+  {{end}}
+  <form method="post" action="/admin/projects/{{.Project.ID}}/members" class="person add">
+    <div class="fields">
+      <label>Person
+        <select name="user_id" required>
+          <option value="">Choose…</option>
+          {{range .Roster}}
+          <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
+          {{end}}
+        </select>
+      </label>
+      <label>Seat
+        <select name="seat">
+          {{range $.Seats}}
+          <option value="{{.}}">{{.}}</option>
+          {{end}}
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit">Seat them</button>
+    </div>
+  </form>
+</section>
+<form class="person-delete" method="post" action="/admin/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Strike this project from the book? Hypotheses are not stored yet, but the name and seats go.');">
+  <button class="danger" type="submit">Remove project</button>
+</form>
+{{else}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Incubation</p>
+    <h2>Projects</h2>
+    <p class="lede">Bets under one registered company. Stage is the portfolio stamp. The gate is this week’s proof. Fundable means paying customers, not a deck.</p>
+  </div>
+  <a class="ghost" href="/admin/projects/new">Open a project</a>
+</section>
+{{if .Projects}}
+<div class="ledger">
+<table class="roster">
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Gate</th>
+      <th>This week</th>
+      <th>Face</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Projects}}
+    <tr {{if or (eq .Stage "killed") (eq .Stage "parked")}}class="dim"{{end}}>
+      <td>
+        <strong>{{.Name}}</strong><br>
+        <span class="hint">{{.OneLiner}}</span>
+        {{if .URL}}<br><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a>{{end}}
+      </td>
+      <td>
+        <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+        {{if .Gate}}<br><span class="hint">{{.JourneyLabel}}: {{.GateLabel}}</span>{{end}}
+        {{if .Proposal}}<br><span class="pill">proposal</span>{{end}}
+      </td>
+      <td>{{if .Notes}}{{.Notes}}{{else}}<span class="hint">none</span>{{end}}</td>
+      <td>{{if .MemberNames}}{{.MemberNames}}{{else}}<span class="hint">you / BDM</span>{{end}}</td>
+      <td class="row-actions"><a class="quiet" href="/admin/projects/{{.ID}}">Amend</a></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{else}}
+<p class="hint">No projects yet. Open one when an idea is worth a one-liner.</p>
+{{end}}
+{{end}}
+{{end}}

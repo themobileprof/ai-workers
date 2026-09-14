@@ -11,11 +11,11 @@
     <label>Phone<input name="phone" placeholder="234…"></label>
     <label>Email<input name="email" type="email"></label>
     <label>Role
+      <span class="hint">owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
       <select name="role">
-        <option value="accounts">accounts</option>
-        <option value="operator">operator</option>
-        <option value="viewer">viewer</option>
-        <option value="owner">owner</option>
+        {{range .Roles}}
+        <option value="{{.}}" {{if eq . "cofounder"}}selected{{end}}>{{.}}</option>
+        {{end}}
       </select>
     </label>
     <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
@@ -43,11 +43,11 @@
     <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
     <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
     <label>Role
+      <span class="hint">owner and bdm sit on the parent. Seat a cofounder or assistant on the project card.</span>
       <select name="role">
-        <option value="owner" {{if eq .Editing.Role "owner"}}selected{{end}}>owner</option>
-        <option value="accounts" {{if eq .Editing.Role "accounts"}}selected{{end}}>accounts</option>
-        <option value="operator" {{if eq .Editing.Role "operator"}}selected{{end}}>operator</option>
-        <option value="viewer" {{if eq .Editing.Role "viewer"}}selected{{end}}>viewer</option>
+        {{range $.Roles}}
+        <option value="{{.}}" {{if eq $.Editing.Role .}}selected{{end}}>{{.}}</option>
+        {{end}}
       </select>
     </label>
     <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
@@ -74,7 +74,7 @@
   <div>
     <p class="kicker">Roster</p>
     <h2>People and permissions</h2>
-    <p class="lede">Names on the book. Open a card only when something needs changing.</p>
+    <p class="lede">Names on the book. Office rank is owner / BDM / cofounder / assistant. Seat cofounders on a <a href="/admin/projects">project</a>. Open a card only when something needs changing.</p>
   </div>
   <a class="ghost" href="/admin/users/new">Add person</a>
 </section>

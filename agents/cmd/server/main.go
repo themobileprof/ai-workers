@@ -57,6 +57,12 @@ func main() {
 				store.Close()
 				admin.RegisterUnavailable(mux)
 			} else {
+				desk.WithPlacer(func(ctx context.Context, req contract.Request) (contract.Response, error) {
+					if completerErr != nil || completer == nil {
+						return contract.Fail("LLM is not configured"), completerErr
+					}
+					return productdev.Handle(ctx, completer, req)
+				})
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")

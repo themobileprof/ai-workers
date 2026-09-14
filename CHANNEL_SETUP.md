@@ -74,10 +74,11 @@ Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops`) are downloaded and O
 
 ### Company desk (admin UI)
 
-Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
+Source of truth for **projects**, people, WhatsApp accounts rights, and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
 
 - Postgres database/role **`aiworkers`** (never the n8n database). Bootstrap: `scripts/bootstrap-admin-db.sh` on the VM.
-- Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
+- **Projects** (`/admin/projects`) is the incubation book: name, one-liner, public URL, journey/gate (playbook stamp), stage, this-week note, and seats (`cofounder`, `assistant`). Seeded bets: MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone. **Ask placement** writes a proposal only; Accept / Amend / Reject on the desk moves the stamp. The worker cannot commit. n8n: `GET /internal/v1/projects`, `GET /internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal` (`X-Internal-Token`). Hypotheses are not stored yet.
+- People roles: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), plus leftover `accounts` / `operator` / `viewer`. Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
 - **Tools** (`/admin/integrations`) is the inventory of every third-party system. Add a row in `agents/internal/admin/integrations.go` when a vendor is wired.

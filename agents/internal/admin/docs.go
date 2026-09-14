@@ -103,7 +103,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Engineering lab",
 		Path:     "POST /departments/product-dev",
 		Wire:     "partial",
-		Summary:  "/validate reaches the worker. n8n does not yet keep project state, intern missions, or GitHub QA.",
+		Summary:  "/validate reaches the worker. Journey placement proposes; the desk Accepts. Hypotheses and intern missions are still one-shot.",
 		Prefixes: []string{"/validate"},
 	},
 }

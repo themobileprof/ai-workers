@@ -23,6 +23,17 @@ func TestValidationActionIgnoredForQA(t *testing.T) {
 	}
 }
 
+func TestValidationActionPlaceOnJourney(t *testing.T) {
+	action, ok := validationAction(map[string]any{"action": "place_on_journey"}, "whatever")
+	if !ok || action != "place_on_journey" {
+		t.Fatalf("got %q ok=%v", action, ok)
+	}
+	action, ok = validationAction(map[string]any{"project": map[string]any{"slug": "mechazone"}}, "Place this bet")
+	if !ok || action != "place_on_journey" {
+		t.Fatalf("project context got %q ok=%v", action, ok)
+	}
+}
+
 func TestValidationPromptsEmbedded(t *testing.T) {
 	for action := range validationFiles {
 		if _, err := validationPrompts.ReadFile("prompts/" + validationFiles[action]); err != nil {

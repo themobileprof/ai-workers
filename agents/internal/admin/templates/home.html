@@ -1,10 +1,14 @@
 {{define "content"}}
 <section class="hero">
   <p class="kicker">Tonight’s board</p>
-  <h2>Who can touch the books</h2>
-  <p class="lede">n8n still routes WhatsApp. This desk holds the allowlist, Zoho/Paystack account ids, and the vendor list under Tools.</p>
+  <h2>Which bets are moving</h2>
+  <p class="lede">Projects live under TheMobileProf Technologies. Parent workers (Accounts, Legal) stay on the company. The face of each bet sits on the project.</p>
 </section>
 <div class="grid-3">
+  <article class="stat">
+    <p class="kicker">Projects</p>
+    <p class="num">{{len .Projects}}</p>
+  </article>
   <article class="stat">
     <p class="kicker">People</p>
     <p class="num">{{.UserCount}}</p>
@@ -13,11 +17,32 @@
     <p class="kicker">WhatsApp accounts</p>
     <p class="num">{{len .Allowlist}}</p>
   </article>
-  <article class="stat">
-    <p class="kicker">Settings keys</p>
-    <p class="num">{{.SettingCount}}</p>
-  </article>
 </div>
+<section>
+  <h3>Projects</h3>
+  <p class="hint">Stage is the agenda. Fundable means paying customers. <a class="quiet" href="/admin/projects">Open the book</a>.</p>
+  {{if .Projects}}
+  <ul class="doc-index">
+    {{range .Projects}}
+    <li class="doc-card">
+      <div class="doc-card-head">
+        <p class="kicker">{{.Slug}}</p>
+        <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+      </div>
+      <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+      <p>{{.OneLiner}}</p>
+      {{if .Gate}}<p class="path">{{.JourneyLabel}} · {{.GateLabel}}</p>{{end}}
+      {{if .Proposal}}<p class="hint">Open proposal — stamp not moved.</p>{{end}}
+      {{if .URL}}<p class="path"><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a></p>{{end}}
+      {{if .Notes}}<p class="path">This week: {{.Notes}}</p>{{end}}
+      <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
+  {{end}}
+</section>
 <section>
   <h3>Live allowlist</h3>
   <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>

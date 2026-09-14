@@ -24,6 +24,7 @@
     </a>
     <nav>
       <a href="/admin/" {{if eq .Nav "home"}}class="on"{{end}}>Board</a>
+      <a href="/admin/projects" {{if eq .Nav "projects"}}class="on"{{end}}>Projects</a>
       <a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>
       <a href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>Defaults</a>
       <a href="/admin/integrations" {{if eq .Nav "tools"}}class="on"{{end}}>Tools</a>

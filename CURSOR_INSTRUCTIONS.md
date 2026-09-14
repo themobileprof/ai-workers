@@ -132,7 +132,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts` (and settings) with `X-Internal-Token`.
+The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal` with `X-Internal-Token`. Proposal POST does not commit the stamp.
 
 ### Layout
 
@@ -148,7 +148,8 @@ agents/
   internal/departments/crm/
   internal/departments/productdev/
   internal/departments/community/
-  internal/admin/          # company desk HTML + store (separate Postgres). Tools catalog + accounts Defaults.
+  internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
+  internal/admin/          # company desk HTML + store. Tools, Defaults, projects + stamps.
                            # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
 
@@ -168,7 +169,7 @@ agents/
 5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
-    - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL). n8n holds project state; the worker only proposes. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`.
+    - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL) plus **journey placement**. Playbooks live in `internal/journeys`. The worker only proposes `suggested_journey` / `suggested_gate` / `mission`. The desk commits. Hypothesis persistence is not wired yet. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`, `place_on_journey`.
 
 ## 5. RECOMMENDED TECH STACK SPECIFICATIONS
 
