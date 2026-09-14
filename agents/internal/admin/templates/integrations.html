@@ -1,0 +1,31 @@
+{{define "content"}}
+<section class="hero">
+  <p class="kicker">Vendors</p>
+  <h2>Third-party tools</h2>
+  <p class="lede">Every system this office talks to. Add a row in <code>agents/internal/admin/integrations.go</code> the day you wire a new one — the test suite fails if compose, <code>.env.example</code>, or an n8n credential shows up without a row. Secrets stay in the VM <code>.env</code> or n8n Credentials, never git.</p>
+</section>
+{{range .Integrations}}
+<article class="tool">
+  <div class="doc-card-head">
+    <div>
+      <p class="kicker">{{.ID}}</p>
+      <h3>{{.Name}}</h3>
+    </div>
+    <span class="stamp {{if eq .Status "live"}}ok{{else if eq .Status "code-ready"}}brass{{else}}dark{{end}}">{{.Status}}</span>
+  </div>
+  {{if .URL}}<p class="path"><a href="{{.URL}}">{{.URL}}</a></p>{{end}}
+  <p>{{.Role}}</p>
+  <p class="hint">{{.Where}}</p>
+  <p class="hint">Secrets: {{.Secrets}}</p>
+  {{if .DeskKeys}}
+  <p class="prefixes">{{range .DeskKeys}}<span class="pill">{{.}}</span>{{end}}</p>
+  {{end}}
+  {{if .N8nCredNames}}
+  <p class="hint">n8n credentials: {{range $i, $n := .N8nCredNames}}{{if $i}}, {{end}}<code>{{$n}}</code>{{end}}</p>
+  {{end}}
+  {{if .ComposeEnvs}}
+  <p class="hint">Env: {{range $i, $n := .ComposeEnvs}}{{if $i}}, {{end}}<code>{{$n}}</code>{{end}}</p>
+  {{end}}
+</article>
+{{end}}
+{{end}}

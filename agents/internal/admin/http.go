@@ -28,22 +28,24 @@ type Server struct {
 }
 
 type pageData struct {
-	Title        string
-	Nav          string
-	User         *User
-	Flash        string
-	Error        string
-	Users        []User
-	Editing      *User
-	Adding       bool
-	Amend        bool
-	OwnerCount   int
-	Allowlist    []string
-	UserCount    int
-	SettingCount int
-	Settings     []kv
-	Docs         []DocMeta
-	Doc          *DocPage
+	Title         string
+	Nav           string
+	User          *User
+	Flash         string
+	Error         string
+	Users         []User
+	Editing       *User
+	Adding        bool
+	Amend         bool
+	OwnerCount    int
+	Allowlist     []string
+	UserCount     int
+	SettingCount  int
+	Settings      []kv
+	SettingGroups []SettingGroupView
+	Docs          []DocMeta
+	Doc           *DocPage
+	Integrations  []Integration
 }
 
 type kv struct {
@@ -60,7 +62,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"canRemove": canRemove,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -98,6 +100,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/settings", s.settingsGET)
 	mux.HandleFunc("GET /admin/settings/edit", s.settingsEditGET)
 	mux.HandleFunc("POST /admin/settings", s.settingsPOST)
+	mux.HandleFunc("GET /admin/integrations", s.integrationsGET)
 	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
 	mux.HandleFunc("GET /admin/docs", s.docsIndex)
 	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
@@ -361,7 +364,7 @@ func (s *Server) settingsGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	raw, err := s.store.Settings(r.Context())
-	data := pageData{Title: "Defaults", Nav: "settings", User: u, Settings: toKV(raw)}
+	data := pageData{Title: "Defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw)}
 	if err != nil {
 		data.Error = err.Error()
 	}
@@ -374,11 +377,19 @@ func (s *Server) settingsEditGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	raw, err := s.store.Settings(r.Context())
-	data := pageData{Title: "Amend defaults", Nav: "settings", User: u, Settings: toKV(raw), Amend: true}
+	data := pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw), Amend: true}
 	if err != nil {
 		data.Error = err.Error()
 	}
 	s.render(w, "settings", data)
+}
+
+func (s *Server) integrationsGET(w http.ResponseWriter, r *http.Request) {
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	s.render(w, "integrations", pageData{Title: "Tools", Nav: "tools", User: u, Integrations: allIntegrations()})
 }
 
 func (s *Server) settingsPOST(w http.ResponseWriter, r *http.Request) {
@@ -393,13 +404,17 @@ func (s *Server) settingsPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
+	raw, _ := s.store.Settings(r.Context())
+	allowed := catalogSettingKeys()
+	for k := range raw {
+		allowed[k] = true
+	}
 	for k, vs := range r.Form {
-		if k == "" || len(vs) == 0 {
+		if k == "" || len(vs) == 0 || !allowed[k] {
 			continue
 		}
 		if err := s.store.SetSetting(r.Context(), k, vs[0]); err != nil {
-			raw, _ := s.store.Settings(r.Context())
-			s.render(w, "settings", pageData{Title: "Amend defaults", Nav: "settings", User: u, Settings: toKV(raw), Amend: true, Error: err.Error()})
+			s.render(w, "settings", pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw), Amend: true, Error: err.Error()})
 			return
 		}
 	}

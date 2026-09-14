@@ -116,14 +116,7 @@ func (s *Store) Seed(ctx context.Context, name, phone, email, password string) e
 			return err
 		}
 	}
-	defaults := map[string]any{
-		"company.name":                    "TheMobileProf Technologies",
-		"company.timezone":                "Africa/Lagos",
-		"zoho.organization_id":            "939049468",
-		"zoho.paid_through_account_id":    "1300646000000000361",
-		"zoho.default_expense_account_id": "1300646000000000460",
-	}
-	for k, v := range defaults {
+	for k, v := range defaultSettings() {
 		if err := s.seedSetting(ctx, k, v); err != nil {
 			return err
 		}

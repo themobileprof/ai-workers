@@ -3,11 +3,20 @@
 <section class="hero">
   <p class="kicker">Seeds</p>
   <h2>Amend defaults</h2>
-  <p class="lede"><a class="quiet" href="/admin/settings">Back to the list</a></p>
+  <p class="lede"><a class="quiet" href="/admin/settings">Back to the list</a>. Secrets (Paystack, LLM, Zoho OAuth) stay in <code>.env</code> / n8n, not here.</p>
 </section>
 <form method="post" action="/admin/settings" class="settings">
-  {{range .Settings}}
-  <label>{{.Key}}<input name="{{.Key}}" value="{{.Value}}"></label>
+  {{range .SettingGroups}}
+  <fieldset>
+    <legend>{{.Title}}</legend>
+    {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
+    {{range .Fields}}
+    <label>{{.Label}}
+      <span class="hint"><code>{{.Key}}</code>{{if .Help}} — {{.Help}}{{end}}</span>
+      <input name="{{.Key}}" value="{{.Value}}">
+    </label>
+    {{end}}
+  </fieldset>
   {{end}}
   <div class="actions">
     <button type="submit">Save defaults</button>
@@ -18,31 +27,38 @@
 <section class="hero row">
   <div>
     <p class="kicker">Seeds</p>
-    <h2>Defaults</h2>
-    <p class="lede">WhatsApp allowlist still comes from people with <code>whatsapp_accounts</code>. n8n Books write and CRM upsert read these keys on every run. Seeded defaults can be amended, not struck.</p>
+    <h2>Accounts defaults</h2>
+    <p class="lede">n8n Books write, Paystack paid, and CRM upsert read these on every run via <code>GET /internal/v1/settings</code>. WhatsApp allowlist still comes from people with <code>whatsapp_accounts</code>. Seeded ids can be amended, not struck.</p>
   </div>
   <a class="ghost" href="/admin/settings/edit">Amend</a>
 </section>
-{{if .Settings}}
-<div class="ledger">
-<table class="roster">
-  <thead>
-    <tr>
-      <th>Key</th>
-      <th>Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{range .Settings}}
-    <tr>
-      <td><code>{{.Key}}</code></td>
-      <td>{{.Value}}</td>
-    </tr>
-    {{end}}
-  </tbody>
-</table>
-</div>
-{{else}}
+{{range .SettingGroups}}
+<section class="settings-block">
+  <h3>{{.Title}}</h3>
+  {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
+  {{if .Fields}}
+  <div class="ledger">
+  <table class="roster">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Fields}}
+      <tr>
+        <td>{{.Label}}<br><code>{{.Key}}</code></td>
+        <td>{{if .Value}}{{.Value}}{{else}}<span class="hint">blank</span>{{end}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{end}}
+</section>
+{{end}}
+{{if not .SettingGroups}}
 <p class="hint">No defaults seeded yet.</p>
 {{end}}
 {{end}}

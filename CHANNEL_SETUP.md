@@ -18,7 +18,7 @@ Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgre
 
 ## Live inventory
 
-Keep this section in sync with every channel change. IDs are not secrets.
+Keep this section in sync with every channel change. IDs are not secrets. The desk **Tools** page (`/admin/integrations`) is the same vendor list; `integrations.go` is the source of truth the tests check.
 
 ### n8n credentials
 
@@ -79,7 +79,8 @@ Source of truth for people, WhatsApp accounts rights, and Zoho default ids: **`h
 - Postgres database/role **`aiworkers`** (never the n8n database). Bootstrap: `scripts/bootstrap-admin-db.sh` on the VM.
 - Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
-- n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings` for `zoho.organization_id`, paid-through / default expense accounts, and timezone. Chart-of-accounts keyword map stays in the workflow. If the fetch fails, those workflows fall back to the seeded ids below.
+- n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
+- **Tools** (`/admin/integrations`) is the inventory of every third-party system. Add a row in `agents/internal/admin/integrations.go` when a vendor is wired.
 - **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**. Do **not** set `N8N_PATH`.
 - **Docs** (`/admin/docs`) is the field playbook: sample uses per worker. Partial workers keep a later-box until the workflow is wired.
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
@@ -106,7 +107,7 @@ To add a bookkeeper: add them on the desk with phone (234…) and `whatsapp_acco
 - Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.invoices.UPDATE`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.customerpayments.CREATE`, `ZohoBooks.customerpayments.READ`, `ZohoBooks.reports.READ`.
 - Telegram/WhatsApp reply is the audit trail (Books totals + document id + Paystack URL).
 - CRM path: `/crm` or high-intent growth/email → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
-- Defaults live on the desk (`zoho.organization_id`, `zoho.default_expense_account_id`, `zoho.paid_through_account_id`). Seeded values: org `939049468`, expense Other Expenses `1300646000000000460`, paid through Petty Cash `1300646000000000361`. Keyword map still in Books write: Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
+- Defaults live on the desk (`/admin/settings`): `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id` / `advertising_id` / `lodging_id` / `uncategorized_id`, optional `zoho.deposit_to_account_id` (a **Bank** account for Paystack customerpayments, not Petty Cash). Seeded org `939049468`, Petty Cash `…361`, Other Expenses `…460`, Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
 
 ### Paystack (not Flutterwave)
@@ -116,7 +117,7 @@ Paystack is the collector because Payment Requests are real AR objects (customer
 - Secret key lives in the VM `.env` as `PAYSTACK_SECRET_KEY` (n8n container only). Start with `sk_test_`. Never git. Never the Go worker.
 - Dashboard webhook (production, not test Listen): `https://workers.themobileprof.com/webhook/paystack-paid`. Caddy already sends `/webhook*` to n8n. Publish **Paystack paid** (`paystackPaid000001`).
 - n8n does **not** trust the webhook body. It re-queries `GET /transaction/verify/:reference` or `GET /paymentrequest/verify/:code`, then `POST /books/v3/customerpayments` against the Zoho invoice in Paystack metadata (`zoho_invoice_id`). Amount applied is `min(verified NGN, invoice.balance)`.
-- Optional desk setting `zoho.deposit_to_account_id` (a **Bank** account in Books, not Petty Cash). If unset, Zoho uses its default deposit account.
+- Optional desk setting `zoho.deposit_to_account_id` (a **Bank** account in Books, not Petty Cash). If unset, Zoho uses its default deposit account. Amend on **Desk → Defaults**.
 - Specimen: `/accounts Invoice Apex 250000 NGN for a 30-day pilot` (email optional if Apex is already in Books).
 - Smoke: **Smoke: Paystack** is a balance GET. It must not create a charge.
 
