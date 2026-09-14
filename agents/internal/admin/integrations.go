@@ -113,7 +113,7 @@ func allIntegrations() []Integration {
 			ID:           "whatsapp",
 			Name:         "WhatsApp (Meta Cloud API)",
 			URL:          "https://developers.facebook.com/docs/whatsapp/cloud-api",
-			Role:         "Customer and community chat. /accounts and /ops are desk-allowlisted. Receipt OCR on allowlisted /accounts photos.",
+			Role:         "Customer and community chat. /accounts, /ops, and /legal are desk-allowlisted. Receipt OCR on allowlisted /accounts photos.",
 			Where:        "n8n Customer WhatsApp. Allowlist from desk People (whatsapp_accounts).",
 			Secrets:      "Tokens in n8n WhatsApp credentials.",
 			Status:       statusLive,

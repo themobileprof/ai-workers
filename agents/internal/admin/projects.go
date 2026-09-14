@@ -250,6 +250,27 @@ FROM projects WHERE id = $1
 	return p, nil
 }
 
+func (s *Store) GetProjectBySlug(ctx context.Context, slug string) (Project, error) {
+	slug = normalizeSlug(slug)
+	if slug == "" {
+		return Project{}, errors.New("slug is required")
+	}
+	row := s.pool.QueryRow(ctx, `
+SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at
+FROM projects WHERE slug = $1
+`, slug)
+	p, err := scanProject(row)
+	if err != nil {
+		return Project{}, err
+	}
+	byID, err := s.membersForProjects(ctx, []int64{p.ID})
+	if err != nil {
+		return Project{}, err
+	}
+	p.Members = byID[p.ID]
+	return p, nil
+}
+
 type projectScanner interface {
 	Scan(dest ...any) error
 }

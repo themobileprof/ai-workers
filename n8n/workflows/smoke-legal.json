@@ -1,0 +1,53 @@
+{
+  "id": "smkLegalHttp0001",
+  "name": "Smoke: legal HTTP",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "a9b8c7d6-e5f4-3210-ab12-cd34ef567901",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/legal",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"task_description\": \"Flag predatory clauses in this contractor NDA: the vendor owns all data forever and may sublicense it.\",\n  \"context_data\": {\n    \"channel\": \"telegram\",\n    \"department\": \"legal\",\n    \"action\": \"review\",\n    \"cannot_send\": true\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "id": "a9b8c7d6-e5f4-3210-ab12-cd34ef567902",
+      "name": "Call legal"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call legal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

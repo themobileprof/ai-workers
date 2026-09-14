@@ -84,7 +84,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text && msg.caption) text = String(msg.caption).trim();\nconst hasPhoto = Array.isArray(msg.photo) && msg.photo.length > 0;\nif (!text && !hasPhoto) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth — sales and support',\n        '/crm — qualify or update a lead',\n        '/cm or /community — community manager',\n        '/accounts — Books: expense, bill, invoice (name is enough if they are in Books), lookup, or a receipt photo (we read the figures).',\n        '/ops — accounts, legal, grants (real expenses post to Zoho)',\n        '/validate — product validation',\n        '/approve — send the pending info@ draft',\n        '/kill — drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts(?:@\\w+)?\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (hasPhoto && department === 'growth') {\n  department = 'accounts';\n}\nlet photo_file_id = '';\nif (hasPhoto) {\n  const last = msg.photo[msg.photo.length - 1] || {};\n  photo_file_id = String(last.file_id || '');\n}\nif (hasPhoto && !text) {\n  text = 'Read this receipt or invoice photo. Extract vendor or customer, amount, currency, date, and whether it is already paid. If the image is unreadable, ask for those fields and set zoho_action to none. Do not invent figures.';\n} else if (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || '',\n      photo_file_id\n    }\n  }\n}];"
+        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text && msg.caption) text = String(msg.caption).trim();\nconst hasPhoto = Array.isArray(msg.photo) && msg.photo.length > 0;\nif (!text && !hasPhoto) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nif (/^\\/approve(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'approve', chat_id: chatId, text: '' } }];\n}\nif (/^\\/kill(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, ops_action: 'kill', chat_id: chatId, text: '' } }];\n}\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{\n    json: {\n      skip_llm: true,\n      chat_id: chatId,\n      text: [\n        'Ops bot. Prefix a message:',\n        '/growth — sales and support',\n        '/crm — qualify or update a lead',\n        '/cm or /community — community manager',\n        '/accounts — Books: expense, bill, invoice (name is enough if they are in Books), lookup, or a receipt photo (we read the figures).',\n        '/ops — accounts, legal, grants (real expenses post to Zoho)',\n        '/validate — product validation',\n        '/legal — NDA/contractor drafts (desk files; does not send)',\n        'Legal watches this chat without a prefix (labour, CAC, NDPR, CBN, contracts).',\n        '/approve — send the pending info@ draft',\n        '/kill — drop the pending draft',\n        'No prefix: 1:1 uses growth, groups use community.'\n      ].join('\\n')\n    }\n  }];\n}\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts(?:@\\w+)?\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops(?:@\\w+)?\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate(?:@\\w+)?\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth(?:@\\w+)?\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm(?:@\\w+)?\\b\\s*/i, dest: 'crm' },\n  { re: /^\\/legal(?:@\\w+)?\\b\\s*/i, dest: 'legal' }\n];\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nif (hasPhoto && department === 'growth') {\n  department = 'accounts';\n}\nlet photo_file_id = '';\nif (hasPhoto) {\n  const last = msg.photo[msg.photo.length - 1] || {};\n  photo_file_id = String(last.file_id || '');\n}\nif (hasPhoto && !text) {\n  text = 'Read this receipt or invoice photo. Extract vendor or customer, amount, currency, date, and whether it is already paid. If the image is unreadable, ask for those fields and set zoho_action to none. Do not invent figures.';\n} else if (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nlet recent_messages = [];\ntry {\n  const store = $getWorkflowStaticData('global');\n  const histKey = 'legal_thread_' + chatId;\n  recent_messages = Array.isArray(store[histKey]) ? store[histKey].slice() : [];\n  const line = String(text || '').slice(0, 400);\n  if (line) {\n    recent_messages.push(line);\n    if (recent_messages.length > 8) recent_messages = recent_messages.slice(-8);\n    store[histKey] = recent_messages;\n  }\n} catch (e) {}\nreturn [{\n  json: {\n    skip_llm: false,\n    department,\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department,\n      chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || '',\n      photo_file_id,\n      recent_messages\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -152,7 +152,62 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrwch00c",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              },
+              "leftValue": "={{ $('Prepare task').item.json.department }}",
+              "rightValue": "legal"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1020,
+        160
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrwch001",
+      "name": "Needs legal watch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/legal",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $('Prepare task').item.json.task_description, context_data: Object.assign({}, $('Prepare task').item.json.context_data || {}, { action: 'watch', cannot_send: true, primary_department: $('Prepare task').item.json.department, primary_status: $json.status, primary_task_type: ($json.structured_data || {}).task_type || '', primary_output: String($json.output_text || '').slice(0, 800), primary_zoho_action: ($json.structured_data || {}).zoho_action || '' }) }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1020,
+        320
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrwch002",
+      "name": "Watch legal",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (String(ctx.department || '') === 'legal') {\n  text += '\\n\\nProposal only. File and Accept on the company desk. This chat cannot send or stamp.';\n}\nlet legalNote = '';\ntry {\n  if (String(ctx.department || '') !== 'legal') {\n    const watch = $('Watch legal').first().json || {};\n    const wsd = watch.structured_data || {};\n    const speak = wsd.speak === true || wsd.speak === 'true';\n    const wtext = String(watch.output_text || '').trim();\n    if (speak && wtext) {\n      const sev = String(wsd.severity || 'note');\n      const label = sev === 'stop' ? 'Legal · stop' : (sev === 'caution' ? 'Legal · caution' : 'Legal');\n      legalNote = '\\n\\n' + label + '\\n' + wtext;\n    }\n  }\n} catch (e) {}\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + legalNote + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '…';\n}\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -529,7 +584,7 @@
           "conditions": [
             {
               "id": "d7e8f901-2345-4abc-9def-telegrimg00c1",
-                "operator": {
+              "operator": {
                 "type": "string",
                 "operation": "notEmpty",
                 "singleValue": true
@@ -648,7 +703,7 @@
       "main": [
         [
           {
-            "node": "Decide CRM",
+            "node": "Needs legal watch",
             "type": "main",
             "index": 0
           }
@@ -904,6 +959,35 @@
         [
           {
             "node": "Call department",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs legal watch": {
+      "main": [
+        [
+          {
+            "node": "Watch legal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Decide CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watch legal": {
+      "main": [
+        [
+          {
+            "node": "Decide CRM",
             "type": "main",
             "index": 0
           }

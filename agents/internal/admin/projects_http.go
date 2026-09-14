@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
@@ -94,8 +95,12 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	roster, _ := s.store.ListUsers(r.Context())
-	flash := placementFlash(r.URL.Query().Get("ok"))
-	s.render(w, "projects", s.projectView(u, p, roster, "", flash))
+	okq := r.URL.Query().Get("ok")
+	flash := placementFlash(okq)
+	if flash == "" {
+		flash = legalFlash(okq)
+	}
+	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
 
 func (s *Server) projectsPOST(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +152,7 @@ func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
 	err := s.store.UpdateProject(r.Context(), p.ID, r.FormValue("name"), r.FormValue("slug"), r.FormValue("one_liner"), r.FormValue("stage"), r.FormValue("notes"), r.FormValue("url"), j, g)
 	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
@@ -193,7 +198,7 @@ func (s *Server) projectMemberAdd(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.AddProjectMember(r.Context(), p.ID, uid, r.FormValue("seat")); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
 		fresh, _ := s.store.GetProject(r.Context(), p.ID)
-		s.render(w, "projects", s.projectView(u, fresh, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, fresh, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
@@ -218,7 +223,7 @@ func (s *Server) projectMemberRemove(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.store.RemoveProjectMember(r.Context(), p.ID, uid); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
@@ -278,19 +283,23 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"projects": out})
 }
 
-func (s *Server) projectView(u *User, p Project, roster []User, errMsg, flash string) pageData {
+func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []User, errMsg, flash string) pageData {
+	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
 	return pageData{
-		Title:    "Amend " + p.Name,
-		Nav:      "projects",
-		User:     u,
-		Project:  &p,
-		Roster:   roster,
-		Stages:   projectStages(),
-		Seats:    projectSeats(),
-		Journeys: journeys.All(),
-		CanPlace: s.place != nil,
-		Error:    errMsg,
-		Flash:    flash,
+		Title:          "Amend " + p.Name,
+		Nav:            "projects",
+		User:           u,
+		Project:        &p,
+		Roster:         roster,
+		Stages:         projectStages(),
+		Seats:          projectSeats(),
+		Journeys:       journeys.All(),
+		CanPlace:       s.place != nil,
+		CanLegal:       s.legal != nil,
+		Drafts:         drafts,
+		LegalTemplates: legal.Specs(),
+		Error:          errMsg,
+		Flash:          flash,
 	}
 }
 
@@ -323,14 +332,14 @@ func (s *Server) projectPlace(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.place == nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, "LLM is not configured on this process", ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "LLM is not configured on this process", ""))
 		return
 	}
 	_ = r.ParseForm()
 	req, err := placementRequest(p, r.FormValue("human_feedback"))
 	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	resp, err := s.place(r.Context(), req)
@@ -340,18 +349,18 @@ func (s *Server) projectPlace(w http.ResponseWriter, r *http.Request) {
 			msg = err.Error()
 		}
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, "Placement did not save a stamp: "+msg, ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Placement did not save a stamp: "+msg, ""))
 		return
 	}
 	prop, err := proposalFromStructured(resp.StructuredData)
 	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, "Worker returned an invalid proposal (stamp untouched): "+err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Worker returned an invalid proposal (stamp untouched): "+err.Error(), ""))
 		return
 	}
 	if err := s.store.SetProposal(r.Context(), p.ID, prop); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=placed", http.StatusSeeOther)
@@ -388,7 +397,7 @@ func (s *Server) projectProposalAmend(w http.ResponseWriter, r *http.Request) {
 	j, g := splitPlacement(r.FormValue("placement"))
 	if err := s.store.CommitPlacement(r.Context(), p.ID, j, g, r.FormValue("mission")); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=amended", http.StatusSeeOther)
@@ -408,7 +417,7 @@ func (s *Server) proposalAction(w http.ResponseWriter, r *http.Request, ok strin
 	}
 	if err := fn(r.Context(), p.ID); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(u, p, roster, err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok="+ok, http.StatusSeeOther)

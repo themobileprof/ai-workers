@@ -1,0 +1,43 @@
+{{define "content"}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Parent worker</p>
+    <h2>Legal</h2>
+    <p class="lede">TheMobileProf Technologies is the only company. Drafts attach to a project and an optional person. The clerk proposes. You Accept. Nothing is emailed. <code>/approve</code> on Telegram still only sends info@ drafts.</p>
+  </div>
+  <a class="ghost" href="/admin/docs/legal">Playbook</a>
+</section>
+{{if .Drafts}}
+{{range .Drafts}}
+<section class="proposal">
+  <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}">{{.ProjectName}}</a> · {{.TemplateLabel}}</p>
+  <div class="doc-card-head">
+    <h3>{{.Title}}{{if .CounterpartyName}} — {{.CounterpartyName}}{{end}}</h3>
+    <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+  </div>
+  {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
+  {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+  {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+  {{if .Proposed}}
+  <div class="actions">
+    <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
+      <input type="hidden" name="next" value="/admin/legal">
+      <button type="submit">Accept</button>
+    </form>
+    <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+      <input type="hidden" name="next" value="/admin/legal">
+      <button class="ghost" type="submit">Reject</button>
+    </form>
+  </div>
+  {{else if eq .Status "approved"}}
+  <p class="hint">Accepted. Copy from here. Sending the other party is not wired.</p>
+  {{end}}
+</section>
+{{end}}
+{{else}}
+<p class="hint">No drafts yet. Open a <a class="quiet" href="/admin/projects">project</a> and Ask draft, or Telegram <code>/legal</code> (review in chat; file on the desk).</p>
+{{end}}
+{{if not .CanLegal}}
+<p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
+{{end}}
+{{end}}

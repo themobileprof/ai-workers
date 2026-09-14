@@ -1,0 +1,63 @@
+<p class="lede">Parent clerk for TheMobileProf Technologies. On <strong>ops Telegram</strong> it watches every real task (no prefix). <code>/legal</code> and desk <strong>Ask draft</strong> file a proposed NDA or contract. Humans Accept. The worker cannot send, cannot stamp approved, and must not invent case citations.</p>
+
+<ol class="steps">
+  <li>Telegram ops: talk as usual (<code>/growth</code>, <code>/accounts</code>, <code>/validate</code>, unprefixed 1:1). After the department answers, Legal scans the thread. It stays silent unless there is a labour, company, IP, data, payments, tax, or contract gotcha.</li>
+  <li>When it speaks, the same Telegram reply grows a <strong>Legal</strong> note (caution / stop). It does not halt Zoho. File a draft on the desk if you need a document.</li>
+  <li>Desk: open a <a href="/admin/projects">project</a> → Ask draft (template + roster person or a name). Or <code>/legal</code> plus the ask.</li>
+  <li>Desk stores <code>proposed</code>. Accept on <a href="/admin/legal">Legal</a>. Copy the accepted text. Do not use info@ <code>/approve</code>.</li>
+</ol>
+
+<p class="hint">Watch is Telegram ops only — not customer WhatsApp. WhatsApp <code>/legal</code> stays allowlisted. <code>/ops</code> legal answers stay chat-only. Watch never writes <code>approved</code> and never saves a desk row.</p>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · desk Ask draft</p>
+  <p class="you-say">Projects → Mechazone → Ask draft → template Contractor, counterparty Ada.</p>
+  <pre class="json">{
+  "task_description": "Draft a Contractor for TheMobileProf Technologies and Ada on project Mechazone. Fill the catalog skeleton. Leave blanks as [TO BE COMPLETED]. Do not send.",
+  "context_data": {
+    "channel": "desk",
+    "action": "draft",
+    "template": "contractor",
+    "cannot_send": true,
+    "company": { "name": "TheMobileProf Technologies" },
+    "project": { "slug": "mechazone" },
+    "counterparty_name": "Ada"
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> legal, <code>cannot_send</code> true, <code>body</code> names TheMobileProf Technologies. Desk row status <code>proposed</code>. Accept is a human click. Worker never writes <code>approved</code>.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · /legal review (chat)</p>
+  <p class="you-say"><code>/legal Flag predatory clauses in this contractor NDA: …paste…</code></p>
+  <p class="expect"><code>action</code> review. <code>output_text</code> is short flags, not the full contract. Filing still happens on the desk if you Ask draft. Nothing is emailed.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · n8n may file, still not stamp</p>
+  <p class="you-say"><code>POST /internal/v1/legal-drafts</code> with <code>X-Internal-Token</code>, <code>project_id</code> or <code>project_slug</code>, and worker <code>structured_data</code>.</p>
+  <p class="expect">Inserts <code>proposed</code> only. A body that claims <code>status: approved</code> is ignored. Same rule as journey proposals.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · Telegram watch (no prefix)</p>
+  <p class="you-say">Telegram: <code>Ada is joining as cofounder of Mechazone and we will pay her a salary from next month.</code> (unprefixed 1:1 → growth, then Legal watch)</p>
+  <pre class="json">{
+  "task_description": "Ada is joining as cofounder of Mechazone and we will pay her a salary from next month.",
+  "context_data": {
+    "channel": "telegram",
+    "action": "watch",
+    "primary_department": "growth",
+    "recent_messages": [
+      "Ada is joining as cofounder of Mechazone and we will pay her a salary from next month."
+    ],
+    "cannot_send": true
+  }
+}</pre>
+  <p class="expect"><code>action</code> watch, <code>speak</code> true, <code>severity</code> caution or stop. Flags: project face ≠ director; salary is employment/PAYE not a handshake. Same Telegram reply appends a Legal note. Books is not blocked. No desk row. A Shoprite snack receipt stays silent (<code>speak</code> false, no LLM).</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · send to the other party</p>
+  <p>Copy from the desk today. When SMTP or a signed-PDF path exists, add the specimen: which address, that the worker still cannot send, and that info@ <code>/approve</code> stays for email drafts unless you deliberately reuse it.</p>
+</section>

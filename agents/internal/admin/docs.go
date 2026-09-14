@@ -89,12 +89,21 @@ var docCatalog = []DocMeta{
 		Prefixes: []string{"/accounts"},
 	},
 	{
+		Slug:     "legal",
+		Title:    "Legal",
+		Kicker:   "Parent clerk",
+		Path:     "POST /departments/legal",
+		Wire:     "partial",
+		Summary:  "Telegram watch flags labour/CAC/NDPR/CBN gotchas without a prefix. /legal and desk Ask draft file proposed NDAs. Humans Accept. The worker cannot send.",
+		Prefixes: []string{"/legal", "Telegram watch", "desk Ask draft"},
+	},
+	{
 		Slug:     "internal-ops",
 		Title:    "Internal ops",
 		Kicker:   "Operations room",
 		Path:     "POST /departments/internal-ops",
 		Wire:     "partial",
-		Summary:  "/ops reaches the worker. Accounts via /ops writes Books. Legal and grant hunting still have no follow-up.",
+		Summary:  "/ops reaches the worker. Accounts via /ops writes Books. /ops legal stays chat-only; filing is /legal. Grant hunting still has no follow-up.",
 		Prefixes: []string{"/ops"},
 	},
 	{

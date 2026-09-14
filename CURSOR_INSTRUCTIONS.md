@@ -132,7 +132,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal` with `X-Internal-Token`. Proposal POST does not commit the stamp.
+The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts` with `X-Internal-Token`. Proposal and legal POSTs do not commit the stamp.
 
 ### Layout
 
@@ -148,8 +148,9 @@ agents/
   internal/departments/crm/
   internal/departments/productdev/
   internal/departments/community/
+  internal/departments/legal/   # parent clerk: TMP templates in git; desk files proposed drafts
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
-  internal/admin/          # company desk HTML + store. Tools, Defaults, projects + stamps.
+  internal/admin/          # company desk HTML + store. Tools, Defaults, projects + stamps, legal drafts.
                            # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
 
@@ -157,15 +158,15 @@ agents/
 
 1. **`internalops` (Operations Room)**
     - *Accounts:* LLM extracts vendor/amount/currency/email and chooses a Zoho document (`expense` paid, `bill` we owe, `invoice` we raise, `lookup`, `preview`). Extra HTTP route `/departments/accounts`. n8n is the Zoho **and** Paystack client (`books-write` + `paystack-paid`): taxes from `GET /settings/taxes`, invoice total from Books, Paystack amount in kobo from that total, webhook verifies then `POST /customerpayments`. Telegram/WhatsApp is the audit trail. Do **not** compute VAT/WHT in Go — that duplicates Books.
-    - *Legal:* Contract risk, localized NDAs/SLAs, predatory-clause flags.
-    - *Grant Hunting:* Startup metadata vs grant eligibility parameters.
+    - *Legal:* Extra HTTP route `/departments/legal` on the same process. Catalog templates in git (NDA, contractor, IP assignment, project face, customer terms) name TheMobileProf Technologies. The worker drafts or flags; `cannot_send` is always true. Desk `/admin/legal` and the project card store **proposed** drafts attached to a project + optional person. Humans Accept. **Telegram ops watch:** after the primary department, n8n calls the same route with `action: watch`. The clerk stays silent on greetings and retail receipts; it appends a Legal note for labour, CAC, NDPR/NITDA, CBN-ish payments, tax process, and contract gotchas. Watch does not halt Zoho and does not save a desk row. Not on customer WhatsApp. Do not invent citations, do not file at CAC, do not reuse info@ `/approve`.
+    - *Grant Hunting:* Startup metadata vs grant eligibility parameters. Still chat-only via `/ops`.
 2. **`growth` (Front Office)**
     - *Marketing:* Platform-customized social copy (Twitter/X, LinkedIn) with local market context.
     - *Sales & Support:* Incoming queries (WhatsApp Business / live chat); calendar booking metadata on high intent. High-intent chats set `record_lead` so n8n can upsert a Zoho Books contact.
 3. **`crm` (Pipeline)**
     - Qualify, update, follow up, pipeline stages. Extra HTTP route on the same Go process (`/departments/crm`), not a new container. n8n writes Zoho **Books contacts** (existing OAuth). Do not add a Zoho CRM credential unless they buy Zoho CRM.
 4. **`community` (Community Manager)**
-    - *Welcome, FAQ, moderation, announcements, engagement.* Public chat personality for WhatsApp/Telegram groups and `/community` DMs. Not sales and not ops. Set `escalate_to_founder` when a human must step in. On WhatsApp, unauthorized `/accounts` or `/ops` is `access_denied` from this department — accounts never runs.
+    - *Welcome, FAQ, moderation, announcements, engagement.* Public chat personality for WhatsApp/Telegram groups and `/community` DMs. Not sales and not ops. Set `escalate_to_founder` when a human must step in. On WhatsApp, unauthorized `/accounts`, `/ops`, or `/legal` is `access_denied` from this department — accounts and legal never run.
 5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
@@ -190,7 +191,7 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
 - Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm}`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `agents/internal/admin/integrations.go` and desk `/admin/integrations`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal}`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `agents/internal/admin/integrations.go` and desk `/admin/integrations`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

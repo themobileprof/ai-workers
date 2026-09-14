@@ -104,6 +104,80 @@
 {{else}}
 <p class="hint">Placement agent is off until the LLM env is set on this process.</p>
 {{end}}
+<section class="settings-block">
+  <h3>Legal drafts</h3>
+  <p class="hint">Parent worker. Files as <strong>proposed</strong> until you Accept. The clerk cannot send this to the other party — copy from the desk. Templates live in git, not Defaults.</p>
+  {{if .Drafts}}
+  {{range .Drafts}}
+  <section class="proposal">
+    <p class="kicker">{{.TemplateLabel}} · {{.CounterpartyName}}</p>
+    <div class="doc-card-head">
+      <h3>{{.Title}}</h3>
+      <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+    </div>
+    {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
+    {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
+    {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+    {{if .Proposed}}
+    <div class="actions">
+      <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
+        <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
+        <button type="submit">Accept</button>
+      </form>
+      <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+        <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
+        <button class="ghost" type="submit">Reject</button>
+      </form>
+    </div>
+    {{else if eq .Status "approved"}}
+    <p class="hint">Accepted. Copy the text. Sending is not wired — do not use info@ <code>/approve</code>.</p>
+    {{end}}
+  </section>
+  {{end}}
+  {{else}}
+  <p class="hint">No drafts on this project yet.</p>
+  {{end}}
+  {{if .CanLegal}}
+  <form method="post" action="/admin/projects/{{.Project.ID}}/legal" class="person add">
+    <p class="hint">Ask draft. Writes a proposed row only.</p>
+    <div class="fields">
+      <label>Action
+        <select name="action">
+          <option value="draft">Draft from template</option>
+          <option value="review">Review pasted text</option>
+        </select>
+      </label>
+      <label>Template
+        <select name="template">
+          <option value="">infer</option>
+          {{range .LegalTemplates}}
+          <option value="{{.ID}}">{{.Label}}</option>
+          {{end}}
+        </select>
+      </label>
+      <label>Counterparty on the roster
+        <select name="counterparty_user_id">
+          <option value="">none</option>
+          {{range .Roster}}
+          <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
+          {{end}}
+        </select>
+      </label>
+    </div>
+    <label>Name if they are not on the roster
+      <input name="counterparty_name" placeholder="Ada Okonkwo">
+    </label>
+    <label>Notes or pasted contract
+      <textarea name="human_feedback" rows="5" placeholder="Pilot NDA for Ada on Mechazone. Or paste a vendor contract to flag."></textarea>
+    </label>
+    <div class="actions">
+      <button type="submit">Ask draft</button>
+    </div>
+  </form>
+  {{else}}
+  <p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
+  {{end}}
+</section>
 <form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
   <label>Name
     <input name="name" value="{{.Project.Name}}" required>

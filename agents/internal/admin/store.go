@@ -99,7 +99,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err != nil {
 		return err
 	}
-	return s.migrateProjects(ctx)
+	if err := s.migrateProjects(ctx); err != nil {
+		return err
+	}
+	return s.migrateLegal(ctx)
 }
 
 func (s *Store) Seed(ctx context.Context, name, phone, email, password string) error {

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
@@ -130,7 +131,7 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if srv.pages["projects"] == nil {
+	if srv.pages["projects"] == nil || srv.pages["legal"] == nil {
 		t.Fatal("projects template missing")
 	}
 	user := &User{ID: 1, Name: "Sam", Role: "owner"}
@@ -148,6 +149,8 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"new", "projects", pageData{Title: "Add", Nav: "projects", User: user, Adding: true, Stages: projectStages(), Journeys: journeys.All()}, "consumer_subscription"},
 		{"edit", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true}, "Ada"},
 		{"proposal", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, "has not moved the stamp"},
+		{"ask-draft", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanLegal: true, LegalTemplates: legal.Specs()}, "Ask draft"},
+		{"legal", "legal", pageData{Title: "Legal", Nav: "legal", User: user, Drafts: []LegalDraft{{ID: 3, ProjectID: 7, ProjectName: "Apex Clerk", Title: "NDA", Template: "nda", Status: "proposed", Body: "TheMobileProf Technologies", CounterpartyName: "Ada"}}, CanLegal: true}, "Apex Clerk"},
 		{"users-new", "users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, "bdm"},
 	}
 	for _, tc := range cases {

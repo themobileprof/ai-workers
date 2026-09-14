@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
@@ -29,38 +30,42 @@ type Server struct {
 	pages        map[string]*template.Template
 	static       http.Handler
 	place        PlaceFunc
+	legal        PlaceFunc
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
 type PlaceFunc func(ctx context.Context, req contract.Request) (contract.Response, error)
 
 type pageData struct {
-	Title         string
-	Nav           string
-	User          *User
-	Flash         string
-	Error         string
-	Users         []User
-	Editing       *User
-	Adding        bool
-	Amend         bool
-	OwnerCount    int
-	Allowlist     []string
-	UserCount     int
-	SettingCount  int
-	Settings      []kv
-	SettingGroups []SettingGroupView
-	Docs          []DocMeta
-	Doc           *DocPage
-	Integrations  []Integration
-	Projects      []Project
-	Project       *Project
-	Stages        []stageSpec
-	Seats         []string
-	Roles         []string
-	Roster        []User
-	Journeys      []journeys.Journey
-	CanPlace      bool
+	Title          string
+	Nav            string
+	User           *User
+	Flash          string
+	Error          string
+	Users          []User
+	Editing        *User
+	Adding         bool
+	Amend          bool
+	OwnerCount     int
+	Allowlist      []string
+	UserCount      int
+	SettingCount   int
+	Settings       []kv
+	SettingGroups  []SettingGroupView
+	Docs           []DocMeta
+	Doc            *DocPage
+	Integrations   []Integration
+	Projects       []Project
+	Project        *Project
+	Stages         []stageSpec
+	Seats          []string
+	Roles          []string
+	Roster         []User
+	Journeys       []journeys.Journey
+	CanPlace       bool
+	CanLegal       bool
+	Drafts         []LegalDraft
+	LegalTemplates []legal.Spec
 }
 
 type kv struct {
@@ -79,7 +84,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"gateLabel":  gateLabel,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -126,6 +131,10 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/projects/{id}/proposal/accept", s.projectProposalAccept)
 	mux.HandleFunc("POST /admin/projects/{id}/proposal/reject", s.projectProposalReject)
 	mux.HandleFunc("POST /admin/projects/{id}/proposal/amend", s.projectProposalAmend)
+	mux.HandleFunc("POST /admin/projects/{id}/legal", s.projectLegal)
+	mux.HandleFunc("GET /admin/legal", s.legalGET)
+	mux.HandleFunc("POST /admin/legal/{id}/approve", s.legalStamp("approved"))
+	mux.HandleFunc("POST /admin/legal/{id}/reject", s.legalStamp("rejected"))
 	mux.HandleFunc("GET /admin/users", s.usersGET)
 	mux.HandleFunc("GET /admin/users/new", s.userNewGET)
 	mux.HandleFunc("GET /admin/users/{id}", s.userEditGET)
@@ -144,6 +153,8 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)
 	mux.HandleFunc("GET /internal/v1/journeys", s.internalJourneys)
 	mux.HandleFunc("POST /internal/v1/projects/{id}/proposal", s.internalProposal)
+	mux.HandleFunc("GET /internal/v1/legal-drafts", s.internalLegalDraftsGET)
+	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
 }
 
 func RegisterPublic(mux *http.ServeMux) {

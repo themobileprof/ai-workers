@@ -3,7 +3,8 @@
 <ol class="steps">
   <li>Telegram or allowlisted WhatsApp: <code>/ops</code> plus the task.</li>
   <li>If the worker classifies <code>task_type: accounts</code>, n8n uses the same Books write path as <code>/accounts</code>.</li>
-  <li>Legal and grant answers return as chat text only. No document store, no grant tracker.</li>
+  <li>Legal via <code>/ops</code> is still chat text only. File NDAs on <a href="/admin/docs/legal">Legal</a> (<code>/legal</code> or desk Ask draft).</li>
+  <li>Grant answers return as chat text only. No grant tracker.</li>
 </ol>
 
 <section class="specimen">
@@ -22,7 +23,7 @@
 <section class="specimen">
   <p class="spec-no">Specimen 02 · legal read (text only)</p>
   <p class="you-say"><code>/ops Flag predatory clauses in this contractor NDA: …paste…</code></p>
-  <p class="expect"><code>task_type</code> legal. Nigerian labour / CAC / CBN-NITDA flags in <code>output_text</code>. Nothing is filed. Do not treat this as a lawyer.</p>
+  <p class="expect"><code>task_type</code> legal. Nigerian labour / CAC / CBN-NITDA flags in <code>output_text</code>. Nothing is filed on this prefix. Use <code>/legal</code> or desk Ask draft to store a proposal. Do not treat this as a lawyer.</p>
 </section>
 
 <section class="specimen">
@@ -39,8 +40,8 @@
 </section>
 
 <section class="later">
-  <p class="stamp dark">Not wired · legal document store</p>
-  <p>When NDAs/SLAs are saved (Drive, Mail draft, or a desk table), add the specimen: where the file lives, who must <code>/approve</code>, and that the worker still must not invent case citations.</p>
+  <p class="stamp dark">Moved · legal document store</p>
+  <p>NDA/contractor filing lives on <a href="/admin/docs/legal">Legal</a>. This page keeps <code>/ops</code> legal as chat-only so Books routing stays obvious.</p>
 </section>
 
 <section class="later">
