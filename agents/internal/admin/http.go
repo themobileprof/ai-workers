@@ -33,6 +33,7 @@ type Server struct {
 	place        PlaceFunc
 	legal        PlaceFunc
 	hr           PlaceFunc
+	workers      map[string]PlaceFunc
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
@@ -72,6 +73,14 @@ type pageData struct {
 	HrApps         []HrApplication
 	HrTemplates    []hr.Spec
 	CanHR          bool
+	NavDesks       []Desk
+	DeskCatalog    []Desk
+	CanPeople      bool
+	Desk           *Desk
+	Jobs           []DeskJob
+	Job            *DeskJob
+	Messages       []JobMessage
+	CanAsk         bool
 }
 
 type kv struct {
@@ -88,9 +97,10 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"canRemove":  canRemove,
 		"stageLabel": stageLabel,
 		"gateLabel":  gateLabel,
+		"assigned":   assignedDesk,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal", "hr"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal", "hr", "desks"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -115,6 +125,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 func (s *Server) WithPlacer(fn PlaceFunc) {
 	if s != nil {
 		s.place = fn
+		s.WithWorker("product-dev", fn)
 	}
 }
 
@@ -148,6 +159,12 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/hr/applications", s.hrApplicationPOST)
 	mux.HandleFunc("POST /admin/hr/applications/{id}/shortlist", s.hrApplicationStamp("shortlisted"))
 	mux.HandleFunc("POST /admin/hr/applications/{id}/reject", s.hrApplicationStamp("rejected"))
+	mux.HandleFunc("GET /admin/desks", s.desksIndex)
+	mux.HandleFunc("GET /admin/desks/{slug}", s.deskGET)
+	mux.HandleFunc("POST /admin/desks/{slug}/ask", s.deskAskPOST)
+	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/chat", s.deskChatPOST)
+	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/accept", s.deskStamp("accepted"))
+	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/reject", s.deskStamp("rejected"))
 	mux.HandleFunc("GET /admin/users", s.usersGET)
 	mux.HandleFunc("GET /admin/users/new", s.userNewGET)
 	mux.HandleFunc("GET /admin/users/{id}", s.userEditGET)
@@ -170,6 +187,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
 	mux.HandleFunc("GET /internal/v1/hr/roles", s.internalHrRoles)
 	mux.HandleFunc("POST /internal/v1/hr/applications", s.internalHrApplicationsPOST)
+	mux.HandleFunc("POST /internal/v1/jobs", s.internalJobsPOST)
 }
 
 func RegisterPublic(mux *http.ServeMux) {
@@ -287,7 +305,7 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) usersGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -301,7 +319,7 @@ func (s *Server) usersGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) userNewGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -309,7 +327,7 @@ func (s *Server) userNewGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) userEditGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -330,7 +348,7 @@ func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -338,7 +356,8 @@ func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	_, err := s.store.CreateUser(r.Context(), r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), r.Form["cap"])
+	caps := withLoginCap(r.Form["cap"], r.Form["desk"])
+	_, err := s.store.CreateUser(r.Context(), r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), caps, r.Form["desk"])
 	if err != nil {
 		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles(), Error: err.Error()})
 		return
@@ -350,7 +369,7 @@ func (s *Server) userSave(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -374,7 +393,8 @@ func (s *Server) userSave(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
-	if err := s.store.UpdateUser(r.Context(), id, r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), active, r.Form["cap"]); err != nil {
+	caps := withLoginCap(r.Form["cap"], r.Form["desk"])
+	if err := s.store.UpdateUser(r.Context(), id, r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), active, caps, r.Form["desk"]); err != nil {
 		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
@@ -385,7 +405,7 @@ func (s *Server) userDelete(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requirePeople(w, r)
 	if u == nil {
 		return
 	}
@@ -529,6 +549,9 @@ func (s *Server) currentUser(r *http.Request) *User {
 
 func (s *Server) render(w http.ResponseWriter, name string, data pageData) {
 	t := s.pages[name]
+	data.NavDesks = visibleDesks(data.User)
+	data.CanPeople = isOwner(data.User)
+	data.DeskCatalog = AllDesks()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	if err := t.ExecuteTemplate(w, "layout.html", data); err != nil {
@@ -589,6 +612,39 @@ func hasStoredCap(u any, cap string) bool {
 		}
 	}
 	return false
+}
+
+func assignedDesk(u any, slug string) bool {
+	var user User
+	switch t := u.(type) {
+	case User:
+		user = t
+	case *User:
+		if t == nil {
+			return false
+		}
+		user = *t
+	default:
+		return false
+	}
+	for _, d := range user.Desks {
+		if d == slug {
+			return true
+		}
+	}
+	return false
+}
+
+func withLoginCap(caps, desks []string) []string {
+	if len(desks) == 0 {
+		return caps
+	}
+	for _, c := range caps {
+		if c == "web_admin" {
+			return caps
+		}
+	}
+	return append(append([]string{}, caps...), "web_admin")
 }
 
 func sameOrigin(w http.ResponseWriter, r *http.Request) bool {

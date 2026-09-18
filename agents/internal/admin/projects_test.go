@@ -131,7 +131,7 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if srv.pages["projects"] == nil || srv.pages["legal"] == nil || srv.pages["hr"] == nil {
+	if srv.pages["projects"] == nil || srv.pages["legal"] == nil || srv.pages["hr"] == nil || srv.pages["desks"] == nil {
 		t.Fatal("projects template missing")
 	}
 	user := &User{ID: 1, Name: "Sam", Role: "owner"}
@@ -152,6 +152,7 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"ask-draft", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanLegal: true, LegalTemplates: legal.Specs()}, "Ask draft"},
 		{"legal", "legal", pageData{Title: "Legal", Nav: "legal", User: user, Drafts: []LegalDraft{{ID: 3, ProjectID: 7, ProjectName: "Apex Clerk", Title: "NDA", Template: "nda", Status: "proposed", Body: "TheMobileProf Technologies", CounterpartyName: "Ada"}}, CanLegal: true}, "Apex Clerk"},
 		{"hr", "hr", pageData{Title: "HR", Nav: "hr", User: user, HrRoles: []HrRole{{ID: 4, Title: "Field intern", Kind: "intern", Template: "intern", Status: "proposed", JD: "TheMobileProf Technologies intern"}}, CanHR: true}, "Field intern"},
+		{"desk", "desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal", Help: "NDA"}, CanAsk: true, Jobs: []DeskJob{{ID: 9, Title: "NDA Ada", Status: "proposed", Source: "desk"}}}, "NDA Ada"},
 		{"users-new", "users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, "bdm"},
 	}
 	for _, tc := range cases {

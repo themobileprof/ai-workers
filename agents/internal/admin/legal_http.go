@@ -14,6 +14,7 @@ import (
 func (s *Server) WithLegal(fn PlaceFunc) {
 	if s != nil {
 		s.legal = fn
+		s.WithWorker("legal", fn)
 	}
 }
 
@@ -31,7 +32,7 @@ func legalFlash(ok string) string {
 }
 
 func (s *Server) legalGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
+	u := s.requireDesk(w, r, "legal")
 	if u == nil {
 		return
 	}
@@ -56,7 +57,7 @@ func (s *Server) legalStamp(status string) http.HandlerFunc {
 		if !sameOrigin(w, r) {
 			return
 		}
-		u := s.requireAdmin(w, r)
+		u := s.requireDesk(w, r, "legal")
 		if u == nil {
 			return
 		}
@@ -78,6 +79,11 @@ func (s *Server) legalStamp(status string) http.HandlerFunc {
 			})
 			return
 		}
+		mapped := "accepted"
+		if status == "rejected" {
+			mapped = "rejected"
+		}
+		_ = s.store.StampJobsByRef(r.Context(), "legal_draft", id, mapped)
 		ok := "legal_ok"
 		if status == "rejected" {
 			ok = "legal_no"
@@ -108,7 +114,7 @@ func (s *Server) projectLegal(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requireDesk(w, r, "legal")
 	if u == nil {
 		return
 	}
@@ -160,11 +166,13 @@ func (s *Server) projectLegal(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Worker returned an invalid draft (nothing filed): "+err.Error(), ""))
 		return
 	}
-	if _, err := s.store.InsertLegalDraft(r.Context(), d); err != nil {
+	saved, err := s.store.InsertLegalDraft(r.Context(), d)
+	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
+	s.linkJob(r.Context(), "legal", saved.Title, saved.Rationale, "legal_draft", saved.ID, map[string]any{"template": saved.Template})
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=drafted", http.StatusSeeOther)
 }
 
@@ -291,6 +299,7 @@ func (s *Server) internalLegalDraftsPOST(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
+	s.linkJob(r.Context(), "legal", saved.Title, saved.Rationale, "legal_draft", saved.ID, map[string]any{"template": saved.Template})
 	writeJSON(w, map[string]any{"ok": true, "committed": false, "status": saved.Status, "draft": legalDraftJSON(saved)})
 }
 

@@ -24,10 +24,11 @@
     </a>
     <nav>
       <a href="/admin/" {{if eq .Nav "home"}}class="on"{{end}}>Board</a>
+      {{range .NavDesks}}
+      <a href="{{.Path}}" {{if or (eq $.Nav (printf "desk-%s" .Slug)) (eq $.Nav .Slug)}}class="on"{{end}}>{{.Title}}</a>
+      {{end}}
       <a href="/admin/projects" {{if eq .Nav "projects"}}class="on"{{end}}>Projects</a>
-      <a href="/admin/legal" {{if eq .Nav "legal"}}class="on"{{end}}>Legal</a>
-      <a href="/admin/hr" {{if eq .Nav "hr"}}class="on"{{end}}>HR</a>
-      <a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>
+      {{if .CanPeople}}<a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>{{end}}
       <a href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>Defaults</a>
       <a href="/admin/integrations" {{if eq .Nav "tools"}}class="on"{{end}}>Tools</a>
       <a href="/admin/docs" {{if eq .Nav "docs"}}class="on"{{end}}>Docs</a>

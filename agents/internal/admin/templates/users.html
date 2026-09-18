@@ -11,7 +11,7 @@
     <label>Phone<input name="phone" placeholder="234…"></label>
     <label>Email<input name="email" type="email"></label>
     <label>Role
-      <span class="hint">owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
+      <span class="hint">Office seat. owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
       <select name="role">
         {{range .Roles}}
         <option value="{{.}}" {{if eq . "cofounder"}}selected{{end}}>{{.}}</option>
@@ -20,6 +20,13 @@
     </label>
     <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
   </div>
+  <fieldset>
+    <legend>Handler desks</legend>
+    <p class="hint">One or more. Each desk is the dashboard for that worker. web_admin is granted when a desk is ticked so they can sign in.</p>
+    {{range .DeskCatalog}}
+    <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}"> {{.Title}} <code>{{.Prefix}}</code></label>
+    {{end}}
+  </fieldset>
   <fieldset>
     <legend>Capabilities</legend>
     <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" checked> whatsapp_accounts</label>
@@ -43,7 +50,7 @@
     <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
     <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
     <label>Role
-      <span class="hint">owner and bdm sit on the parent. Seat a cofounder or assistant on the project card.</span>
+      <span class="hint">Office seat. Seat a cofounder or assistant on the project card. Handler desks are below.</span>
       <select name="role">
         {{range $.Roles}}
         <option value="{{.}}" {{if eq $.Editing.Role .}}selected{{end}}>{{.}}</option>
@@ -52,6 +59,15 @@
     </label>
     <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
   </div>
+  {{if ne .Editing.Role "owner"}}
+  <fieldset>
+    <legend>Handler desks</legend>
+    <p class="hint">One or more workers this person handles. Owner already sees every desk.</p>
+    {{range .DeskCatalog}}
+    <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}" {{if assigned $.Editing .Slug}}checked{{end}}> {{.Title}} <code>{{.Prefix}}</code></label>
+    {{end}}
+  </fieldset>
+  {{end}}
   <fieldset>
     <legend>Capabilities</legend>
     <label class="chk"><input type="checkbox" name="cap" value="web_admin" {{if has .Editing "web_admin"}}checked{{end}}> web_admin</label>
@@ -74,7 +90,7 @@
   <div>
     <p class="kicker">Roster</p>
     <h2>People and permissions</h2>
-    <p class="lede">Names on the book. Office rank is owner / BDM / cofounder / assistant. Seat cofounders on a <a href="/admin/projects">project</a>. Open a card only when something needs changing.</p>
+    <p class="lede">Names on the book. Office seat is owner / BDM / cofounder / assistant. Handler desks (one or more) are the dashboards for each worker — assign them on the card. Seat cofounders on a <a href="/admin/projects">project</a>.</p>
   </div>
   <a class="ghost" href="/admin/users/new">Add person</a>
 </section>
@@ -87,6 +103,7 @@
       <th>Phone</th>
       <th>Email</th>
       <th>Role</th>
+      <th>Desks</th>
       <th>Rights</th>
       <th></th>
     </tr>
@@ -101,6 +118,9 @@
       <td><code>{{.Phone}}</code></td>
       <td>{{if .Email}}{{.Email}}{{else}}—{{end}}</td>
       <td><span class="role">{{.Role}}</span></td>
+      <td class="caps">
+        {{if eq .Role "owner"}}all{{else}}{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}—{{end}}{{end}}
+      </td>
       <td class="caps">
         {{range .Caps}}<span class="pill">{{.}}</span>{{end}}
         {{if not .Caps}}—{{end}}

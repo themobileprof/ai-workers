@@ -13,6 +13,7 @@ import (
 func (s *Server) WithHR(fn PlaceFunc) {
 	if s != nil {
 		s.hr = fn
+		s.WithWorker("hr", fn)
 	}
 }
 
@@ -36,7 +37,7 @@ func hrFlash(ok string) string {
 }
 
 func (s *Server) hrGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
+	u := s.requireDesk(w, r, "hr")
 	if u == nil {
 		return
 	}
@@ -65,7 +66,7 @@ func (s *Server) hrRolePOST(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requireDesk(w, r, "hr")
 	if u == nil {
 		return
 	}
@@ -107,10 +108,12 @@ func (s *Server) hrRolePOST(w http.ResponseWriter, r *http.Request) {
 	if title != "" {
 		role.Title = title
 	}
-	if _, err := s.store.InsertHrRole(r.Context(), role); err != nil {
+	saved, err := s.store.InsertHrRole(r.Context(), role)
+	if err != nil {
 		s.render(w, "hr", s.hrView(r, u, err.Error(), ""))
 		return
 	}
+	s.linkJob(r.Context(), "hr", saved.Title, saved.JD, "hr_role", saved.ID, map[string]any{"template": saved.Template, "kind": saved.Kind})
 	http.Redirect(w, r, "/admin/hr?ok=role_drafted", http.StatusSeeOther)
 }
 
@@ -119,7 +122,7 @@ func (s *Server) hrRoleStamp(status string) http.HandlerFunc {
 		if !sameOrigin(w, r) {
 			return
 		}
-		u := s.requireAdmin(w, r)
+		u := s.requireDesk(w, r, "hr")
 		if u == nil {
 			return
 		}
@@ -132,6 +135,11 @@ func (s *Server) hrRoleStamp(status string) http.HandlerFunc {
 			s.render(w, "hr", s.hrView(r, u, err.Error(), ""))
 			return
 		}
+		mapped := "accepted"
+		if status != "open" {
+			mapped = "rejected"
+		}
+		_ = s.store.StampJobsByRef(r.Context(), "hr_role", id, mapped)
 		ok := "role_open"
 		if status != "open" {
 			ok = "role_closed"
@@ -144,7 +152,7 @@ func (s *Server) hrApplicationPOST(w http.ResponseWriter, r *http.Request) {
 	if !sameOrigin(w, r) {
 		return
 	}
-	u := s.requireAdmin(w, r)
+	u := s.requireDesk(w, r, "hr")
 	if u == nil {
 		return
 	}
@@ -196,10 +204,12 @@ func (s *Server) hrApplicationPOST(w http.ResponseWriter, r *http.Request) {
 	if email != "" {
 		app.Email = email
 	}
-	if _, err := s.store.InsertHrApplication(r.Context(), app); err != nil {
+	saved, err := s.store.InsertHrApplication(r.Context(), app)
+	if err != nil {
 		s.render(w, "hr", s.hrView(r, u, err.Error(), ""))
 		return
 	}
+	s.linkJob(r.Context(), "hr", saved.Name, saved.Rationale, "hr_application", saved.ID, map[string]any{"recommendation": saved.Recommendation, "score": saved.Score})
 	http.Redirect(w, r, "/admin/hr?ok=app_filed", http.StatusSeeOther)
 }
 
@@ -208,7 +218,7 @@ func (s *Server) hrApplicationStamp(status string) http.HandlerFunc {
 		if !sameOrigin(w, r) {
 			return
 		}
-		u := s.requireAdmin(w, r)
+		u := s.requireDesk(w, r, "hr")
 		if u == nil {
 			return
 		}
@@ -221,6 +231,11 @@ func (s *Server) hrApplicationStamp(status string) http.HandlerFunc {
 			s.render(w, "hr", s.hrView(r, u, err.Error(), ""))
 			return
 		}
+		mapped := "accepted"
+		if status == "rejected" {
+			mapped = "rejected"
+		}
+		_ = s.store.StampJobsByRef(r.Context(), "hr_application", id, mapped)
 		ok := "app_yes"
 		if status == "rejected" {
 			ok = "app_no"
@@ -375,6 +390,7 @@ func (s *Server) internalHrApplicationsPOST(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
+	s.linkJob(r.Context(), "hr", saved.Name, saved.Rationale, "hr_application", saved.ID, map[string]any{"source": saved.Source, "recommendation": saved.Recommendation})
 	writeJSON(w, map[string]any{"ok": true, "committed": false, "status": saved.Status, "application": hrAppJSON(saved)})
 }
 

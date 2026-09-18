@@ -2,7 +2,7 @@
 <section class="hero">
   <p class="kicker">Tonight’s board</p>
   <h2>Which bets are moving</h2>
-  <p class="lede">Projects live under TheMobileProf Technologies. Parent workers (Accounts, Legal, HR) stay on the company. The face of each bet sits on the project.</p>
+  <p class="lede">Projects live under TheMobileProf Technologies. Each worker has a handler desk. Parent workers stay on the company. The face of each bet sits on the project.</p>
 </section>
 <div class="grid-3">
   <article class="stat">
@@ -38,11 +38,26 @@
       <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
     </li>
     {{end}}
-  </ul>
+    </ul>
   {{else}}
   <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
   {{end}}
 </section>
+{{if .NavDesks}}
+<section>
+  <h3>Handler desks</h3>
+  <p class="hint">Chat and Accept live on the desk. Specialized books (Legal, HR, Projects) stay one click away.</p>
+  <ul class="doc-index">
+    {{range .NavDesks}}
+    <li class="doc-card">
+      <p class="kicker">{{.Prefix}}</p>
+      <h3><a href="{{.Path}}">{{.Title}}</a></h3>
+      <p>{{.Help}}</p>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
 <section>
   <h3>Live allowlist</h3>
   <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>

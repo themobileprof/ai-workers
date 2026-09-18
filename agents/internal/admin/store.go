@@ -27,6 +27,7 @@ type User struct {
 	Active      bool
 	HasPassword bool
 	Caps        []string
+	Desks       []string
 	CreatedAt   time.Time
 }
 
@@ -105,7 +106,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateLegal(ctx); err != nil {
 		return err
 	}
-	return s.migrateHR(ctx)
+	if err := s.migrateHR(ctx); err != nil {
+		return err
+	}
+	return s.migrateDesks(ctx)
 }
 
 func (s *Store) Seed(ctx context.Context, name, phone, email, password string) error {
@@ -115,7 +119,7 @@ func (s *Store) Seed(ctx context.Context, name, phone, email, password string) e
 		return err
 	}
 	if n == 0 {
-		u, err := s.CreateUser(ctx, name, phone, email, password, "owner", []string{"web_admin", "whatsapp_accounts", "zoho_write"})
+		u, err := s.CreateUser(ctx, name, phone, email, password, "owner", []string{"web_admin", "whatsapp_accounts", "zoho_write"}, nil)
 		if err != nil {
 			return err
 		}
@@ -177,7 +181,7 @@ func (s *Store) ensureOwnerPassword(ctx context.Context, phone, password string)
 	return err
 }
 
-func (s *Store) CreateUser(ctx context.Context, name, phone, email, password, role string, caps []string) (User, error) {
+func (s *Store) CreateUser(ctx context.Context, name, phone, email, password, role string, caps, desks []string) (User, error) {
 	name = strings.TrimSpace(name)
 	phone = normalizePhone(phone)
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -208,10 +212,13 @@ RETURNING id
 	if err := s.replaceCaps(ctx, id, caps); err != nil {
 		return User{}, err
 	}
+	if err := s.replaceDesks(ctx, id, desks); err != nil {
+		return User{}, err
+	}
 	return s.GetUser(ctx, id)
 }
 
-func (s *Store) UpdateUser(ctx context.Context, id int64, name, phone, email, password, role string, active bool, caps []string) error {
+func (s *Store) UpdateUser(ctx context.Context, id int64, name, phone, email, password, role string, active bool, caps, desks []string) error {
 	name = strings.TrimSpace(name)
 	phone = normalizePhone(phone)
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -237,7 +244,10 @@ UPDATE users SET name=$1, phone=$2, email=$3, role=$4, active=$5 WHERE id=$6
 			return friendlyDBErr(err)
 		}
 	}
-	return s.replaceCaps(ctx, id, caps)
+	if err := s.replaceCaps(ctx, id, caps); err != nil {
+		return err
+	}
+	return s.replaceDesks(ctx, id, desks)
 }
 
 func (s *Store) replaceCaps(ctx context.Context, id int64, caps []string) error {
@@ -269,6 +279,10 @@ SELECT id, name, phone, email, password_hash, role, active, created_at FROM user
 	}
 	u.HasPassword = hash != ""
 	u.Caps, err = s.capsFor(ctx, id)
+	if err != nil {
+		return User{}, err
+	}
+	u.Desks, err = s.desksFor(ctx, id)
 	return u, err
 }
 
@@ -290,6 +304,10 @@ FROM users ORDER BY id
 		}
 		u.HasPassword = hash != ""
 		u.Caps, err = s.capsFor(ctx, u.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.Desks, err = s.desksFor(ctx, u.ID)
 		if err != nil {
 			return nil, err
 		}

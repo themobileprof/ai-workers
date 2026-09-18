@@ -132,7 +132,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **HR roles and applications** proposed until a human opens or Shortlists, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications` with `X-Internal-Token`. Proposal, legal, and HR POSTs do not commit the stamp.
+The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, **handler desks** assigned one-or-more per person, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **HR roles and applications** proposed until a human opens or Shortlists, **desk jobs + handler↔worker chat**, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications`, `POST /internal/v1/jobs` with `X-Internal-Token`. Proposal, legal, HR, and job POSTs do not commit the stamp. Chat never stamps Accept.
 
 ### Layout
 
@@ -152,6 +152,7 @@ agents/
   internal/departments/hr/      # parent clerk: JD templates in git; desk files proposed roles/apps
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
   internal/admin/          # company desk HTML + store. Tools, Defaults, projects + stamps, legal drafts, HR roles/apps.
+                           # Handler desks: /admin/desks/{slug} jobs + chat. People assigns one or more desks.
                            # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
 

@@ -40,6 +40,7 @@ func main() {
 	mux := http.NewServeMux()
 	admin.RegisterPublic(mux)
 	var adminReady bool
+	var desk *admin.Server
 	if dsn := strings.TrimSpace(os.Getenv("ADMIN_DATABASE_URL")); dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		store, err := admin.Open(ctx, dsn)
@@ -53,30 +54,28 @@ func main() {
 				log.Printf("admin seed: %v", err)
 			}
 			seedCancel()
-			desk, err := admin.New(store, os.Getenv("INTERNAL_API_TOKEN"))
+			desk, err = admin.New(store, os.Getenv("INTERNAL_API_TOKEN"))
 			if err != nil {
 				log.Printf("admin ui: %v", err)
 				store.Close()
 				admin.RegisterUnavailable(mux)
 			} else {
-				desk.WithPlacer(func(ctx context.Context, req contract.Request) (contract.Response, error) {
-					if completerErr != nil || completer == nil {
-						return contract.Fail("LLM is not configured"), completerErr
+				call := func(fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error)) admin.PlaceFunc {
+					return func(ctx context.Context, req contract.Request) (contract.Response, error) {
+						if completerErr != nil || completer == nil {
+							return contract.Fail("LLM is not configured"), completerErr
+						}
+						return fn(ctx, completer, req)
 					}
-					return productdev.Handle(ctx, completer, req)
-				})
-				desk.WithLegal(func(ctx context.Context, req contract.Request) (contract.Response, error) {
-					if completerErr != nil || completer == nil {
-						return contract.Fail("LLM is not configured"), completerErr
-					}
-					return legal.Handle(ctx, completer, req)
-				})
-				desk.WithHR(func(ctx context.Context, req contract.Request) (contract.Response, error) {
-					if completerErr != nil || completer == nil {
-						return contract.Fail("LLM is not configured"), completerErr
-					}
-					return hr.Handle(ctx, completer, req)
-				})
+				}
+				desk.WithPlacer(call(productdev.Handle))
+				desk.WithLegal(call(legal.Handle))
+				desk.WithHR(call(hr.Handle))
+				desk.WithWorker("accounts", call(internalops.HandleAccounts))
+				desk.WithWorker("internal-ops", call(internalops.Handle))
+				desk.WithWorker("growth", call(growth.Handle))
+				desk.WithWorker("community", call(community.Handle))
+				desk.WithWorker("crm", call(crm.Handle))
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")
@@ -98,14 +97,14 @@ func main() {
 			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "hr"},
 		})
 	})
-	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, internalops.Handle))
-	mux.HandleFunc("POST /departments/accounts", departmentHandler(completer, completerErr, internalops.HandleAccounts))
-	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, growth.Handle))
-	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, productdev.Handle))
-	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, community.Handle))
-	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, crm.Handle))
-	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, legal.Handle))
-	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, hr.Handle))
+	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, "internal-ops", internalops.Handle, desk))
+	mux.HandleFunc("POST /departments/accounts", departmentHandler(completer, completerErr, "accounts", internalops.HandleAccounts, desk))
+	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, "growth", growth.Handle, desk))
+	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, "product-dev", productdev.Handle, desk))
+	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, "community", community.Handle, desk))
+	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, "crm", crm.Handle, desk))
+	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk))
+	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk))
 
 	srv := &http.Server{
 		Addr:              addr,
@@ -122,7 +121,7 @@ func main() {
 	}
 }
 
-func departmentHandler(c llm.Completer, initErr error, fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error)) http.HandlerFunc {
+func departmentHandler(c llm.Completer, initErr error, dept string, fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error), desk *admin.Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if initErr != nil || c == nil {
 			writeJSON(w, http.StatusServiceUnavailable, contract.Fail("LLM is not configured: "+errString(initErr)))
@@ -147,6 +146,9 @@ func departmentHandler(c llm.Completer, initErr error, fn func(context.Context, 
 			}
 			writeJSON(w, http.StatusBadGateway, resp)
 			return
+		}
+		if desk != nil {
+			desk.FileInboundJob(r.Context(), dept, req, resp)
 		}
 		writeJSON(w, http.StatusOK, resp)
 	}
