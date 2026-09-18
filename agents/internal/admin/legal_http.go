@@ -94,20 +94,25 @@ func (s *Server) legalStamp(status string) http.HandlerFunc {
 
 func legalNext(r *http.Request, fallback string) string {
 	_ = r.ParseForm()
+	out := fallback
 	if next := strings.TrimSpace(r.FormValue("next")); strings.HasPrefix(next, "/admin/") {
-		if strings.Contains(next, "?") {
-			return next
-		}
-		sep := "?"
+		out = next
 		if strings.Contains(fallback, "ok=legal_no") {
-			return next + sep + "ok=legal_no"
+			out = withQuery(out, "ok", "legal_no")
+		} else if strings.Contains(fallback, "ok=legal_ok") {
+			out = withQuery(out, "ok", "legal_ok")
 		}
-		if strings.Contains(fallback, "ok=legal_ok") {
-			return next + sep + "ok=legal_ok"
-		}
-		return next
 	}
-	return fallback
+	if strings.Contains(out, "/admin/projects/") {
+		return withQuery(out, "tab", "legal")
+	}
+	if strings.Contains(fallback, "ok=legal_no") {
+		return withQuery(out, "tab", "rejected")
+	}
+	if strings.Contains(fallback, "ok=legal_ok") {
+		return withQuery(out, "tab", "accepted")
+	}
+	return out
 }
 
 func (s *Server) projectLegal(w http.ResponseWriter, r *http.Request) {
@@ -173,7 +178,7 @@ func (s *Server) projectLegal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.linkJob(r.Context(), "legal", saved.Title, saved.Rationale, "legal_draft", saved.ID, map[string]any{"template": saved.Template})
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=drafted", http.StatusSeeOther)
+	http.Redirect(w, r, withQuery(withQuery("/admin/projects/"+strconv.FormatInt(p.ID, 10), "ok", "drafted"), "tab", "legal"), http.StatusSeeOther)
 }
 
 func legalRequest(p Project, company string, cp User, extraName, template, action, feedback string) (contract.Request, error) {

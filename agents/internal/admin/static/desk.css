@@ -258,6 +258,43 @@ textarea {
 .login-card button { justify-self: start; margin-top: 0.4rem; }
 .hero { margin-bottom: 1.5rem; }
 .hero h2 { font-size: 2.3rem; }
+.tabset { margin: 0 0 0.5rem; }
+.tabs {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 0 0 1.35rem;
+  border-bottom: 1px solid rgba(26, 163, 224, 0.22);
+}
+.tabs [role="tab"] {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--paper);
+  opacity: 0.42;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.5rem 0.85rem 0.62rem;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+.tabs [role="tab"]:hover { opacity: 0.85; }
+.tabs [role="tab"].on {
+  opacity: 1;
+  color: var(--foam);
+  border-bottom-color: var(--brass);
+}
+.tabs [role="tab"] .count {
+  opacity: 0.6;
+  margin-left: 0.3rem;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.tab-panels { min-height: 6rem; }
+.tabset:not(.is-on) .tab-panels > [role="tabpanel"] ~ [role="tabpanel"] { display: none; }
+.tab-panels [role="tabpanel"][hidden] { display: none; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
 .stat {
   border: 1px solid rgba(201, 184, 154, 0.3);

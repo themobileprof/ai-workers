@@ -11,125 +11,136 @@
   </div>
 </section>
 
-{{if .CanHR}}
-<form method="post" action="/admin/hr/roles" class="person add">
-  <p class="hint">Ask JD. Writes a proposed role. Accept opens it. Templates live in git.</p>
-  <div class="fields">
-    <label>Title
-      <input name="title" required placeholder="Field intern — Mechazone">
-    </label>
-    <label>Template
-      <select name="template">
-        {{range .HrTemplates}}
-        <option value="{{.ID}}">{{.Label}}</option>
-        {{end}}
-      </select>
-    </label>
-    <label>Project
-      <select name="project_id">
-        <option value="">parent (TMP)</option>
-        {{range .Projects}}
-        <option value="{{.ID}}">{{.Name}}</option>
-        {{end}}
-      </select>
-    </label>
-  </div>
-  <label>Notes
-    <textarea name="human_feedback" rows="3" placeholder="Must have WhatsApp fluency. Two weeks in Ikeja."></textarea>
-  </label>
-  <div class="actions">
-    <button type="submit">Ask JD</button>
-  </div>
-</form>
-<form method="post" action="/admin/hr/applications" class="person add">
-  <p class="hint">Score a paste against an open JD. Files as proposed.</p>
-  <div class="fields">
-    <label>Open role
-      <select name="role_id">
-        <option value="">infer</option>
-        {{range .HrRoles}}
-        {{if .Open}}
-        <option value="{{.ID}}">{{.Title}}</option>
-        {{end}}
-        {{end}}
-      </select>
-    </label>
-    <label>Name
-      <input name="applicant_name" placeholder="Chinedu Okeke">
-    </label>
-    <label>Email
-      <input name="applicant_email" placeholder="they@example.com">
-    </label>
-  </div>
-  <label>CV or application
-    <textarea name="human_feedback" rows="6" required placeholder="Paste the email or CV."></textarea>
-  </label>
-  <div class="actions">
-    <button type="submit">Score applicant</button>
-  </div>
-</form>
-{{else}}
-<p class="hint">HR clerk is off until the LLM env is set on this process.</p>
-{{end}}
+<div class="tabset" data-tabs data-default="ask">
+  <nav class="tabs" role="tablist" aria-label="HR">
+    <button type="button" role="tab" data-tab="ask" aria-controls="tab-ask">Ask</button>
+    <button type="button" role="tab" data-tab="roles" aria-controls="tab-roles">Roles <span class="count">{{len .HrRoles}}</span></button>
+    <button type="button" role="tab" data-tab="applicants" aria-controls="tab-applicants">Applicants <span class="count">{{len .HrApps}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-ask" data-tab="ask">
+      {{if .CanHR}}
+      <form method="post" action="/admin/hr/roles" class="person add">
+        <p class="hint">Ask JD. Writes a proposed role. Accept opens it. Templates live in git.</p>
+        <div class="fields">
+          <label>Title
+            <input name="title" required placeholder="Field intern — Mechazone">
+          </label>
+          <label>Template
+            <select name="template">
+              {{range .HrTemplates}}
+              <option value="{{.ID}}">{{.Label}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Project
+            <select name="project_id">
+              <option value="">parent (TMP)</option>
+              {{range .Projects}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+        </div>
+        <label>Notes
+          <textarea name="human_feedback" rows="3" placeholder="Must have WhatsApp fluency. Two weeks in Ikeja."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask JD</button>
+        </div>
+      </form>
+      <form method="post" action="/admin/hr/applications" class="person add">
+        <p class="hint">Score a paste against an open JD. Files as proposed.</p>
+        <div class="fields">
+          <label>Open role
+            <select name="role_id">
+              <option value="">infer</option>
+              {{range .HrRoles}}
+              {{if .Open}}
+              <option value="{{.ID}}">{{.Title}}</option>
+              {{end}}
+              {{end}}
+            </select>
+          </label>
+          <label>Name
+            <input name="applicant_name" placeholder="Chinedu Okeke">
+          </label>
+          <label>Email
+            <input name="applicant_email" placeholder="they@example.com">
+          </label>
+        </div>
+        <label>CV or application
+          <textarea name="human_feedback" rows="6" required placeholder="Paste the email or CV."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Score applicant</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">HR clerk is off until the LLM env is set on this process.</p>
+      {{end}}
+    </section>
 
-<section class="settings-block">
-  <h3>Roles</h3>
-  {{if .HrRoles}}
-  {{range .HrRoles}}
-  <section class="proposal">
-    <p class="kicker">{{.KindLabel}}{{if .ProjectName}} · {{.ProjectName}}{{end}}</p>
-    <div class="doc-card-head">
-      <h3>{{.Title}}</h3>
-      <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-    </div>
-    {{if .JD}}<pre class="legal-body">{{.JD}}</pre>{{end}}
-    {{if .Proposed}}
-    <div class="actions">
-      <form class="inline" method="post" action="/admin/hr/roles/{{.ID}}/open">
-        <button type="submit">Accept — open</button>
-      </form>
-      <form class="inline" method="post" action="/admin/hr/roles/{{.ID}}/close">
-        <button class="ghost" type="submit">Reject</button>
-      </form>
-    </div>
-    {{end}}
-  </section>
-  {{end}}
-  {{else}}
-  <p class="hint">No roles yet. Ask JD above, or Telegram <code>/hr</code>.</p>
-  {{end}}
-</section>
+    <section role="tabpanel" id="tab-roles" data-tab="roles">
+      <h3>Roles</h3>
+      {{if .HrRoles}}
+      {{range .HrRoles}}
+      <section class="proposal">
+        <p class="kicker">{{.KindLabel}}{{if .ProjectName}} · {{.ProjectName}}{{end}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .JD}}<pre class="legal-body">{{.JD}}</pre>{{end}}
+        {{if .Proposed}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/hr/roles/{{.ID}}/open">
+            <button type="submit">Accept — open</button>
+          </form>
+          <form class="inline" method="post" action="/admin/hr/roles/{{.ID}}/close">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+        {{end}}
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No roles yet. Ask JD on Ask, or Telegram <code>/hr</code>.</p>
+      {{end}}
+    </section>
 
-<section class="settings-block">
-  <h3>Applicants</h3>
-  {{if .HrApps}}
-  {{range .HrApps}}
-  <section class="proposal">
-    <p class="kicker">{{if .RoleTitle}}{{.RoleTitle}}{{else}}unmatched{{end}} · {{.Recommendation}}{{if .Score}} · {{.Score}}{{end}}</p>
-    <div class="doc-card-head">
-      <h3>{{if .Name}}{{.Name}}{{else}}unnamed{{end}}{{if .Email}} — {{.Email}}{{end}}</h3>
-      <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-    </div>
-    {{if .Reasons}}<p class="hint">{{range $i, $f := .Reasons}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
-    {{if .CVText}}<pre class="legal-body">{{.CVText}}</pre>{{end}}
-    {{if .Proposed}}
-    <div class="actions">
-      <form class="inline" method="post" action="/admin/hr/applications/{{.ID}}/shortlist">
-        <button type="submit">Shortlist</button>
-      </form>
-      <form class="inline" method="post" action="/admin/hr/applications/{{.ID}}/reject">
-        <button class="ghost" type="submit">Turn away</button>
-      </form>
-    </div>
-    {{else if eq .Status "shortlisted"}}
-    <p class="hint">Shortlisted. Offer letter, interview loop, and Tentacle payroll are not wired.</p>
-    {{else if eq .Status "rejected"}}
-    <p class="hint">Turned away. Nothing was emailed. Ask <code>/hr</code> for the reason if you need to send one yourself.</p>
-    {{end}}
-  </section>
-  {{end}}
-  {{else}}
-  <p class="hint">No applicants yet. Score a paste, or an info@ CV will file here.</p>
-  {{end}}
-</section>
+    <section role="tabpanel" id="tab-applicants" data-tab="applicants">
+      <h3>Applicants</h3>
+      {{if .HrApps}}
+      {{range .HrApps}}
+      <section class="proposal">
+        <p class="kicker">{{if .RoleTitle}}{{.RoleTitle}}{{else}}unmatched{{end}} · {{.Recommendation}}{{if .Score}} · {{.Score}}{{end}}</p>
+        <div class="doc-card-head">
+          <h3>{{if .Name}}{{.Name}}{{else}}unnamed{{end}}{{if .Email}} — {{.Email}}{{end}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Reasons}}<p class="hint">{{range $i, $f := .Reasons}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
+        {{if .CVText}}<pre class="legal-body">{{.CVText}}</pre>{{end}}
+        {{if .Proposed}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/hr/applications/{{.ID}}/shortlist">
+            <button type="submit">Shortlist</button>
+          </form>
+          <form class="inline" method="post" action="/admin/hr/applications/{{.ID}}/reject">
+            <button class="ghost" type="submit">Turn away</button>
+          </form>
+        </div>
+        {{else if eq .Status "shortlisted"}}
+        <p class="hint">Shortlisted. Offer letter, interview loop, and Tentacle payroll are not wired.</p>
+        {{else if eq .Status "rejected"}}
+        <p class="hint">Turned away. Nothing was emailed. Ask <code>/hr</code> for the reason if you need to send one yourself.</p>
+        {{end}}
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No applicants yet. Score a paste on Ask, or an info@ CV will file here.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
 {{end}}

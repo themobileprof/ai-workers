@@ -165,3 +165,52 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		}
 	}
 }
+
+func TestBoardHasThreeTabs(t *testing.T) {
+	srv, err := New(nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := &User{ID: 1, Name: "Sam", Role: "owner"}
+	p := Project{ID: 7, Name: "Apex Clerk", Stage: "testing"}
+	pages := []struct {
+		page string
+		data pageData
+		min  int
+	}{
+		{"home", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2}, 3},
+		{"hr", pageData{Title: "HR", Nav: "hr", User: user, CanHR: true}, 3},
+		{"legal", pageData{Title: "Legal", Nav: "legal", User: user}, 3},
+		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
+		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, 3},
+		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{})}, 3},
+		{"integrations", pageData{Title: "Tools", Nav: "tools", User: user, Integrations: allIntegrations()}, 3},
+		{"users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, 3},
+	}
+	for _, tc := range pages {
+		var buf strings.Builder
+		if err := srv.pages[tc.page].ExecuteTemplate(&buf, "layout.html", tc.data); err != nil {
+			t.Fatalf("%s: %v", tc.page, err)
+		}
+		got := buf.String()
+		if !strings.Contains(got, `data-tabs`) {
+			t.Fatalf("%s missing tabset", tc.page)
+		}
+		if n := strings.Count(got, `role="tab"`); n < tc.min {
+			t.Fatalf("%s tabs %d, want >= %d", tc.page, n, tc.min)
+		}
+	}
+}
+
+func TestWithQueryAndStatusCount(t *testing.T) {
+	got := withQuery("/admin/hr?ok=role_open", "tab", "roles")
+	if !strings.Contains(got, "tab=roles") || !strings.Contains(got, "ok=role_open") {
+		t.Fatalf("%s", got)
+	}
+	if statusCount([]LegalDraft{{Status: "proposed"}, {Status: "approved"}}, "proposed") != 1 {
+		t.Fatal("legal count")
+	}
+	if statusCount([]Integration{{Status: "live"}, {Status: "host"}}, "live") != 1 {
+		t.Fatal("tools count")
+	}
+}

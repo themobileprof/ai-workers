@@ -4,7 +4,39 @@
   <h2>Third-party tools</h2>
   <p class="lede">Every system this office talks to. Add a row in <code>agents/internal/admin/integrations.go</code> the day you wire a new one — the test suite fails if compose, <code>.env.example</code>, or an n8n credential shows up without a row. Secrets stay in the VM <code>.env</code> or n8n Credentials, never git.</p>
 </section>
-{{range .Integrations}}
+<div class="tabset" data-tabs data-default="live">
+  <nav class="tabs" role="tablist" aria-label="Tools">
+    <button type="button" role="tab" data-tab="live" aria-controls="tab-live">Live <span class="count">{{statusCount .Integrations "live"}}</span></button>
+    <button type="button" role="tab" data-tab="host" aria-controls="tab-host">Host <span class="count">{{statusCount .Integrations "host"}}</span></button>
+    <button type="button" role="tab" data-tab="ready" aria-controls="tab-ready">Code-ready <span class="count">{{statusCount .Integrations "code-ready"}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-live" data-tab="live">
+      {{range .Integrations}}
+      {{if eq .Status "live"}}
+      {{template "tool-card" .}}
+      {{end}}
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-host" data-tab="host">
+      {{range .Integrations}}
+      {{if eq .Status "host"}}
+      {{template "tool-card" .}}
+      {{end}}
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-ready" data-tab="ready">
+      {{range .Integrations}}
+      {{if eq .Status "code-ready"}}
+      {{template "tool-card" .}}
+      {{end}}
+      {{end}}
+    </section>
+  </div>
+</div>
+{{end}}
+
+{{define "tool-card"}}
 <article class="tool">
   <div class="doc-card-head">
     <div>
@@ -27,5 +59,4 @@
   <p class="hint">Env: {{range $i, $n := .ComposeEnvs}}{{if $i}}, {{end}}<code>{{$n}}</code>{{end}}</p>
   {{end}}
 </article>
-{{end}}
 {{end}}

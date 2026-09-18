@@ -6,33 +6,48 @@
   <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
 </section>
 <form class="person add" method="post" action="/admin/users">
-  <div class="fields">
-    <label>Name<input name="name" required></label>
-    <label>Phone<input name="phone" placeholder="234…"></label>
-    <label>Email<input name="email" type="email"></label>
-    <label>Role
-      <span class="hint">Office seat. owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
-      <select name="role">
-        {{range .Roles}}
-        <option value="{{.}}" {{if eq . "cofounder"}}selected{{end}}>{{.}}</option>
-        {{end}}
-      </select>
-    </label>
-    <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
+  <div class="tabset" data-tabs data-default="person">
+    <nav class="tabs" role="tablist" aria-label="Add person">
+      <button type="button" role="tab" data-tab="person" aria-controls="tab-person">Person</button>
+      <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks</button>
+      <button type="button" role="tab" data-tab="rights" aria-controls="tab-rights">Rights</button>
+    </nav>
+    <div class="tab-panels">
+      <section role="tabpanel" id="tab-person" data-tab="person">
+        <div class="fields">
+          <label>Name<input name="name" required></label>
+          <label>Phone<input name="phone" placeholder="234…"></label>
+          <label>Email<input name="email" type="email"></label>
+          <label>Role
+            <span class="hint">Office seat. owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
+            <select name="role">
+              {{range .Roles}}
+              <option value="{{.}}" {{if eq . "cofounder"}}selected{{end}}>{{.}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
+        </div>
+      </section>
+      <section role="tabpanel" id="tab-desks" data-tab="desks">
+        <fieldset>
+          <legend>Handler desks</legend>
+          <p class="hint">One or more. Each desk is the dashboard for that worker. web_admin is granted when a desk is ticked so they can sign in.</p>
+          {{range .DeskCatalog}}
+          <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}"> {{.Title}} <code>{{.Prefix}}</code></label>
+          {{end}}
+        </fieldset>
+      </section>
+      <section role="tabpanel" id="tab-rights" data-tab="rights">
+        <fieldset>
+          <legend>Capabilities</legend>
+          <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" checked> whatsapp_accounts</label>
+          <label class="chk"><input type="checkbox" name="cap" value="web_admin"> web_admin</label>
+          <label class="chk"><input type="checkbox" name="cap" value="zoho_write"> zoho_write</label>
+        </fieldset>
+      </section>
+    </div>
   </div>
-  <fieldset>
-    <legend>Handler desks</legend>
-    <p class="hint">One or more. Each desk is the dashboard for that worker. web_admin is granted when a desk is ticked so they can sign in.</p>
-    {{range .DeskCatalog}}
-    <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}"> {{.Title}} <code>{{.Prefix}}</code></label>
-    {{end}}
-  </fieldset>
-  <fieldset>
-    <legend>Capabilities</legend>
-    <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" checked> whatsapp_accounts</label>
-    <label class="chk"><input type="checkbox" name="cap" value="web_admin"> web_admin</label>
-    <label class="chk"><input type="checkbox" name="cap" value="zoho_write"> zoho_write</label>
-  </fieldset>
   <div class="actions">
     <button type="submit">Add</button>
     <a class="ghost" href="/admin/users">Cancel</a>
@@ -45,36 +60,53 @@
   <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
 </section>
 <form class="person" method="post" action="/admin/users/{{.Editing.ID}}">
-  <div class="fields">
-    <label>Name<input name="name" value="{{.Editing.Name}}" required></label>
-    <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
-    <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
-    <label>Role
-      <span class="hint">Office seat. Seat a cofounder or assistant on the project card. Handler desks are below.</span>
-      <select name="role">
-        {{range $.Roles}}
-        <option value="{{.}}" {{if eq $.Editing.Role .}}selected{{end}}>{{.}}</option>
+  <div class="tabset" data-tabs data-default="person">
+    <nav class="tabs" role="tablist" aria-label="Amend person">
+      <button type="button" role="tab" data-tab="person" aria-controls="tab-person">Person</button>
+      <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks</button>
+      <button type="button" role="tab" data-tab="rights" aria-controls="tab-rights">Rights</button>
+    </nav>
+    <div class="tab-panels">
+      <section role="tabpanel" id="tab-person" data-tab="person">
+        <div class="fields">
+          <label>Name<input name="name" value="{{.Editing.Name}}" required></label>
+          <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
+          <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
+          <label>Role
+            <span class="hint">Office seat. Seat a cofounder or assistant on the project card. Handler desks are on Desks.</span>
+            <select name="role">
+              {{range $.Roles}}
+              <option value="{{.}}" {{if eq $.Editing.Role .}}selected{{end}}>{{.}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
+        </div>
+      </section>
+      <section role="tabpanel" id="tab-desks" data-tab="desks">
+        {{if ne .Editing.Role "owner"}}
+        <fieldset>
+          <legend>Handler desks</legend>
+          <p class="hint">One or more workers this person handles. Owner already sees every desk.</p>
+          {{range .DeskCatalog}}
+          <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}" {{if assigned $.Editing .Slug}}checked{{end}}> {{.Title}} <code>{{.Prefix}}</code></label>
+          {{end}}
+        </fieldset>
+        {{else}}
+        <p class="hint">Owner already sees every desk.</p>
         {{end}}
-      </select>
-    </label>
-    <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
+      </section>
+      <section role="tabpanel" id="tab-rights" data-tab="rights">
+        <fieldset>
+          <legend>Capabilities</legend>
+          <label class="chk"><input type="checkbox" name="cap" value="web_admin" {{if has .Editing "web_admin"}}checked{{end}}> web_admin</label>
+          <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" {{if has .Editing "whatsapp_accounts"}}checked{{end}}> whatsapp_accounts</label>
+          <label class="chk"><input type="checkbox" name="cap" value="zoho_write" {{if has .Editing "zoho_write"}}checked{{end}}> zoho_write</label>
+          <label class="chk"><input type="checkbox" name="active" value="1" {{if .Editing.Active}}checked{{end}}> active</label>
+        </fieldset>
+      </section>
+    </div>
   </div>
-  {{if ne .Editing.Role "owner"}}
-  <fieldset>
-    <legend>Handler desks</legend>
-    <p class="hint">One or more workers this person handles. Owner already sees every desk.</p>
-    {{range .DeskCatalog}}
-    <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}" {{if assigned $.Editing .Slug}}checked{{end}}> {{.Title}} <code>{{.Prefix}}</code></label>
-    {{end}}
-  </fieldset>
-  {{end}}
-  <fieldset>
-    <legend>Capabilities</legend>
-    <label class="chk"><input type="checkbox" name="cap" value="web_admin" {{if has .Editing "web_admin"}}checked{{end}}> web_admin</label>
-    <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" {{if has .Editing "whatsapp_accounts"}}checked{{end}}> whatsapp_accounts</label>
-    <label class="chk"><input type="checkbox" name="cap" value="zoho_write" {{if has .Editing "zoho_write"}}checked{{end}}> zoho_write</label>
-    <label class="chk"><input type="checkbox" name="active" value="1" {{if .Editing.Active}}checked{{end}}> active</label>
-  </fieldset>
   <div class="actions">
     <button type="submit">Save</button>
     <a class="ghost" href="/admin/users">Cancel</a>

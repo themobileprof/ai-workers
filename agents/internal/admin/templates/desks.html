@@ -12,114 +12,140 @@
   </div>
 </section>
 
-{{if .CanAsk}}
-<form method="post" action="/admin/desks/{{.Desk.Slug}}/ask" class="person add">
-  <p class="hint">Ask the worker. Files a proposed job. Chat does not stamp Accept.</p>
-  <label>Task
-    <textarea name="task" rows="3" required placeholder="What should this worker draft or flag?"></textarea>
-  </label>
-  <div class="actions">
-    <button type="submit">Ask worker</button>
-  </div>
-</form>
-{{else}}
-<p class="hint">Worker is off until the LLM env is set on this process. You can still read jobs filed from Telegram or email.</p>
-{{end}}
+<div class="tabset" data-tabs data-default="{{if .Job}}job{{else}}jobs{{end}}">
+  <nav class="tabs" role="tablist" aria-label="{{.Desk.Title}} desk">
+    <button type="button" role="tab" data-tab="ask" aria-controls="tab-ask">Ask</button>
+    <button type="button" role="tab" data-tab="job" aria-controls="tab-job">This job</button>
+    <button type="button" role="tab" data-tab="jobs" aria-controls="tab-jobs">Jobs <span class="count">{{len .Jobs}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-ask" data-tab="ask">
+      {{if .CanAsk}}
+      <form method="post" action="/admin/desks/{{.Desk.Slug}}/ask" class="person add">
+        <p class="hint">Ask the worker. Files a proposed job. Chat does not stamp Accept.</p>
+        <label>Task
+          <textarea name="task" rows="3" required placeholder="What should this worker draft or flag?"></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask worker</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">Worker is off until the LLM env is set on this process. You can still read jobs filed from Telegram or email.</p>
+      {{end}}
+    </section>
 
-{{if .Job}}
-<section class="proposal">
-  <p class="kicker">{{.Job.Source}} · job {{.Job.ID}}</p>
-  <div class="doc-card-head">
-    <h3>{{.Job.Title}}</h3>
-    <span class="stamp {{.Job.StatusStamp}}">{{.Job.Status}}</span>
-  </div>
-  {{if .Job.Summary}}<p class="hint">{{.Job.Summary}}</p>{{end}}
-  <div class="thread">
-    {{range .Messages}}
-    <article class="bubble {{if .Handler}}handler{{else if .Worker}}worker{{else}}system{{end}}">
-      <p class="kicker">{{if .AuthorName}}{{.AuthorName}}{{else}}{{.AuthorKind}}{{end}}</p>
-      <pre class="legal-body">{{.Body}}</pre>
-    </article>
-    {{else}}
-    <p class="hint">No messages yet.</p>
-    {{end}}
-  </div>
-  {{if .Job.Proposed}}
-  <form method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/chat" class="person">
-    <label>Reply to the worker
-      <textarea name="body" rows="3" required placeholder="Complement, correct, or ask a follow-up. This does not Accept."></textarea>
-    </label>
-    <div class="actions">
-      <button type="submit">Send to worker</button>
-    </div>
-  </form>
-  <div class="actions">
-    <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/accept">
-      <button type="submit">Accept</button>
-    </form>
-    <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/reject">
-      <button class="ghost" type="submit">Turn away</button>
-    </form>
-  </div>
-  {{else}}
-  <p class="hint">Stamped. Chat is closed for this stamp — open a new Ask if you need more.</p>
-  {{end}}
-</section>
-{{end}}
+    <section role="tabpanel" id="tab-job" data-tab="job">
+      {{if .Job}}
+      <section class="proposal">
+        <p class="kicker">{{.Job.Source}} · job {{.Job.ID}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Job.Title}}</h3>
+          <span class="stamp {{.Job.StatusStamp}}">{{.Job.Status}}</span>
+        </div>
+        {{if .Job.Summary}}<p class="hint">{{.Job.Summary}}</p>{{end}}
+        <div class="thread">
+          {{range .Messages}}
+          <article class="bubble {{if .Handler}}handler{{else if .Worker}}worker{{else}}system{{end}}">
+            <p class="kicker">{{if .AuthorName}}{{.AuthorName}}{{else}}{{.AuthorKind}}{{end}}</p>
+            <pre class="legal-body">{{.Body}}</pre>
+          </article>
+          {{else}}
+          <p class="hint">No messages yet.</p>
+          {{end}}
+        </div>
+        {{if .Job.Proposed}}
+        <form method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/chat" class="person">
+          <label>Reply to the worker
+            <textarea name="body" rows="3" required placeholder="Complement, correct, or ask a follow-up. This does not Accept."></textarea>
+          </label>
+          <div class="actions">
+            <button type="submit">Send to worker</button>
+          </div>
+        </form>
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/accept">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/reject">
+            <button class="ghost" type="submit">Turn away</button>
+          </form>
+        </div>
+        {{else}}
+        <p class="hint">Stamped. Chat is closed for this stamp — open a new Ask if you need more.</p>
+        {{end}}
+      </section>
+      {{else}}
+      <p class="hint">No job open. Pick one from Jobs, or Ask the worker.</p>
+      {{end}}
+    </section>
 
-<section class="settings-block">
-  <h3>Jobs</h3>
-  {{if .Jobs}}
-  <ul class="doc-index">
-    {{range .Jobs}}
-    <li class="doc-card">
-      <div class="doc-card-head">
-        <p class="kicker">{{.Source}}</p>
-        <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-      </div>
-      <h3><a href="/admin/desks/{{$.Desk.Slug}}?job={{.ID}}">{{.Title}}</a></h3>
-      {{if .Summary}}<p>{{.Summary}}</p>{{end}}
-    </li>
-    {{end}}
-  </ul>
-  {{else}}
-  <p class="hint">No jobs yet. Ask the worker above, or wait for Telegram / email to file one.</p>
-  {{end}}
-</section>
+    <section role="tabpanel" id="tab-jobs" data-tab="jobs">
+      <h3>Jobs</h3>
+      {{if .Jobs}}
+      <ul class="doc-index">
+        {{range .Jobs}}
+        <li class="doc-card">
+          <div class="doc-card-head">
+            <p class="kicker">{{.Source}}</p>
+            <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+          </div>
+          <h3><a href="/admin/desks/{{$.Desk.Slug}}?job={{.ID}}&tab=job">{{.Title}}</a></h3>
+          {{if .Summary}}<p>{{.Summary}}</p>{{end}}
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="hint">No jobs yet. Ask the worker on Ask, or wait for Telegram / email to file one.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
 {{else}}
 <section class="hero">
   <p class="kicker">Handler desks</p>
   <h2>Your workers</h2>
   <p class="lede">Each department worker has a handler desk. Chat on a job, then Accept. The worker cannot stamp.</p>
 </section>
-{{if .NavDesks}}
-<ul class="doc-index">
-  {{range .NavDesks}}
-  <li class="doc-card">
-    <p class="kicker">{{.Prefix}}</p>
-    <h3><a href="{{.Path}}">{{.Title}}</a></h3>
-    <p>{{.Help}}</p>
-  </li>
-  {{end}}
-</ul>
-{{else}}
-<p class="hint">No desks assigned. The owner grants handler roles on People.</p>
-{{end}}
-{{if .Jobs}}
-<section class="settings-block">
-  <h3>Recent jobs</h3>
-  <ul class="doc-index">
-    {{range .Jobs}}
-    <li class="doc-card">
-      <div class="doc-card-head">
-        <p class="kicker">{{.DeskTitle}}</p>
-        <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-      </div>
-      <h3><a href="/admin/desks/{{.Desk}}?job={{.ID}}">{{.Title}}</a></h3>
-    </li>
-    {{end}}
-  </ul>
-</section>
-{{end}}
+<div class="tabset" data-tabs data-default="desks">
+  <nav class="tabs" role="tablist" aria-label="Handler desks">
+    <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks <span class="count">{{len .NavDesks}}</span></button>
+    <button type="button" role="tab" data-tab="recent" aria-controls="tab-recent">Recent jobs <span class="count">{{len .Jobs}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-desks" data-tab="desks">
+      {{if .NavDesks}}
+      <ul class="doc-index">
+        {{range .NavDesks}}
+        <li class="doc-card">
+          <p class="kicker">{{.Prefix}}</p>
+          <h3><a href="{{.Path}}">{{.Title}}</a></h3>
+          <p>{{.Help}}</p>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="hint">No desks assigned. The owner grants handler roles on People.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-recent" data-tab="recent">
+      {{if .Jobs}}
+      <ul class="doc-index">
+        {{range .Jobs}}
+        <li class="doc-card">
+          <div class="doc-card-head">
+            <p class="kicker">{{.DeskTitle}}</p>
+            <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+          </div>
+          <h3><a href="/admin/desks/{{.Desk}}?job={{.ID}}&tab=job">{{.Title}}</a></h3>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="hint">No jobs filed yet.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
 {{end}}
 {{end}}

@@ -93,11 +93,12 @@ func New(store *Store, internalToken string) (*Server, error) {
 		return nil, err
 	}
 	funcMap := template.FuncMap{
-		"has":        hasStoredCap,
-		"canRemove":  canRemove,
-		"stageLabel": stageLabel,
-		"gateLabel":  gateLabel,
-		"assigned":   assignedDesk,
+		"has":         hasStoredCap,
+		"canRemove":   canRemove,
+		"stageLabel":  stageLabel,
+		"gateLabel":   gateLabel,
+		"assigned":    assignedDesk,
+		"statusCount": statusCount,
 	}
 	pages := map[string]*template.Template{}
 	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal", "hr", "desks"} {
@@ -545,6 +546,39 @@ func (s *Server) currentUser(r *http.Request) *User {
 	}
 	u := sess.User
 	return &u
+}
+
+func withQuery(path, key, val string) string {
+	if path == "" || key == "" {
+		return path
+	}
+	u, err := url.Parse(path)
+	if err != nil {
+		return path
+	}
+	q := u.Query()
+	q.Set(key, val)
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+func statusCount(items any, status string) int {
+	n := 0
+	switch xs := items.(type) {
+	case []LegalDraft:
+		for _, d := range xs {
+			if d.Status == status {
+				n++
+			}
+		}
+	case []Integration:
+		for _, it := range xs {
+			if it.Status == status {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 func (s *Server) render(w http.ResponseWriter, name string, data pageData) {

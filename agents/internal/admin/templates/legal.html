@@ -10,36 +10,85 @@
     <a class="ghost" href="/admin/docs/legal">Playbook</a>
   </div>
 </section>
-{{if .Drafts}}
-{{range .Drafts}}
-<section class="proposal">
-  <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}">{{.ProjectName}}</a> · {{.TemplateLabel}}</p>
-  <div class="doc-card-head">
-    <h3>{{.Title}}{{if .CounterpartyName}} — {{.CounterpartyName}}{{end}}</h3>
-    <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+<div class="tabset" data-tabs data-default="proposed">
+  <nav class="tabs" role="tablist" aria-label="Legal drafts">
+    <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .Drafts "proposed"}}</span></button>
+    <button type="button" role="tab" data-tab="accepted" aria-controls="tab-accepted">Accepted <span class="count">{{statusCount .Drafts "approved"}}</span></button>
+    <button type="button" role="tab" data-tab="rejected" aria-controls="tab-rejected">Turned away <span class="count">{{statusCount .Drafts "rejected"}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-proposed" data-tab="proposed">
+      {{if statusCount .Drafts "proposed"}}
+      {{range .Drafts}}
+      {{if .Proposed}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=legal">{{.ProjectName}}</a> · {{.TemplateLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}{{if .CounterpartyName}} — {{.CounterpartyName}}{{end}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
+            <input type="hidden" name="next" value="/admin/legal">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/legal">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">No proposed drafts. Open a <a class="quiet" href="/admin/projects">project</a> and Ask draft, or Telegram <code>/legal</code>.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-accepted" data-tab="accepted">
+      {{if statusCount .Drafts "approved"}}
+      {{range .Drafts}}
+      {{if eq .Status "approved"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=legal">{{.ProjectName}}</a> · {{.TemplateLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}{{if .CounterpartyName}} — {{.CounterpartyName}}{{end}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        <p class="hint">Accepted. Copy from here. Sending the other party is not wired.</p>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing accepted yet.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-rejected" data-tab="rejected">
+      {{if statusCount .Drafts "rejected"}}
+      {{range .Drafts}}
+      {{if eq .Status "rejected"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=legal">{{.ProjectName}}</a> · {{.TemplateLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}{{if .CounterpartyName}} — {{.CounterpartyName}}{{end}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing turned away.</p>
+      {{end}}
+    </section>
   </div>
-  {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
-  {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
-  {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
-  {{if .Proposed}}
-  <div class="actions">
-    <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
-      <input type="hidden" name="next" value="/admin/legal">
-      <button type="submit">Accept</button>
-    </form>
-    <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
-      <input type="hidden" name="next" value="/admin/legal">
-      <button class="ghost" type="submit">Reject</button>
-    </form>
-  </div>
-  {{else if eq .Status "approved"}}
-  <p class="hint">Accepted. Copy from here. Sending the other party is not wired.</p>
-  {{end}}
-</section>
-{{end}}
-{{else}}
-<p class="hint">No drafts yet. Open a <a class="quiet" href="/admin/projects">project</a> and Ask draft, or Telegram <code>/legal</code> (review in chat; file on the desk).</p>
-{{end}}
+</div>
 {{if not .CanLegal}}
 <p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
 {{end}}

@@ -6,18 +6,29 @@
   <p class="lede"><a class="quiet" href="/admin/settings">Back to the list</a>. Secrets (Paystack, LLM, Zoho OAuth) stay in <code>.env</code> / n8n, not here.</p>
 </section>
 <form method="post" action="/admin/settings" class="settings">
-  {{range .SettingGroups}}
-  <fieldset>
-    <legend>{{.Title}}</legend>
-    {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
-    {{range .Fields}}
-    <label>{{.Label}}
-      <span class="hint"><code>{{.Key}}</code>{{if .Help}} — {{.Help}}{{end}}</span>
-      <input name="{{.Key}}" value="{{.Value}}">
-    </label>
-    {{end}}
-  </fieldset>
-  {{end}}
+  <div class="tabset" data-tabs data-default="g0">
+    <nav class="tabs" role="tablist" aria-label="Defaults">
+      {{range $i, $g := .SettingGroups}}
+      <button type="button" role="tab" data-tab="g{{$i}}" aria-controls="tab-g{{$i}}">{{$g.Title}}</button>
+      {{end}}
+    </nav>
+    <div class="tab-panels">
+      {{range $i, $g := .SettingGroups}}
+      <section role="tabpanel" id="tab-g{{$i}}" data-tab="g{{$i}}">
+        <fieldset>
+          <legend>{{$g.Title}}</legend>
+          {{if $g.Help}}<p class="hint">{{$g.Help}}</p>{{end}}
+          {{range $g.Fields}}
+          <label>{{.Label}}
+            <span class="hint"><code>{{.Key}}</code>{{if .Help}} — {{.Help}}{{end}}</span>
+            <input name="{{.Key}}" value="{{.Value}}">
+          </label>
+          {{end}}
+        </fieldset>
+      </section>
+      {{end}}
+    </div>
+  </div>
   <div class="actions">
     <button type="submit">Save defaults</button>
     <a class="ghost" href="/admin/settings">Cancel</a>
@@ -32,33 +43,42 @@
   </div>
   <a class="ghost" href="/admin/settings/edit">Amend</a>
 </section>
-{{range .SettingGroups}}
-<section class="settings-block">
-  <h3>{{.Title}}</h3>
-  {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
-  {{if .Fields}}
-  <div class="ledger">
-  <table class="roster">
-    <thead>
-      <tr>
-        <th>Setting</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range .Fields}}
-      <tr>
-        <td>{{.Label}}<br><code>{{.Key}}</code></td>
-        <td>{{if .Value}}{{.Value}}{{else}}<span class="hint">blank</span>{{end}}</td>
-      </tr>
+{{if .SettingGroups}}
+<div class="tabset" data-tabs data-default="g0">
+  <nav class="tabs" role="tablist" aria-label="Defaults">
+    {{range $i, $g := .SettingGroups}}
+    <button type="button" role="tab" data-tab="g{{$i}}" aria-controls="tab-g{{$i}}">{{$g.Title}}</button>
+    {{end}}
+  </nav>
+  <div class="tab-panels">
+    {{range $i, $g := .SettingGroups}}
+    <section role="tabpanel" id="tab-g{{$i}}" data-tab="g{{$i}}">
+      {{if $g.Help}}<p class="hint">{{$g.Help}}</p>{{end}}
+      {{if $g.Fields}}
+      <div class="ledger">
+      <table class="roster">
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $g.Fields}}
+          <tr>
+            <td>{{.Label}}<br><code>{{.Key}}</code></td>
+            <td>{{if .Value}}{{.Value}}{{else}}<span class="hint">blank</span>{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
       {{end}}
-    </tbody>
-  </table>
+    </section>
+    {{end}}
   </div>
-  {{end}}
-</section>
-{{end}}
-{{if not .SettingGroups}}
+</div>
+{{else}}
 <p class="hint">No defaults seeded yet.</p>
 {{end}}
 {{end}}

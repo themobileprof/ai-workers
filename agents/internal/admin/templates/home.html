@@ -4,69 +4,84 @@
   <h2>Which bets are moving</h2>
   <p class="lede">Projects live under TheMobileProf Technologies. Each worker has a handler desk. Parent workers stay on the company. The face of each bet sits on the project.</p>
 </section>
-<div class="grid-3">
-  <article class="stat">
-    <p class="kicker">Projects</p>
-    <p class="num">{{len .Projects}}</p>
-  </article>
-  <article class="stat">
-    <p class="kicker">People</p>
-    <p class="num">{{.UserCount}}</p>
-  </article>
-  <article class="stat">
-    <p class="kicker">WhatsApp accounts</p>
-    <p class="num">{{len .Allowlist}}</p>
-  </article>
-</div>
-<section>
-  <h3>Projects</h3>
-  <p class="hint">Stage is the agenda. Fundable means paying customers. <a class="quiet" href="/admin/projects">Open the book</a>.</p>
-  {{if .Projects}}
-  <ul class="doc-index">
-    {{range .Projects}}
-    <li class="doc-card">
-      <div class="doc-card-head">
-        <p class="kicker">{{.Slug}}</p>
-        <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+<div class="tabset" data-tabs data-default="tonight">
+  <nav class="tabs" role="tablist" aria-label="Board">
+    <button type="button" role="tab" data-tab="tonight" aria-controls="tab-tonight">Tonight</button>
+    <button type="button" role="tab" data-tab="projects" aria-controls="tab-projects">Projects <span class="count">{{len .Projects}}</span></button>
+    <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks <span class="count">{{len .NavDesks}}</span></button>
+    <button type="button" role="tab" data-tab="whatsapp" aria-controls="tab-whatsapp">WhatsApp <span class="count">{{len .Allowlist}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-tonight" data-tab="tonight">
+      <div class="grid-3">
+        <article class="stat">
+          <p class="kicker">Projects</p>
+          <p class="num">{{len .Projects}}</p>
+        </article>
+        <article class="stat">
+          <p class="kicker">People</p>
+          <p class="num">{{.UserCount}}</p>
+        </article>
+        <article class="stat">
+          <p class="kicker">WhatsApp accounts</p>
+          <p class="num">{{len .Allowlist}}</p>
+        </article>
       </div>
-      <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
-      <p>{{.OneLiner}}</p>
-      {{if .Gate}}<p class="path">{{.JourneyLabel}} · {{.GateLabel}}</p>{{end}}
-      {{if .Proposal}}<p class="hint">Open proposal — stamp not moved.</p>{{end}}
-      {{if .URL}}<p class="path"><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a></p>{{end}}
-      {{if .Notes}}<p class="path">This week: {{.Notes}}</p>{{end}}
-      <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
-    </li>
-    {{end}}
-    </ul>
-  {{else}}
-  <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
-  {{end}}
-</section>
-{{if .NavDesks}}
-<section>
-  <h3>Handler desks</h3>
-  <p class="hint">Chat and Accept live on the desk. Specialized books (Legal, HR, Projects) stay one click away.</p>
-  <ul class="doc-index">
-    {{range .NavDesks}}
-    <li class="doc-card">
-      <p class="kicker">{{.Prefix}}</p>
-      <h3><a href="{{.Path}}">{{.Title}}</a></h3>
-      <p>{{.Help}}</p>
-    </li>
-    {{end}}
-  </ul>
-</section>
-{{end}}
-<section>
-  <h3>Live allowlist</h3>
-  <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>
-  {{if .Allowlist}}
-  <ul class="phones">
-    {{range .Allowlist}}<li><code>{{.}}</code></li>{{end}}
-  </ul>
-  {{else}}
-  <p class="hint">Empty — nobody on WhatsApp can reach /accounts until you grant the capability.</p>
-  {{end}}
-</section>
+      <p class="hint">Pulse only. Open a tab for the book, the handler desks, or the live WhatsApp allowlist.</p>
+    </section>
+    <section role="tabpanel" id="tab-projects" data-tab="projects">
+      <h3>Projects</h3>
+      <p class="hint">Stage is the agenda. Fundable means paying customers. <a class="quiet" href="/admin/projects">Open the book</a>.</p>
+      {{if .Projects}}
+      <ul class="doc-index">
+        {{range .Projects}}
+        <li class="doc-card">
+          <div class="doc-card-head">
+            <p class="kicker">{{.Slug}}</p>
+            <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+          </div>
+          <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+          <p>{{.OneLiner}}</p>
+          {{if .Gate}}<p class="path">{{.JourneyLabel}} · {{.GateLabel}}</p>{{end}}
+          {{if .Proposal}}<p class="hint">Open proposal — stamp not moved.</p>{{end}}
+          {{if .URL}}<p class="path"><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a></p>{{end}}
+          {{if .Notes}}<p class="path">This week: {{.Notes}}</p>{{end}}
+          <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-desks" data-tab="desks">
+      <h3>Handler desks</h3>
+      <p class="hint">Chat and Accept live on the desk. Specialized books (Legal, HR, Projects) stay one click away.</p>
+      {{if .NavDesks}}
+      <ul class="doc-index">
+        {{range .NavDesks}}
+        <li class="doc-card">
+          <p class="kicker">{{.Prefix}}</p>
+          <h3><a href="{{.Path}}">{{.Title}}</a></h3>
+          <p>{{.Help}}</p>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="hint">No desks assigned. The owner grants handler roles on People.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-whatsapp" data-tab="whatsapp">
+      <h3>Live allowlist</h3>
+      <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>
+      {{if .Allowlist}}
+      <ul class="phones">
+        {{range .Allowlist}}<li><code>{{.}}</code></li>{{end}}
+      </ul>
+      {{else}}
+      <p class="hint">Empty — nobody on WhatsApp can reach /accounts until you grant the capability.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
 {{end}}

@@ -114,7 +114,7 @@ func (s *Server) hrRolePOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.linkJob(r.Context(), "hr", saved.Title, saved.JD, "hr_role", saved.ID, map[string]any{"template": saved.Template, "kind": saved.Kind})
-	http.Redirect(w, r, "/admin/hr?ok=role_drafted", http.StatusSeeOther)
+	http.Redirect(w, r, withQuery("/admin/hr?ok=role_drafted", "tab", "roles"), http.StatusSeeOther)
 }
 
 func (s *Server) hrRoleStamp(status string) http.HandlerFunc {
@@ -144,7 +144,7 @@ func (s *Server) hrRoleStamp(status string) http.HandlerFunc {
 		if status != "open" {
 			ok = "role_closed"
 		}
-		http.Redirect(w, r, "/admin/hr?ok="+ok, http.StatusSeeOther)
+		http.Redirect(w, r, withQuery("/admin/hr?ok="+ok, "tab", "roles"), http.StatusSeeOther)
 	}
 }
 
@@ -210,7 +210,7 @@ func (s *Server) hrApplicationPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.linkJob(r.Context(), "hr", saved.Name, saved.Rationale, "hr_application", saved.ID, map[string]any{"recommendation": saved.Recommendation, "score": saved.Score})
-	http.Redirect(w, r, "/admin/hr?ok=app_filed", http.StatusSeeOther)
+	http.Redirect(w, r, withQuery("/admin/hr?ok=app_filed", "tab", "applicants"), http.StatusSeeOther)
 }
 
 func (s *Server) hrApplicationStamp(status string) http.HandlerFunc {
@@ -240,7 +240,7 @@ func (s *Server) hrApplicationStamp(status string) http.HandlerFunc {
 		if status == "rejected" {
 			ok = "app_no"
 		}
-		http.Redirect(w, r, "/admin/hr?ok="+ok, http.StatusSeeOther)
+		http.Redirect(w, r, withQuery("/admin/hr?ok="+ok, "tab", "applicants"), http.StatusSeeOther)
 	}
 }
 

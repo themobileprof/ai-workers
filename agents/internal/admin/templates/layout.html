@@ -44,5 +44,41 @@
     {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
     {{template "content" .}}
   </main>
+  <script>
+  (function () {
+    function activate(root, id) {
+      root.querySelectorAll('[role="tab"]').forEach(function (btn) {
+        var on = btn.getAttribute("data-tab") === id;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      root.querySelectorAll('[role="tabpanel"]').forEach(function (panel) {
+        var match = panel.getAttribute("data-tab") === id;
+        panel.hidden = !match;
+      });
+      root.classList.add("is-on");
+    }
+    document.querySelectorAll("[data-tabs]").forEach(function (root) {
+      var params = new URLSearchParams(location.search);
+      var hash = location.hash.replace(/^#tab-?/, "").replace(/^#/, "");
+      var ids = [];
+      root.querySelectorAll('[role="tab"]').forEach(function (btn) {
+        ids.push(btn.getAttribute("data-tab"));
+      });
+      var want = params.get("tab") || hash || root.getAttribute("data-default") || "";
+      if (ids.indexOf(want) < 0) want = ids[0] || "";
+      if (want) activate(root, want);
+      root.querySelectorAll('[role="tab"]').forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var id = btn.getAttribute("data-tab");
+          activate(root, id);
+          var url = new URL(location.href);
+          url.searchParams.set("tab", id);
+          history.replaceState(null, "", url);
+        });
+      });
+    });
+  })();
+  </script>
 </body>
 </html>

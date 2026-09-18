@@ -129,7 +129,7 @@ func (s *Server) projectsPOST(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "stamp", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +155,7 @@ func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "card", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectDelete(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +201,7 @@ func (s *Server) projectMemberAdd(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, fresh, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "face", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectMemberRemove(w http.ResponseWriter, r *http.Request) {
@@ -226,7 +226,7 @@ func (s *Server) projectMemberRemove(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "face", ""), http.StatusSeeOther)
 }
 
 func (s *Server) loadProject(w http.ResponseWriter, r *http.Request) (Project, bool) {
@@ -363,7 +363,7 @@ func (s *Server) projectPlace(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=placed", http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "stamp", "placed"), http.StatusSeeOther)
 }
 
 func (s *Server) projectProposalAccept(w http.ResponseWriter, r *http.Request) {
@@ -400,7 +400,7 @@ func (s *Server) projectProposalAmend(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok=amended", http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "stamp", "amended"), http.StatusSeeOther)
 }
 
 func (s *Server) proposalAction(w http.ResponseWriter, r *http.Request, ok string, fn func(context.Context, int64) error) {
@@ -420,7 +420,18 @@ func (s *Server) proposalAction(w http.ResponseWriter, r *http.Request, ok strin
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?ok="+ok, http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "stamp", ok), http.StatusSeeOther)
+}
+
+func projectURL(id int64, tab, ok string) string {
+	p := "/admin/projects/" + strconv.FormatInt(id, 10)
+	if ok != "" {
+		p = withQuery(p, "ok", ok)
+	}
+	if tab != "" {
+		p = withQuery(p, "tab", tab)
+	}
+	return p
 }
 
 func placementRequest(p Project, feedback string) (contract.Request, error) {

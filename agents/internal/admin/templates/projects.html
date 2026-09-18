@@ -59,225 +59,241 @@
   </div>
   <span class="stamp {{.Project.StageStamp}}">{{.Project.StageLabel}}</span>
 </section>
-{{if .Project.Proposal}}
-<section class="proposal">
-  <p class="kicker">Open proposal</p>
-  <h3>Agent has not moved the stamp</h3>
-  <p>{{.Project.Proposal.JourneyLabel}} → {{.Project.Proposal.GateLabel}} {{if .Project.Proposal.Confidence}}({{.Project.Proposal.Confidence}}%){{end}}</p>
-  <p>{{.Project.Proposal.Mission}}</p>
-  {{if .Project.Proposal.Rationale}}<p class="hint">{{.Project.Proposal.Rationale}}</p>{{end}}
-  <div class="actions">
-    <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/accept">
-      <button type="submit">Accept</button>
-    </form>
-    <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/reject">
-      <button class="ghost" type="submit">Reject</button>
-    </form>
-  </div>
-  <form method="post" action="/admin/projects/{{.Project.ID}}/proposal/amend" class="settings">
-    <label>Amend then stamp
-      <select name="placement" required>
-        {{range $j := $.Journeys}}
-        {{range $j.Gates}}
-        <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Proposal.Journey $j.ID) (eq $.Project.Proposal.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
-        {{end}}
-        {{end}}
-      </select>
-    </label>
-    <label>This week
-      <input name="mission" value="{{.Project.Proposal.Mission}}">
-    </label>
-    <button type="submit">Amend and commit</button>
-  </form>
-</section>
-{{end}}
-{{if .CanPlace}}
-<form method="post" action="/admin/projects/{{.Project.ID}}/place" class="person add">
-  <p class="hint">Ask placement. Writes a proposal only. Suggest evidence or a correction in the box.</p>
-  <label>Feedback for the agent
-    <input name="human_feedback" placeholder="We already have 12 paid Academy seats this month.">
-  </label>
-  <div class="actions">
-    <button type="submit">Ask placement</button>
-  </div>
-</form>
-{{else}}
-<p class="hint">Placement agent is off until the LLM env is set on this process.</p>
-{{end}}
-<section class="settings-block">
-  <h3>Legal drafts</h3>
-  <p class="hint">Parent worker. Files as <strong>proposed</strong> until you Accept. The clerk cannot send this to the other party — copy from the desk. Templates live in git, not Defaults.</p>
-  {{if .Drafts}}
-  {{range .Drafts}}
-  <section class="proposal">
-    <p class="kicker">{{.TemplateLabel}} · {{.CounterpartyName}}</p>
-    <div class="doc-card-head">
-      <h3>{{.Title}}</h3>
-      <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-    </div>
-    {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
-    {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
-    {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
-    {{if .Proposed}}
-    <div class="actions">
-      <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
-        <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
-        <button type="submit">Accept</button>
-      </form>
-      <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
-        <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
-        <button class="ghost" type="submit">Reject</button>
-      </form>
-    </div>
-    {{else if eq .Status "approved"}}
-    <p class="hint">Accepted. Copy the text. Sending is not wired — do not use info@ <code>/approve</code>.</p>
-    {{end}}
-  </section>
-  {{end}}
-  {{else}}
-  <p class="hint">No drafts on this project yet.</p>
-  {{end}}
-  {{if .CanLegal}}
-  <form method="post" action="/admin/projects/{{.Project.ID}}/legal" class="person add">
-    <p class="hint">Ask draft. Writes a proposed row only.</p>
-    <div class="fields">
-      <label>Action
-        <select name="action">
-          <option value="draft">Draft from template</option>
-          <option value="review">Review pasted text</option>
-        </select>
-      </label>
-      <label>Template
-        <select name="template">
-          <option value="">infer</option>
-          {{range .LegalTemplates}}
-          <option value="{{.ID}}">{{.Label}}</option>
-          {{end}}
-        </select>
-      </label>
-      <label>Counterparty on the roster
-        <select name="counterparty_user_id">
-          <option value="">none</option>
-          {{range .Roster}}
-          <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
-          {{end}}
-        </select>
-      </label>
-    </div>
-    <label>Name if they are not on the roster
-      <input name="counterparty_name" placeholder="Ada Okonkwo">
-    </label>
-    <label>Notes or pasted contract
-      <textarea name="human_feedback" rows="5" placeholder="Pilot NDA for Ada on Mechazone. Or paste a vendor contract to flag."></textarea>
-    </label>
-    <div class="actions">
-      <button type="submit">Ask draft</button>
-    </div>
-  </form>
-  {{else}}
-  <p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
-  {{end}}
-</section>
-<form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
-  <label>Name
-    <input name="name" value="{{.Project.Name}}" required>
-  </label>
-  <label>Slug
-    <span class="hint"><code>{{.Project.Slug}}</code> is what n8n will send as <code>project</code>.</span>
-    <input name="slug" value="{{.Project.Slug}}" required>
-  </label>
-  <label>One-liner
-    <input name="one_liner" value="{{.Project.OneLiner}}" required>
-  </label>
-  <label>Public URL
-    <input name="url" value="{{.Project.URL}}" placeholder="https://">
-  </label>
-  <label>Stage
-    <select name="stage">
-      {{range $.Stages}}
-      <option value="{{.ID}}" {{if eq $.Project.Stage .ID}}selected{{end}}>{{.Label}} — {{.Help}}</option>
-      {{end}}
-    </select>
-  </label>
-  <label>Committed journey and gate
-    <span class="hint">Saving a different pair here is a human stamp and drops an open proposal.</span>
-    <select name="placement">
-      <option value="">unset</option>
-      {{range $j := $.Journeys}}
-      {{range $j.Gates}}
-      <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Journey $j.ID) (eq $.Project.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
-      {{end}}
-      {{end}}
-    </select>
-  </label>
-  <label>This week
-    <input name="notes" value="{{.Project.Notes}}">
-  </label>
-  <div class="actions">
-    <button type="submit">Save project</button>
-    <a class="ghost" href="/admin/projects">Back</a>
-  </div>
-</form>
-
-<section class="settings-block">
-  <h3>Face of this project</h3>
-  <p class="hint">Cofounder is the public face. Assistant helps that person. Owner and BDM see every project without sitting here. Seats are not directors of TheMobileProf.</p>
-  {{if .Project.Members}}
-  <div class="ledger">
-  <table class="roster">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Seat</th>
-        <th>Office role</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range .Project.Members}}
-      <tr>
-        <td><strong>{{.Name}}</strong>{{if .Phone}}<br><code>{{.Phone}}</code>{{end}}</td>
-        <td><span class="role">{{.Seat}}</span></td>
-        <td>{{.Role}}</td>
-        <td class="row-actions">
-          <form class="inline" method="post" action="/admin/projects/{{$.Project.ID}}/members/{{.UserID}}/delete" onsubmit="return confirm('Take this person off the project?');">
-            <button class="quiet danger-text" type="submit">Remove</button>
+<div class="tabset" data-tabs data-default="stamp">
+  <nav class="tabs" role="tablist" aria-label="Project">
+    <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Stamp</button>
+    <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
+    <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
+    <button type="button" role="tab" data-tab="face" aria-controls="tab-face">Face</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-stamp" data-tab="stamp">
+      {{if .Project.Proposal}}
+      <section class="proposal">
+        <p class="kicker">Open proposal</p>
+        <h3>Agent has not moved the stamp</h3>
+        <p>{{.Project.Proposal.JourneyLabel}} → {{.Project.Proposal.GateLabel}} {{if .Project.Proposal.Confidence}}({{.Project.Proposal.Confidence}}%){{end}}</p>
+        <p>{{.Project.Proposal.Mission}}</p>
+        {{if .Project.Proposal.Rationale}}<p class="hint">{{.Project.Proposal.Rationale}}</p>{{end}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/accept">
+            <button type="submit">Accept</button>
           </form>
-        </td>
-      </tr>
+          <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/reject">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+        <form method="post" action="/admin/projects/{{.Project.ID}}/proposal/amend" class="settings">
+          <label>Amend then stamp
+            <select name="placement" required>
+              {{range $j := $.Journeys}}
+              {{range $j.Gates}}
+              <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Proposal.Journey $j.ID) (eq $.Project.Proposal.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
+              {{end}}
+              {{end}}
+            </select>
+          </label>
+          <label>This week
+            <input name="mission" value="{{.Project.Proposal.Mission}}">
+          </label>
+          <button type="submit">Amend and commit</button>
+        </form>
+      </section>
       {{end}}
-    </tbody>
-  </table>
+      {{if .CanPlace}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/place" class="person add">
+        <p class="hint">Ask placement. Writes a proposal only. Suggest evidence or a correction in the box.</p>
+        <label>Feedback for the agent
+          <input name="human_feedback" placeholder="We already have 12 paid Academy seats this month.">
+        </label>
+        <div class="actions">
+          <button type="submit">Ask placement</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">Placement agent is off until the LLM env is set on this process.</p>
+      {{end}}
+    </section>
+
+    <section role="tabpanel" id="tab-legal" data-tab="legal">
+      <h3>Legal drafts</h3>
+      <p class="hint">Parent worker. Files as <strong>proposed</strong> until you Accept. The clerk cannot send this to the other party — copy from the desk. Templates live in git, not Defaults.</p>
+      {{if .Drafts}}
+      {{range .Drafts}}
+      <section class="proposal">
+        <p class="kicker">{{.TemplateLabel}} · {{.CounterpartyName}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
+        {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        {{if .Proposed}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/legal/{{.ID}}/approve">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=legal">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=legal">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+        {{else if eq .Status "approved"}}
+        <p class="hint">Accepted. Copy the text. Sending is not wired — do not use info@ <code>/approve</code>.</p>
+        {{end}}
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No drafts on this project yet.</p>
+      {{end}}
+      {{if .CanLegal}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/legal" class="person add">
+        <p class="hint">Ask draft. Writes a proposed row only.</p>
+        <div class="fields">
+          <label>Action
+            <select name="action">
+              <option value="draft">Draft from template</option>
+              <option value="review">Review pasted text</option>
+            </select>
+          </label>
+          <label>Template
+            <select name="template">
+              <option value="">infer</option>
+              {{range .LegalTemplates}}
+              <option value="{{.ID}}">{{.Label}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Counterparty on the roster
+            <select name="counterparty_user_id">
+              <option value="">none</option>
+              {{range .Roster}}
+              <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
+              {{end}}
+            </select>
+          </label>
+        </div>
+        <label>Name if they are not on the roster
+          <input name="counterparty_name" placeholder="Ada Okonkwo">
+        </label>
+        <label>Notes or pasted contract
+          <textarea name="human_feedback" rows="5" placeholder="Pilot NDA for Ada on Mechazone. Or paste a vendor contract to flag."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask draft</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
+      {{end}}
+    </section>
+
+    <section role="tabpanel" id="tab-card" data-tab="card">
+      <form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
+        <label>Name
+          <input name="name" value="{{.Project.Name}}" required>
+        </label>
+        <label>Slug
+          <span class="hint"><code>{{.Project.Slug}}</code> is what n8n will send as <code>project</code>.</span>
+          <input name="slug" value="{{.Project.Slug}}" required>
+        </label>
+        <label>One-liner
+          <input name="one_liner" value="{{.Project.OneLiner}}" required>
+        </label>
+        <label>Public URL
+          <input name="url" value="{{.Project.URL}}" placeholder="https://">
+        </label>
+        <label>Stage
+          <select name="stage">
+            {{range $.Stages}}
+            <option value="{{.ID}}" {{if eq $.Project.Stage .ID}}selected{{end}}>{{.Label}} — {{.Help}}</option>
+            {{end}}
+          </select>
+        </label>
+        <label>Committed journey and gate
+          <span class="hint">Saving a different pair here is a human stamp and drops an open proposal.</span>
+          <select name="placement">
+            <option value="">unset</option>
+            {{range $j := $.Journeys}}
+            {{range $j.Gates}}
+            <option value="{{$j.ID}}/{{.ID}}" {{if and (eq $.Project.Journey $j.ID) (eq $.Project.Gate .ID)}}selected{{end}}>{{$j.Name}} — {{.Label}}</option>
+            {{end}}
+            {{end}}
+          </select>
+        </label>
+        <label>This week
+          <input name="notes" value="{{.Project.Notes}}">
+        </label>
+        <div class="actions">
+          <button type="submit">Save project</button>
+          <a class="ghost" href="/admin/projects">Back</a>
+        </div>
+      </form>
+      <form class="person-delete" method="post" action="/admin/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Strike this project from the book? Hypotheses are not stored yet, but the name and seats go.');">
+        <button class="danger" type="submit">Remove project</button>
+      </form>
+    </section>
+
+    <section role="tabpanel" id="tab-face" data-tab="face">
+      <h3>Face of this project</h3>
+      <p class="hint">Cofounder is the public face. Assistant helps that person. Owner and BDM see every project without sitting here. Seats are not directors of TheMobileProf.</p>
+      {{if .Project.Members}}
+      <div class="ledger">
+      <table class="roster">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Seat</th>
+            <th>Office role</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Project.Members}}
+          <tr>
+            <td><strong>{{.Name}}</strong>{{if .Phone}}<br><code>{{.Phone}}</code>{{end}}</td>
+            <td><span class="role">{{.Seat}}</span></td>
+            <td>{{.Role}}</td>
+            <td class="row-actions">
+              <form class="inline" method="post" action="/admin/projects/{{$.Project.ID}}/members/{{.UserID}}/delete" onsubmit="return confirm('Take this person off the project?');">
+                <button class="quiet danger-text" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="hint">No face yet — you or the BDM are carrying it.</p>
+      {{end}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/members" class="person add">
+        <div class="fields">
+          <label>Person
+            <select name="user_id" required>
+              <option value="">Choose…</option>
+              {{range .Roster}}
+              <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Seat
+            <select name="seat">
+              {{range $.Seats}}
+              <option value="{{.}}">{{.}}</option>
+              {{end}}
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Seat them</button>
+        </div>
+      </form>
+    </section>
   </div>
-  {{else}}
-  <p class="hint">No face yet — you or the BDM are carrying it.</p>
-  {{end}}
-  <form method="post" action="/admin/projects/{{.Project.ID}}/members" class="person add">
-    <div class="fields">
-      <label>Person
-        <select name="user_id" required>
-          <option value="">Choose…</option>
-          {{range .Roster}}
-          <option value="{{.ID}}">{{.Name}} ({{.Role}})</option>
-          {{end}}
-        </select>
-      </label>
-      <label>Seat
-        <select name="seat">
-          {{range $.Seats}}
-          <option value="{{.}}">{{.}}</option>
-          {{end}}
-        </select>
-      </label>
-    </div>
-    <div class="actions">
-      <button type="submit">Seat them</button>
-    </div>
-  </form>
-</section>
-<form class="person-delete" method="post" action="/admin/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Strike this project from the book? Hypotheses are not stored yet, but the name and seats go.');">
-  <button class="danger" type="submit">Remove project</button>
-</form>
+</div>
 {{else}}
 <section class="hero row">
   <div>
