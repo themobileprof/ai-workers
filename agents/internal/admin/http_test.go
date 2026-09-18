@@ -77,6 +77,10 @@ func TestPlaybookCatalog(t *testing.T) {
 	if !ok || !leg.Partial() || !strings.Contains(string(leg.Body), "Not wired") {
 		t.Fatal("legal must stay a partial with a later-box for send")
 	}
+	h, ok := lookupDoc("hr")
+	if !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
+		t.Fatal("hr must stay a partial with later-boxes")
+	}
 }
 
 func TestHasStoredCap(t *testing.T) {

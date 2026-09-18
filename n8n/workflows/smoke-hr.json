@@ -1,0 +1,53 @@
+{
+  "id": "smkHrHttp0000001",
+  "name": "Smoke: HR HTTP",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "a9b8c7d6-e5f4-3210-ab12-hrsmoke00001",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/hr",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"task_description\": \"Draft a job description for TheMobileProf Technologies: Field intern on Mechazone. WhatsApp fluency. Two weeks in Ikeja. Do not hire.\",\n  \"context_data\": {\n    \"channel\": \"telegram\",\n    \"department\": \"hr\",\n    \"action\": \"draft_jd\",\n    \"template\": \"intern\",\n    \"cannot_hire\": true,\n    \"cannot_send\": true\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [280, 0],
+      "id": "a9b8c7d6-e5f4-3210-ab12-hrsmoke00002",
+      "name": "Call HR"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call HR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

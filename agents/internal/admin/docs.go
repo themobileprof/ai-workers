@@ -98,6 +98,15 @@ var docCatalog = []DocMeta{
 		Prefixes: []string{"/legal", "Telegram watch", "desk Ask draft"},
 	},
 	{
+		Slug:     "hr",
+		Title:    "HR",
+		Kicker:   "Parent clerk",
+		Path:     "POST /departments/hr",
+		Wire:     "partial",
+		Summary:  "/hr and desk Ask JD / Score applicant file proposed roles and applications. Humans Shortlist. No hire email, no PAYE.",
+		Prefixes: []string{"/hr", "info@ CVs", "desk Ask JD"},
+	},
+	{
 		Slug:     "internal-ops",
 		Title:    "Internal ops",
 		Kicker:   "Operations room",

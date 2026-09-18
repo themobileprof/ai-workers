@@ -15,6 +15,7 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
 	"github.com/samuel/ai-workers/agents/internal/departments/crm"
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
+	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/internalops"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/productdev"
@@ -70,6 +71,12 @@ func main() {
 					}
 					return legal.Handle(ctx, completer, req)
 				})
+				desk.WithHR(func(ctx context.Context, req contract.Request) (contract.Response, error) {
+					if completerErr != nil || completer == nil {
+						return contract.Fail("LLM is not configured"), completerErr
+					}
+					return hr.Handle(ctx, completer, req)
+				})
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")
@@ -88,7 +95,7 @@ func main() {
 			"vision_model": stack.VisionModel,
 			"vision_ready": stack.VisionModel != "",
 			"admin_ready":  adminReady,
-			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal"},
+			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "hr"},
 		})
 	})
 	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, internalops.Handle))
@@ -98,6 +105,7 @@ func main() {
 	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, community.Handle))
 	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, crm.Handle))
 	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, legal.Handle))
+	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, hr.Handle))
 
 	srv := &http.Server{
 		Addr:              addr,

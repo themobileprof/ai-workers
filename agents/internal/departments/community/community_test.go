@@ -43,4 +43,7 @@ func TestAccessDeniedSkipsLLMAndHidesPayload(t *testing.T) {
 	if !strings.Contains(resp.OutputText, "not authorized") {
 		t.Fatalf("missing refuse: %s", resp.OutputText)
 	}
+	if !strings.Contains(resp.OutputText, "HR") {
+		t.Fatalf("missing HR desk: %s", resp.OutputText)
+	}
 }

@@ -8,7 +8,7 @@ n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`.
 | WhatsApp | Customers, community, field intern | One Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/n8n/`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
@@ -40,6 +40,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-growth.json` | `smkGrwthHttp0001` | no | Manual POST growth worker |
 | `n8n/workflows/smoke-community.json` | `smkCommHttp0001` | no | Manual POST community worker |
 | `n8n/workflows/smoke-legal.json` | `smkLegalHttp0001` | no | Manual POST legal worker (review flags; must not send) |
+| `n8n/workflows/smoke-hr.json` | `smkHrHttp0000001` | no | Manual POST HR worker (draft JD; must not hire or send) |
 | `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs, chart of accounts, taxes, unpaid invoices |
 | `n8n/workflows/smoke-email.json` | `smkEmailSmtp0001` | no | Send one text mail From/To `info@themobileprof.com` |
 | `n8n/workflows/smoke-crm.json` | `smkCrmBooks00001` | no | GET Zoho Books contacts (read-only) |
@@ -49,10 +50,10 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
 | `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes and `/legal` only for desk-allowlisted numbers; CRM upsert on high intent |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/hr` JDs/applicants (desk files); Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes, `/legal`, and `/hr` only for desk-allowlisted numbers; CRM upsert on high intent |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
-| `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft → Telegram; upserts Books contact from sender |
+| `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft (customer mail) or HR file (CVs); Telegram not used for CVs; upserts Books contact from customer senders only |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
@@ -66,11 +67,12 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/accounts` | accounts |
 | `/ops` | internal-ops |
 | `/legal` | legal |
+| `/hr` | hr |
 | `/validate` | product-dev |
 | none, 1:1 | growth |
 | none, group | community |
 
-WhatsApp `/accounts`, `/ops`, and `/legal` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books or the legal clerk. Telegram ops is not gated (that chat is already private). After the primary department on Telegram, Legal **watches** the task (`POST /departments/legal` with `action: watch`) and may append a Legal note. Greetings and retail receipts stay silent. Watch does not halt Books and does not run on customer WhatsApp.
+WhatsApp `/accounts`, `/ops`, `/legal`, and `/hr` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books, Legal, or HR. Telegram ops is not gated (that chat is already private). After the primary department on Telegram, Legal **watches** the task (`POST /departments/legal` with `action: watch`) and may append a Legal note. Greetings and retail receipts stay silent. Watch does not halt Books and does not run on customer WhatsApp.
 
 Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops`) are downloaded and OCR’d with Gemini. WhatsApp photos are OCR’d only for allowlisted `/accounts` or `/ops` — unprefixed customer photos stay growth. A failed read must not invent amounts.
 
@@ -79,7 +81,7 @@ Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops`) are downloaded and O
 Source of truth for **projects**, people, WhatsApp accounts rights, and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
 
 - Postgres database/role **`aiworkers`** (never the n8n database). Bootstrap: `scripts/bootstrap-admin-db.sh` on the VM.
-- **Projects** (`/admin/projects`) is the incubation book: name, one-liner, public URL, journey/gate (playbook stamp), stage, this-week note, and seats (`cofounder`, `assistant`). Seeded bets: MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone. **Ask placement** writes a proposal only; Accept / Amend / Reject on the desk moves the stamp. The worker cannot commit. **Ask draft** (Legal) writes a proposed NDA/contract on that project; Accept on Legal or the project card. The worker cannot stamp approved or send. n8n: `GET /internal/v1/projects`, `GET /internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts` (`X-Internal-Token`). Proposal and legal POSTs do not commit. Hypotheses are not stored yet.
+- **Projects** (`/admin/projects`) is the incubation book: name, one-liner, public URL, journey/gate (playbook stamp), stage, this-week note, and seats (`cofounder`, `assistant`). Seeded bets: MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone. **Ask placement** writes a proposal only; Accept / Amend / Reject on the desk moves the stamp. The worker cannot commit. **Ask draft** (Legal) writes a proposed NDA/contract on that project; Accept on Legal or the project card. The worker cannot stamp approved or send. **HR** (`/admin/hr`) stores proposed JDs and applications (optional project on a role). Humans open / Shortlist / Turn away. The worker cannot hire or email. n8n: `GET /internal/v1/projects`, `GET /internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications` (`X-Internal-Token`). Proposal, legal, and HR POSTs do not commit the stamp. Hypotheses are not stored yet.
 - People roles: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), plus leftover `accounts` / `operator` / `viewer`. Capabilities: `web_admin` (desk), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
@@ -128,7 +130,7 @@ Paystack is the collector because Payment Requests are real AR objects (customer
 
 - Company address: **`info@themobileprof.com`**. From display name: `TheMobileProf`.
 - Outbound: n8n **Send Email** + credential `Zoho Mail info@`. Paid Zoho Mail SMTP is `smtppro.zoho.com` / `465` SSL (fallback `smtp.zoho.com` if a send fails).
-- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → growth worker drafts a reply → **Email outbox** holds **one** pending draft → Telegram notify. Nothing is sent until `/approve` in Ops Telegram. `/kill` drops it. A new inbound mail overwrites the pending draft. The sender is upserted as a Zoho Books contact.
+- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → if the mail looks like a CV / “I am applying”, **HR** scores it and `POST /internal/v1/hr/applications` files a proposed row (no growth draft, no Books contact, nothing sent). Other mail → growth worker drafts a reply → **Email outbox** holds **one** pending draft → Telegram notify. Nothing is sent until `/approve` in Ops Telegram. `/kill` drops it. A new inbound customer mail overwrites the pending draft. Customer senders are upserted as a Zoho Books contact.
 - Skips mail From `info@themobileprof.com` (loop) and subjects matching `n8n smoke`.
 - Message the ops bot once (`/help`) after deploy so outbox learns `ops_chat_id`; otherwise the draft is still stored and `/approve` still works, but you will not get the Telegram card.
 - Replies are a new message with `Re:` subject (n8n SMTP does not set `In-Reply-To`).
@@ -201,7 +203,7 @@ Fastest loop. Proves inbound → worker → outbound on HTTPS.
 1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
 2. Message the bot once (so a `chat_id` exists), or create a private group, add the bot, send a message.
 3. n8n → **Credentials** → Telegram API → paste token. The repo workflow **Ops Telegram** (`n8n/workflows/ops-telegram.json`) is imported and published from there — do not rebuild the nodes by hand.
-4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/accounts`, `/ops`, `/legal`, `/validate`. Groups default to community; 1:1 defaults to growth.
+4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/accounts`, `/ops`, `/legal`, `/hr`, `/validate`. Groups default to community; 1:1 defaults to growth.
 5. Confirm Telegram registered the production hook:
 
 ```text
@@ -235,7 +237,7 @@ Approved customer replies use the same SMTP node inside **Email outbox**. Depart
 
 1. Enable IMAP on the mailbox (Zoho Mail → Settings → Mail Accounts → IMAP).
 2. Credential **Zoho Mail info@ IMAP** (`w6VyL4iDdwX5XgIM`): `imappro.zoho.com`, `993`, SSL, user `info@themobileprof.com`, same app password as SMTP.
-3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Telegram should get a draft. `/approve` sends; `/kill` drops.
+3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Customer mail: Telegram should get a draft; `/approve` sends; `/kill` drops. A CV / “I am applying” mail files on **Desk → HR** instead and does not draft a reply.
 4. First, `/help` the ops bot so it records your chat id.
 
 ---
@@ -268,6 +270,7 @@ On that number, n8n routes by prefix (then default **growth** for 1:1, **communi
 | `/accounts` | accounts (allowlisted WhatsApp numbers only; others get community `access_denied`) |
 | `/ops` | internal-ops (same WhatsApp allowlist) |
 | `/legal` | legal (same WhatsApp allowlist; chat is flags only; file on the desk) |
+| `/hr` | hr (same WhatsApp allowlist; chat is flags only; info@ CVs file on the desk) |
 | `/validate` | product-dev |
 
 Telegram community uses the same worker path once a bot credential exists. Do not create a second WhatsApp number for community.
@@ -298,7 +301,7 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 2. Telegram bot + Ops workflow + getWebhookInfo clean.
 3. **Smoke: send email** — Execute; confirm mail in `info@`.
 4. WhatsApp is already live; keep using prefixes.
-5. Email inbound is live: mail `info@` → Telegram draft → `/approve`.
+5. Email inbound is live: customer mail `info@` → Telegram draft → `/approve`. CVs file on Desk → HR.
 6. Only then: intern mission on WhatsApp.
 
 If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker.

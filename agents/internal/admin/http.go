@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
@@ -31,6 +32,7 @@ type Server struct {
 	static       http.Handler
 	place        PlaceFunc
 	legal        PlaceFunc
+	hr           PlaceFunc
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
@@ -66,6 +68,10 @@ type pageData struct {
 	CanLegal       bool
 	Drafts         []LegalDraft
 	LegalTemplates []legal.Spec
+	HrRoles        []HrRole
+	HrApps         []HrApplication
+	HrTemplates    []hr.Spec
+	CanHR          bool
 }
 
 type kv struct {
@@ -84,7 +90,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"gateLabel":  gateLabel,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal", "hr"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -135,6 +141,13 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/legal", s.legalGET)
 	mux.HandleFunc("POST /admin/legal/{id}/approve", s.legalStamp("approved"))
 	mux.HandleFunc("POST /admin/legal/{id}/reject", s.legalStamp("rejected"))
+	mux.HandleFunc("GET /admin/hr", s.hrGET)
+	mux.HandleFunc("POST /admin/hr/roles", s.hrRolePOST)
+	mux.HandleFunc("POST /admin/hr/roles/{id}/open", s.hrRoleStamp("open"))
+	mux.HandleFunc("POST /admin/hr/roles/{id}/close", s.hrRoleStamp("closed"))
+	mux.HandleFunc("POST /admin/hr/applications", s.hrApplicationPOST)
+	mux.HandleFunc("POST /admin/hr/applications/{id}/shortlist", s.hrApplicationStamp("shortlisted"))
+	mux.HandleFunc("POST /admin/hr/applications/{id}/reject", s.hrApplicationStamp("rejected"))
 	mux.HandleFunc("GET /admin/users", s.usersGET)
 	mux.HandleFunc("GET /admin/users/new", s.userNewGET)
 	mux.HandleFunc("GET /admin/users/{id}", s.userEditGET)
@@ -155,6 +168,8 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/v1/projects/{id}/proposal", s.internalProposal)
 	mux.HandleFunc("GET /internal/v1/legal-drafts", s.internalLegalDraftsGET)
 	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
+	mux.HandleFunc("GET /internal/v1/hr/roles", s.internalHrRoles)
+	mux.HandleFunc("POST /internal/v1/hr/applications", s.internalHrApplicationsPOST)
 }
 
 func RegisterPublic(mux *http.ServeMux) {

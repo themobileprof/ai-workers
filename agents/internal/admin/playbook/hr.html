@@ -1,0 +1,53 @@
+<p class="lede">Parent clerk for hiring at TheMobileProf Technologies. Prefix <code>/hr</code> reaches the worker. Desk <strong>Ask JD</strong> and <strong>Score applicant</strong> file proposed rows. Humans open a role, Shortlist, or Turn away. The worker cannot hire, email, or run PAYE.</p>
+
+<ol class="steps">
+  <li>Desk <a href="/admin/hr">HR</a>: Ask JD (intern / contractor / assistant / employee). Accept opens the role.</li>
+  <li>info@ that looks like a CV or “I am applying” goes to HR, not growth. n8n files a proposed application. Customer mail stays growth.</li>
+  <li>Telegram (or allowlisted WhatsApp): <code>/hr</code> plus the ask. Chat is flags; the desk is the filing path unless email already filed.</li>
+  <li>Shortlist or Turn away on the desk. Reasons live on the row. Do not use info@ <code>/approve</code>.</li>
+</ol>
+
+<p class="hint">People on <a href="/admin/users">People</a> are login/access. Applicants are not that. WhatsApp <code>/hr</code> is allowlisted like <code>/accounts</code>.</p>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · desk Ask JD</p>
+  <p class="you-say">HR → Ask JD → Intern, project Mechazone, “WhatsApp fluency, two weeks Ikeja.”</p>
+  <pre class="json">{
+  "task_description": "Draft a job description for TheMobileProf Technologies: Field intern on project Mechazone.",
+  "context_data": {
+    "channel": "desk",
+    "action": "draft_jd",
+    "template": "intern",
+    "cannot_hire": true,
+    "project": { "slug": "mechazone" }
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> hr, <code>save_role</code> true, JD names TheMobileProf Technologies, not a second company. Desk status <code>proposed</code> until Accept opens it.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · inbound CV</p>
+  <p class="you-say">info@ subject “Application for intern” with a CV body.</p>
+  <p class="expect">n8n sets department hr, <code>action</code> ingest. <code>POST /internal/v1/hr/applications</code> inserts <code>proposed</code>. No growth draft, no Books contact, no email send.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · score / reject reason</p>
+  <p class="you-say"><code>/hr Why reject Chinedu for the intern role? He has no WhatsApp sample.</code></p>
+  <p class="expect"><code>action</code> explain, <code>recommendation</code> reject, <code>reasons</code> cite the JD must-haves. Chat does not stamp. Turn away on the desk if you agree.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · interview transcripts</p>
+  <p>When you paste or attach a transcript, replace this box with the specimen: which field stores it, that the clerk only opines, and that the handler still stamps the hire.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · offer letter and signature</p>
+  <p>Legal already has contractor / project-face notes. When HR asks Legal for an employment letter and a signed PDF comes back, add the specimen. Do not reuse info@ <code>/approve</code> unless you mean to.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · monthly salary advice / Tentacle</p>
+  <p>Cron to Accounts for contractor bills is later. PAYE/pension/NHF is Tentacle the first month you have a salaried employee — not this worker.</p>
+</section>

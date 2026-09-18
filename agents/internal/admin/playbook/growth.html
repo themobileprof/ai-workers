@@ -3,7 +3,7 @@
 <ol class="steps">
   <li>WhatsApp 1:1 with no prefix → growth. Or start with <code>/growth</code>.</li>
   <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code></li>
-  <li>Email: send a real mail to <code>info@themobileprof.com</code>. Growth drafts. Telegram shows the card. <code>/approve</code> sends, <code>/kill</code> drops.</li>
+  <li>Email: send a real mail to <code>info@themobileprof.com</code>. Customer mail: Growth drafts. Telegram shows the card. <code>/approve</code> sends, <code>/kill</code> drops. A CV / “I am applying” mail goes to <a href="/admin/docs/hr">HR</a> instead — no draft, no send.</li>
   <li>Manual smoke in n8n: <strong>Smoke: growth HTTP</strong> (<code>smkGrwthHttp0001</code>).</li>
 </ol>
 
@@ -35,7 +35,7 @@
 <section class="specimen">
   <p class="spec-no">Specimen 03 · inbound info@</p>
   <p class="you-say">Mail from a human to <code>info@themobileprof.com</code> (not from info@, not subject “n8n smoke”).</p>
-  <p class="expect">Growth drafts a plain-text reply. Email outbox holds <strong>one</strong> pending draft. Ops Telegram gets the card. First <code>/help</code> the bot so it knows your chat id. <code>/approve</code> sends via Zoho Mail SMTP.</p>
+  <p class="expect">Customer mail: Growth drafts a plain-text reply. Email outbox holds <strong>one</strong> pending draft. Ops Telegram gets the card. First <code>/help</code> the bot so it knows your chat id. <code>/approve</code> sends via Zoho Mail SMTP. A CV / application does not take this path — see HR.</p>
 </section>
 
 <section class="later">
