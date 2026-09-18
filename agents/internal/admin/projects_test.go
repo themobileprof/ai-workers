@@ -163,6 +163,9 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		if !strings.Contains(buf.String(), tc.want) {
 			t.Fatalf("%s missing %q", tc.name, tc.want)
 		}
+		if strings.Contains(buf.String(), "/admin/integrations") {
+			t.Fatalf("%s still links to the removed Tools page", tc.name)
+		}
 	}
 }
 
@@ -184,7 +187,6 @@ func TestBoardHasThreeTabs(t *testing.T) {
 		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
 		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, 3},
 		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{})}, 3},
-		{"integrations", pageData{Title: "Tools", Nav: "tools", User: user, Integrations: allIntegrations()}, 3},
 		{"users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, 3},
 	}
 	for _, tc := range pages {

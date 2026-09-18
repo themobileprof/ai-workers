@@ -7,8 +7,8 @@ alwaysApply: true
 
 When you add or change a vendor this office talks to (new env var, n8n credential, outbound API, or webhook):
 
-1. Add or amend a row in `agents/internal/admin/integrations.go` (`allIntegrations`). Include `ComposeEnvs`, `N8nCredNames`, and `DeskKeys`.
+1. Add or amend a section in `TOOLS.md` (repo root — this is what GitHub shows). Include **Env**, **n8n credentials**, and **Desk keys** when they apply.
 2. Accounts/Books/Paystack **ids** belong on the company desk (`settingCatalog` + `defaultSettings` in `agents/internal/admin/settings_catalog.go`), not hardcoded in n8n JSON. Secrets stay in the VM `.env` or n8n Credentials — never git, never the Go worker for Paystack/Zoho tokens.
-3. `go test ./internal/admin` must pass: it fails if compose / `.env.example` vendor env or an n8n credential name is missing from the catalog.
+3. `go test ./internal/admin` must pass: it fails if compose / `.env.example` vendor env or an n8n credential name is missing from `TOOLS.md`.
 
-The live list is **Desk → Tools** (`/admin/integrations`). Accounts ids are **Desk → Defaults** (`/admin/settings`).
+The live list is **`TOOLS.md`**. Accounts ids are **Desk → Defaults** (`/admin/settings`).

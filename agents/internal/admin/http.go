@@ -57,7 +57,6 @@ type pageData struct {
 	SettingGroups  []SettingGroupView
 	Docs           []DocMeta
 	Doc            *DocPage
-	Integrations   []Integration
 	Projects       []Project
 	Project        *Project
 	Stages         []stageSpec
@@ -101,7 +100,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"statusCount": statusCount,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "integrations", "projects", "legal", "hr", "desks"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -175,7 +174,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/settings", s.settingsGET)
 	mux.HandleFunc("GET /admin/settings/edit", s.settingsEditGET)
 	mux.HandleFunc("POST /admin/settings", s.settingsPOST)
-	mux.HandleFunc("GET /admin/integrations", s.integrationsGET)
+	mux.HandleFunc("GET /admin/integrations", http.NotFound)
 	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
 	mux.HandleFunc("GET /admin/docs", s.docsIndex)
 	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
@@ -448,14 +447,6 @@ func (s *Server) settingsEditGET(w http.ResponseWriter, r *http.Request) {
 		data.Error = err.Error()
 	}
 	s.render(w, "settings", data)
-}
-
-func (s *Server) integrationsGET(w http.ResponseWriter, r *http.Request) {
-	u := s.requireAdmin(w, r)
-	if u == nil {
-		return
-	}
-	s.render(w, "integrations", pageData{Title: "Tools", Nav: "tools", User: u, Integrations: allIntegrations()})
 }
 
 func (s *Server) settingsPOST(w http.ResponseWriter, r *http.Request) {

@@ -151,7 +151,7 @@ agents/
   internal/departments/legal/   # parent clerk: TMP templates in git; desk files proposed drafts
   internal/departments/hr/      # parent clerk: JD templates in git; desk files proposed roles/apps
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
-  internal/admin/          # company desk HTML + store. Tools, Defaults, projects + stamps, legal drafts, HR roles/apps.
+  internal/admin/          # company desk HTML + store. Defaults, projects + stamps, legal drafts, HR roles/apps.
                            # Handler desks: /admin/desks/{slug} jobs + chat. People assigns one or more desks.
                            # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
@@ -194,7 +194,7 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 - Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
 - Re-importing the same `id` updates the workflow. Import deactivates unless you publish: `N8N_PUBLISH=id1,id2 ./scripts/sync-n8n-workflows.sh`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `agents/internal/admin/integrations.go` and desk `/admin/integrations`. Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `TOOLS.md` (GitHub). Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

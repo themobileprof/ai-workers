@@ -18,7 +18,7 @@ Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgre
 
 ## Live inventory
 
-Keep this section in sync with every channel change. IDs are not secrets. The desk **Tools** page (`/admin/integrations`) is the same vendor list; `integrations.go` is the source of truth the tests check.
+Keep this section in sync with every channel change. IDs are not secrets. The vendor catalog GitHub shows is [`TOOLS.md`](TOOLS.md); tests parse that file.
 
 ### n8n credentials
 
@@ -86,7 +86,7 @@ Source of truth for **projects**, people, WhatsApp accounts rights, and Zoho def
 - People seats: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), leftover `accounts` / `operator` / `viewer`. Handler desks (Accounts, Growth, Community, CRM, Legal, HR, Ops, Product) are assigned separately, one or more per person. Capabilities: `web_admin` (desk login), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
-- **Tools** (`/admin/integrations`) is the inventory of every third-party system. Add a row in `agents/internal/admin/integrations.go` when a vendor is wired.
+- **Third-party tools** live in [`TOOLS.md`](TOOLS.md) (GitHub). Add a section there when a vendor is wired — not a desk page.
 - **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**. Do **not** set `N8N_PATH`.
 - **Docs** (`/admin/docs`) is the field playbook: sample uses per worker. Partial workers keep a later-box until the workflow is wired.
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.

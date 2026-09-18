@@ -22,9 +22,14 @@ func repoRoot(t *testing.T) string {
 	return root
 }
 
-func claimedEnvs() map[string]bool {
+func claimedEnvs(t *testing.T) map[string]bool {
+	t.Helper()
+	got, err := loadIntegrations()
+	if err != nil {
+		t.Fatal(err)
+	}
 	out := map[string]bool{}
-	for _, it := range allIntegrations() {
+	for _, it := range got {
 		for _, e := range it.ComposeEnvs {
 			out[e] = true
 		}
@@ -32,9 +37,14 @@ func claimedEnvs() map[string]bool {
 	return out
 }
 
-func claimedCreds() map[string]bool {
+func claimedCreds(t *testing.T) map[string]bool {
+	t.Helper()
+	got, err := loadIntegrations()
+	if err != nil {
+		t.Fatal(err)
+	}
 	out := map[string]bool{}
-	for _, it := range allIntegrations() {
+	for _, it := range got {
 		for _, n := range it.N8nCredNames {
 			out[n] = true
 		}
@@ -53,7 +63,7 @@ func isVendorEnv(name string) bool {
 
 func TestIntegrationsCoverVendorEnv(t *testing.T) {
 	root := repoRoot(t)
-	claimed := claimedEnvs()
+	claimed := claimedEnvs(t)
 	for _, rel := range []string{"docker-compose.yml", ".env.example"} {
 		raw, err := os.ReadFile(filepath.Join(root, rel))
 		if err != nil {
@@ -75,7 +85,7 @@ func TestIntegrationsCoverVendorEnv(t *testing.T) {
 				continue
 			}
 			if !claimed[name] {
-				t.Errorf("%s: %s is not listed in allIntegrations().ComposeEnvs — add a Tools row", rel, name)
+				t.Errorf("%s: %s is not listed in TOOLS.md Env — add a vendor section", rel, name)
 			}
 		}
 	}
@@ -83,7 +93,7 @@ func TestIntegrationsCoverVendorEnv(t *testing.T) {
 
 func TestIntegrationsCoverN8nCredentials(t *testing.T) {
 	root := repoRoot(t)
-	claimed := claimedCreds()
+	claimed := claimedCreds(t)
 	err := filepath.WalkDir(filepath.Join(root, "n8n", "workflows"), func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") {
 			return err
@@ -109,7 +119,7 @@ func TestIntegrationsCoverN8nCredentials(t *testing.T) {
 					continue
 				}
 				if !claimed[c.Name] {
-					t.Errorf("%s: n8n credential %q is not in allIntegrations().N8nCredNames", filepath.Base(path), c.Name)
+					t.Errorf("%s: n8n credential %q is not in TOOLS.md n8n credentials", filepath.Base(path), c.Name)
 				}
 			}
 		}
@@ -134,8 +144,12 @@ func TestSettingCatalogMatchesDefaults(t *testing.T) {
 }
 
 func TestIntegrationDeskKeysAreCatalogued(t *testing.T) {
+	got, err := loadIntegrations()
+	if err != nil {
+		t.Fatal(err)
+	}
 	keys := catalogSettingKeys()
-	for _, it := range allIntegrations() {
+	for _, it := range got {
 		for _, k := range it.DeskKeys {
 			if !keys[k] {
 				t.Errorf("%s desk key %s is not in settingCatalog()", it.ID, k)
@@ -144,11 +158,18 @@ func TestIntegrationDeskKeysAreCatalogued(t *testing.T) {
 	}
 }
 
-func TestIntegrationsPageParses(t *testing.T) {
-	if _, err := New(nil, ""); err != nil {
+func TestToolsMarkdownParses(t *testing.T) {
+	got, err := loadIntegrations()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if n := len(allIntegrations()); n < 8 {
+	if n := len(got); n < 8 {
 		t.Fatalf("expected a full vendor list, got %d", n)
+	}
+	if _, ok := integrationByID("zoho-books"); !ok {
+		t.Fatal("zoho-books")
+	}
+	if _, ok := integrationByID("whatsapp"); !ok {
+		t.Fatal("whatsapp")
 	}
 }
