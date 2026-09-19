@@ -47,12 +47,12 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-accounts.json` | `smkAccountsHttp01` | no | Manual POST accounts worker (hypothetical → preview, must not post) |
 | `n8n/workflows/smoke-books-lookup.json` | `smkBooksWrite0001` | no | Execute Books write with `lookup` (live P&L / unpaid) |
 | `n8n/workflows/smoke-paystack.json` | `smkPaystackHttp01` | no | GET Paystack `/balance` (needs `PAYSTACK_SECRET_KEY`; does not charge) |
-| `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | no (sub-workflow) | Upsert a Books customer from `record_lead` |
-| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | no (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup |
+| `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | yes (sub-workflow) | Upsert a Books customer from `record_lead`. Must be published — Execute Workflow cannot call an inactive child. |
+| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. Must be published. |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/hr` JDs/applicants (desk files); Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes, `/legal`, and `/hr` only for desk-allowlisted numbers; CRM upsert on high intent |
-| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | no (sub-workflow) | Stores one pending draft; SMTP send on `/approve` |
+| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; SMTP send on `/approve`. Must be published. |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft (customer mail) or HR file (CVs); Telegram not used for CVs; upserts Books contact from customer senders only |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
@@ -292,7 +292,7 @@ Agents among themselves: n8n HTTP only (never WhatsApp/Telegram as the bus)
 
 Validation loop: Telegram `/validate` → `POST .../product-dev` with `context_data.action`. n8n stores the returned `structured_data` (hypotheses, mission) in workflow static data or a Data Table, then WhatsApp/email the intern the mission text.
 
-When a new flow is described in Cursor, add or edit a JSON file under `n8n/workflows/`, run `scripts/sync-n8n-workflows.sh`, and (for webhooks) publish. Tokens still go in n8n **Credentials**, not in those JSON files.
+When a new flow is described in Cursor, add or edit a JSON file under `n8n/workflows/` and run `scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox). Tokens still go in n8n **Credentials**, not in those JSON files.
 
 ---
 
