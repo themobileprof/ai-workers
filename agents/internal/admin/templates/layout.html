@@ -15,23 +15,26 @@
   <div class="sky-glow" aria-hidden="true"></div>
   {{if .User}}
   <header class="mast">
-    <a class="brand" href="/admin/">
+    <a class="brand" href="{{if .CanOffice}}/admin/{{else}}/admin/desks{{end}}">
       <img class="logo" src="/site/themobileprof_cloud.png" width="56" height="56" alt="TheMobileProf">
       <div>
         <p class="kicker">TheMobileProf · Lagos</p>
-        <h1>Company desk</h1>
+        <h1>{{if .CanOffice}}Company desk{{else}}Handler desk{{end}}</h1>
       </div>
     </a>
     <nav>
+      {{if .CanOffice}}
       <a href="/admin/" {{if eq .Nav "home"}}class="on"{{end}}>Board</a>
-      {{range .NavDesks}}
-      <a href="{{.Path}}" {{if or (eq $.Nav (printf "desk-%s" .Slug)) (eq $.Nav .Slug)}}class="on"{{end}}>{{.Title}}</a>
-      {{end}}
       <a href="/admin/projects" {{if eq .Nav "projects"}}class="on"{{end}}>Projects</a>
       {{if .CanPeople}}<a href="/admin/users" {{if eq .Nav "users"}}class="on"{{end}}>People</a>{{end}}
       <a href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>Defaults</a>
       <a href="/admin/docs" {{if eq .Nav "docs"}}class="on"{{end}}>Docs</a>
       <a href="/admin/workflows" {{if eq .Nav "flows"}}class="on"{{end}}>n8n</a>
+      {{end}}
+      {{range .NavDesks}}
+      <a href="{{.Path}}" {{if or (eq $.Nav (printf "desk-%s" .Slug)) (eq $.Nav .Slug)}}class="on"{{end}}>{{.Title}}</a>
+      {{end}}
+      {{if and (not .CanOffice) .NavDesks}}<a href="/admin/docs" {{if eq .Nav "docs"}}class="on"{{end}}>Docs</a>{{end}}
     </nav>
     <form class="out" method="post" action="/admin/logout">
       <button type="submit">Sign out {{.User.Name}}</button>

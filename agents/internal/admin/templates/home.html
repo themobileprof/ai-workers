@@ -2,13 +2,12 @@
 <section class="hero">
   <p class="kicker">Tonight’s board</p>
   <h2>Which bets are moving</h2>
-  <p class="lede">Projects live under TheMobileProf Technologies. Each worker has a handler desk. Parent workers stay on the company. The face of each bet sits on the project.</p>
+  <p class="lede">Projects live under TheMobileProf Technologies. Assign handler desks on People — those workers appear when that person signs in, not here.</p>
 </section>
 <div class="tabset" data-tabs data-default="tonight">
   <nav class="tabs" role="tablist" aria-label="Board">
     <button type="button" role="tab" data-tab="tonight" aria-controls="tab-tonight">Tonight</button>
     <button type="button" role="tab" data-tab="projects" aria-controls="tab-projects">Projects <span class="count">{{len .Projects}}</span></button>
-    <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks <span class="count">{{len .NavDesks}}</span></button>
     <button type="button" role="tab" data-tab="whatsapp" aria-controls="tab-whatsapp">WhatsApp <span class="count">{{len .Allowlist}}</span></button>
   </nav>
   <div class="tab-panels">
@@ -27,7 +26,7 @@
           <p class="num">{{len .Allowlist}}</p>
         </article>
       </div>
-      <p class="hint">Pulse only. Open a tab for the book, the handler desks, or the live WhatsApp allowlist.</p>
+      <p class="hint">Pulse only. Open Projects for the book, or People to assign a worker to a handler.</p>
     </section>
     <section role="tabpanel" id="tab-projects" data-tab="projects">
       <h3>Projects</h3>
@@ -52,23 +51,6 @@
       </ul>
       {{else}}
       <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
-      {{end}}
-    </section>
-    <section role="tabpanel" id="tab-desks" data-tab="desks">
-      <h3>Handler desks</h3>
-      <p class="hint">Chat and Accept live on the desk. Specialized books (Legal, HR, Projects) stay one click away.</p>
-      {{if .NavDesks}}
-      <ul class="doc-index">
-        {{range .NavDesks}}
-        <li class="doc-card">
-          <p class="kicker">{{.Prefix}}</p>
-          <h3><a href="{{.Path}}">{{.Title}}</a></h3>
-          <p>{{.Help}}</p>
-        </li>
-        {{end}}
-      </ul>
-      {{else}}
-      <p class="hint">No desks assigned. The owner grants handler roles on People.</p>
       {{end}}
     </section>
     <section role="tabpanel" id="tab-whatsapp" data-tab="whatsapp">

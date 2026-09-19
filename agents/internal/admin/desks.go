@@ -46,9 +46,6 @@ func Handles(u User, slug string) bool {
 	if slug == "" {
 		return false
 	}
-	if u.Role == "owner" {
-		return true
-	}
 	for _, d := range u.Desks {
 		if d == slug {
 			return true
@@ -58,15 +55,11 @@ func Handles(u User, slug string) bool {
 }
 
 func visibleDesks(u *User) []Desk {
-	all := AllDesks()
 	if u == nil {
 		return nil
 	}
-	if u.Role == "owner" {
-		return all
-	}
 	var out []Desk
-	for _, d := range all {
+	for _, d := range AllDesks() {
 		if Handles(*u, d.Slug) {
 			out = append(out, d)
 		}
@@ -76,4 +69,22 @@ func visibleDesks(u *User) []Desk {
 
 func isOwner(u *User) bool {
 	return u != nil && u.Role == "owner"
+}
+
+func canOffice(u *User) bool {
+	if u == nil {
+		return false
+	}
+	return u.Role == "owner" || u.Role == "bdm"
+}
+
+func afterLoginPath(u User) string {
+	if canOffice(&u) {
+		return "/admin/"
+	}
+	desks := visibleDesks(&u)
+	if len(desks) == 1 {
+		return desks[0].Path()
+	}
+	return "/admin/desks"
 }

@@ -152,7 +152,7 @@ agents/
   internal/departments/hr/      # parent clerk: JD templates in git; desk files proposed roles/apps
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
   internal/admin/          # company desk HTML + store. Defaults, projects + stamps, legal drafts, HR roles/apps.
-                           # Handler desks: /admin/desks/{slug} jobs + chat. People assigns one or more desks.
+                           # Handler desks: /admin/desks/{slug} jobs + chat. People assigns desks; they appear on that user's sign-in, not Board.
                            # /admin/docs = field playbook (sample uses; later-boxes if unwired)
 ```
 

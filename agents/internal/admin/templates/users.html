@@ -32,7 +32,7 @@
       <section role="tabpanel" id="tab-desks" data-tab="desks">
         <fieldset>
           <legend>Handler desks</legend>
-          <p class="hint">One or more. Each desk is the dashboard for that worker. web_admin is granted when a desk is ticked so they can sign in.</p>
+          <p class="hint">Workers this person handles. They see those desks when they sign in — not on the company Board. Ticking a desk grants web_admin.</p>
           {{range .DeskCatalog}}
           <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}"> {{.Title}} <code>{{.Prefix}}</code></label>
           {{end}}
@@ -84,17 +84,13 @@
         </div>
       </section>
       <section role="tabpanel" id="tab-desks" data-tab="desks">
-        {{if ne .Editing.Role "owner"}}
         <fieldset>
           <legend>Handler desks</legend>
-          <p class="hint">One or more workers this person handles. Owner already sees every desk.</p>
+          <p class="hint">Workers this person handles. They see those desks when they sign in — not on the company Board. Ticking a desk grants web_admin.</p>
           {{range .DeskCatalog}}
           <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}" {{if assigned $.Editing .Slug}}checked{{end}}> {{.Title}} <code>{{.Prefix}}</code></label>
           {{end}}
         </fieldset>
-        {{else}}
-        <p class="hint">Owner already sees every desk.</p>
-        {{end}}
       </section>
       <section role="tabpanel" id="tab-rights" data-tab="rights">
         <fieldset>
@@ -122,7 +118,7 @@
   <div>
     <p class="kicker">Roster</p>
     <h2>People and permissions</h2>
-    <p class="lede">Names on the book. Office seat is owner / BDM / cofounder / assistant. Handler desks (one or more) are the dashboards for each worker — assign them on the card. Seat cofounders on a <a href="/admin/projects">project</a>.</p>
+    <p class="lede">Names on the book. Office seat is owner / BDM / cofounder / assistant. Assign one or more handler desks on the card — that person sees those workers after they sign in. Seat cofounders on a <a href="/admin/projects">project</a>.</p>
   </div>
   <a class="ghost" href="/admin/users/new">Add person</a>
 </section>
@@ -151,7 +147,7 @@
       <td>{{if .Email}}{{.Email}}{{else}}—{{end}}</td>
       <td><span class="role">{{.Role}}</span></td>
       <td class="caps">
-        {{if eq .Role "owner"}}all{{else}}{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}—{{end}}{{end}}
+        {{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}—{{end}}
       </td>
       <td class="caps">
         {{range .Caps}}<span class="pill">{{.}}</span>{{end}}

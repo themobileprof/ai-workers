@@ -202,6 +202,13 @@ func TestBoardHasThreeTabs(t *testing.T) {
 			t.Fatalf("%s tabs %d, want >= %d", tc.page, n, tc.min)
 		}
 	}
+	var homeBuf strings.Builder
+	if err := srv.pages["home"].ExecuteTemplate(&homeBuf, "layout.html", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2, CanOffice: true}); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(homeBuf.String(), `data-tab="desks"`) {
+		t.Fatal("board must not list worker desks")
+	}
 }
 
 func TestWithQueryAndStatusCount(t *testing.T) {

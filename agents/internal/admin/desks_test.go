@@ -1,6 +1,9 @@
 package admin
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAllDesksUnique(t *testing.T) {
 	seen := map[string]bool{}
@@ -23,8 +26,12 @@ func TestAllDesksUnique(t *testing.T) {
 
 func TestHandles(t *testing.T) {
 	owner := User{Role: "owner"}
-	if !Handles(owner, "legal") || !Handles(owner, "hr") {
-		t.Fatal("owner handles all")
+	if Handles(owner, "legal") || Handles(owner, "hr") {
+		t.Fatal("owner does not implicitly handle desks")
+	}
+	assigned := User{Role: "owner", Desks: []string{"hr"}}
+	if !Handles(assigned, "hr") || Handles(assigned, "legal") {
+		t.Fatal("assignment only")
 	}
 	handler := User{Role: "bdm", Desks: []string{"hr", "growth"}}
 	if !Handles(handler, "hr") || Handles(handler, "legal") {
@@ -32,6 +39,25 @@ func TestHandles(t *testing.T) {
 	}
 	if Handles(handler, "") {
 		t.Fatal("empty")
+	}
+}
+
+func TestAfterLoginPath(t *testing.T) {
+	owner := User{Role: "owner", Desks: []string{"hr"}}
+	if afterLoginPath(owner) != "/admin/" {
+		t.Fatal("office lands on Board")
+	}
+	one := User{Role: "cofounder", Desks: []string{"hr"}}
+	if afterLoginPath(one) != "/admin/desks/hr" {
+		t.Fatalf("got %s", afterLoginPath(one))
+	}
+	many := User{Role: "assistant", Desks: []string{"hr", "legal"}}
+	if afterLoginPath(many) != "/admin/desks" {
+		t.Fatal("picker")
+	}
+	none := User{Role: "viewer"}
+	if afterLoginPath(none) != "/admin/desks" {
+		t.Fatal("empty handler must not loop on Board")
 	}
 }
 
@@ -80,5 +106,42 @@ func TestAssignedDesk(t *testing.T) {
 	}
 	if assignedDesk((*User)(nil), "hr") {
 		t.Fatal("nil")
+	}
+}
+
+func TestLayoutOfficeVsHandlerNav(t *testing.T) {
+	srv, err := New(nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	office := pageData{Title: "Board", Nav: "home", User: &User{ID: 1, Name: "Sam", Role: "owner"}, CanOffice: true, CanPeople: true}
+	var buf strings.Builder
+	if err := srv.pages["home"].ExecuteTemplate(&buf, "layout.html", office); err != nil {
+		t.Fatal(err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, ">Board</a>") || !strings.Contains(got, "/admin/users") {
+		t.Fatal("office nav")
+	}
+	if strings.Contains(got, "/admin/desks/hr") || strings.Contains(got, "/admin/desks/legal") {
+		t.Fatal("unassigned worker on office nav")
+	}
+	handler := pageData{
+		Title:    "HR",
+		Nav:      "desk-hr",
+		User:     &User{ID: 2, Name: "Ada", Role: "cofounder"},
+		NavDesks: []Desk{{Slug: "hr", Title: "HR"}},
+		Desk:     &Desk{Slug: "hr", Title: "HR", Prefix: "/hr"},
+	}
+	buf.Reset()
+	if err := srv.pages["desks"].ExecuteTemplate(&buf, "layout.html", handler); err != nil {
+		t.Fatal(err)
+	}
+	got = buf.String()
+	if strings.Contains(got, ">Board</a>") || strings.Contains(got, `href="/admin/projects"`) {
+		t.Fatal("handler should not see office nav")
+	}
+	if !strings.Contains(got, "/admin/desks/hr") {
+		t.Fatal("assigned desk")
 	}
 }

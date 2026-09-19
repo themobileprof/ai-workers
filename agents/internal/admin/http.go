@@ -75,6 +75,7 @@ type pageData struct {
 	NavDesks       []Desk
 	DeskCatalog    []Desk
 	CanPeople      bool
+	CanOffice      bool
 	Desk           *Desk
 	Jobs           []DeskJob
 	Job            *DeskJob
@@ -228,7 +229,7 @@ func (s *Server) serveStatic(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) loginGET(w http.ResponseWriter, r *http.Request) {
 	if u := s.currentUser(r); u != nil {
-		http.Redirect(w, r, "/admin/", http.StatusSeeOther)
+		http.Redirect(w, r, afterLoginPath(*u), http.StatusSeeOther)
 		return
 	}
 	s.render(w, "login", pageData{Title: "Sign in", Error: r.URL.Query().Get("e")})
@@ -261,7 +262,7 @@ func (s *Server) loginPOST(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   7 * 24 * 3600,
 	})
-	http.Redirect(w, r, "/admin/", http.StatusSeeOther)
+	http.Redirect(w, r, afterLoginPath(u), http.StatusSeeOther)
 }
 
 func (s *Server) workflowsGET(w http.ResponseWriter, r *http.Request) {
@@ -576,6 +577,7 @@ func (s *Server) render(w http.ResponseWriter, name string, data pageData) {
 	t := s.pages[name]
 	data.NavDesks = visibleDesks(data.User)
 	data.CanPeople = isOwner(data.User)
+	data.CanOffice = canOffice(data.User)
 	data.DeskCatalog = AllDesks()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")

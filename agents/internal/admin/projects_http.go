@@ -40,6 +40,10 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	if u == nil {
 		return
 	}
+	if !canOffice(u) {
+		http.Redirect(w, r, afterLoginPath(*u), http.StatusSeeOther)
+		return
+	}
 	users, _ := s.store.ListUsers(r.Context())
 	allow, _ := s.store.WhatsAppAccounts(r.Context())
 	settings, _ := s.store.Settings(r.Context())
