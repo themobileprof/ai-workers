@@ -164,13 +164,42 @@
         });
       });
     });
+    function pinMenu(d) {
+      var pop = d.querySelector(".menu-pop");
+      if (!pop) return;
+      if (!d.open) {
+        pop.style.top = "";
+        pop.style.left = "";
+        return;
+      }
+      var r = d.querySelector("summary").getBoundingClientRect();
+      var gap = 6;
+      var w = pop.offsetWidth;
+      var h = pop.offsetHeight;
+      var top = r.bottom + gap;
+      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - gap - h);
+      var left = (d.classList.contains("account") || d.classList.contains("kebab")) ? r.right - w : r.left;
+      if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
+      if (left < 8) left = 8;
+      pop.style.top = top + "px";
+      pop.style.left = left + "px";
+    }
     document.querySelectorAll("details.menu").forEach(function (d) {
       d.addEventListener("toggle", function () {
-        if (!d.open) return;
-        document.querySelectorAll("details.menu").forEach(function (o) {
-          if (o !== d) o.removeAttribute("open");
+        var x = window.scrollX, y = window.scrollY;
+        if (d.open) {
+          document.querySelectorAll("details.menu").forEach(function (o) {
+            if (o !== d) o.removeAttribute("open");
+          });
+        }
+        requestAnimationFrame(function () {
+          pinMenu(d);
+          window.scrollTo(x, y);
         });
       });
+    });
+    window.addEventListener("resize", function () {
+      document.querySelectorAll("details.menu[open]").forEach(pinMenu);
     });
     document.addEventListener("click", function (e) {
       if (e.target.closest("details.menu")) return;
