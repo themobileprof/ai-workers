@@ -120,7 +120,10 @@
     <h2>People and permissions</h2>
     <p class="lede">Names on the book. Office seat is owner / BDM / cofounder / assistant. Assign one or more handler desks on the card — that person sees those workers after they sign in. Seat cofounders on a <a href="/admin/projects">project</a>.</p>
   </div>
-  <a class="ghost" href="/admin/users/new">Add person</a>
+  <a class="ghost fill" href="/admin/users/new">
+    <svg class="ico"><use href="#i-plus"/></svg>
+    Add person
+  </a>
 </section>
 {{if .Users}}
 <div class="ledger">
@@ -154,12 +157,17 @@
         {{if not .Caps}}—{{end}}
       </td>
       <td class="row-actions">
-        <a class="quiet" href="/admin/users/{{.ID}}">Amend</a>
-        {{if canRemove $.User . $.OwnerCount}}
-        <form class="inline" method="post" action="/admin/users/{{.ID}}/delete" onsubmit="return confirm('Strike this person from the roster?');">
-          <button class="quiet danger-text" type="submit">Remove</button>
-        </form>
-        {{end}}
+        <details class="menu kebab">
+          <summary aria-label="Actions for {{.Name}}"><svg class="ico"><use href="#i-more"/></svg></summary>
+          <div class="menu-pop">
+            <a href="/admin/users/{{.ID}}">Amend</a>
+            {{if canRemove $.User . $.OwnerCount}}
+            <form class="out" method="post" action="/admin/users/{{.ID}}/delete" onsubmit="return confirm('Strike this person from the roster?');">
+              <button class="danger-text" type="submit">Remove</button>
+            </form>
+            {{end}}
+          </div>
+        </details>
       </td>
     </tr>
     {{end}}

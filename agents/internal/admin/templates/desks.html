@@ -7,8 +7,8 @@
     <p class="lede">{{.Desk.Help}} The worker proposes. You complement in chat and Accept. Prefix <code>{{.Desk.Prefix}}</code>.</p>
   </div>
   <div class="actions">
-    {{if .Desk.BookPath}}<a class="ghost" href="{{.Desk.BookPath}}">{{.Desk.BookLabel}}</a>{{end}}
-    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}">Playbook</a>
+    {{if .Desk.BookPath}}<a class="ghost" href="{{.Desk.BookPath}}"><svg class="ico"><use href="#i-book"/></svg> {{.Desk.BookLabel}}</a>{{end}}
+    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
   </div>
 </section>
 

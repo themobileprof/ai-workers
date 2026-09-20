@@ -301,7 +301,10 @@
     <h2>Projects</h2>
     <p class="lede">Bets under one registered company. Stage is the portfolio stamp. The gate is this week’s proof. Fundable means paying customers, not a deck.</p>
   </div>
-  <a class="ghost" href="/admin/projects/new">Open a project</a>
+  <a class="ghost fill" href="/admin/projects/new">
+    <svg class="ico"><use href="#i-plus"/></svg>
+    Open a project
+  </a>
 </section>
 {{if .Projects}}
 <div class="ledger">
@@ -330,7 +333,14 @@
       </td>
       <td>{{if .Notes}}{{.Notes}}{{else}}<span class="hint">none</span>{{end}}</td>
       <td>{{if .MemberNames}}{{.MemberNames}}{{else}}<span class="hint">you / BDM</span>{{end}}</td>
-      <td class="row-actions"><a class="quiet" href="/admin/projects/{{.ID}}">Amend</a></td>
+      <td class="row-actions">
+        <details class="menu kebab">
+          <summary aria-label="Actions for {{.Name}}"><svg class="ico"><use href="#i-more"/></svg></summary>
+          <div class="menu-pop">
+            <a href="/admin/projects/{{.ID}}">Amend</a>
+          </div>
+        </details>
+      </td>
     </tr>
     {{end}}
   </tbody>

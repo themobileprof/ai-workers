@@ -93,12 +93,14 @@ func New(store *Store, internalToken string) (*Server, error) {
 		return nil, err
 	}
 	funcMap := template.FuncMap{
-		"has":         hasStoredCap,
-		"canRemove":   canRemove,
-		"stageLabel":  stageLabel,
-		"gateLabel":   gateLabel,
-		"assigned":    assignedDesk,
-		"statusCount": statusCount,
+		"has":          hasStoredCap,
+		"canRemove":    canRemove,
+		"stageLabel":   stageLabel,
+		"gateLabel":    gateLabel,
+		"assigned":     assignedDesk,
+		"statusCount":  statusCount,
+		"deskNavOn":    deskNavOn,
+		"officeMenuOn": officeMenuOn,
 	}
 	pages := map[string]*template.Template{}
 	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks"} {

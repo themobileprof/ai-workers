@@ -78,6 +78,22 @@ func canOffice(u *User) bool {
 	return u.Role == "owner" || u.Role == "bdm"
 }
 
+func deskNavOn(nav string, desks []Desk) bool {
+	if nav == "desks" {
+		return true
+	}
+	for _, d := range desks {
+		if nav == "desk-"+d.Slug || nav == d.Slug {
+			return true
+		}
+	}
+	return false
+}
+
+func officeMenuOn(nav string) bool {
+	return nav == "settings" || nav == "docs" || nav == "flows"
+}
+
 func afterLoginPath(u User) string {
 	if canOffice(&u) {
 		return "/admin/"

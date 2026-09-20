@@ -61,6 +61,16 @@ func TestAfterLoginPath(t *testing.T) {
 	}
 }
 
+func TestDeskNavOn(t *testing.T) {
+	desks := []Desk{{Slug: "hr"}}
+	if deskNavOn("home", desks) || !deskNavOn("desk-hr", desks) || !deskNavOn("hr", desks) {
+		t.Fatal("desk nav")
+	}
+	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") {
+		t.Fatal("office menu")
+	}
+}
+
 func TestShouldFileInboundJob(t *testing.T) {
 	if shouldFileInboundJob("legal", map[string]any{"channel": "desk", "action": "draft"}, map[string]any{}) {
 		t.Fatal("desk channel stays on the HTTP insert")
@@ -120,8 +130,11 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := buf.String()
-	if !strings.Contains(got, ">Board</a>") || !strings.Contains(got, "/admin/users") {
+	if !strings.Contains(got, `data-nav="home"`) || !strings.Contains(got, "/admin/users") {
 		t.Fatal("office nav")
+	}
+	if !strings.Contains(got, "Office") || !strings.Contains(got, `href="/admin/settings"`) {
+		t.Fatal("office dropdown")
 	}
 	if strings.Contains(got, "/admin/desks/hr") || strings.Contains(got, "/admin/desks/legal") {
 		t.Fatal("unassigned worker on office nav")
@@ -138,10 +151,10 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 		t.Fatal(err)
 	}
 	got = buf.String()
-	if strings.Contains(got, ">Board</a>") || strings.Contains(got, `href="/admin/projects"`) {
+	if strings.Contains(got, `data-nav="home"`) || strings.Contains(got, `href="/admin/projects"`) {
 		t.Fatal("handler should not see office nav")
 	}
-	if !strings.Contains(got, "/admin/desks/hr") {
+	if !strings.Contains(got, "/admin/desks/hr") || !strings.Contains(got, "Workers") {
 		t.Fatal("assigned desk")
 	}
 }

@@ -6,22 +6,31 @@
 </section>
 <div class="tabset" data-tabs data-default="tonight">
   <nav class="tabs" role="tablist" aria-label="Board">
-    <button type="button" role="tab" data-tab="tonight" aria-controls="tab-tonight">Tonight</button>
-    <button type="button" role="tab" data-tab="projects" aria-controls="tab-projects">Projects <span class="count">{{len .Projects}}</span></button>
-    <button type="button" role="tab" data-tab="whatsapp" aria-controls="tab-whatsapp">WhatsApp <span class="count">{{len .Allowlist}}</span></button>
+    <button type="button" role="tab" data-tab="tonight" aria-controls="tab-tonight">
+      <svg class="ico"><use href="#i-pulse"/></svg> Tonight
+    </button>
+    <button type="button" role="tab" data-tab="projects" aria-controls="tab-projects">
+      <svg class="ico"><use href="#i-projects"/></svg> Projects <span class="count">{{len .Projects}}</span>
+    </button>
+    <button type="button" role="tab" data-tab="whatsapp" aria-controls="tab-whatsapp">
+      <svg class="ico"><use href="#i-whatsapp"/></svg> WhatsApp <span class="count">{{len .Allowlist}}</span>
+    </button>
   </nav>
   <div class="tab-panels">
     <section role="tabpanel" id="tab-tonight" data-tab="tonight">
       <div class="grid-3">
         <article class="stat">
+          <svg class="ico"><use href="#i-projects"/></svg>
           <p class="kicker">Projects</p>
           <p class="num">{{len .Projects}}</p>
         </article>
         <article class="stat">
+          <svg class="ico"><use href="#i-people"/></svg>
           <p class="kicker">People</p>
           <p class="num">{{.UserCount}}</p>
         </article>
         <article class="stat">
+          <svg class="ico"><use href="#i-whatsapp"/></svg>
           <p class="kicker">WhatsApp accounts</p>
           <p class="num">{{len .Allowlist}}</p>
         </article>
