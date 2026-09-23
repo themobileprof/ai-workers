@@ -4,7 +4,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REMOTE_HOST="${DEPLOY_SSH_HOST:-${N8N_SSH_HOST:-oci-ai-workers}}"
+if [[ -n "${DEPLOY_SSH_HOST:-}" ]]; then
+  REMOTE_HOST="$DEPLOY_SSH_HOST"
+elif [[ -n "${DEPLOY_HOST:-}" ]]; then
+  REMOTE_HOST="${DEPLOY_USER:-cursor}@${DEPLOY_HOST}"
+else
+  REMOTE_HOST="${N8N_SSH_HOST:-oci-ai-workers}"
+fi
 REMOTE_DIR="${DEPLOY_REMOTE_DIR:-${N8N_REMOTE_DIR:-/home/cursor/ai-workers}}"
 SSH_OPTS="-o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=8"
 
@@ -33,13 +39,15 @@ apply_on_host() {
 }
 
 on_vm() {
-  [[ -d /home/cursor/ai-workers/docker-compose.yml ]] && [[ "$(id -un)" == "cursor" ]]
+  [[ -f /home/cursor/ai-workers/docker-compose.yml ]] && [[ "$(id -un)" == "cursor" ]]
 }
 
 if on_vm; then
   apply_on_host /home/cursor/ai-workers
   exit 0
 fi
+
+echo "rsync to ${REMOTE_HOST}:${REMOTE_DIR}"
 
 rsync -az --delete \
   --exclude '.git/' \

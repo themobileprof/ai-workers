@@ -41,6 +41,9 @@ jobs:
           chmod 700 ~/.ssh
           ssh-keyscan -T 15 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
       - name: Deploy
+        env:
+          DEPLOY_SSH_HOST: ${{ format('{0}@{1}', env.DEPLOY_USER, env.DEPLOY_HOST) }}
         run: |
           chmod +x scripts/deploy.sh scripts/sync-n8n-workflows.sh
-          DEPLOY_SSH_HOST="${DEPLOY_USER}@${DEPLOY_HOST}" ./scripts/deploy.sh
+          echo "deploying to $DEPLOY_SSH_HOST"
+          ./scripts/deploy.sh
