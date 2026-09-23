@@ -101,4 +101,19 @@ cd agents && go test ./... -cover
 | A vendor | Section in `TOOLS.md` (env, n8n credential names, desk keys). `go test ./internal/admin` fails if compose / `.env.example` / a credential name is missing. Accounts ids on Defaults, not in workflow JSON. |
 | A webhook workflow | JSON under `n8n/workflows/`, then `./scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox). |
 
+## CI / CD
+
+- **CI** on every pull request to `main` and on merge to `main`: `go test ./...` plus a `linux/arm64` build (the OCI VM). No Postgres, no DeepSeek.
+- **CD** when you **publish a GitHub Release** (or Actions → CD → Run workflow): rsync this tree to `/home/cursor/ai-workers`, `docker compose up -d --build`, republish n8n webhooks, `GET /health`. The VM `.env` is never overwritten.
+
+Cut a release after main is green:
+
+```
+git tag v0.1.0
+git push origin v0.1.0
+gh release create v0.1.0 --generate-notes
+```
+
+Repo secret **`DEPLOY_SSH_KEY`** is required (ed25519 private key whose public half is in `cursor`’s `authorized_keys` on the VM). Optional: `DEPLOY_HOST` (default `130.61.144.174`), `DEPLOY_USER` (default `cursor`). Port 22 must accept GitHub-hosted runners; key-only, no password.
+
 Host VM, Compose caps, Caddy: [`SERVER_INIT_INSTRUCTIONS.md`](SERVER_INIT_INSTRUCTIONS.md). Cursor architecture prompt: [`CURSOR_INSTRUCTIONS.md`](CURSOR_INSTRUCTIONS.md).

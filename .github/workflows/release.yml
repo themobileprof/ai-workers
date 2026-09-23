@@ -1,0 +1,46 @@
+name: CD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Git tag to deploy. Empty uses this commit.
+        required: false
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || '130.61.144.174' }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'cursor' }}
+      DEPLOY_REMOTE_DIR: /home/cursor/ai-workers
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.sha }}
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - name: Trust host
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -T 15 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+      - name: Deploy
+        run: |
+          chmod +x scripts/deploy.sh scripts/sync-n8n-workflows.sh
+          DEPLOY_SSH_HOST="${DEPLOY_USER}@${DEPLOY_HOST}" ./scripts/deploy.sh

@@ -124,3 +124,11 @@ Create application files in this folder:
    - Go worker is reachable from n8n at `http://agents:8000` (health route) and is **not** listening on the public NIC.
 
 3. If the VM is under memory pressure, do not raise Postgres `shared_buffers`. Lower the n8n memory cap or prune executions first. Do not "fix" pressure by adding Python workers.
+
+### Step F: GitHub Actions
+
+CI (`.github/workflows/ci.yml`) runs `go test` and an arm64 build on pull requests and on merge to `main`. It does not SSH here.
+
+CD (`.github/workflows/release.yml`) runs on a **published GitHub Release**. It rsyncs the tagged tree to `/home/cursor/ai-workers` as `cursor`, then `scripts/deploy.sh` (`docker compose up -d --build`, n8n import/publish, health). `.env` stays on this host.
+
+One repo secret: `DEPLOY_SSH_KEY` (private key). Put the matching public key in `/home/cursor/.ssh/authorized_keys`. Do not reuse the founder laptop key. Do not install a GitHub self-hosted runner on this 6 GB box.
