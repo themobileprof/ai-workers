@@ -30,6 +30,19 @@
 }</pre>
 </section>
 
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · internal JSON n8n already calls</p>
+  <p class="you-say">HTTP Request on the Docker network, header <code>X-Internal-Token</code>.</p>
+  <p class="expect">
+    <code>GET /internal/v1/whatsapp-accounts</code> — allowlist.<br>
+    <code>GET /internal/v1/settings</code> — Defaults (org, paid-through, expense accounts, Paystack currency).<br>
+    <code>GET /internal/v1/projects</code> · <code>GET /internal/v1/journeys</code><br>
+    <code>POST /internal/v1/projects/{id}/proposal</code> · <code>GET|POST /internal/v1/legal-drafts</code><br>
+    <code>GET /internal/v1/hr/roles</code> · <code>POST /internal/v1/hr/applications</code><br>
+    <code>POST /internal/v1/jobs</code> — files a proposed desk job. None of the POSTs stamp Accept.
+  </p>
+</section>
+
 <section class="later">
   <p class="stamp dark">When you add a worker</p>
   <p>New department = one extra Go route, one catalog row in <code>docs.go</code>, and a file <code>playbook/{slug}.html</code>. Until that route is called from a published workflow, stamp the page <strong>Not wired</strong> and leave a later-box with the sample you will write on the day it ships.</p>

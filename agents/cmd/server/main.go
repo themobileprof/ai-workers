@@ -1,3 +1,5 @@
+// Command agents is the Go HTTP process on the Docker network.
+// Public: / and /site*. Desk: /admin*. n8n-only: /departments/* and /internal/v1/*.
 package main
 
 import (
@@ -121,6 +123,7 @@ func main() {
 	}
 }
 
+// departmentHandler is POST /departments/{name}. n8n is the only caller. Body is contract.Request.
 func departmentHandler(c llm.Completer, initErr error, dept string, fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error), desk *admin.Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if initErr != nil || c == nil {

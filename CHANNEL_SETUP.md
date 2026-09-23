@@ -1,6 +1,6 @@
 # Channel setup (Telegram, WhatsApp, Email)
 
-n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/home` (desk iframes it; `/n8n/` redirects there). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges.
+n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/home` (desk iframes it; `/n8n/` redirects there). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges. Usage and code map: [`README.md`](README.md). Field playbook on the desk: `/admin/docs`.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
@@ -88,7 +88,7 @@ Source of truth for **projects**, people, WhatsApp accounts rights, and Zoho def
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
 - **Third-party tools** live in [`TOOLS.md`](TOOLS.md) (GitHub). Add a section there when a vendor is wired — not a desk page.
 - **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**. Do **not** set `N8N_PATH`.
-- **Docs** (`/admin/docs`) is the field playbook: sample uses per worker. Partial workers keep a later-box until the workflow is wired.
+- **Docs** (`/admin/docs`) is the field playbook: **Company desk** and **Projects** first (humans), then each worker specimen. Partial workers keep a later-box until the workflow is wired. GitHub usage + code map: [`README.md`](README.md).
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
 
 ### WhatsApp accounts allowlist

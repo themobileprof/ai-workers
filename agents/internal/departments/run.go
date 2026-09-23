@@ -1,3 +1,5 @@
+// Package departments runs an LLM against a system prompt and unmarshals the contract JSON.
+// Each worker is a thin wrapper: extra HTTP route on the same process, same Request/Response.
 package departments
 
 import (

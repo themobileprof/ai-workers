@@ -1,3 +1,4 @@
+// Package llm is a small Completer. Text defaults to DeepSeek. Receipt photos use Gemini. No local models.
 package llm
 
 import (

@@ -69,6 +69,14 @@ func TestPlaybookCatalog(t *testing.T) {
 	if first := allDocs()[0]; first.Slug != "contract" || !first.Live() {
 		t.Fatalf("first page %s", first.Slug)
 	}
+	desk, ok := lookupDoc("desk")
+	if !ok || !desk.Live() || !strings.Contains(string(desk.Body), "People") {
+		t.Fatal("desk playbook")
+	}
+	proj, ok := lookupDoc("projects")
+	if !ok || !proj.Live() || !strings.Contains(string(proj.Body), "this-week") {
+		t.Fatal("projects playbook")
+	}
 	prod, ok := lookupDoc("product-dev")
 	if !ok || !prod.Partial() || !strings.Contains(string(prod.Body), "Not wired") {
 		t.Fatal("product-dev must stay a partial with later-boxes")

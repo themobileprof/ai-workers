@@ -45,6 +45,7 @@ task_type must be "accounts".
 output_text: one short line with no tax arithmetic.
 Do not include vat_amount, wht_amount, gross, or net.`
 
+// HandleAccounts is POST /departments/accounts. Extract and classify only; n8n posts to Books.
 func HandleAccounts(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	data := contract.ContextObject(req.ContextData)
 	images := departments.TakeImages(data)

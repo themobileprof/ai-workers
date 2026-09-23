@@ -1,3 +1,5 @@
+// Package internalops is the operations room. Handle is POST /departments/internal-ops.
+// HandleAccounts is POST /departments/accounts (Books classifier). VAT/WHT stay in Zoho.
 package internalops
 
 import (
@@ -31,6 +33,7 @@ Never set record_expense for tax questions, hypotheticals, legal, or grant work.
 Do not put vat_amount, wht_amount, gross, or net in structured_data.
 output_text for accounts: one short line with no tax arithmetic.`
 
+// Handle is POST /departments/internal-ops. Accounts-shaped tasks still go through HandleAccounts.
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	data := contract.ContextObject(req.ContextData)
 	if accountsOnly(data) {

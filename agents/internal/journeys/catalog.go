@@ -1,3 +1,4 @@
+// Package journeys is the idea→PMF catalog in git. The worker only proposes a journey/gate. The desk commits.
 package journeys
 
 import (

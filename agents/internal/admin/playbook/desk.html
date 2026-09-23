@@ -1,0 +1,34 @@
+<p class="lede">This is the human office, not n8n. Owner and BDM land on Board. Everyone else lands on the worker desks ticked on their People card.</p>
+
+<ol class="steps">
+  <li>Owner adds a person on <a href="/admin/users">People</a>: office seat, then <strong>Desks</strong>. Ticking a desk grants <code>web_admin</code>.</li>
+  <li>That person signs in. One desk → that worker. Several → the picker. They do not see Board unless they are owner or BDM.</li>
+  <li>On a worker: <strong>Ask</strong> files a proposed job. Chat complements. <strong>Accept</strong> / Turn away stamps. Chat never stamps.</li>
+  <li>Specialized books (Legal, HR, Projects, Defaults) stay one click from the desk that owns them, and still require that desk assignment.</li>
+</ol>
+
+<p class="hint">Office nav is Board, Projects, People, then an Office menu (Defaults, Docs, n8n). Assigned workers sit under <strong>Workers</strong>. Row ⋮ menus do not scroll the table — they overlay.</p>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01 · add a handler</p>
+  <p class="you-say">People → Add person → Role <code>assistant</code> → Desks → tick HR (and only HR) → Add.</p>
+  <p class="expect">They sign in and land on <code>/admin/desks/hr</code>. No Board, no eight worker links. Tick Legal later if they should also file NDAs.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 02 · owner wants Legal too</p>
+  <p class="you-say">People → your own card → Desks → tick Legal (and HR if you handle hiring).</p>
+  <p class="expect">Owner still lands on Board. Workers menu grows those links. <code>/admin/legal</code> stops 403.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 03 · WhatsApp books right</p>
+  <p class="you-say">People → Rights → <code>whatsapp_accounts</code> on the founder number <code>2348033954301</code>.</p>
+  <p class="expect">Customer WhatsApp <code>/accounts</code> <code>/ops</code> <code>/legal</code> <code>/hr</code> only work for allowlisted numbers. A stranger gets the community access-denied reply. Books never runs.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · Accept a job</p>
+  <p class="you-say">Workers → Legal → Ask “Draft an NDA for Ada on Mechazone.” Wait for the proposed job. Chat a fix. Accept.</p>
+  <p class="expect">Job status accepted. The worker’s JSON never wrote <code>approved</code>. Copy the body from the Legal book if you need the document.</p>
+</section>

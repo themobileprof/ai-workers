@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Store is Postgres database aiworkers (never the n8n database). Schema is created in migrate.
 type Store struct {
 	pool *pgxpool.Pool
 }

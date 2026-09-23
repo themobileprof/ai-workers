@@ -1,3 +1,4 @@
+// Package hr drafts JDs and scores applicants. Rows are proposed. Humans Shortlist. No hire email, no PAYE.
 package hr
 
 import (

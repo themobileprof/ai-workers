@@ -1,3 +1,5 @@
+// Package contract is the n8n ↔ Go JSON envelope.
+// Every department accepts Request and returns Response. context_data is always an object.
 package contract
 
 import "encoding/json"

@@ -1,3 +1,5 @@
+// Package growth is the front office: sales chat, inbound drafts, and marketing copy.
+// High intent may set record_lead; n8n upserts a Books contact. The worker does not send.
 package growth
 
 import (

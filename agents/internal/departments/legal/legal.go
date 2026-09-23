@@ -1,3 +1,5 @@
+// Package legal drafts NDAs and flags labour/CAC/NDPR/CBN gotchas.
+// Watch is silent unless a gotcha. Filing is proposed only; humans Accept. The worker cannot send.
 package legal
 
 import (

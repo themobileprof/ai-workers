@@ -1,3 +1,4 @@
+// Package crm qualifies or updates a person. n8n writes Zoho Books contacts, not Zoho CRM.
 package crm
 
 import (

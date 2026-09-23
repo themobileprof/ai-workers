@@ -132,6 +132,7 @@ func (s *Server) WithPlacer(fn PlaceFunc) {
 	}
 }
 
+// Register mounts /admin* (cookie session) and /internal/v1* (X-Internal-Token). Caddy must not publish /internal.
 func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/static/", s.serveStatic)
 	mux.HandleFunc("GET /admin/login", s.loginGET)

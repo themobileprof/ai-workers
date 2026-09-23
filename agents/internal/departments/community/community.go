@@ -1,3 +1,5 @@
+// Package community is the room voice for WhatsApp/Telegram groups.
+// Unallowlisted /accounts /ops /legal /hr on WhatsApp land here as access_denied.
 package community
 
 import (
