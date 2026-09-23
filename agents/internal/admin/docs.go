@@ -85,8 +85,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Room voice",
 		Path:     "POST /departments/community",
 		Wire:     "live",
-		Summary:  "WhatsApp/Telegram groups, /cm, and the access-denied reply when a number is not on the books desk.",
-		Prefixes: []string{"/cm", "/community", "group chat (default)"},
+		Summary:  "Mandated WhatsApp groups, Monday intro, /cm, LMS catalog, and the access-denied reply when a number is not on the books desk.",
+		Prefixes: []string{"/cm", "/community", "group (mandate)"},
 	},
 	{
 		Slug:     "crm",

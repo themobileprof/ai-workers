@@ -85,8 +85,13 @@ func TestPlaybookCatalog(t *testing.T) {
 	if !ok || !leg.Partial() || !strings.Contains(string(leg.Body), "Not wired") {
 		t.Fatal("legal must stay a partial with a later-box for send")
 	}
-	if h, ok := lookupDoc("hr"); !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
+	h, ok := lookupDoc("hr")
+	if !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
 		t.Fatal("hr must stay a partial with later-boxes")
+	}
+	cm, ok := lookupDoc("community")
+	if !ok || !strings.Contains(string(cm.Body), "lms.themobileprof.com") {
+		t.Fatal("community LMS specimen")
 	}
 	later := DocMeta{Slug: "x", Wire: "later"}
 	if !later.Later() || later.Href() != "/admin/docs/x" || later.WireLabel() != "Not wired" {

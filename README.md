@@ -19,7 +19,7 @@ If you also handle Legal or HR, tick those desks on your own People card or the 
 
 ### Handler desk
 
-Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp.
+Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per WhatsApp group. Academy LMS is seeded from the public course list. Paste `group_id` from an n8n execution after the Business number is in the room. Monday 09:00 Lagos the worker introduces itself in each matched group.
 
 ### Chat prefixes
 
@@ -73,6 +73,7 @@ Internal JSON for n8n (`X-Internal-Token`). Caddy must not publish `/internal`. 
 
 | Method | Path |
 | --- | --- |
+| GET | `/internal/v1/community/mandate` · `/internal/v1/community/mandates` |
 | GET | `/internal/v1/whatsapp-accounts` |
 | GET | `/internal/v1/settings` |
 | GET | `/internal/v1/projects` · `/internal/v1/journeys` |

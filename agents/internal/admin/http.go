@@ -81,6 +81,8 @@ type pageData struct {
 	Job            *DeskJob
 	Messages       []JobMessage
 	CanAsk         bool
+	Mandates       []CommunityMandate
+	Mandate        *CommunityMandate
 }
 
 type kv struct {
@@ -103,7 +105,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"officeMenuOn": officeMenuOn,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -169,6 +171,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/chat", s.deskChatPOST)
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/accept", s.deskStamp("accepted"))
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/reject", s.deskStamp("rejected"))
+	mux.HandleFunc("GET /admin/community", s.communityGET)
+	mux.HandleFunc("POST /admin/community", s.communityPOST)
+	mux.HandleFunc("POST /admin/community/{id}/delete", s.communityDelete)
 	mux.HandleFunc("GET /admin/users", s.usersGET)
 	mux.HandleFunc("GET /admin/users/new", s.userNewGET)
 	mux.HandleFunc("GET /admin/users/{id}", s.userEditGET)
@@ -182,6 +187,8 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
 	mux.HandleFunc("GET /admin/docs", s.docsIndex)
 	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
+	mux.HandleFunc("GET /internal/v1/community/mandate", s.internalCommunityMandate)
+	mux.HandleFunc("GET /internal/v1/community/mandates", s.internalCommunityMandates)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
 	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)

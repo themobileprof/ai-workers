@@ -1,0 +1,87 @@
+{{define "content"}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Room voice</p>
+    <h2>Community mandates</h2>
+    <p class="lede">One brief per WhatsApp group. Paste the group id from an n8n execution after you add the Business number to the room. The worker reads this catalog; it does not invent courses. Escalate still files a job on the Community desk.</p>
+  </div>
+  <div class="actions">
+    <a class="ghost" href="/admin/desks/community"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
+    <a class="ghost" href="/admin/docs/community"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  </div>
+</section>
+{{if .Flash}}<p class="hint">{{.Flash}}</p>{{end}}
+{{if .Error}}<p class="hint">{{.Error}}</p>{{end}}
+
+<div class="tabset" data-tabs data-default="{{if .Mandate}}edit{{else}}rooms{{end}}">
+  <nav class="tabs" role="tablist" aria-label="Community">
+    <button type="button" role="tab" data-tab="rooms" aria-controls="tab-rooms">Rooms <span class="count">{{len .Mandates}}</span></button>
+    <button type="button" role="tab" data-tab="edit" aria-controls="tab-edit">{{if .Mandate}}Amend{{else}}New mandate{{end}}</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-rooms" data-tab="rooms">
+      {{if .Mandates}}
+      {{range .Mandates}}
+      <section class="proposal">
+        <p class="kicker">{{if .SiteURL}}<a class="quiet" href="{{.SiteURL}}">{{.SiteURL}}</a>{{else}}no site{{end}} · {{if .Active}}on{{else}}paused{{end}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{if .Active}}ok{{else}}dark{{end}}">{{.Slug}}</span>
+        </div>
+        <p class="hint">WhatsApp group <code>{{if .WhatsAppGroupID}}{{.WhatsAppGroupID}}{{else}}not set — add the number to the group, send a message, copy group_id from n8n{{end}}</code></p>
+        {{if .Brief}}<pre class="legal-body">{{.Brief}}</pre>{{end}}
+        <div class="actions">
+          <a class="ghost" href="/admin/community?id={{.ID}}">Amend</a>
+          <form class="inline" method="post" action="/admin/community/{{.ID}}/delete">
+            <button class="ghost" type="submit">Remove</button>
+          </form>
+        </div>
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No rooms yet. Seed should have created Academy LMS. Use New mandate.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-edit" data-tab="edit">
+      <form method="post" action="/admin/community" class="person add">
+        {{if .Mandate}}<input type="hidden" name="id" value="{{.Mandate.ID}}">{{end}}
+        <p class="hint">The catalog is the ground truth. Leave a course off this list and the worker must escalate instead of guessing.</p>
+        <div class="fields">
+          <label>Title
+            <input name="title" required value="{{if .Mandate}}{{.Mandate.Title}}{{end}}" placeholder="Academy LMS">
+          </label>
+          <label>Slug
+            <input name="slug" value="{{if .Mandate}}{{.Mandate.Slug}}{{end}}" placeholder="lms">
+          </label>
+          <label>Site
+            <input name="site_url" value="{{if .Mandate}}{{.Mandate.SiteURL}}{{end}}" placeholder="https://lms.themobileprof.com">
+          </label>
+        </div>
+        <div class="fields">
+          <label>WhatsApp group id
+            <input name="whatsapp_group_id" value="{{if .Mandate}}{{.Mandate.WhatsAppGroupID}}{{end}}" placeholder="from context_data.group_id">
+          </label>
+          <label>Telegram chat id
+            <input name="telegram_chat_id" value="{{if .Mandate}}{{.Mandate.TelegramChatID}}{{end}}" placeholder="optional">
+          </label>
+          <label>Live
+            <select name="active">
+              <option value="true" {{if or (not .Mandate) .Mandate.Active}}selected{{end}}>On</option>
+              <option value="false" {{if and .Mandate (not .Mandate.Active)}}selected{{end}}>Paused</option>
+            </select>
+          </label>
+        </div>
+        <label>Mandate
+          <textarea name="brief" rows="8" required placeholder="What this room is for, when to speak, when to escalate.">{{if .Mandate}}{{.Mandate.Brief}}{{end}}</textarea>
+        </label>
+        <label>Catalog
+          <textarea name="catalog" rows="10" required placeholder="Courses the worker may name. Mini, Path, Professional…">{{if .Mandate}}{{.Mandate.Catalog}}{{end}}</textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Save mandate</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{{end}}

@@ -15,7 +15,7 @@ func AllDesks() []Desk {
 	return []Desk{
 		{Slug: "accounts", Title: "Accounts", Department: "accounts", Prefix: "/accounts", Help: "Books classifier. Handler confirms what Zoho already posted or a lookup the worker flagged.", BookPath: "/admin/settings", BookLabel: "Defaults"},
 		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Front office copy and replies. Handler complements drafts that must not send themselves."},
-		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Room voice. Handler steps in when the worker sets escalate_to_founder."},
+		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Room voice with a mandate per WhatsApp group. Handler steps in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
 		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Pipeline notes. Handler confirms a contact the worker asked a human to review."},
 		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "NDA and contract proposals. Accept still lives on the Legal book.", BookPath: "/admin/legal", BookLabel: "Legal book"},
 		{Slug: "hr", Title: "HR", Department: "hr", Prefix: "/hr", Help: "JDs and applicants. Open / Shortlist on the HR book. Chat does not hire.", BookPath: "/admin/hr", BookLabel: "HR book"},

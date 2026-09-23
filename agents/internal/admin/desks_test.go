@@ -19,6 +19,10 @@ func TestAllDesksUnique(t *testing.T) {
 	if _, ok := LookupDesk("hr"); !ok {
 		t.Fatal("hr")
 	}
+	cm, ok := LookupDesk("community")
+	if !ok || cm.BookPath != "/admin/community" {
+		t.Fatal("community mandates book")
+	}
 	if _, ok := DeskByDepartment("internal-ops"); !ok {
 		t.Fatal("ops")
 	}

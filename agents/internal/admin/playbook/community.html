@@ -1,8 +1,10 @@
-<p class="lede">Room voice. Welcome, FAQ, moderation, announcements. Not sales and not the books desk.</p>
+<p class="lede">Room voice with a <strong>mandate</strong> per WhatsApp group. Welcome, weekly intro, progress, lesson help, FAQ, moderation. Not sales and not the books desk.</p>
 
 <ol class="steps">
-  <li>WhatsApp or Telegram <strong>group</strong> with no prefix → community.</li>
-  <li>DM: <code>/cm</code> or <code>/community</code> plus the ask.</li>
+  <li>On <a href="/admin/community">Mandates</a>, write the brief and the catalog (Academy LMS is seeded from the public course list). Leave a course off the catalog and the worker must escalate instead of guessing.</li>
+  <li>Add the Business number to the WhatsApp group. Send a message. Copy <code>context_data.group_id</code> from the n8n execution onto the mandate.</li>
+  <li>Unprefixed group chat uses that mandate. DM: <code>/cm</code> or <code>/community</code>.</li>
+  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room that has a group id: who it is, how to call it, then what are you working on.</li>
   <li>Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/hr</code> is rewritten to community with <code>accounts_denied: true</code>. Books, Legal, and HR never run.</li>
   <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
 </ol>
@@ -38,10 +40,61 @@
 <section class="specimen">
   <p class="spec-no">Specimen 03 · FAQ</p>
   <p class="you-say">Group: <code>/cm When do we meet this month?</code></p>
-  <p class="expect"><code>task_type</code> faq. If the worker does not know the date, it says so and sets <code>escalate_to_founder</code> true. Telegram/WhatsApp just send <code>output_text</code> — there is no separate founder ping yet.</p>
+  <p class="expect"><code>task_type</code> faq. If the worker does not know the date, it says so and sets <code>escalate_to_founder</code> true. Telegram/WhatsApp just send <code>output_text</code> — there is no separate founder ping yet. Escalate still files a job on the Community desk.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · Academy LMS room</p>
+  <p class="you-say">Student in the LMS WhatsApp group: “I am on the Linux Mini, lesson 3. The terminal on my phone still looks empty.”</p>
+  <pre class="json">{
+  "task_description": "I am on the Linux Mini, lesson 3. The terminal on my phone still looks empty.",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "group",
+    "group_id": "1203630example",
+    "mandate": {
+      "slug": "lms",
+      "title": "Academy LMS",
+      "site_url": "https://lms.themobileprof.com",
+      "catalog": "Three tiers: Mini, Path, Professional."
+    }
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> progress or lesson_help. <code>speak</code> true. Names Mini because it is in the catalog. Does not invent a course. Login or payment trouble sets <code>escalate_to_founder</code> true and files a Community job. n8n <code>GET /internal/v1/community/mandate?group_id=</code> attaches the mandate before the worker runs.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · stay quiet</p>
+  <p class="you-say">Group: “lol” / “ok” / members talking to each other.</p>
+  <p class="expect"><code>task_type</code> silent. <code>speak</code> false. Empty <code>output_text</code>. n8n does not send a WhatsApp message.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 06 · weekly intro</p>
+  <p class="you-say">Monday 09:00 Lagos. n8n <strong>Community weekly intro</strong> for a mandate with a WhatsApp group id.</p>
+  <pre class="json">{
+  "task_description": "Weekly check-in. Introduce yourself as the room host. Explain how people call you. Then ask what course and lesson each person is on.",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "group",
+    "action": "weekly_intro",
+    "group_id": "1203630example"
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> weekly_intro. <code>speak</code> true. Names itself, says unprefixed group chat already reaches it, mentions <code>/cm</code> / <code>/community</code>, then asks what people are working on. n8n <code>GET /internal/v1/community/mandates</code> then sends to each <code>whatsapp_group_id</code>.</p>
 </section>
 
 <section class="later">
   <p class="stamp dark">Not wired · founder ping on escalate</p>
-  <p>When you wire a Telegram card for <code>escalate_to_founder</code>, add the specimen: which chat id, what the card contains, and that community still replies in the original thread.</p>
+  <p>When you wire a Telegram card for <code>escalate_to_founder</code>, add the specimen: which chat id, what the card contains, and that community still replies in the original thread. Until then the Community desk job is the ping.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · LMS lesson token</p>
+  <p>Course titles are public (<code>GET https://api.themobileprof.com/api/courses</code>). Lesson video and quizzes need a Bearer token from <code>POST /api/auth/login</code>. Prefer a dedicated community-bot LMS user, secret in the VM <code>.env</code> — not a founder password in git. Until then the catalog is titles and syllabus lines only.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not wired · WhatsApp template for a quiet group</p>
+  <p>If the group has had no student message in 24h, Meta may reject the Monday send. Approve a utility template in WhatsApp Manager and swap that send onto it; until then the weekly intro only lands inside an open session.</p>
 </section>

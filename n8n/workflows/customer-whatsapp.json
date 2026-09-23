@@ -113,7 +113,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst FALLBACK_ACCOUNTS = [\n  '2348033954301', // last-resort if the desk fetch fails\n];\n\nfunction waDigits(s) {\n  let d = String(s || '').replace(/\\D/g, '');\n  if (d.startsWith('00')) d = d.slice(2);\n  if (d.length === 11 && d.startsWith('0')) d = '234' + d.slice(1);\n  if (d.length === 10 && (d.startsWith('7') || d.startsWith('8') || d.startsWith('9'))) d = '234' + d;\n  return d;\n}\n\nfunction loadAllowlist() {\n  try {\n    const fetched = $('Fetch WhatsApp allowlist').first().json || {};\n    const nums = fetched.numbers;\n    if (Array.isArray(nums) && nums.length) return nums.map(waDigits).filter(Boolean);\n  } catch (e) {}\n  return FALLBACK_ACCOUNTS.slice();\n}\n\nfunction isAccountsAllowed(from, allowed) {\n  const d = waDigits(from);\n  if (!d) return false;\n  return allowed.some((n) => {\n    const a = waDigits(n);\n    return a === d || (a && d.endsWith(a)) || (d && a.endsWith(d));\n  });\n}\n\nconst ACCOUNTS_ALLOWED = loadAllowlist();\nconst event = $('Only text messages').first().json;\nconst msg = (event.messages || [])[0] || {};\nlet text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nconst img = msg.image || {};\nif (!text && img.caption) text = String(img.caption).trim();\nconst hasPhoto = Boolean(img.id);\nif (!text && !hasPhoto) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nconst groupId = msg.group_id || (event.metadata && event.metadata.group_id) || '';\nconst chatKind = groupId ? 'group' : 'dm';\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm\\b\\s*/i, dest: 'crm' },\n  { re: /^\\/legal\\b\\s*/i, dest: 'legal' },\n  { re: /^\\/hr\\b\\s*/i, dest: 'hr' }\n];\nlet requested = department;\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    requested = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nconst accountsDesk = requested === 'accounts' || requested === 'internal-ops' || requested === 'legal' || requested === 'hr';\nconst accounts_authorized = isAccountsAllowed(from, ACCOUNTS_ALLOWED);\nlet accounts_denied = false;\nif (accountsDesk && !accounts_authorized) {\n  accounts_denied = true;\n  department = 'community';\n  text = 'Write a WhatsApp DM to this person in second person. They are not authorized for the company books, legal, or HR desk. Do not repeat amounts, vendors, tax questions, or CV text. Suggest /growth or /cm.';\n}\nif (hasPhoto && !text && accountsDesk && accounts_authorized) {\n  text = 'Read this receipt or invoice photo. Extract vendor or customer, amount, currency, date, and whether it is already paid. If the image is unreadable, ask for those fields and set zoho_action to none. Do not invent figures.';\n} else if (hasPhoto && !text) {\n  text = 'The person sent a photo with no caption. Ask what they need in one short question. Do not treat it as a receipt or invent amounts.';\n} else if (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nconst context_data = {\n  channel: 'whatsapp',\n  chat_kind: chatKind,\n  department,\n  requested_department: requested,\n  from,\n  wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n  phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857',\n  accounts_authorized,\n  accounts_denied\n};\nif (hasPhoto) {\n  context_data.whatsapp_media_id = String(img.id || '');\n  if (img.mime_type) context_data.image_mime = String(img.mime_type);\n}\nif (groupId) {\n  context_data.group_id = groupId;\n}\nreturn [{ json: { department, task_description: text, context_data } }];\n"
+        "jsCode": "\nconst FALLBACK_ACCOUNTS = [\n  '2348033954301', // last-resort if the desk fetch fails\n];\n\nfunction waDigits(s) {\n  let d = String(s || '').replace(/\\D/g, '');\n  if (d.startsWith('00')) d = d.slice(2);\n  if (d.length === 11 && d.startsWith('0')) d = '234' + d.slice(1);\n  if (d.length === 10 && (d.startsWith('7') || d.startsWith('8') || d.startsWith('9'))) d = '234' + d;\n  return d;\n}\n\nfunction loadAllowlist() {\n  try {\n    const fetched = $('Fetch WhatsApp allowlist').first().json || {};\n    const nums = fetched.numbers;\n    if (Array.isArray(nums) && nums.length) return nums.map(waDigits).filter(Boolean);\n  } catch (e) {}\n  return FALLBACK_ACCOUNTS.slice();\n}\n\nfunction isAccountsAllowed(from, allowed) {\n  const d = waDigits(from);\n  if (!d) return false;\n  return allowed.some((n) => {\n    const a = waDigits(n);\n    return a === d || (a && d.endsWith(a)) || (d && a.endsWith(d));\n  });\n}\n\nconst ACCOUNTS_ALLOWED = loadAllowlist();\nconst event = $('Only text messages').first().json;\nconst msg = (event.messages || [])[0] || {};\nlet text = (msg.text && msg.text.body) ? String(msg.text.body).trim() : '';\nconst img = msg.image || {};\nif (!text && img.caption) text = String(img.caption).trim();\nconst hasPhoto = Boolean(img.id);\nif (!text && !hasPhoto) {\n  return [];\n}\nconst from = msg.from || (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || '';\nfunction groupIdOf(msg, event) {\n  const from = String(msg.from || '');\n  const gid = msg.group_id || (msg.context && (msg.context.group_id || msg.context.id)) || (event.metadata && event.metadata.group_id) || (event.group && event.group.id) || '';\n  if (gid) return String(gid);\n  if (/@g\\.us$/i.test(from)) return from;\n  if (/^\\d{15,}$/.test(from)) return from;\n  return '';\n}\nconst groupId = groupIdOf(msg, event);\nconst chatKind = groupId ? 'group' : 'dm';\nlet department = chatKind === 'group' ? 'community' : 'growth';\nconst commands = [\n  { re: /^(?:\\/community|\\/cm)\\b\\s*/i, dest: 'community' },\n  { re: /^\\/accounts\\b\\s*/i, dest: 'accounts' },\n  { re: /^\\/ops\\b\\s*/i, dest: 'internal-ops' },\n  { re: /^\\/validate\\b\\s*/i, dest: 'product-dev' },\n  { re: /^\\/growth\\b\\s*/i, dest: 'growth' },\n  { re: /^\\/crm\\b\\s*/i, dest: 'crm' },\n  { re: /^\\/legal\\b\\s*/i, dest: 'legal' },\n  { re: /^\\/hr\\b\\s*/i, dest: 'hr' }\n];\nlet requested = department;\nfor (const cmd of commands) {\n  if (cmd.re.test(text)) {\n    department = cmd.dest;\n    requested = cmd.dest;\n    text = text.replace(cmd.re, '').trim();\n    break;\n  }\n}\nconst accountsDesk = requested === 'accounts' || requested === 'internal-ops' || requested === 'legal' || requested === 'hr';\nconst accounts_authorized = isAccountsAllowed(from, ACCOUNTS_ALLOWED);\nlet accounts_denied = false;\nif (accountsDesk && !accounts_authorized) {\n  accounts_denied = true;\n  department = 'community';\n  text = 'Write a WhatsApp DM to this person in second person. They are not authorized for the company books, legal, or HR desk. Do not repeat amounts, vendors, tax questions, or CV text. Suggest /growth or /cm.';\n}\nif (hasPhoto && !text && accountsDesk && accounts_authorized) {\n  text = 'Read this receipt or invoice photo. Extract vendor or customer, amount, currency, date, and whether it is already paid. If the image is unreadable, ask for those fields and set zoho_action to none. Do not invent figures.';\n} else if (hasPhoto && !text) {\n  text = 'The person sent a photo with no caption. Ask what they need in one short question. Do not treat it as a receipt or invent amounts.';\n} else if (!text) {\n  text = department === 'community'\n    ? 'Welcome this person and ask how you can help in the community.'\n    : 'Greet the person and ask how you can help.';\n}\nconst context_data = {\n  channel: 'whatsapp',\n  chat_kind: chatKind,\n  department,\n  requested_department: requested,\n  from,\n  wa_id: (event.contacts && event.contacts[0] && event.contacts[0].wa_id) || from,\n  phone_number_id: (event.metadata && event.metadata.phone_number_id) || '1353516234507857',\n  accounts_authorized,\n  accounts_denied\n};\nif (hasPhoto) {\n  context_data.whatsapp_media_id = String(img.id || '');\n  if (img.mime_type) context_data.image_mime = String(img.mime_type);\n}\nif (groupId) {\n  context_data.group_id = groupId;\n}\nreturn [{ json: { department, task_description: text, context_data } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -146,7 +146,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (String(ctx.department || '') === 'legal') {\n  text += '\\n\\nProposal only. File and Accept on the company desk. This chat cannot send or stamp.';\n}\nif (String(ctx.department || '') === 'hr') {\n  text += '\\n\\nProposal only. Open roles and Shortlist on the company desk. This chat cannot hire or email applicants.';\n}\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst ctx = $('Prepare task').item.json.context_data;\nconst sd = worker.structured_data || {};\nif (String(ctx.department || '') === 'community' && (sd.speak === false || sd.speak === 'false' || !String(worker.output_text || '').trim())) {\n  return [];\n}\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (String(ctx.department || '') === 'legal') {\n  text += '\\n\\nProposal only. File and Accept on the company desk. This chat cannot send or stamp.';\n}\nif (String(ctx.department || '') === 'hr') {\n  text += '\\n\\nProposal only. Open roles and Shortlist on the company desk. This chat cannot hire or email applicants.';\n}\nlet zohoNote = '';\nif ($json.audit_text) {\n  zohoNote = '\\n\\n' + String($json.audit_text);\n} else if ($json.expense && $json.expense.expense_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as expense ' + $json.expense.expense_id + '.';\n} else if ($json.bill && $json.bill.bill_id) {\n  zohoNote = '\\n\\nRecorded in Zoho Books as bill ' + $json.bill.bill_id + '.';\n} else if ($json.invoice && $json.invoice.invoice_id) {\n  zohoNote = '\\n\\nDraft invoice in Zoho Books ' + ($json.invoice.invoice_number || $json.invoice.invoice_id) + '.';\n} else if ($json.code && $json.message) {\n  zohoNote = '\\n\\nZoho Books: ' + String($json.message);\n} else if ($json.error) {\n  const err = $json.error;\n  zohoNote = '\\n\\nZoho Books: ' + String(err.message || JSON.stringify(err));\n}\ntry {\n  const c = $('Run CRM upsert').first().json || {};\n  const id = (c.contact && c.contact.contact_id) || c.contact_id;\n  if (id) zohoNote += '\\n\\nCRM: Zoho Books contact ' + id;\n  else if (c.message && c.code) zohoNote += '\\n\\nCRM: ' + c.message;\n} catch (e) {}\ntext = (text + zohoNote).trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\u2026';\n}\nreturn [{\n  json: {\n    text,\n    to: ctx.group_id || ctx.from,\n    phoneNumberId: ctx.phone_number_id,\n    status: worker.status || 'failed',\n    department: ctx.department || 'growth'\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -252,7 +252,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst ctx = prep.context_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst intent = Number(sd.intent_score);\nconst recordFlag = sd.record_lead === true || sd.record_lead === 'true';\nconst denied = ctx.accounts_denied === true;\nconst deskOnly = prep.department === 'legal' || prep.department === 'hr';\nconst record_crm = worker.status === 'success' && !denied && !deskOnly && (\n  prep.department === 'crm' ||\n  recordFlag ||\n  (Number.isFinite(intent) && intent >= 0.6)\n);\nlet phone = String(sd.phone || '').trim();\nif (!phone && ctx.channel === 'whatsapp' && ctx.from && /^\\d{8,}$/.test(String(ctx.from))) {\n  phone = String(ctx.from);\n}\nlet email = String(sd.email || '').trim();\nif (!email && ctx.channel === 'email' && ctx.from && String(ctx.from).includes('@')) {\n  email = String(ctx.from);\n}\nlet contact_name = String(sd.contact_name || sd.name || '').trim();\nif (!contact_name && ctx.username) contact_name = String(ctx.username);\nconst crm_contact = record_crm ? {\n  contact_name,\n  company_name: String(sd.company_name || '').trim(),\n  email,\n  phone,\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: String(sd.notes || '').trim(),\n  source: ctx.channel || 'ops',\n  task_type: task\n} : null;\nreturn [{ json: { ...worker, record_crm, crm_contact } }];\n"
+        "jsCode": "const worker = $('Call department').item.json;\nconst prep = $('Prepare task').item.json;\nconst sd = worker.structured_data || {};\nconst ctx = prep.context_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst intent = Number(sd.intent_score);\nconst recordFlag = sd.record_lead === true || sd.record_lead === 'true';\nconst denied = ctx.accounts_denied === true;\nconst deskOnly = prep.department === 'legal' || prep.department === 'hr' || prep.department === 'community';\nconst record_crm = worker.status === 'success' && !denied && !deskOnly && (\n  prep.department === 'crm' ||\n  recordFlag ||\n  (Number.isFinite(intent) && intent >= 0.6)\n);\nlet phone = String(sd.phone || '').trim();\nif (!phone && ctx.channel === 'whatsapp' && ctx.from && /^\\d{8,}$/.test(String(ctx.from))) {\n  phone = String(ctx.from);\n}\nlet email = String(sd.email || '').trim();\nif (!email && ctx.channel === 'email' && ctx.from && String(ctx.from).includes('@')) {\n  email = String(ctx.from);\n}\nlet contact_name = String(sd.contact_name || sd.name || '').trim();\nif (!contact_name && ctx.username) contact_name = String(ctx.username);\nconst crm_contact = record_crm ? {\n  contact_name,\n  company_name: String(sd.company_name || '').trim(),\n  email,\n  phone,\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: String(sd.notes || '').trim(),\n  source: ctx.channel || 'ops',\n  task_type: task\n} : null;\nreturn [{ json: { ...worker, record_crm, crm_contact } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -425,7 +425,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prep = $('Prepare task').first().json;\nconst ctx = Object.assign({}, prep.context_data || {});\nconst item = $input.first();\nconst bins = item.binary || {};\nconst key = Object.keys(bins)[0];\nif (key && bins[key] && bins[key].data) {\n  ctx.has_image = true;\n  ctx.image_mime = bins[key].mimeType || ctx.image_mime || 'image/jpeg';\n  ctx.image_base64 = bins[key].data;\n}\ndelete ctx.whatsapp_media_id;\nreturn [{ json: { ...prep, context_data: ctx } }];\n"
+        "jsCode": "const prep = $('Attach mandate').first().json;\nconst ctx = Object.assign({}, prep.context_data || {});\nconst item = $input.first();\nconst bins = item.binary || {};\nconst key = Object.keys(bins)[0];\nif (key && bins[key] && bins[key].data) {\n  ctx.has_image = true;\n  ctx.image_mime = bins[key].mimeType || ctx.image_mime || 'image/jpeg';\n  ctx.image_base64 = bins[key].data;\n}\ndelete ctx.whatsapp_media_id;\nreturn [{ json: { ...prep, context_data: ctx } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -435,6 +435,46 @@
       ],
       "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560mat",
       "name": "Attach image"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'http://agents:8000/internal/v1/community/mandate?group_id=' + encodeURIComponent($json.context_data.group_id || '') + '&telegram_chat_id=' + encodeURIComponent($json.context_data.telegram_chat_id || '') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        700,
+        -160
+      ],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560man",
+      "name": "Fetch community mandate",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prepare task').first().json;\nconst ctx = Object.assign({}, prep.context_data || {});\ntry {\n  const m = $('Fetch community mandate').first().json || {};\n  if (m.found && m.mandate) ctx.mandate = m.mandate;\n} catch (e) {}\nreturn [{ json: { ...prep, context_data: ctx } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        0
+      ],
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234560maa",
+      "name": "Attach mandate"
     }
   ],
   "connections": {
@@ -464,7 +504,7 @@
       "main": [
         [
           {
-            "node": "Has accounts photo",
+            "node": "Fetch community mandate",
             "type": "main",
             "index": 0
           }
@@ -640,6 +680,28 @@
         [
           {
             "node": "Call department",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch community mandate": {
+      "main": [
+        [
+          {
+            "node": "Attach mandate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach mandate": {
+      "main": [
+        [
+          {
+            "node": "Has accounts photo",
             "type": "main",
             "index": 0
           }
