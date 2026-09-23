@@ -85,9 +85,18 @@ func TestPlaybookCatalog(t *testing.T) {
 	if !ok || !leg.Partial() || !strings.Contains(string(leg.Body), "Not wired") {
 		t.Fatal("legal must stay a partial with a later-box for send")
 	}
-	h, ok := lookupDoc("hr")
-	if !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
+	if h, ok := lookupDoc("hr"); !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
 		t.Fatal("hr must stay a partial with later-boxes")
+	}
+	later := DocMeta{Slug: "x", Wire: "later"}
+	if !later.Later() || later.Href() != "/admin/docs/x" || later.WireLabel() != "Not wired" {
+		t.Fatalf("later %+v %s %s", later, later.Href(), later.WireLabel())
+	}
+	if !allDocs()[0].Live() || allDocs()[0].WireLabel() != "On the wire" {
+		t.Fatal("live label")
+	}
+	if !leg.Partial() || leg.WireLabel() != "Prefix live · follow-up missing" {
+		t.Fatal("partial label")
 	}
 }
 

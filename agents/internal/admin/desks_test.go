@@ -22,6 +22,12 @@ func TestAllDesksUnique(t *testing.T) {
 	if _, ok := DeskByDepartment("internal-ops"); !ok {
 		t.Fatal("ops")
 	}
+	if _, ok := LookupDesk("missing"); ok {
+		t.Fatal("unknown desk")
+	}
+	if _, ok := DeskByDepartment("nope"); ok {
+		t.Fatal("unknown dept")
+	}
 }
 
 func TestHandles(t *testing.T) {
@@ -39,6 +45,27 @@ func TestHandles(t *testing.T) {
 	}
 	if Handles(handler, "") {
 		t.Fatal("empty")
+	}
+}
+
+func TestIsOwnerAndVisibleDesks(t *testing.T) {
+	if isOwner(nil) || canOffice(nil) {
+		t.Fatal("nil")
+	}
+	owner := &User{Role: "owner", Desks: []string{"hr"}}
+	if !isOwner(owner) || !canOffice(owner) {
+		t.Fatal("owner")
+	}
+	bdm := &User{Role: "bdm"}
+	if isOwner(bdm) || !canOffice(bdm) {
+		t.Fatal("bdm")
+	}
+	got := visibleDesks(owner)
+	if len(got) != 1 || got[0].Slug != "hr" {
+		t.Fatalf("%+v", got)
+	}
+	if visibleDesks(nil) != nil {
+		t.Fatal("nil desks")
 	}
 }
 

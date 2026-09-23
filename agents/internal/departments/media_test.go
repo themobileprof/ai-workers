@@ -27,3 +27,20 @@ func TestTakeImagesEmpty(t *testing.T) {
 		t.Fatalf("unexpected %+v", imgs)
 	}
 }
+
+func TestSniffMIME(t *testing.T) {
+	if sniffMIME([]byte{0xFF, 0xD8, 0xFF, 0x00}) != "image/jpeg" {
+		t.Fatal("jpeg")
+	}
+	if sniffMIME([]byte{0x89, 0x50, 0x4E, 0x47}) != "image/png" {
+		t.Fatal("png")
+	}
+	webp := []byte("RIFF....WEBP")
+	copy(webp[4:8], []byte("xxxx"))
+	if sniffMIME(webp) != "image/webp" {
+		t.Fatal("webp")
+	}
+	if sniffMIME([]byte("nope")) != "image/jpeg" {
+		t.Fatal("default")
+	}
+}

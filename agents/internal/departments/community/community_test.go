@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
 func TestAccountsDeniedFlag(t *testing.T) {
@@ -46,4 +47,25 @@ func TestAccessDeniedSkipsLLMAndHidesPayload(t *testing.T) {
 	if !strings.Contains(resp.OutputText, "HR") {
 		t.Fatalf("missing HR desk: %s", resp.OutputText)
 	}
+}
+
+func TestHandleFAQ(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"We meet Thursdays.","structured_data":{"task_type":"faq"}}`}, contract.Request{
+		TaskDescription: "When is the next session?",
+		ContextData:     []byte(`{"channel":"whatsapp","chat_kind":"group"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["task_type"] != "faq" {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+}
+
+type stubLLM struct {
+	text string
+}
+
+func (s stubLLM) Complete(context.Context, llm.Request) (string, error) {
+	return s.text, nil
 }

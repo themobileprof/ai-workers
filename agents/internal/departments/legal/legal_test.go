@@ -1,11 +1,21 @@
 package legal
 
 import (
+	"context"
 	"strings"
 	"testing"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/llm"
 )
+
+type stubLLM struct {
+	text string
+}
+
+func (s stubLLM) Complete(context.Context, llm.Request) (string, error) {
+	return s.text, nil
+}
 
 func TestSpecsUnique(t *testing.T) {
 	seen := map[string]bool{}
@@ -93,5 +103,21 @@ func TestWatchUnworthySkipsLLM(t *testing.T) {
 	}
 	if boolish(resp.StructuredData["speak"]) {
 		t.Fatal("speak")
+	}
+}
+
+func TestHandleDraftCannotSend(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Accept on Legal.","structured_data":{"save_draft":true}}`}, contract.Request{
+		TaskDescription: "Draft an NDA for Ada on Mechazone",
+		ContextData:     []byte(`{"action":"draft","template":"nda"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["cannot_send"] != true || resp.StructuredData["action"] != "draft" {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if resp.StructuredData["template"] != "nda" || resp.StructuredData["task_type"] != "legal" {
+		t.Fatalf("%+v", resp.StructuredData)
 	}
 }

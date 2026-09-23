@@ -1,6 +1,20 @@
 package productdev
 
-import "testing"
+import (
+	"context"
+	"testing"
+
+	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/llm"
+)
+
+type stubLLM struct {
+	text string
+}
+
+func (s stubLLM) Complete(context.Context, llm.Request) (string, error) {
+	return s.text, nil
+}
 
 func TestValidationActionFromContext(t *testing.T) {
 	action, ok := validationAction(map[string]any{"action": "analyse_evidence"}, "whatever")
@@ -39,5 +53,31 @@ func TestValidationPromptsEmbedded(t *testing.T) {
 		if _, err := validationPrompts.ReadFile("prompts/" + validationFiles[action]); err != nil {
 			t.Fatalf("%s: %v", action, err)
 		}
+	}
+}
+
+func TestHandleValidationStampsProposal(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Named desks, not vibes.","structured_data":{}}`}, contract.Request{
+		TaskDescription: "Analyse evidence: Ada at XYZ Mortgage quoted 22%.",
+		ContextData:     []byte(`{"action":"analyse_evidence"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["task_type"] != "product_validation" || resp.StructuredData["action"] != "analyse_evidence" {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+}
+
+func TestHandleQAUsesLabPrompt(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Redact the token.","structured_data":{"task_type":"product_ops_qa"}}`}, contract.Request{
+		TaskDescription: "Review this pull request for secrets",
+		ContextData:     []byte(`{"diff":"--- a/main.go"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["task_type"] != "product_ops_qa" {
+		t.Fatalf("%+v", resp.StructuredData)
 	}
 }

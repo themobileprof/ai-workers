@@ -88,9 +88,10 @@ See Desk → Docs → How to call a worker.
 
 ```
 cd agents && go test ./...
+cd agents && go test ./... -cover
 ```
 
-`./internal/admin` also fails if compose / `.env.example` vendor env or an n8n credential name is missing from `TOOLS.md`.
+`go test` does not start Postgres or call DeepSeek. Desk HTML, prefixes, the n8n envelope, and worker Handles run against a stub Completer. `./internal/admin` also fails if compose / `.env.example` vendor env or an n8n credential name is missing from `TOOLS.md`. Store migrate and live LLM HTTP stay unhit until you point `ADMIN_DATABASE_URL` at a throwaway `aiworkers` and set keys.
 
 ## Adding something
 
