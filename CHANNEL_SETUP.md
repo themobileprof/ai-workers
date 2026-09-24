@@ -1,6 +1,6 @@
 # Channel setup (Telegram, WhatsApp, Email)
 
-n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/home` (desk iframes it; `/n8n/` redirects there). n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges. Usage and code map: [`README.md`](README.md). Field playbook on the desk: `/admin/docs`.
+n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`. The public homepage is `/`. The n8n editor is `/home` (desk iframes it; `/n8n/` redirects there). Caddy allowlists editor/REST paths (`/home*`, `/signin*`, `/rest*`, `/assets*`, …) — it does not catch-all to n8n. n8n still has its own sign-in. Agents still talk over HTTP JSON. Chat apps are inbound/outbound edges. Usage and code map: [`README.md`](README.md). Field playbook on the desk: `/admin/docs`.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
@@ -8,9 +8,9 @@ n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`.
 | WhatsApp | Customers, community, field intern | One Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}` with header `X-Internal-Token`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
-Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/n8n/`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
+Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/home`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
 Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, license, the company desk DB, and `INTERNAL_API_TOKEN`.
 
@@ -153,7 +153,7 @@ If you rebuild the node by hand instead:
 
 - Method: `POST`
 - URL: `http://agents:8000/departments/growth`
-- Authentication: None
+- Header: `X-Internal-Token` = `={{ $env.INTERNAL_API_TOKEN }}` (or the value from the VM `.env`)
 - Send Body: on
 - Body Content Type: JSON
 - Specify Body: Using JSON

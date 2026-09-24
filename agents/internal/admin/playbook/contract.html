@@ -1,4 +1,4 @@
-<p class="lede">n8n is the only public door. The Go process listens on the Docker network at <code>http://agents:8000</code>. That URL is not a browser page. Caddy never publishes <code>/departments</code>.</p>
+<p class="lede">n8n is the channel door (webhooks, cron, Zoho, execution log). The Go process is the office: desk HTML plus workers, on the Docker network at <code>http://agents:8000</code>. That URL is not a browser page. Caddy never publishes <code>/departments</code> or <code>/internal</code>. Department POSTs need the same <code>X-Internal-Token</code> as internal JSON.</p>
 
 <ol class="steps">
   <li>Open <a href="/admin/workflows">n8n in the desk</a> (iframe of <code>/home</code>) or Telegram/WhatsApp.</li>
@@ -32,8 +32,9 @@
 
 <section class="specimen">
   <p class="spec-no">Specimen 03 · internal JSON n8n already calls</p>
-  <p class="you-say">HTTP Request on the Docker network, header <code>X-Internal-Token</code>.</p>
+  <p class="you-say">HTTP Request on the Docker network, header <code>X-Internal-Token</code> (departments and <code>/internal/v1</code>).</p>
   <p class="expect">
+    <code>POST /departments/{name}</code> — workers. Same token as below.<br>
     <code>GET /internal/v1/community/mandate</code> — group brief (<code>group_id</code>).<br>
     <code>GET /internal/v1/community/mandates</code> — active rooms (weekly intro).<br>
     <code>GET /internal/v1/whatsapp-accounts</code> — allowlist.<br>

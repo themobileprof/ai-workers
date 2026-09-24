@@ -1,0 +1,7 @@
+# Overlay for the OCI VM. scripts/deploy.sh adds this file when
+# agents/dist/agents exists so compose never compiles Go on the box.
+services:
+  agents:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile.runtime

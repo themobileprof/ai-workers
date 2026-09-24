@@ -1,3 +1,6 @@
+# Live copy: /etc/caddy/conf.d/workers.caddy
+# Do not overwrite /etc/caddy/Caddyfile — that file only imports conf.d
+# (enterprisellm.ng shares this VM).
 workers.themobileprof.com {
 	encode gzip
 	log {
@@ -18,7 +21,7 @@ workers.themobileprof.com {
 
 	# WhatsApp, Telegram, form waits. These public paths must not change.
 	@hooks {
-		path /webhook* /webhook-test* /webhook-waiting* /form*
+		path /webhook* /webhook-test* /webhook-waiting* /form* /mcp* /mcp-test*
 	}
 	handle @hooks {
 		reverse_proxy 127.0.0.1:5678
@@ -30,9 +33,17 @@ workers.themobileprof.com {
 	redir /n8n /home 308
 	redir /n8n/ /home 308
 
-	# n8n REST, static assets, sign-in, websockets.
-	handle {
+	# n8n editor + REST. Allowlist only — do not catch-all to :5678.
+	@n8nui {
+		path /home* /signin* /signup* /signout* /logout* /setup*
+		path /forgot-password* /change-password*
+		path /rest* /assets* /static* /types* /icons*
+		path /oauth2-credential* /sso* /saml*
+		path /favicon.ico /icon.svg
+	}
+	handle @n8nui {
 		reverse_proxy 127.0.0.1:5678 {
+			flush_interval -1
 			header_down -X-Frame-Options
 		}
 		header Content-Security-Policy "frame-ancestors 'self'"

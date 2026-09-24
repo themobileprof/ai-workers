@@ -516,16 +516,10 @@ func (s *Server) internalSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) internalOK(r *http.Request) bool {
-	if s.internalTok == "" {
+	if s == nil {
 		return false
 	}
-	got := r.Header.Get("X-Internal-Token")
-	if got == "" {
-		if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
-			got = strings.TrimPrefix(auth, "Bearer ")
-		}
-	}
-	return got == s.internalTok
+	return InternalTokenOK(InternalRequestToken(r), s.internalTok)
 }
 
 func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) *User {

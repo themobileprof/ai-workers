@@ -158,6 +158,79 @@ func TestIntegrationDeskKeysAreCatalogued(t *testing.T) {
 	}
 }
 
+func TestCaddyfileAllowlistsN8n(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join(repoRoot(t), "Caddyfile"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(raw)
+	if !strings.Contains(s, "handle @n8nui") {
+		t.Fatal("Caddyfile must proxy the n8n editor through @n8nui, not a catch-all")
+	}
+	if strings.Contains(s, "handle {\n\t\treverse_proxy 127.0.0.1:5678") {
+		t.Fatal("Caddyfile must not catch-all to n8n")
+	}
+}
+
+func TestN8nDepartmentCallsSendInternalToken(t *testing.T) {
+	root := repoRoot(t)
+	err := filepath.WalkDir(filepath.Join(root, "n8n", "workflows"), func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return err
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var wf struct {
+			Nodes []struct {
+				Name       string         `json:"name"`
+				Type       string         `json:"type"`
+				Parameters map[string]any `json:"parameters"`
+			} `json:"nodes"`
+		}
+		if err := json.Unmarshal(raw, &wf); err != nil {
+			t.Errorf("%s: %v", path, err)
+			return nil
+		}
+		for _, n := range wf.Nodes {
+			if n.Type != "n8n-nodes-base.httpRequest" || n.Parameters == nil {
+				continue
+			}
+			url, _ := n.Parameters["url"].(string)
+			if !strings.Contains(url, "/departments/") {
+				continue
+			}
+			if n.Parameters["sendHeaders"] != true {
+				t.Errorf("%s %s: POST %s missing sendHeaders for X-Internal-Token", filepath.Base(path), n.Name, url)
+				continue
+			}
+			headers, _ := n.Parameters["headerParameters"].(map[string]any)
+			params, _ := headers["parameters"].([]any)
+			found := false
+			for _, p := range params {
+				m, _ := p.(map[string]any)
+				if strings.EqualFold(fmtString(m["name"]), "X-Internal-Token") {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("%s %s: POST %s missing X-Internal-Token header", filepath.Base(path), n.Name, url)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func fmtString(v any) string {
+	s, _ := v.(string)
+	return s
+}
+
 func TestToolsMarkdownParses(t *testing.T) {
 	got, err := loadIntegrations()
 	if err != nil {

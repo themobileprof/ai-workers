@@ -99,14 +99,18 @@ func main() {
 			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "hr"},
 		})
 	})
-	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, "internal-ops", internalops.Handle, desk))
-	mux.HandleFunc("POST /departments/accounts", departmentHandler(completer, completerErr, "accounts", internalops.HandleAccounts, desk))
-	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, "growth", growth.Handle, desk))
-	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, "product-dev", productdev.Handle, desk))
-	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, "community", community.Handle, desk))
-	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, "crm", crm.Handle, desk))
-	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk))
-	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk))
+	internalTok := strings.TrimSpace(os.Getenv("INTERNAL_API_TOKEN"))
+	if internalTok == "" {
+		log.Printf("INTERNAL_API_TOKEN is empty: POST /departments and /internal/v1 will 401")
+	}
+	mux.HandleFunc("POST /departments/internal-ops", departmentHandler(completer, completerErr, "internal-ops", internalops.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/accounts", departmentHandler(completer, completerErr, "accounts", internalops.HandleAccounts, desk, internalTok))
+	mux.HandleFunc("POST /departments/growth", departmentHandler(completer, completerErr, "growth", growth.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/product-dev", departmentHandler(completer, completerErr, "product-dev", productdev.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, "community", community.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, "crm", crm.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk, internalTok))
 
 	srv := &http.Server{
 		Addr:              addr,
@@ -124,8 +128,13 @@ func main() {
 }
 
 // departmentHandler is POST /departments/{name}. n8n is the only caller. Body is contract.Request.
-func departmentHandler(c llm.Completer, initErr error, dept string, fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error), desk *admin.Server) http.HandlerFunc {
+// Same X-Internal-Token as /internal/v1 — Caddy not publishing the path is not enough.
+func departmentHandler(c llm.Completer, initErr error, dept string, fn func(context.Context, llm.Completer, contract.Request) (contract.Response, error), desk *admin.Server, internalTok string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !admin.InternalTokenOK(admin.InternalRequestToken(r), internalTok) {
+			writeJSON(w, http.StatusUnauthorized, contract.Fail("unauthorized"))
+			return
+		}
 		if initErr != nil || c == nil {
 			writeJSON(w, http.StatusServiceUnavailable, contract.Fail("LLM is not configured: "+errString(initErr)))
 			return

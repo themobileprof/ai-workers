@@ -5,7 +5,6 @@ COPY . .
 ARG TARGETOS=linux
 ARG TARGETARCH=arm64
 ENV GOPROXY=https://proxy.golang.org,direct
-ENV GOSUMDB=off
 ENV GOTOOLCHAIN=local
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath -ldflags="-s -w" -o /out/agents ./cmd/server

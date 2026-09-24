@@ -10,7 +10,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `n8n`
 - **URL:** https://n8n.io/
-- **Role:** Orchestration: webhooks, cron, visual routing, execution logs. Public `/webhook*` and the editor at `/home`.
+- **Role:** Orchestration: webhooks, cron, Zoho/Paystack client, execution logs. Public `/webhook*` and an allowlisted editor at `/home` (plus `/signin*`, `/rest*`, `/assets*`). Not a catch-all on the hostname.
 - **Where:** Docker service n8n. Desk iframes `/home`.
 - **Secrets:** `N8N_ENCRYPTION_KEY` and `N8N_LICENSE_ACTIVATION_KEY` on the VM `.env`. Per-app tokens live in n8n Credentials, not git.
 - **Env:** `N8N_ENCRYPTION_KEY`, `N8N_LICENSE_ACTIVATION_KEY`, `N8N_HOST`, `N8N_PROTOCOL`, `N8N_WEBHOOK_URL`
@@ -95,8 +95,8 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `caddy`
 - **URL:** https://caddyserver.com/
-- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook*` → n8n. `/n8n/` redirects to `/home`.
-- **Where:** Native on the host. Config in `Caddyfile` (repo) and `/etc/caddy/Caddyfile` (live).
+- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook*` `/form*` → n8n. Editor allowlist `/home*` `/signin*` `/rest*` `/assets*` `/static*` `/types*` → n8n. `/n8n/` redirects to `/home`. No catch-all to n8n. `/departments` and `/internal` stay unpublished.
+- **Where:** Native on the host. Site block in `Caddyfile` (repo) → `/etc/caddy/conf.d/workers.caddy`. `/etc/caddy/Caddyfile` only imports `conf.d` so `enterprisellm.ng` can share the VM.
 - **Secrets:** None in git. ACME via the public hostname.
 
 ## Code-ready

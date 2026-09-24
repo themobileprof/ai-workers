@@ -47,6 +47,8 @@ services:
   agents:
     build:
       context: ./agents
+      # Local compose compiles. VM deploy overlays docker-compose.deploy.yml
+      # (Dockerfile.runtime + agents/dist/agents) so the 6 GB box never pulls golang.
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:172.28.0.1"

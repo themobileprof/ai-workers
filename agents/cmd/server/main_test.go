@@ -14,6 +14,8 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
+const testInternalTok = "test-internal-token"
+
 type stubLLM struct {
 	text string
 	err  error
@@ -21,6 +23,12 @@ type stubLLM struct {
 
 func (s stubLLM) Complete(context.Context, llm.Request) (string, error) {
 	return s.text, s.err
+}
+
+func deptReq(body string) *http.Request {
+	r := httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(body))
+	r.Header.Set("X-Internal-Token", testInternalTok)
+	return r
 }
 
 func TestListenAddr(t *testing.T) {
@@ -56,28 +64,43 @@ func TestDepartmentHandler(t *testing.T) {
 		}, nil
 	}
 
-	h := departmentHandler(nil, errors.New("no key"), "growth", okFn, nil)
+	h := departmentHandler(nil, errors.New("no key"), "growth", okFn, nil, testInternalTok)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{"task_description":"hi","context_data":{}}`)))
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("missing token %d", rec.Code)
+	}
+
+	rec = httptest.NewRecorder()
+	bad := httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{"task_description":"hi","context_data":{}}`))
+	bad.Header.Set("X-Internal-Token", "wrong")
+	h.ServeHTTP(rec, bad)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("wrong token %d", rec.Code)
+	}
+
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, deptReq(`{"task_description":"hi","context_data":{}}`))
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("unconfigured %d", rec.Code)
 	}
 
-	h = departmentHandler(stubLLM{}, nil, "growth", okFn, nil)
+	h = departmentHandler(stubLLM{}, nil, "growth", okFn, nil, testInternalTok)
 	rec = httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{`)))
+	h.ServeHTTP(rec, deptReq(`{`))
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("bad json %d", rec.Code)
 	}
 
 	rec = httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{"task_description":"  ","context_data":{}}`)))
+	h.ServeHTTP(rec, deptReq(`{"task_description":"  ","context_data":{}}`))
 	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "task_description") {
 		t.Fatalf("empty task %d %s", rec.Code, rec.Body.String())
 	}
 
 	rec = httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/departments/growth", bytes.NewReader([]byte(`{"task_description":"When can we start?","context_data":{}}`)))
+	req.Header.Set("X-Internal-Token", testInternalTok)
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("ok %d %s", rec.Code, rec.Body.String())
@@ -94,7 +117,7 @@ func TestDepartmentHandler(t *testing.T) {
 		return contract.Response{}, errors.New("llm down")
 	}
 	rec = httptest.NewRecorder()
-	departmentHandler(stubLLM{}, nil, "growth", failFn, nil).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{"task_description":"hi","context_data":{}}`)))
+	departmentHandler(stubLLM{}, nil, "growth", failFn, nil, testInternalTok).ServeHTTP(rec, deptReq(`{"task_description":"hi","context_data":{}}`))
 	if rec.Code != http.StatusBadGateway {
 		t.Fatalf("gateway %d", rec.Code)
 	}
@@ -103,9 +126,16 @@ func TestDepartmentHandler(t *testing.T) {
 		return contract.Fail("classified fail"), errors.New("upstream")
 	}
 	rec = httptest.NewRecorder()
-	departmentHandler(stubLLM{}, nil, "growth", failWithBody, nil).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/departments/growth", strings.NewReader(`{"task_description":"hi","context_data":{}}`)))
+	departmentHandler(stubLLM{}, nil, "growth", failWithBody, nil, testInternalTok).ServeHTTP(rec, deptReq(`{"task_description":"hi","context_data":{}}`))
 	if rec.Code != http.StatusBadGateway || !strings.Contains(rec.Body.String(), "classified fail") {
 		t.Fatalf("fail body %d %s", rec.Code, rec.Body.String())
+	}
+
+	closed := departmentHandler(stubLLM{}, nil, "growth", okFn, nil, "")
+	rec = httptest.NewRecorder()
+	closed.ServeHTTP(rec, deptReq(`{"task_description":"hi","context_data":{}}`))
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("empty configured token %d", rec.Code)
 	}
 }
 

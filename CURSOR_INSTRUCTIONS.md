@@ -4,7 +4,7 @@
 
 I am a technical startup founder and a lone developer operating out of Lagos, Nigeria. I use Cursor as my core coding workstation. My goal is to build a highly synchronized, automated multi-agent "synthetic company."
 
-This system must run multiple background AI departments that talk to each other and external channels, allowing me to run a hyper-lean startup with absolute minimal human overhead.
+This system must run a hyper-lean office: one company desk, background AI departments, and external channels, with absolute minimal human overhead. Departments do **not** call each other. n8n fans out (and Legal **watch** is a second POST after the primary worker). Humans stamp; workers propose.
 
 ## 2. SYSTEM ARCHITECTURE & STACK CONFIGURATION
 
@@ -12,10 +12,10 @@ You have full creative and architectural freedom over how the inner software cod
 
 * **Host Environment:** Single Oracle Cloud Infrastructure (OCI) Free-Tier Ubuntu VM (`aarch64`).
 * **Hardware Constraints:** Exactly 1 OCPU and 6 GB of RAM. Disk is a custom 50–100 GB OCI boot volume.
-* **Orchestration Engine:** **n8n**, self-hosted in Docker. Visual router, webhook manager, event processor, cron scheduler, and execution log keeper. Stay on Node/n8n here — replacing it with a custom Go orchestrator loses the visual workflows this system is built around.
+* **Orchestration / channels:** **n8n**, self-hosted in Docker. Webhook manager, cron, WhatsApp/Telegram/email, Zoho Books + Paystack client, execution log. Routing lives in Code nodes (not a click-auditable graph). Stay on Node/n8n here — replacing it with a custom Go orchestrator loses webhooks and the execution log this system is built around.
 * **System Database:** **PostgreSQL, native on the host** (systemd / apt — **not** a Docker container). n8n stores its backend and execution state here. Local beats a remote free tier (Supabase/Neon) for latency, connection-pool stability, and no cold starts.
-* **Execution Worker Fleet:** A **Go** HTTP service in Docker. n8n is the only caller. Do **not** publish the worker to the public internet.
-* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443. Public `/` and `/site*` plus **`/admin*`** go to the Go agents process on `127.0.0.1:8000`. n8n editor is **`/home`** (desk iframe; `/n8n/` redirects there). Inbound **`/webhook*`** still goes to n8n at the same URLs (WhatsApp/Telegram). Do **not** set `N8N_PATH`. Do **not** proxy `/departments` or `/internal` to the public internet.
+* **Office + workers:** A **Go** HTTP service in Docker. This is the company desk (`/admin`, People, Projects, Legal/HR books, community mandates) **and** the LLM department routes. n8n is the only caller of `POST /departments/*` and `/internal/v1/*`. Both require `X-Internal-Token`. Do **not** publish those paths to the public internet.
+* **TLS edge (when a domain exists):** **Caddy** native on the host (Go binary via apt/official repo — **not** a third container). Terminates HTTPS on 443. Public `/` and `/site*` plus **`/admin*`** go to the Go agents process on `127.0.0.1:8000`. n8n editor is **`/home`** (desk iframe; `/n8n/` redirects there). Inbound **`/webhook*`** still goes to n8n at the same URLs (WhatsApp/Telegram). Caddy **allowlists** n8n UI/REST (`/home*`, `/signin*`, `/rest*`, `/assets*`, `/static*`, `/types*`). Do **not** catch-all to n8n. Do **not** set `N8N_PATH`. Do **not** proxy `/departments` or `/internal` to the public internet.
 
 ```
 External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
@@ -27,7 +27,7 @@ External Inputs: WhatsApp / Telegram / Cron / HTTPS webhooks
 │  /admin* → 127.0.0.1:8000  (desk UI)     │
 │  /admin/workflows iframes /home (n8n)    │
 │  /webhook* unchanged → n8n               │
-│  /home /signin /rest /assets → n8n       │
+│  /home /signin /rest /assets /static → n8n (allowlist, not catch-all)       │
 └──────────────────┬───────────────────────┘
                    ▼
 ┌──────────────────────────────────────────┐
@@ -61,7 +61,7 @@ Python is allowed later **only** as an optional sidecar if a job truly needs a P
 
 LLM provider switching does **not** require LiteLLM. A small Go `Completer` interface with OpenAI / Anthropic / DeepSeek / Gemini clients, selected by `LLM_PROVIDER` plus `DEEPSEEK_API_KEY` / `GEMINI_API_KEY` (or the older `LLM_API_KEY`) in `.env`, is the whole abstraction we need. Receipt photos are OCR’d with Gemini (`GEMINI_API_KEY`, default `gemini-3.6-flash`) while chat can stay on DeepSeek.
 
-Build the worker as `CGO_ENABLED=0 GOOS=linux GOARCH=arm64` (this host is Oracle aarch64). Multi-stage Docker: compile in `golang`, copy a static binary into `gcr.io/distroless/static` or `scratch`. Do not install a Go toolchain on the host.
+Build the worker as `CGO_ENABLED=0 GOOS=linux GOARCH=arm64` (this host is Oracle aarch64). **Do not compile on the VM.** CI and `scripts/deploy.sh` cross-compile on GitHub Actions or the laptop; the VM copies `agents/dist/agents` into distroless (`Dockerfile.runtime`). A local `docker compose up --build` may still compile via `agents/Dockerfile` on a machine that can spare RAM. Do not install a Go toolchain on the host.
 
 ## 3. CORE CONSIDERATIONS & CONSTRAINTS TO ENFORCE
 
@@ -107,7 +107,7 @@ This is a **shared** machine, not a dedicated database server. Do not apply "25%
 ### B. Network exposure
 
 - Bootstrap: publish **only** n8n (`5678`). Worker stays on `agent-network` with no `ports:` mapping.
-- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Public `/` and `/site*` plus `/admin*` go to agents. Worker **departments** stay unpublished. Inbound n8n URLs **`/webhook*`** (WhatsApp, Telegram) stay at the same public paths. The n8n editor is **`/home`** (`/n8n/` redirects). Bind agents to `127.0.0.1:8000`.
+- After Caddy: bind n8n to `127.0.0.1:5678` only; Caddy publishes `443` (and `80` for ACME). Public `/` and `/site*` plus `/admin*` go to agents. Worker **departments** stay unpublished and require `X-Internal-Token` on the Docker network. Inbound n8n URLs **`/webhook*`** (WhatsApp, Telegram) stay at the same public paths. The n8n editor is **`/home`** (`/n8n/` redirects). Caddy allowlists editor/REST paths; it must not catch-all to n8n. Bind agents to `127.0.0.1:8000`.
 - Postgres `5432` is host-local + Docker subnet in `pg_hba.conf`. Not in UFW. Not in the OCI Security List / NSG.
 - n8n must have authentication enabled from first boot plus a stable `N8N_ENCRYPTION_KEY`.
 - Local UFW is not enough on OCI: the **VCN security list / NSG** must allow 22 and 5678 (then 80/443; drop 5678 from the cloud firewall once Caddy owns the edge). Never allow 8000 or 5432.
@@ -132,7 +132,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns orchestration state. Department handlers stay stateless. Company desk state (users, **handler desks** assigned one-or-more per person, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **HR roles and applications** proposed until a human opens or Shortlists, **desk jobs + handler↔worker chat**, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. Internal JSON for n8n: `GET /internal/v1/community/mandate`, `/internal/v1/community/mandates`, `/internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications`, `POST /internal/v1/jobs` with `X-Internal-Token`. Proposal, legal, HR, and job POSTs do not commit the stamp. Chat never stamps Accept.
+The worker does **not** share n8n's Postgres database. n8n owns execution state and is the Zoho/Paystack client. Department handlers are request/response (they read desk overlays such as community mandates). Company desk state (users, **handler desks** assigned one-or-more per person, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **HR roles and applications** proposed until a human opens or Shortlists, **desk jobs + handler↔worker chat**, **community mandates**, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. n8n calls `POST /departments/{name}` and internal JSON with `X-Internal-Token`: `GET /internal/v1/community/mandate`, `/internal/v1/community/mandates`, `/internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications`, `POST /internal/v1/jobs`. Proposal, legal, HR, and job POSTs do not commit the stamp. Chat never stamps Accept.
 
 ### Layout
 
@@ -191,10 +191,10 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 **Channel register:** `CHANNEL_SETUP.md` is the living inventory of credential IDs, workflow IDs, prefixes, Zoho org/account ids, and the From address. Update it in the same change whenever you add or change a channel. Repo usage + tree: `README.md`. Desk specimens: `/admin/docs` (`agents/internal/admin/playbook/`).
 
 - Compose mounts `./n8n/workflows` read-only at `/home/node/workflows`.
-- Owner assignment: `n8n/instance.json` (`userId` / `projectId`).
+- Owner assignment: `n8n/instance.json` (`projectId` on import; `--userId` re-owns and fails on n8n 2.x).
 - Re-importing the same `id` updates the workflow. Import deactivates. `./scripts/sync-n8n-workflows.sh` republishes webhooks, the community weekly cron (`commWeeklyPing01`), **and** Execute Workflow children (`booksWriteDoc0001`, `crmUpsertCont0001`, `emailOutbox000001`). Override with `N8N_PUBLISH=id1,id2` if needed. An inactive Books write replies on WhatsApp as `Workflow is not active and cannot be executed.` A GitHub Release runs that script on the VM after Compose rebuild (`scripts/deploy.sh`). Do not deploy on every merge to `main`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}`. Community mandate: `GET http://agents:8000/internal/v1/community/mandate`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `TOOLS.md` (GitHub). Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}` with `X-Internal-Token`. Community mandate: `GET http://agents:8000/internal/v1/community/mandate`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `TOOLS.md` (GitHub). Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 

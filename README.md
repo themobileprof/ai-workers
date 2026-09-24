@@ -59,7 +59,7 @@ n8n/workflows/              imported JSON; credentials stay in n8n
 scripts/sync-n8n-workflows.sh
 ```
 
-n8n calls `http://agents:8000/departments/{name}` on the Docker network. Caddy must not publish `/departments` or `/internal`. Body is always:
+n8n calls `http://agents:8000/departments/{name}` on the Docker network with header `X-Internal-Token` (same as `/internal/v1`). Caddy must not publish `/departments` or `/internal`. Body is always:
 
 ```json
 { "task_description": "…", "context_data": {} }
@@ -69,7 +69,7 @@ n8n calls `http://agents:8000/departments/{name}` on the Docker network. Caddy m
 
 Worker reply: `status`, `output_text` (what the human reads), `structured_data` (what n8n may act on). Accounts never compute VAT/WHT — Zoho does. Legal/HR/placement POSTs insert **proposed** rows only.
 
-Internal JSON for n8n (`X-Internal-Token`). Caddy must not publish `/internal`. None of the POSTs stamp Accept.
+Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{name}`. Caddy must not publish `/internal`. None of the POSTs stamp Accept.
 
 | Method | Path |
 | --- | --- |
@@ -104,8 +104,8 @@ cd agents && go test ./... -cover
 
 ## CI / CD
 
-- **CI** on every pull request to `main` and on merge to `main`: `go test ./...` plus a `linux/arm64` build (the OCI VM). No Postgres, no DeepSeek.
-- **CD** when you **publish a GitHub Release** (or Actions → CD → Run workflow): rsync this tree to `/home/cursor/ai-workers`, `docker compose up -d --build`, republish n8n webhooks, `GET /health`. The VM `.env` is never overwritten.
+- **CI** on every pull request to `main` and on merge to `main`: `go test ./...` plus a `linux/arm64` binary (`agents/dist/agents`). No Postgres, no DeepSeek.
+- **CD** when you **publish a GitHub Release** (or Actions → CD → Run workflow): cross-compile that binary, rsync this tree to `/home/cursor/ai-workers`, `docker compose` with `Dockerfile.runtime` (no golang image on the VM), copy `Caddyfile` to `/etc/caddy/conf.d/workers.caddy` when sudo allows, republish n8n webhooks, `GET /health`. The VM `.env` is never overwritten.
 
 Cut a release after main is green:
 

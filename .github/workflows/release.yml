@@ -32,6 +32,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag || github.sha }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: agents/go.mod
+          cache-dependency-path: agents/go.sum
+      - name: Cross-compile agents for the VM
+        working-directory: agents
+        run: mkdir -p dist && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o dist/agents ./cmd/server
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}

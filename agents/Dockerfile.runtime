@@ -1,0 +1,8 @@
+# syntax=docker/dockerfile:1
+# VM deploy only. COPY a linux/arm64 binary built on CI or the laptop.
+# Do not use this file without agents/dist/agents — that would pull golang on the 6 GB box.
+FROM gcr.io/distroless/static:nonroot
+COPY dist/agents /agents
+USER nonroot:nonroot
+EXPOSE 8000
+ENTRYPOINT ["/agents"]

@@ -49,7 +49,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Envelope",
 		Path:     "POST /departments/{name}",
 		Wire:     "live",
-		Summary:  "Every department takes the same JSON. n8n is the only public caller.",
+		Summary:  "Every department takes the same JSON. n8n is the only caller. Header X-Internal-Token.",
 		Prefixes: nil,
 	},
 	{
