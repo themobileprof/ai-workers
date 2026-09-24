@@ -85,8 +85,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Room voice",
 		Path:     "POST /departments/community",
 		Wire:     "live",
-		Summary:  "Mandated WhatsApp groups, Monday intro, /cm, LMS catalog, and the access-denied reply when a number is not on the books desk.",
-		Prefixes: []string{"/cm", "/community", "group (mandate)"},
+		Summary:  "Mandated Academy Telegram rooms, Monday intro, /cm, LMS catalog. WhatsApp Cloud API cannot join ordinary groups.",
+		Prefixes: []string{"/cm", "/community", "Academy Telegram group"},
 	},
 	{
 		Slug:     "crm",

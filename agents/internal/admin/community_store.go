@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS community_mandates (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS community_mandates_wa_idx ON community_mandates (whatsapp_group_id) WHERE whatsapp_group_id <> '';
+CREATE INDEX IF NOT EXISTS community_mandates_tg_idx ON community_mandates (telegram_chat_id) WHERE telegram_chat_id <> '';
 `)
 	if err != nil {
 		return err
@@ -88,12 +89,12 @@ func (s *Store) refreshLMSSeed(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
 UPDATE community_mandates
 SET brief = $1, catalog = $2, updated_at = now()
-WHERE slug = 'lms' AND catalog LIKE '%Three tiers (do not invent a fourth)%'
+WHERE slug = 'lms' AND (catalog LIKE '%Three tiers (do not invent a fourth)%' OR brief LIKE '%student WhatsApp group%')
 `, lmsMandateBrief, lmsMandateCatalog)
 	return err
 }
 
-const lmsMandateBrief = `You host the TheMobileProf Academy student WhatsApp group for https://lms.themobileprof.com.
+const lmsMandateBrief = `You host the TheMobileProf Academy student Telegram group for https://lms.themobileprof.com. The Cloud API WhatsApp number cannot join ordinary WhatsApp groups — this room is Telegram.
 
 Your job in this room:
 - Welcome people. Ask which course they are on (Micro / Mini path / Professional — use the catalog titles) and which lesson.

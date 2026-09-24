@@ -19,11 +19,11 @@ If you also handle Legal or HR, tick those desks on your own People card or the 
 
 ### Handler desk
 
-Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per WhatsApp group. Academy LMS is seeded from the public course list. Paste `group_id` from an n8n execution after the Business number is in the room. Monday 09:00 Lagos the worker introduces itself in each matched group.
+Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per Academy Telegram room. Academy LMS is seeded from the public course list. Paste `telegram_chat_id` from an Academy Telegram n8n execution after the bot is in the group. Monday 09:00 Lagos the worker introduces itself in each matched room.
 
 ### Chat prefixes
 
-Do not give each department its own WhatsApp. One ops Telegram, one customer WhatsApp, one `info@`.
+Do not give each department its own WhatsApp. One ops Telegram, one Academy Telegram, one customer WhatsApp, one `info@`.
 
 | Starts with | Worker |
 | --- | --- |
@@ -36,7 +36,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one customer Wha
 | `/cm` `/community` | community |
 | `/validate` | product-dev |
 | none, 1:1 | growth |
-| none, group | community |
+| none, group | community (Academy Telegram student rooms; ops Telegram groups still default community — do not add ops to class) |
 
 `/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal/HR/project stamp.
 

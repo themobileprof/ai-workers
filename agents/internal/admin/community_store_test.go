@@ -53,7 +53,7 @@ func TestLMSCatalogMentionsTiers(t *testing.T) {
 			t.Fatal(part)
 		}
 	}
-	if !strings.Contains(lmsMandateBrief, "escalate") || !strings.Contains(lmsMandateBrief, "lesson") || !strings.Contains(lmsMandateBrief, "/cm") {
+	if !strings.Contains(lmsMandateBrief, "escalate") || !strings.Contains(lmsMandateBrief, "lesson") || !strings.Contains(lmsMandateBrief, "/cm") || !strings.Contains(lmsMandateBrief, "Telegram") {
 		t.Fatal("seed brief")
 	}
 }

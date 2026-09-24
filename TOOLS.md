@@ -48,16 +48,16 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
-- **Role:** Ops room: prefixes including `/hr` and `/legal`, receipt photos, `/approve` and `/kill` for info@ drafts.
-- **Where:** n8n Ops Telegram workflow.
+- **Role:** Two bots. Ops (`Telegram account`): prefixes, receipts, `/approve` `/kill`. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
+- **Where:** n8n Ops Telegram and Academy Telegram workflows.
 - **Secrets:** Bot token in n8n credential Telegram account.
-- **n8n credentials:** `Telegram account`
+- **n8n credentials:** `Telegram account`, `Telegram Academy`
 
 ### WhatsApp (Meta Cloud API)
 
 - **Id:** `whatsapp`
 - **URL:** https://developers.facebook.com/docs/whatsapp/cloud-api
-- **Role:** Customer and community chat. `/accounts`, `/ops`, `/legal`, and `/hr` are desk-allowlisted. Receipt OCR on allowlisted `/accounts` photos.
+- **Role:** Customer 1:1 chat. `/accounts`, `/ops`, `/legal`, and `/hr` are desk-allowlisted. Receipt OCR on allowlisted `/accounts` photos. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
 - **Where:** n8n Customer WhatsApp. Allowlist from desk People (`whatsapp_accounts`).
 - **Secrets:** Tokens in n8n WhatsApp credentials.
 - **n8n credentials:** `WhatsApp OAuth account`, `WhatsApp account`

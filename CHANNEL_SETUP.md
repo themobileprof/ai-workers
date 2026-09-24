@@ -4,11 +4,12 @@ n8n is the public door for webhooks (`/webhook*`). The company desk is `/admin`.
 
 | Channel | Role | Identity |
 | --- | --- | --- |
-| Telegram | You (ops room): watch jobs, approve, poke a department | One bot, one private chat or group |
-| WhatsApp | Customers, community, field intern | One Business number |
+| Telegram | You (ops room): watch jobs, approve, poke a department | Ops bot, one private chat or group |
+| Telegram | Academy student rooms (community manager) | Academy bot, student group |
+| WhatsApp | Customers 1:1, field intern | One Cloud API Business number |
 | Email | Formal humans: grants, investors, NDAs, invoices | One sending domain |
 
-Do not give each department its own WhatsApp or bot. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}` with header `X-Internal-Token`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
+Do not give each department its own WhatsApp. One ops Telegram, one Academy Telegram, one customer WhatsApp, one `info@`. n8n routes to the Go workers on the **Docker network** at `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}` with header `X-Internal-Token`. That hostname only works inside an n8n **HTTP Request** node (or `docker compose exec n8n ...`). It is not a browser URL.
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/home`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
@@ -25,6 +26,7 @@ Keep this section in sync with every channel change. IDs are not secrets. The ve
 | Name | Type | ID | Used by |
 | --- | --- | --- | --- |
 | Telegram account | `telegramApi` | `GD7WqGif3v6QlSbc` | Ops Telegram |
+| Telegram Academy | `telegramApi` | `acadTelegrCred001` | Academy Telegram trigger/send; weekly intro Telegram send. Create in n8n; bind the nodes if import id differs. |
 | WhatsApp OAuth account | `whatsAppTriggerApi` | `Oaps5dWBa76PVrD9` | Customer WhatsApp trigger |
 | WhatsApp account | `whatsAppApi` | `TpVfkoyKY6eZDl87` | Customer WhatsApp send |
 | Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/accounts` `/ops` expenses; CRM contact upsert |
@@ -51,8 +53,9 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. Must be published. |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/hr` JDs/applicants (desk files); Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp; prefixes; Books writes, `/legal`, and `/hr` only for desk-allowlisted numbers; CRM upsert on high intent |
-| `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated WhatsApp group, then ask what people are working on |
+| `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or HR. |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1; prefixes; Books writes, `/legal`, and `/hr` only for desk-allowlisted numbers; CRM upsert on high intent |
+| `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram (and leftover WhatsApp) room |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; SMTP send on `/approve`. Must be published. |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft (customer mail) or HR file (CVs); Telegram not used for CVs; upserts Books contact from customer senders only |
 
@@ -70,10 +73,12 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/legal` | legal |
 | `/hr` | hr |
 | `/validate` | product-dev |
-| none, 1:1 | growth |
+| none, 1:1 | growth (ops Telegram and customer WhatsApp). Academy Telegram 1:1 stays community. |
 | none, group | community |
 
-Unprefixed group chat is community. Write the brief and catalog on **`/admin/community`**, then paste `context_data.group_id` from the n8n execution after the Business number is in the room. Academy LMS catalog is the public list at `https://api.themobileprof.com/api/courses`. Chatter (`speak: false`) is not sent. Replies go to the group id, not a DM. Monday 09:00 Lagos the worker introduces itself and asks what people are working on. If the group has been quiet more than 24h, Meta may reject that send until you approve a WhatsApp template.
+On the **Academy** bot, `/accounts` `/ops` `/legal` `/hr` `/approve` `/kill` `/growth` `/crm` `/validate` are refused. Those stay on the ops bot.
+
+Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable), then paste `context_data.telegram_chat_id` from the n8n execution onto the mandate. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram (and any leftover WhatsApp) room. Do not add the **ops** bot to student groups.
 
 WhatsApp `/accounts`, `/ops`, `/legal`, and `/hr` are **allowlisted**. Unauthorized numbers are rerouted to **community** (`access_denied`) and never reach Books, Legal, or HR. Telegram ops is not gated (that chat is already private). After the primary department on Telegram, Legal **watches** the task (`POST /departments/legal` with `action: watch`) and may append a Legal note. Greetings and retail receipts stay silent. Watch does not halt Books and does not run on customer WhatsApp.
 
@@ -87,7 +92,7 @@ Source of truth for **projects**, people, WhatsApp accounts rights, and Zoho def
 - **People** (`/admin/users`, owner only): add a person, office seat (owner / bdm / cofounder / assistant / viewer), and **one or more handler desks**. Assigned desks appear when **that person signs in** (`/admin/desks/{slug}` — Ask worker, chat, Accept / Turn away). Chat does not stamp. They are not on the company Board. Ticking a desk grants `web_admin`. Owner and BDM still land on Board; tick desks on their own People card if they also handle a worker. Specialized books stay at `/admin/legal`, `/admin/hr`, `/admin/projects` and still require that desk assignment.
 - **Projects** (`/admin/projects`) is the incubation book: name, one-liner, public URL, journey/gate (playbook stamp), stage, this-week note, and seats (`cofounder`, `assistant`). Seeded bets: MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone. **Ask placement** writes a proposal only; Accept / Amend / Reject on the desk moves the stamp. The worker cannot commit. **Ask draft** (Legal) writes a proposed NDA/contract on that project; Accept on Legal or the project card. The worker cannot stamp approved or send. **HR** (`/admin/hr`) stores proposed JDs and applications (optional project on a role). Humans open / Shortlist / Turn away. The worker cannot hire or email. n8n: `GET /internal/v1/projects`, `GET /internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications`, `POST /internal/v1/jobs` (`X-Internal-Token`). Proposal, legal, HR, and job POSTs do not commit the stamp. Hypotheses are not stored yet.
 - People seats: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), leftover `accounts` / `operator` / `viewer`. Handler desks (Accounts, Growth, Community, CRM, Legal, HR, Ops, Product) are assigned separately, one or more per person. Capabilities: `web_admin` (desk login), `whatsapp_accounts` (live allowlist), `zoho_write` (reserved).
-- **Community** (`/admin/community`, community desk): one **mandate** per WhatsApp group (brief + catalog + `whatsapp_group_id`). Academy LMS is seeded from the public catalog at `https://api.themobileprof.com/api/courses` (Micro / Mini paths / Professional). Lesson video and quizzes need an LMS login token — not wired. Paste the group id from an n8n execution after the Business number is in the room. n8n `GET /internal/v1/community/mandate?group_id=` and `GET /internal/v1/community/mandates`. Weekly intro: **Community weekly intro** (`commWeeklyPing01`) Monday 09:00 Lagos. The worker stays silent on chatter (`speak: false`). Escalate files a Community job. The worker cannot reset passwords.
+- **Community** (`/admin/community`, community desk): one **mandate** per student room (brief + catalog + `telegram_chat_id`). Academy LMS is seeded from the public catalog at `https://api.themobileprof.com/api/courses` (Micro / Mini paths / Professional). Lesson video and quizzes need an LMS login token — not wired. Paste the Telegram chat id from an **Academy Telegram** n8n execution after the bot is in the room. n8n `GET /internal/v1/community/mandate?telegram_chat_id=` and `GET /internal/v1/community/mandates`. Weekly intro: **Community weekly intro** (`commWeeklyPing01`) Monday 09:00 Lagos. The worker stays silent on chatter (`speak: false`). Escalate files a Community job. The worker cannot reset passwords. The Cloud API WhatsApp number cannot join ordinary groups.
 - n8n Customer WhatsApp **Fetch WhatsApp allowlist** `GET http://agents:8000/internal/v1/whatsapp-accounts` with `X-Internal-Token`. If that call fails, Prepare task falls back to `2348033954301`.
 - n8n **Books write** and **CRM upsert** (and their smokes) **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
 - **Third-party tools** live in [`TOOLS.md`](TOOLS.md) (GitHub). Add a section there when a vendor is wired — not a desk page.
@@ -203,12 +208,16 @@ Create a second small workflow later: **Notify ops** — Telegram send of `outpu
 
 ## 1. Telegram first (about 20 minutes)
 
+Two bots. Do not add the ops bot to student groups.
+
+### Ops bot
+
 Fastest loop. Proves inbound → worker → outbound on HTTPS.
 
-1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
+1. In Telegram, talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token (ops).
 2. Message the bot once (so a `chat_id` exists), or create a private group, add the bot, send a message.
-3. n8n → **Credentials** → Telegram API → paste token. The repo workflow **Ops Telegram** (`n8n/workflows/ops-telegram.json`) is imported and published from there — do not rebuild the nodes by hand.
-4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/accounts`, `/ops`, `/legal`, `/hr`, `/validate`. Groups default to community; 1:1 defaults to growth.
+3. n8n → **Credentials** → Telegram API → name **Telegram account** → paste token. The repo workflow **Ops Telegram** (`n8n/workflows/ops-telegram.json`) is imported and published from there — do not rebuild the nodes by hand.
+4. Message the bot `/help`, then `/growth` plus a task. Same prefixes as WhatsApp: `/cm`, `/accounts`, `/ops`, `/legal`, `/hr`, `/validate`. Groups default to community; 1:1 defaults to growth. Student rooms must use the Academy bot, not this one.
 5. Confirm Telegram registered the production hook:
 
 ```text
@@ -218,6 +227,20 @@ https://api.telegram.org/bot<TOKEN>/getWebhookInfo
 `url` must contain `/webhook/` not `/webhook-test/`. `last_error_message` must be empty.
 
 `/approve` and `/kill` send or drop the pending **info@** draft. Validation GO/PIVOT/KILL can reuse the same commands later.
+
+### Academy bot (student rooms)
+
+Cloud API WhatsApp cannot join ordinary groups. Host the LMS class here.
+
+1. BotFather `/newbot` (a second bot). Suggested name: Academy host. Copy the token.
+2. `/setjoingroups` → Enable. `/setprivacy` → **Disable** (otherwise the bot only hears slash commands and stays mute on “I am on Linux Mini lesson 3”).
+3. n8n → **Credentials** → Telegram API → name exactly **Telegram Academy** → paste token. Open **Academy Telegram** and **Community weekly intro** and select that credential on the Telegram nodes if import did not bind `acadTelegrCred001`.
+4. Create or open the student Telegram group. Add the Academy bot. Send a message (any text).
+5. In n8n, open the **Academy Telegram** execution. Copy `context_data.telegram_chat_id` onto **Desk → Community** for the LMS mandate.
+6. Message `/help` in the group. Then a course/lesson line with no prefix. Chatter should stay silent.
+7. `getWebhookInfo` on this bot’s token must also show a production `/webhook/` URL.
+
+Do not reuse the ops token on this credential.
 
 ---
 
@@ -278,7 +301,7 @@ On that number, n8n routes by prefix (then default **growth** for 1:1, **communi
 | `/hr` | hr (same WhatsApp allowlist; chat is flags only; info@ CVs file on the desk) |
 | `/validate` | product-dev |
 
-Add the Business number to the student WhatsApp group. Copy `context_data.group_id` from that execution onto the mandate. Unmatched groups get a polite host with no catalog. Telegram community uses the same worker path once a bot credential exists. Do not create a second WhatsApp number for community.
+Student rooms are **Academy Telegram**, not this WhatsApp number. Cloud API Business numbers cannot be added to ordinary WhatsApp groups. Keep this number for 1:1 (`/cm` DMs, growth, allowlisted books). Copy `context_data.telegram_chat_id` from **Academy Telegram** onto the mandate. Do not create a second WhatsApp number for community.
 
 Intern field missions: same number, or a second **internal** WhatsApp later. Do not mix intern debriefs and customer support in one thread without a prefix (`MISSION:` vs customer).
 

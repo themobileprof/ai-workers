@@ -1,11 +1,11 @@
-<p class="lede">Room voice with a <strong>mandate</strong> per WhatsApp group. Welcome, weekly intro, progress, lesson help, FAQ, moderation. Not sales and not the books desk.</p>
+<p class="lede">Room voice with a <strong>mandate</strong> per Academy Telegram group. Welcome, weekly intro, progress, lesson help, FAQ, moderation. Not sales and not the books desk. Cloud API WhatsApp cannot join ordinary groups.</p>
 
 <ol class="steps">
   <li>On <a href="/admin/community">Mandates</a>, write the brief and the catalog (Academy LMS is seeded from the public course list). Leave a course off the catalog and the worker must escalate instead of guessing.</li>
-  <li>Add the Business number to the WhatsApp group. Send a message. Copy <code>context_data.group_id</code> from the n8n execution onto the mandate.</li>
-  <li>Unprefixed group chat uses that mandate. DM: <code>/cm</code> or <code>/community</code>.</li>
-  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room that has a group id: who it is, how to call it, then what are you working on.</li>
-  <li>Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/hr</code> is rewritten to community with <code>accounts_denied: true</code>. Books, Legal, and HR never run.</li>
+  <li>Create the Academy Telegram bot (BotFather). <code>/setprivacy</code> Disable. Add it to the student group. Send a message. Copy <code>context_data.telegram_chat_id</code> from the <strong>Academy Telegram</strong> n8n execution onto the mandate.</li>
+  <li>Unprefixed group chat uses that mandate. <code>/cm</code> or <code>/community</code> also works. Ops prefixes (<code>/accounts</code>, <code>/approve</code>, …) are refused on this bot.</li>
+  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room that has a Telegram chat id (and any leftover WhatsApp group id).</li>
+  <li>Do not add the ops Telegram bot to the student group. Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/hr</code> is still rewritten to community with <code>accounts_denied: true</code>.</li>
   <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
 </ol>
 
@@ -40,18 +40,18 @@
 <section class="specimen">
   <p class="spec-no">Specimen 03 · FAQ</p>
   <p class="you-say">Group: <code>/cm When do we meet this month?</code></p>
-  <p class="expect"><code>task_type</code> faq. If the worker does not know the date, it says so and sets <code>escalate_to_founder</code> true. Telegram/WhatsApp just send <code>output_text</code> — there is no separate founder ping yet. Escalate still files a job on the Community desk.</p>
+  <p class="expect"><code>task_type</code> faq. If the worker does not know the date, it says so and sets <code>escalate_to_founder</code> true. Telegram/WhatsApp just send <code>output_text</code> — there is no separate founder ping yet. Escalate still files a Community job on the Community desk.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 04 · Academy LMS room</p>
-  <p class="you-say">Student in the LMS WhatsApp group: “I am on the Linux Mini, lesson 3. The terminal on my phone still looks empty.”</p>
+  <p class="you-say">Student in the LMS Telegram group: “I am on the Linux Mini, lesson 3. The terminal on my phone still looks empty.”</p>
   <pre class="json">{
   "task_description": "I am on the Linux Mini, lesson 3. The terminal on my phone still looks empty.",
   "context_data": {
-    "channel": "whatsapp",
+    "channel": "telegram",
     "chat_kind": "group",
-    "group_id": "1203630example",
+    "telegram_chat_id": "-1001234567890",
     "mandate": {
       "slug": "lms",
       "title": "Academy LMS",
@@ -60,28 +60,28 @@
     }
   }
 }</pre>
-  <p class="expect"><code>task_type</code> progress or lesson_help. <code>speak</code> true. Names Mini because it is in the catalog. Does not invent a course. Login or payment trouble sets <code>escalate_to_founder</code> true and files a Community job. n8n <code>GET /internal/v1/community/mandate?group_id=</code> attaches the mandate before the worker runs.</p>
+  <p class="expect"><code>task_type</code> progress or lesson_help. <code>speak</code> true. Names Mini because it is in the catalog. Does not invent a course. Login or payment trouble sets <code>escalate_to_founder</code> true and files a Community job. n8n <code>GET /internal/v1/community/mandate?telegram_chat_id=</code> attaches the mandate before the worker runs.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 05 · stay quiet</p>
   <p class="you-say">Group: “lol” / “ok” / members talking to each other.</p>
-  <p class="expect"><code>task_type</code> silent. <code>speak</code> false. Empty <code>output_text</code>. n8n does not send a WhatsApp message.</p>
+  <p class="expect"><code>task_type</code> silent. <code>speak</code> false. Empty <code>output_text</code>. n8n does not send a message.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 06 · weekly intro</p>
-  <p class="you-say">Monday 09:00 Lagos. n8n <strong>Community weekly intro</strong> for a mandate with a WhatsApp group id.</p>
+  <p class="you-say">Monday 09:00 Lagos. n8n <strong>Community weekly intro</strong> for a mandate with a Telegram chat id.</p>
   <pre class="json">{
   "task_description": "Weekly check-in. Introduce yourself as the room host. Explain how people call you. Then ask what course and lesson each person is on.",
   "context_data": {
-    "channel": "whatsapp",
+    "channel": "telegram",
     "chat_kind": "group",
     "action": "weekly_intro",
-    "group_id": "1203630example"
+    "telegram_chat_id": "-1001234567890"
   }
 }</pre>
-  <p class="expect"><code>task_type</code> weekly_intro. <code>speak</code> true. Names itself, says unprefixed group chat already reaches it, mentions <code>/cm</code> / <code>/community</code>, then asks what people are working on. n8n <code>GET /internal/v1/community/mandates</code> then sends to each <code>whatsapp_group_id</code>.</p>
+  <p class="expect"><code>task_type</code> weekly_intro. <code>speak</code> true. Names itself, says unprefixed group chat already reaches it, mentions <code>/cm</code> / <code>/community</code>, then asks what people are working on. n8n <code>GET /internal/v1/community/mandates</code> then sends via the Academy bot to each <code>telegram_chat_id</code>.</p>
 </section>
 
 <section class="later">
@@ -96,5 +96,5 @@
 
 <section class="later">
   <p class="stamp dark">Not wired · WhatsApp template for a quiet group</p>
-  <p>If the group has had no student message in 24h, Meta may reject the Monday send. Approve a utility template in WhatsApp Manager and swap that send onto it; until then the weekly intro only lands inside an open session.</p>
+  <p>Cloud API still cannot join the existing LMS WhatsApp group. If you later use Meta’s 8-person Groups API, a quiet group may still need an approved utility template for the Monday send.</p>
 </section>

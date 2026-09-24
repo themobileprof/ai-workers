@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REMOTE_HOST="${N8N_SSH_HOST:-oci-ai-workers}"
 REMOTE_DIR="${N8N_REMOTE_DIR:-/home/cursor/ai-workers}"
 # Execute Workflow refuses inactive children. Webhooks also stay dark after import.
-DEFAULT_PUBLISH="paystackPaid000001,opsTelegram00001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,commWeeklyPing01"
+DEFAULT_PUBLISH="paystackPaid000001,opsTelegram00001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,commWeeklyPing01,acadTelegram00001"
 PUBLISH="${N8N_PUBLISH:-$DEFAULT_PUBLISH}"
 
 instance_field() {

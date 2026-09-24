@@ -1,0 +1,227 @@
+{
+  "id": "acadTelegram00001",
+  "name": "Academy Telegram",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "acadTg000000trig01",
+      "name": "Telegram Trigger",
+      "webhookId": "telegram-academy",
+      "credentials": {
+        "telegramApi": {
+          "id": "acadTelegrCred001",
+          "name": "Telegram Academy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "acadTg000000filt01",
+              "operator": { "type": "string", "operation": "exists", "singleValue": true },
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": ""
+            },
+            {
+              "id": "acadTg000000filt03",
+              "operator": { "type": "string", "operation": "exists", "singleValue": true },
+              "leftValue": "={{ $json.message.caption }}",
+              "rightValue": ""
+            },
+            {
+              "id": "acadTg000000filt04",
+              "operator": { "type": "array", "operation": "notEmpty", "singleValue": true },
+              "leftValue": "={{ $json.message.photo }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [240, 0],
+      "id": "acadTg000000filt02",
+      "name": "Only text messages"
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst msg = event.message || {};\nconst fromUser = msg.from || {};\nif (fromUser.is_bot) {\n  return [];\n}\nlet text = msg.text ? String(msg.text).trim() : '';\nif (!text && msg.caption) text = String(msg.caption).trim();\nconst hasPhoto = Array.isArray(msg.photo) && msg.photo.length > 0;\nif (!text && !hasPhoto) {\n  return [];\n}\nconst chat = msg.chat || {};\nconst chatId = String(chat.id || '');\nconst chatKind = (chat.type === 'group' || chat.type === 'supergroup') ? 'group' : 'dm';\nconst help = [\n  'Academy bot. I host this student room — not the company ops desk.',\n  'Talk about your course. No prefix needed. /cm or /community to be sure.',\n  'I stay quiet when you are just chatting.',\n  'Login, payment, or a missing certificate: I pass that to a human.',\n  'Books, legal, HR, and info@ drafts are the ops Telegram bot, not me.'\n].join('\\n');\nif (/^\\/(start|help)(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, chat_id: chatId, text: help } }];\n}\nif (/^\\/(approve|kill|accounts|ops|legal|hr|growth|crm|validate)(?:@\\w+)?\\b/i.test(text)) {\n  return [{ json: { skip_llm: true, chat_id: chatId, text: 'This is the Academy bot. I cannot do books, legal, HR, or send email. Use the ops Telegram bot for that. Here, talk about your course — or /cm.' } }];\n}\ntext = text.replace(/^(?:\\/community|\\/cm)(?:@\\w+)?\\b\\s*/i, '').trim();\nif (hasPhoto && !text) {\n  text = 'A student sent a photo. If it is a study screenshot, help from the catalog. If it looks like a receipt or payment, escalate to a human. Do not invent amounts or treat it as bookkeeping.';\n} else if (!text) {\n  text = 'Welcome this person and ask which course and lesson they are on.';\n}\nreturn [{\n  json: {\n    skip_llm: false,\n    department: 'community',\n    task_description: text,\n    context_data: {\n      channel: 'telegram',\n      chat_kind: chatKind,\n      department: 'community',\n      chat_id: chatId,\n      telegram_chat_id: chatId,\n      from: String(fromUser.id || ''),\n      username: fromUser.username || ''\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0],
+      "id": "acadTg000000prep01",
+      "name": "Prepare task"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "acadTg000000if00c",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true },
+              "leftValue": "={{ $json.skip_llm }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [720, 0],
+      "id": "acadTg000000if0001",
+      "name": "Help only"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'http://agents:8000/internal/v1/community/mandate?telegram_chat_id=' + encodeURIComponent($json.context_data.telegram_chat_id || '') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": { "timeout": 5000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [960, 160],
+      "id": "acadTg000000fetch1",
+      "name": "Fetch mandate",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prepare task').first().json;\nconst ctx = Object.assign({}, prep.context_data || {});\ntry {\n  const m = $('Fetch mandate').first().json || {};\n  if (m.found && m.mandate) ctx.mandate = m.mandate;\n} catch (e) {}\nreturn [{ json: { ...prep, context_data: ctx } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 160],
+      "id": "acadTg000000att001",
+      "name": "Attach mandate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/community",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
+        "options": { "timeout": 120000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [1440, 160],
+      "id": "acadTg000000call01",
+      "name": "Call community"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $input.first().json || {};\nconst ctx = $('Attach mandate').item.json.context_data;\nconst sd = worker.structured_data || {};\nif (sd.speak === false || sd.speak === 'false' || !String(worker.output_text || '').trim()) {\n  return [];\n}\nlet text = String(worker.output_text || 'Sorry, I could not complete that.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (text.length > 4000) {\n  text = text.slice(0, 3990) + '\\u2026';\n}\nreturn [{ json: { chat_id: ctx.chat_id, text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 160],
+      "id": "acadTg000000fmt001",
+      "name": "Format reply"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1920, 0],
+      "id": "acadTg000000send01",
+      "name": "Send Telegram",
+      "webhookId": "telegram-academy-send",
+      "credentials": {
+        "telegramApi": {
+          "id": "acadTelegrCred001",
+          "name": "Telegram Academy"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Only text messages", "type": "main", "index": 0 }]]
+    },
+    "Only text messages": {
+      "main": [[{ "node": "Prepare task", "type": "main", "index": 0 }]]
+    },
+    "Prepare task": {
+      "main": [[{ "node": "Help only", "type": "main", "index": 0 }]]
+    },
+    "Help only": {
+      "main": [
+        [{ "node": "Send Telegram", "type": "main", "index": 0 }],
+        [{ "node": "Fetch mandate", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch mandate": {
+      "main": [[{ "node": "Attach mandate", "type": "main", "index": 0 }]]
+    },
+    "Attach mandate": {
+      "main": [[{ "node": "Call community", "type": "main", "index": 0 }]]
+    },
+    "Call community": {
+      "main": [[{ "node": "Format reply", "type": "main", "index": 0 }]]
+    },
+    "Format reply": {
+      "main": [[{ "node": "Send Telegram", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

@@ -3,7 +3,7 @@
   <div>
     <p class="kicker">Room voice</p>
     <h2>Community mandates</h2>
-    <p class="lede">One brief per WhatsApp group. Paste the group id from an n8n execution after you add the Business number to the room. The worker reads this catalog; it does not invent courses. Escalate still files a job on the Community desk.</p>
+    <p class="lede">One brief per student room. Cloud API WhatsApp cannot join ordinary groups — host on the Academy Telegram bot. Paste the Telegram chat id from an n8n execution after you add the bot. The worker reads this catalog; it does not invent courses. Escalate still files a job on the Community desk.</p>
   </div>
   <div class="actions">
     <a class="ghost" href="/admin/desks/community"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
@@ -28,7 +28,7 @@
           <h3>{{.Title}}</h3>
           <span class="stamp {{if .Active}}ok{{else}}dark{{end}}">{{.Slug}}</span>
         </div>
-        <p class="hint">WhatsApp group <code>{{if .WhatsAppGroupID}}{{.WhatsAppGroupID}}{{else}}not set — add the number to the group, send a message, copy group_id from n8n{{end}}</code></p>
+        <p class="hint">Telegram chat <code>{{if .TelegramChatID}}{{.TelegramChatID}}{{else}}not set — add the Academy bot to the group, send a message, copy telegram_chat_id from n8n{{end}}</code>{{if .WhatsAppGroupID}} · WhatsApp <code>{{.WhatsAppGroupID}}</code>{{end}}</p>
         {{if .Brief}}<pre class="legal-body">{{.Brief}}</pre>{{end}}
         <div class="actions">
           <a class="ghost" href="/admin/community?id={{.ID}}">Amend</a>
@@ -62,7 +62,7 @@
             <input name="whatsapp_group_id" value="{{if .Mandate}}{{.Mandate.WhatsAppGroupID}}{{end}}" placeholder="from context_data.group_id">
           </label>
           <label>Telegram chat id
-            <input name="telegram_chat_id" value="{{if .Mandate}}{{.Mandate.TelegramChatID}}{{end}}" placeholder="optional">
+            <input name="telegram_chat_id" value="{{if .Mandate}}{{.Mandate.TelegramChatID}}{{end}}" placeholder="from context_data.telegram_chat_id">
           </label>
           <label>Live
             <select name="active">

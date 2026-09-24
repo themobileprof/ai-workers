@@ -37,9 +37,7 @@
             }
           ]
         },
-        "options": {
-          "timeout": 5000
-        }
+        "options": { "timeout": 5000 }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -50,7 +48,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const PHONE_NUMBER_ID = '1353516234507857';\nconst raw = $input.first().json || {};\nconst list = Array.isArray(raw.mandates) ? raw.mandates : [];\nreturn list\n  .filter((m) => m && m.active !== false && String(m.whatsapp_group_id || '').trim())\n  .map((m) => ({\n    json: {\n      department: 'community',\n      task_description: 'Weekly check-in. Introduce yourself as the room host. Explain how people call you in this WhatsApp group (unprefixed chat already reaches you; /cm or /community to be sure). Then ask what course title and lesson each person is on this week, and one thing they learned. Keep it phone-short. No sales pitch.',\n      context_data: {\n        channel: 'whatsapp',\n        chat_kind: 'group',\n        department: 'community',\n        action: 'weekly_intro',\n        group_id: String(m.whatsapp_group_id).trim(),\n        mandate: m,\n        phone_number_id: PHONE_NUMBER_ID\n      }\n    }\n  }));\n"
+        "jsCode": "const PHONE_NUMBER_ID = '1353516234507857';\nconst raw = $input.first().json || {};\nconst list = Array.isArray(raw.mandates) ? raw.mandates : [];\nconst items = [];\nfor (const m of list) {\n  if (!m || m.active === false) continue;\n  const wa = String(m.whatsapp_group_id || '').trim();\n  const tg = String(m.telegram_chat_id || '').trim();\n  const ask = 'Weekly check-in. Introduce yourself as the room host. Explain how people call you in this group (unprefixed chat already reaches you; /cm or /community to be sure). Then ask what course title and lesson each person is on this week, and one thing they learned. Keep it phone-short. No sales pitch.';\n  if (wa) {\n    items.push({\n      json: {\n        department: 'community',\n        task_description: ask,\n        context_data: {\n          channel: 'whatsapp',\n          chat_kind: 'group',\n          department: 'community',\n          action: 'weekly_intro',\n          group_id: wa,\n          mandate: m,\n          phone_number_id: PHONE_NUMBER_ID\n        }\n      }\n    });\n  }\n  if (tg) {\n    items.push({\n      json: {\n        department: 'community',\n        task_description: ask,\n        context_data: {\n          channel: 'telegram',\n          chat_kind: 'group',\n          department: 'community',\n          action: 'weekly_intro',\n          telegram_chat_id: tg,\n          chat_id: tg,\n          mandate: m\n        }\n      }\n    });\n  }\n}\nreturn items;\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -74,9 +72,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
-        "options": {
-          "timeout": 120000
-        }
+        "options": { "timeout": 120000 }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
@@ -86,13 +82,61 @@
     },
     {
       "parameters": {
-        "jsCode": "const worker = $input.first().json || {};\nconst prep = $('Prepare weekly').item.json;\nconst sd = worker.structured_data || {};\nconst text = String(worker.output_text || '').replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (sd.speak === false || sd.speak === 'false' || !text) {\n  return [];\n}\nreturn [{\n  json: {\n    text: text.length > 4000 ? text.slice(0, 3990) + '\\u2026' : text,\n    to: prep.context_data.group_id,\n    phoneNumberId: prep.context_data.phone_number_id\n  }\n}];\n"
+        "jsCode": "const worker = $input.first().json || {};\nconst prep = $('Prepare weekly').item.json;\nconst sd = worker.structured_data || {};\nconst text = String(worker.output_text || '').replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nif (sd.speak === false || sd.speak === 'false' || !text) {\n  return [];\n}\nconst body = text.length > 4000 ? text.slice(0, 3990) + '\\u2026' : text;\nconst ctx = prep.context_data || {};\nif (String(ctx.channel || '') === 'telegram') {\n  return [{ json: { channel: 'telegram', chat_id: ctx.chat_id, text: body } }];\n}\nreturn [{\n  json: {\n    channel: 'whatsapp',\n    text: body,\n    to: ctx.group_id,\n    phoneNumberId: ctx.phone_number_id\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [960, 0],
       "id": "commWeekly000000fmt001",
       "name": "Format intro"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "commWeekly000000if00c",
+              "operator": { "type": "string", "operation": "equals" },
+              "leftValue": "={{ $json.channel }}",
+              "rightValue": "telegram"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1200, 0],
+      "id": "commWeekly000000if0001",
+      "name": "Telegram room"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, -80],
+      "id": "commWeekly000000tg001",
+      "name": "Send Telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "acadTelegrCred001",
+          "name": "Telegram Academy"
+        }
+      }
     },
     {
       "parameters": {
@@ -106,7 +150,7 @@
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
-      "position": [1200, 0],
+      "position": [1440, 80],
       "id": "commWeekly000000send1",
       "name": "Send WhatsApp",
       "credentials": {
@@ -131,7 +175,13 @@
       "main": [[{ "node": "Format intro", "type": "main", "index": 0 }]]
     },
     "Format intro": {
-      "main": [[{ "node": "Send WhatsApp", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Telegram room", "type": "main", "index": 0 }]]
+    },
+    "Telegram room": {
+      "main": [
+        [{ "node": "Send Telegram", "type": "main", "index": 0 }],
+        [{ "node": "Send WhatsApp", "type": "main", "index": 0 }]
+      ]
     }
   },
   "settings": {

@@ -9,7 +9,7 @@ import (
 func communityFlash(ok string) string {
 	switch ok {
 	case "saved":
-		return "Mandate saved. Add the WhatsApp group id from an n8n execution if the room is not matched yet."
+		return "Mandate saved. Paste the Telegram chat id from an Academy Telegram n8n execution if the room is not matched yet."
 	case "deleted":
 		return "Mandate removed. The worker has no brief for that room."
 	default:
