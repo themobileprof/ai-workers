@@ -2,18 +2,24 @@
 <div class="doc-split">
   <aside class="doc-rail" aria-label="Playbook">
     <a href="/admin/docs" class="on">Index</a>
-    {{range .Docs}}
+    <p class="rail-label">Your sheet</p>
+    {{range .Docs}}{{if .Player}}
     <a href="{{.Href}}">{{.Title}}</a>
-    {{end}}
+    {{end}}{{end}}
+    <p class="rail-label">Workers</p>
+    {{range .Docs}}{{if .Worker}}
+    <a href="{{.Href}}">{{.Title}}</a>
+    {{end}}{{end}}
   </aside>
   <div class="playbook">
     <section class="hero">
       <p class="kicker">Field playbook</p>
-      <h2>How to use each worker</h2>
-      <p class="lede">Company desk and Projects first if you are a human on the book. Then each worker: send the specimen, check the reply. Half-wired workers keep a red later-box until that sample is real.</p>
+      <h2>Hand them a sheet</h2>
+      <p class="lede">Start with <a href="/admin/docs/you">How you fit</a>. Print the page that matches their People card. Worker pages below are specimens for the person who runs that desk — JSON and later-boxes live there, not on the role sheets.</p>
     </section>
+    <h3>Your sheet</h3>
     <ol class="doc-index">
-      {{range .Docs}}
+      {{range .Docs}}{{if .Player}}
       <li class="doc-card">
         <div class="doc-card-head">
           <p class="kicker">{{.Kicker}}</p>
@@ -26,7 +32,24 @@
         <p class="prefixes">{{range .Prefixes}}<span class="pill">{{.}}</span>{{end}}</p>
         {{end}}
       </li>
-      {{end}}
+      {{end}}{{end}}
+    </ol>
+    <h3>Workers</h3>
+    <ol class="doc-index">
+      {{range .Docs}}{{if .Worker}}
+      <li class="doc-card">
+        <div class="doc-card-head">
+          <p class="kicker">{{.Kicker}}</p>
+          <span class="stamp {{if .Live}}ok{{else if .Partial}}brass{{else}}dark{{end}}">{{.WireLabel}}</span>
+        </div>
+        <h3><a href="{{.Href}}">{{.Title}}</a></h3>
+        <p>{{.Summary}}</p>
+        <p class="path"><code>{{.Path}}</code></p>
+        {{if .Prefixes}}
+        <p class="prefixes">{{range .Prefixes}}<span class="pill">{{.}}</span>{{end}}</p>
+        {{end}}
+      </li>
+      {{end}}{{end}}
     </ol>
   </div>
 </div>

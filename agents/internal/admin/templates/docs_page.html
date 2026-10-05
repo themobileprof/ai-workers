@@ -2,9 +2,14 @@
 <div class="doc-split">
   <aside class="doc-rail" aria-label="Playbook">
     <a href="/admin/docs">Index</a>
-    {{range .Docs}}
+    <p class="rail-label">Your sheet</p>
+    {{range .Docs}}{{if .Player}}
     <a href="{{.Href}}" {{if eq $.Doc.Slug .Slug}}class="on"{{end}}>{{.Title}}</a>
-    {{end}}
+    {{end}}{{end}}
+    <p class="rail-label">Workers</p>
+    {{range .Docs}}{{if .Worker}}
+    <a href="{{.Href}}" {{if eq $.Doc.Slug .Slug}}class="on"{{end}}>{{.Title}}</a>
+    {{end}}{{end}}
   </aside>
   <article class="playbook">
     <header class="doc-head">

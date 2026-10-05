@@ -14,6 +14,7 @@ type DocMeta struct {
 	Slug     string
 	Title    string
 	Kicker   string
+	Kind     string // "player" handout, or empty/"worker" for desk specimens
 	Path     string
 	Wire     string
 	Summary  string
@@ -30,6 +31,8 @@ type DocPage struct {
 func (d DocMeta) Live() bool    { return d.Wire == "live" }
 func (d DocMeta) Partial() bool { return d.Wire == "partial" }
 func (d DocMeta) Later() bool   { return d.Wire == "later" }
+func (d DocMeta) Player() bool  { return d.Kind == "player" }
+func (d DocMeta) Worker() bool  { return !d.Player() }
 func (d DocMeta) Href() string  { return "/admin/docs/" + d.Slug }
 func (d DocMeta) WireLabel() string {
 	switch d.Wire {
@@ -43,6 +46,66 @@ func (d DocMeta) WireLabel() string {
 }
 
 var docCatalog = []DocMeta{
+	{
+		Slug:     "you",
+		Title:    "How you fit",
+		Kicker:   "Start here",
+		Kind:     "player",
+		Path:     "Pick the sheet that matches your People card",
+		Wire:     "live",
+		Summary:  "One company. You are a seat, not a department. Print this map, then the page for your role.",
+		Prefixes: []string{"Owner", "BDM", "Project face", "Field", "Handler"},
+	},
+	{
+		Slug:     "owner",
+		Title:    "Owner",
+		Kicker:   "Office",
+		Kind:     "player",
+		Path:     "Board · People · Projects",
+		Wire:     "live",
+		Summary:  "You run the Lagos office. Workers propose. You stamp. You add people and seat them on bets.",
+		Prefixes: []string{"People", "Ops Telegram", "/approve is email only"},
+	},
+	{
+		Slug:     "bdm",
+		Title:    "Business desk",
+		Kicker:   "Office",
+		Kind:     "player",
+		Path:     "Board · Projects",
+		Wire:     "live",
+		Summary:  "Same Board as the owner. You stamp bets. You do not add people — ask the owner.",
+		Prefixes: []string{"Board", "Ask placement", "this-week note"},
+	},
+	{
+		Slug:     "project-face",
+		Title:    "Project face",
+		Kicker:   "On one bet",
+		Kind:     "player",
+		Path:     "Seat on a project card · cofounder",
+		Wire:     "live",
+		Summary:  "You are the public face of one bet. You are not a director of TheMobileProf. You do not see the whole office.",
+		Prefixes: []string{"Your project only", "No Board"},
+	},
+	{
+		Slug:     "field",
+		Title:    "Field week",
+		Kicker:   "On one bet",
+		Kind:     "player",
+		Path:     "Seat on a project card · assistant",
+		Wire:     "live",
+		Summary:  "You go to the place and come back with names. The card’s this-week line is your mission. No invented company.",
+		Prefixes: []string{"Named people", "This-week note"},
+	},
+	{
+		Slug:     "handler",
+		Title:    "Running a worker",
+		Kicker:   "Desk",
+		Kind:     "player",
+		Path:     "Workers menu · Ask → Accept",
+		Wire:     "live",
+		Summary:  "You were ticked on a People card. Ask, chat, Accept. Chat never stamps. JSON specimens live on the worker pages.",
+		Prefixes: []string{"Ask", "Accept", "Turn away"},
+	},
 	{
 		Slug:     "contract",
 		Title:    "How to call a worker",

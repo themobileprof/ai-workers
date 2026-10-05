@@ -153,7 +153,8 @@ agents/
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
   internal/admin/          # company desk HTML + store. Defaults, projects + stamps, legal drafts, HR roles/apps.
                            # Handler desks: /admin/desks/{slug} jobs + chat. People assigns desks; they appear on that user's sign-in, not Board.
-                           # /admin/docs = field playbook (sample uses; later-boxes if unwired)
+                           # /admin/docs = player sheets (you/owner/bdm/project-face/field/handler) then worker specimens.
+                           # Player HTML: steps, flow, do/don't — no JSON. Later-boxes if unwired. Printable. Keep them true to the wire.
 ```
 
 ### Module mapping
@@ -188,7 +189,7 @@ Host packages required: Docker Engine + Compose v2 plugin, Git, native PostgreSQ
 
 Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.json` (stable `id` per file) and are imported with `scripts/sync-n8n-workflows.sh`. Credentials (Telegram, WhatsApp, Zoho Books OAuth, Zoho Mail SMTP) stay in the n8n UI / Postgres — never in git.
 
-**Channel register:** `CHANNEL_SETUP.md` is the living inventory of credential IDs, workflow IDs, prefixes, Zoho org/account ids, and the From address. Update it in the same change whenever you add or change a channel. Repo usage + tree: `README.md`. Desk specimens: `/admin/docs` (`agents/internal/admin/playbook/`).
+**Channel register:** `CHANNEL_SETUP.md` is the living inventory of credential IDs, workflow IDs, prefixes, Zoho org/account ids, and the From address. Update it in the same change whenever you add or change a channel. Repo usage + tree: `README.md`. Desk Docs: player sheets then worker specimens (`agents/internal/admin/playbook/`). Player pages stay free of JSON.
 
 - Compose mounts `./n8n/workflows` read-only at `/home/node/workflows`.
 - Owner assignment: `n8n/instance.json` (`projectId` on import; `--userId` re-owns and fails on n8n 2.x).

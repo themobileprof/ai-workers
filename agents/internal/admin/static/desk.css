@@ -602,6 +602,72 @@ code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.88em;
   border-radius: 0.4rem;
 }
 .doc-rail a.on, .doc-rail a:hover { opacity: 1; background: rgba(78, 200, 238, 0.1); }
+.rail-label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  margin: 0.85rem 0 0.15rem;
+  padding: 0 0.5rem;
+}
+.flow {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.6rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.flow li, .channel, .do, .dont {
+  border: 1px solid var(--line);
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.65rem;
+  background: var(--panel);
+}
+.flow .who, .do .who, .dont .who {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brass);
+  display: block;
+  margin: 0 0 0.25rem;
+}
+.channels {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1.6rem;
+}
+.channel {
+  display: grid;
+  grid-template-columns: 8.2rem 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+.channel strong {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 0.92rem;
+}
+.channel p { margin: 0; opacity: 0.82; }
+.do { border-color: rgba(61, 186, 139, 0.55); }
+.dont {
+  border-color: rgba(180, 35, 24, 0.45);
+  background: rgba(180, 35, 24, 0.08);
+  margin: 0 0 1.4rem;
+}
+.do { margin: 0 0 0.7rem; }
+.playbook h3 { margin: 1.5rem 0 0.7rem; }
+@media print {
+  .grain, .sky-glow, .mast, .doc-rail, .pager { display: none !important; }
+  .doc-split { display: block; }
+  body { background: #fff; color: #1a1a1a; }
+  .playbook h2, .playbook h3, .playbook a, .you-say { color: #1a1a1a; }
+  .flow li, .channel, .do, .dont, .specimen, .later, .doc-card {
+    background: #fff;
+    border-color: #ccc;
+    break-inside: avoid;
+  }
+}
 .playbook { max-width: 42rem; }
 .playbook h2 { font-size: 2.1rem; line-height: 1.05; }
 .playbook h3 { font-size: 1.25rem; margin: 0 0 0.4rem; }
@@ -730,7 +796,7 @@ pre.legal-body {
   .mast { flex-wrap: wrap; }
   .brand { min-width: 0; }
   .menu.account { margin-left: 0; }
-  .grid-3, .split, .fields, .doc-split { grid-template-columns: 1fr; }
+  .grid-3, .split, .fields, .doc-split, .channel { grid-template-columns: 1fr; }
   .hero h2, .playbook h2, .hero.land h2 { font-size: 1.7rem; }
   .hero.land { grid-template-columns: 1fr; }
   .cloud { width: 8rem; }

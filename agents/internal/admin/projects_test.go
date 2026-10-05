@@ -138,6 +138,10 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 	p := Project{ID: 7, Name: "Apex Clerk", Slug: "apex-clerk", OneLiner: "Workshops pay for a clerk.", Stage: "testing", Notes: "Five interviews"}
 	p.Members = []ProjectMember{{UserID: 2, Name: "Ada", Seat: "cofounder", Role: "cofounder"}}
 	p.Proposal = &Proposal{Journey: "shop_ledger", Gate: "design_partner", Mission: "One shop.", Confidence: 60}
+	ownerSheet, ok := lookupDoc("owner")
+	if !ok {
+		t.Fatal("owner sheet")
+	}
 	cases := []struct {
 		name string
 		page string
@@ -154,6 +158,8 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"hr", "hr", pageData{Title: "HR", Nav: "hr", User: user, HrRoles: []HrRole{{ID: 4, Title: "Field intern", Kind: "intern", Template: "intern", Status: "proposed", JD: "TheMobileProf Technologies intern"}}, CanHR: true}, "Field intern"},
 		{"desk", "desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal", Help: "NDA"}, CanAsk: true, Jobs: []DeskJob{{ID: 9, Title: "NDA Ada", Status: "proposed", Source: "desk"}}}, "NDA Ada"},
 		{"users-new", "users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, "bdm"},
+		{"docs", "docs", pageData{Title: "Docs", Nav: "docs", User: user, Docs: allDocs()}, "How you fit"},
+		{"docs-page", "docs_page", pageData{Title: "Owner", Nav: "docs", User: user, Docs: allDocs(), Doc: &ownerSheet}, "You run TheMobileProf"},
 	}
 	for _, tc := range cases {
 		var buf strings.Builder

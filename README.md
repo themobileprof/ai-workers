@@ -3,7 +3,7 @@
 One Lagos company, [TheMobileProf Technologies](https://workers.themobileprof.com). n8n is the public door. A Go process holds the workers and the **desk**. Humans stamp. Workers propose.
 
 Live desk: `https://workers.themobileprof.com/admin/`  
-Field playbook (signed in): `/admin/docs`
+Hand someone a sheet (signed in): `/admin/docs` — start at **How you fit**, then the page that matches their People card. Worker specimens stay below that.
 
 ## How to use it
 

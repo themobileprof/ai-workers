@@ -66,8 +66,32 @@ func TestPlaybookCatalog(t *testing.T) {
 	if _, ok := lookupDoc("missing"); ok {
 		t.Fatal("unknown slug")
 	}
-	if first := allDocs()[0]; first.Slug != "contract" || !first.Live() {
-		t.Fatalf("first page %s", first.Slug)
+	if first := allDocs()[0]; first.Slug != "you" || !first.Player() || !first.Live() {
+		t.Fatalf("first page %s kind=%s", first.Slug, first.Kind)
+	}
+	contract, ok := lookupDoc("contract")
+	if !ok || contract.Player() || !contract.Worker() {
+		t.Fatal("contract is a worker page")
+	}
+	you, ok := lookupDoc("you")
+	if !ok || !you.Player() || !strings.Contains(string(you.Body), "Academy Telegram") || strings.Contains(string(you.Body), "task_description") {
+		t.Fatal("you sheet")
+	}
+	own, ok := lookupDoc("owner")
+	if !ok || !strings.Contains(string(own.Body), "People") || strings.Contains(string(own.Body), "POST /departments") {
+		t.Fatal("owner sheet")
+	}
+	face, ok := lookupDoc("project-face")
+	if !ok || !strings.Contains(string(face.Body), "not a director") || !strings.Contains(string(face.Body), "Not wired") {
+		t.Fatal("project-face sheet")
+	}
+	field, ok := lookupDoc("field")
+	if !ok || !strings.Contains(string(field.Body), "names") {
+		t.Fatal("field sheet")
+	}
+	handler, ok := lookupDoc("handler")
+	if !ok || !strings.Contains(string(handler.Body), "Chat does") {
+		t.Fatal("handler sheet")
 	}
 	desk, ok := lookupDoc("desk")
 	if !ok || !desk.Live() || !strings.Contains(string(desk.Body), "People") {
