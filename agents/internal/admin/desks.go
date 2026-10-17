@@ -18,7 +18,8 @@ func AllDesks() []Desk {
 		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Room voice with a mandate per Academy Telegram group. Handler steps in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
 		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Pipeline notes. Handler confirms a contact the worker asked a human to review."},
 		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "NDA and contract proposals. Accept still lives on the Legal book.", BookPath: "/admin/legal", BookLabel: "Legal book"},
-		{Slug: "hr", Title: "HR", Department: "hr", Prefix: "/hr", Help: "JDs and applicants. Open / Shortlist on the HR book. Chat does not hire.", BookPath: "/admin/hr", BookLabel: "HR book"},
+		{Slug: "seo", Title: "SEO", Department: "seo", Prefix: "/seo", Help: "Page titles, meta, outlines. Accept still lives on the SEO book. The worker cannot publish.", BookPath: "/admin/seo", BookLabel: "SEO book"},
+		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. Stamp sets how many. Pace is on the person. Seat them on the Face tab to onboard.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
 		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books; grants stay chat until you stamp a job."},
 		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. Journey stamps stay on the project card.", BookPath: "/admin/projects", BookLabel: "Projects"},
 	}
@@ -64,6 +65,11 @@ func visibleDesks(u *User) []Desk {
 			out = append(out, d)
 		}
 	}
+	if canOffice(u) && !Handles(*u, "delivery") {
+		if d, ok := LookupDesk("delivery"); ok {
+			out = append(out, d)
+		}
+	}
 	return out
 }
 
@@ -91,7 +97,7 @@ func deskNavOn(nav string, desks []Desk) bool {
 }
 
 func officeMenuOn(nav string) bool {
-	return nav == "settings" || nav == "docs" || nav == "flows"
+	return nav == "settings" || nav == "docs" || nav == "flows" || nav == "guide"
 }
 
 func afterLoginPath(u User) string {

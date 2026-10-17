@@ -131,7 +131,7 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if srv.pages["projects"] == nil || srv.pages["legal"] == nil || srv.pages["hr"] == nil || srv.pages["desks"] == nil {
+	if srv.pages["projects"] == nil || srv.pages["legal"] == nil || srv.pages["delivery"] == nil || srv.pages["seo"] == nil || srv.pages["desks"] == nil {
 		t.Fatal("projects template missing")
 	}
 	user := &User{ID: 1, Name: "Sam", Role: "owner"}
@@ -155,7 +155,8 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"proposal", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, "has not moved the stamp"},
 		{"ask-draft", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanLegal: true, LegalTemplates: legal.Specs()}, "Ask draft"},
 		{"legal", "legal", pageData{Title: "Legal", Nav: "legal", User: user, Drafts: []LegalDraft{{ID: 3, ProjectID: 7, ProjectName: "Apex Clerk", Title: "NDA", Template: "nda", Status: "proposed", Body: "TheMobileProf Technologies", CounterpartyName: "Ada"}}, CanLegal: true}, "Apex Clerk"},
-		{"hr", "hr", pageData{Title: "HR", Nav: "hr", User: user, HrRoles: []HrRole{{ID: 4, Title: "Field intern", Kind: "intern", Template: "intern", Status: "proposed", JD: "TheMobileProf Technologies intern"}}, CanHR: true}, "Field intern"},
+		{"seo", "seo", pageData{Title: "SEO", Nav: "seo", User: user, SeoBriefs: []SeoBrief{{ID: 5, ProjectID: 7, ProjectName: "Apex Clerk", Kind: "page", Title: "Apex Clerk workshops", Status: "proposed"}}, CanSEO: true}, "Apex Clerk"},
+		{"delivery", "delivery", pageData{Title: "Delivery", Nav: "delivery", User: user, DeliveryBets: []DeliveryBet{{Project: p, Engagement: EngagementFor("testing"), Open: 0, Slots: 3}}}, "Apex Clerk"},
 		{"desk", "desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal", Help: "NDA"}, CanAsk: true, Jobs: []DeskJob{{ID: 9, Title: "NDA Ada", Status: "proposed", Source: "desk"}}}, "NDA Ada"},
 		{"users-new", "users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, "bdm"},
 		{"docs", "docs", pageData{Title: "Docs", Nav: "docs", User: user, Docs: allDocs()}, "How you fit"},
@@ -188,8 +189,9 @@ func TestBoardHasThreeTabs(t *testing.T) {
 		min  int
 	}{
 		{"home", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2}, 3},
-		{"hr", pageData{Title: "HR", Nav: "hr", User: user, CanHR: true}, 3},
+		{"delivery", pageData{Title: "Delivery", Nav: "delivery", User: user, DeliveryBets: []DeliveryBet{{Project: p, Engagement: EngagementFor("testing"), Open: 0, Slots: 3}}}, 3},
 		{"legal", pageData{Title: "Legal", Nav: "legal", User: user}, 3},
+		{"seo", pageData{Title: "SEO", Nav: "seo", User: user, CanSEO: true}, 3},
 		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
 		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, 3},
 		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{})}, 3},

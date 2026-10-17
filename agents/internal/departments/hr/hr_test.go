@@ -77,10 +77,16 @@ func TestHandleStampsCannotHire(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if resp.StructuredData["task_type"] != "hr_closed" {
+		t.Fatalf("%v", resp.StructuredData)
+	}
 	if resp.StructuredData["cannot_hire"] != true || resp.StructuredData["cannot_send"] != true {
 		t.Fatalf("%+v", resp.StructuredData)
 	}
-	if resp.StructuredData["action"] != "draft_jd" || resp.StructuredData["template"] != "intern" {
+	if resp.StructuredData["save_role"] != false || resp.StructuredData["save_application"] != false {
 		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if !strings.Contains(resp.OutputText, "People") {
+		t.Fatalf("closed copy: %s", resp.OutputText)
 	}
 }

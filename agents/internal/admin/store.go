@@ -20,16 +20,17 @@ type Store struct {
 }
 
 type User struct {
-	ID          int64
-	Name        string
-	Phone       string
-	Email       string
-	Role        string
-	Active      bool
-	HasPassword bool
-	Caps        []string
-	Desks       []string
-	CreatedAt   time.Time
+	ID           int64
+	Name         string
+	Phone        string
+	Email        string
+	Role         string
+	Active       bool
+	HasPassword  bool
+	HoursPerWeek float64
+	Caps         []string
+	Desks        []string
+	CreatedAt    time.Time
 }
 
 type Session struct {
@@ -113,7 +114,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateDesks(ctx); err != nil {
 		return err
 	}
-	return s.migrateCommunity(ctx)
+	if err := s.migrateCommunity(ctx); err != nil {
+		return err
+	}
+	if err := s.migrateDelivery(ctx); err != nil {
+		return err
+	}
+	if err := s.migrateSEO(ctx); err != nil {
+		return err
+	}
+	return s.migrateGuide(ctx)
 }
 
 func (s *Store) Seed(ctx context.Context, name, phone, email, password string) error {

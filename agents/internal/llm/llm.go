@@ -44,6 +44,7 @@ type Request struct {
 	System   string
 	Messages []Message
 	Images   []Image
+	Plain    bool // skip json_object; the desk guide wants prose-or-JSON without forcing the mode
 }
 
 type Completer interface {
@@ -93,6 +94,31 @@ func (r *router) Complete(ctx context.Context, req Request) (string, error) {
 	return r.text.Complete(ctx, req)
 }
 
+type fallback struct {
+	chain []Completer
+}
+
+func (f *fallback) Complete(ctx context.Context, req Request) (string, error) {
+	if f == nil || len(f.chain) == 0 {
+		return "", errors.New("no LLM providers")
+	}
+	var errs []error
+	for _, c := range f.chain {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
+		text, err := c.Complete(ctx, req)
+		if err == nil {
+			return text, nil
+		}
+		errs = append(errs, err)
+	}
+	if len(errs) == 1 {
+		return "", errs[0]
+	}
+	return "", errors.Join(errs...)
+}
+
 func ParseProvider(s string) Provider {
 	return Provider(strings.ToLower(strings.TrimSpace(s)))
 }
@@ -117,7 +143,7 @@ type openAIChatRequest struct {
 	Model          string              `json:"model"`
 	Messages       []openAIChatMessage `json:"messages"`
 	Temperature    float64             `json:"temperature"`
-	ResponseFormat map[string]string   `json:"response_format"`
+	ResponseFormat map[string]string   `json:"response_format,omitempty"`
 }
 
 type openAIChatMessage struct {
@@ -147,12 +173,15 @@ func (c *openAICompat) Complete(ctx context.Context, req Request) (string, error
 	if len(req.Images) > 0 {
 		msgs = attachImages(msgs, req.Images)
 	}
-	body, err := json.Marshal(openAIChatRequest{
-		Model:          c.model,
-		Messages:       msgs,
-		Temperature:    0.2,
-		ResponseFormat: map[string]string{"type": "json_object"},
-	})
+	payload := openAIChatRequest{
+		Model:       c.model,
+		Messages:    msgs,
+		Temperature: 0.2,
+	}
+	if !req.Plain {
+		payload.ResponseFormat = map[string]string{"type": "json_object"}
+	}
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}

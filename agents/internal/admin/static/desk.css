@@ -792,6 +792,108 @@ pre.legal-body {
   font-size: 0.78rem;
 }
 .pager a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--brass); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.guide-dock {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  max-width: min(22.5rem, calc(100vw - 1.6rem));
+}
+body.framed .guide-dock,
+body.gate .guide-dock { display: none; }
+.guide-fab {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+.guide-panel {
+  width: 22.5rem;
+  max-width: 100%;
+  max-height: min(32rem, calc(100vh - 6.5rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  overflow: hidden;
+}
+.guide-panel[hidden] { display: none; }
+.guide-panel header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+}
+.guide-panel header h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.15rem;
+  margin: 0;
+  flex: 1;
+}
+.guide-panel header .kicker { margin: 0; }
+.guide-panel header .ghost { padding: 0.25rem 0.55rem; font-size: 0.78rem; }
+.guide-log {
+  flex: 1 1 auto;
+  overflow: auto;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem 0.85rem;
+  min-height: 8rem;
+}
+.guide-log .bubble { white-space: pre-wrap; font-size: 0.88rem; }
+.guide-log .bubble a { color: var(--brass); }
+.guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  margin: 0.45rem 0 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+.guide-links a { color: var(--brass); }
+#guide-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem 0.55rem;
+  border-top: 1px solid var(--line);
+  align-items: end;
+}
+#guide-form textarea {
+  width: 100%;
+  min-height: 2.6rem;
+  resize: none;
+  font: inherit;
+  color: var(--paper);
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.55rem;
+}
+.guide-foot {
+  margin: 0;
+  padding: 0 0.85rem 0.7rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
 @media (max-width: 800px) {
   .mast { flex-wrap: wrap; }
   .brand { min-width: 0; }
@@ -803,4 +905,6 @@ pre.legal-body {
   .landing { padding: 1rem 1.2rem 3rem; }
   .doc-rail { position: static; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); }
   .tabs { width: 100%; }
+  .guide-dock { right: 0.7rem; bottom: 0.7rem; left: 0.7rem; max-width: none; }
+  .guide-panel { width: 100%; }
 }

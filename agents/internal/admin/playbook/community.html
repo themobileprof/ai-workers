@@ -4,8 +4,8 @@
   <li>On <a href="/admin/community">Mandates</a>, write the brief and the catalog (Academy LMS is seeded from the public course list). Leave a course off the catalog and the worker must escalate instead of guessing.</li>
   <li>Create the Academy Telegram bot (BotFather). <code>/setprivacy</code> Disable. Add it to the student group. Send a message. Copy <code>context_data.telegram_chat_id</code> from the <strong>Academy Telegram</strong> n8n execution onto the mandate.</li>
   <li>Unprefixed group chat uses that mandate. <code>/cm</code> or <code>/community</code> also works. Ops prefixes (<code>/accounts</code>, <code>/approve</code>, …) are refused on this bot.</li>
-  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room that has a Telegram chat id (and any leftover WhatsApp group id).</li>
-  <li>Do not add the ops Telegram bot to the student group. Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/hr</code> is still rewritten to community with <code>accounts_denied: true</code>.</li>
+  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room whose linked bet stamp allows pings (testing / selling / fundable). Parked, killed, and idea stay quiet.</li>
+  <li>Do not add the ops Telegram bot to the student group. Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/seo</code> is still rewritten to community with <code>accounts_denied: true</code>.</li>
   <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
 </ol>
 
@@ -26,7 +26,7 @@
   <p class="spec-no">Specimen 02 · access denied</p>
   <p class="you-say">A WhatsApp number that is <em>not</em> on People → <code>whatsapp_accounts</code> sends <code>/accounts I paid MTN 15000</code>.</p>
   <pre class="json">{
-  "task_description": "Write a WhatsApp DM to this person in second person. They are not authorized for the company books, legal, or HR desk.",
+  "task_description": "Write a WhatsApp DM to this person in second person. They are not authorized for the company books or legal desk.",
   "context_data": {
     "channel": "whatsapp",
     "chat_kind": "dm",
@@ -34,7 +34,7 @@
     "department": "community"
   }
 }</pre>
-  <p class="expect">Fixed Go reply (no LLM): they cannot book expenses, draft NDAs, or file applicants from that number. Suggest <code>/growth</code> or <code>/cm</code>. Amounts, vendors, contract text, and CVs are not repeated. n8n does not call Books write, Legal, or HR.</p>
+  <p class="expect">Fixed Go reply (no LLM): they cannot book expenses or draft NDAs from that number. Suggest <code>/growth</code> or <code>/cm</code>. Amounts, vendors, and contract text are not repeated. n8n does not call Books write or Legal.</p>
 </section>
 
 <section class="specimen">

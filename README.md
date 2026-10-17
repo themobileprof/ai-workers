@@ -9,17 +9,19 @@ Hand someone a sheet (signed in): `/admin/docs` — start at **How you fit**, th
 
 ### Company desk (owner / BDM)
 
-Sign in on `/admin/`. You get Board, Projects, People, Defaults, Docs, n8n.
+Sign in on `/admin/`. You get Board, Projects, People, Defaults, Docs, Guide, n8n.
+
+The brass **How?** button (bottom right on every signed-in page except n8n) is a desk guide. It answers what to do and which screen to open. It does not file a job and does not stamp Accept. Questions are stored; owner/BDM review them at `/admin/guide` (download `/admin/guide/asked.md`) and fold durable answers into `agents/internal/admin/guide/faq.md` in Cursor.
 
 - **People** — add a human, pick an office seat, tick the **handler desks** they actually run. Those workers appear when **that person** signs in, not on the Board. Ticking a desk grants `web_admin`.
 - **Projects** — incubated bets (MomLaunchpad, Mechazone, HomeGauge, …). Journey/gate is a stamp. Ask placement writes a proposal; Accept moves it.
 - **Defaults** — Zoho org and chart-of-accounts ids. Paystack deposit account may stay blank until you create a **Bank** row in Books. Secrets stay in the VM `.env` / n8n Credentials.
 
-If you also handle Legal or HR, tick those desks on your own People card or the books 403.
+If you also handle Legal or SEO, tick those desks on your own People card or the books 403. Delivery is on the Board rail for owner/BDM.
 
 ### Handler desk
 
-Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per Academy Telegram room. Academy LMS is seeded from the public course list. Paste `telegram_chat_id` from an Academy Telegram n8n execution after the bot is in the group. Monday 09:00 Lagos the worker introduces itself in each matched room.
+Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not stamp. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per Academy Telegram room. Academy LMS is seeded from the public course list. Paste `telegram_chat_id` from an Academy Telegram n8n execution after the bot is in the group. Monday 09:00 Lagos the worker introduces itself in each matched room whose bet stamp allows pings.
 
 ### Chat prefixes
 
@@ -30,7 +32,8 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/accounts` | accounts (WhatsApp allowlisted) |
 | `/ops` | internal-ops (WhatsApp allowlisted) |
 | `/legal` | legal (WhatsApp allowlisted) |
-| `/hr` | hr (WhatsApp allowlisted) |
+| `/seo` | seo (WhatsApp allowlisted) |
+| `/today` `/pm` `/idea` | delivery |
 | `/growth` | growth |
 | `/crm` | crm |
 | `/cm` `/community` | community |
@@ -38,7 +41,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 | growth |
 | none, group | community (Academy Telegram student rooms; ops Telegram groups still default community — do not add ops to class) |
 
-`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal/HR/project stamp.
+`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal/project/delivery/SEO stamp.
 
 Customer-development field work (rates at a mortgage desk, mechanics, a PHC) is a human on a project, not a chat prefix. Bring the names back; `/validate` `analyse_evidence` can score them. The desk still stamps GO/PIVOT/KILL.
 
@@ -49,12 +52,13 @@ Full channel inventory: [`CHANNEL_SETUP.md`](CHANNEL_SETUP.md). Vendors: [`TOOLS
 ```
 agents/cmd/server/          HTTP process (site, /admin, /departments, /internal)
 agents/internal/contract/   n8n ↔ Go JSON envelope
-agents/internal/departments/{growth,community,crm,legal,hr,productdev}/
+agents/internal/departments/{growth,community,crm,legal,seo,delivery,productdev}/
 agents/internal/departments/internalops/  /ops and /accounts (HandleAccounts)
-agents/internal/admin/      desk: templates/, playbook/, Postgres `aiworkers`
+agents/internal/admin/      desk: templates/, playbook/, guide/, Postgres `aiworkers`
                             docs.go catalog · desks.go handler list · store.go migrate
+                            guide/handbook.md + faq.md (How? bot); live asks in Postgres
 agents/internal/journeys/   idea→PMF playbooks (gates)
-agents/internal/llm/        Completer; DeepSeek chat, Gemini vision
+agents/internal/llm/        Completer; DeepSeek chat, Gemini vision; other keys in `.env` are text fallbacks
 n8n/workflows/              imported JSON; credentials stay in n8n
 scripts/sync-n8n-workflows.sh
 ```
@@ -67,7 +71,7 @@ n8n calls `http://agents:8000/departments/{name}` on the Docker network with hea
 
 `context_data` is an object, never a blank expression. Timeout 120s.
 
-Worker reply: `status`, `output_text` (what the human reads), `structured_data` (what n8n may act on). Accounts never compute VAT/WHT — Zoho does. Legal/HR/placement POSTs insert **proposed** rows only.
+Worker reply: `status`, `output_text` (what the human reads), `structured_data` (what n8n may act on). Accounts never compute VAT/WHT — Zoho does. Legal/placement/delivery plan POSTs insert **proposed** rows only. Own Delivery check-ins may apply immediately.
 
 Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{name}`. Caddy must not publish `/internal`. None of the POSTs stamp Accept.
 
@@ -79,8 +83,9 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | GET | `/internal/v1/projects` · `/internal/v1/journeys` |
 | POST | `/internal/v1/projects/{id}/proposal` |
 | GET, POST | `/internal/v1/legal-drafts` |
-| GET | `/internal/v1/hr/roles` |
-| POST | `/internal/v1/hr/applications` |
+| GET, POST | `/internal/v1/seo-briefs` |
+| GET | `/internal/v1/delivery/context` · `/internal/v1/delivery/digest` |
+| POST | `/internal/v1/delivery/checkin` |
 | POST | `/internal/v1/jobs` |
 
 See Desk → Docs → How to call a worker.

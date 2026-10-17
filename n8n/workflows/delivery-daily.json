@@ -1,0 +1,90 @@
+{
+  "id": "deliveryDaily00001",
+  "name": "Delivery morning ping",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "deliveryDailyTrig0001",
+      "name": "08:00 Lagos"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/delivery/digest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Internal-Token", "value": "={{ $env.INTERNAL_API_TOKEN }}" }
+          ]
+        },
+        "options": { "timeout": 8000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [240, 0],
+      "id": "deliveryDailyFetch001",
+      "name": "Fetch digest",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const PHONE_NUMBER_ID = '1353516234507857';\nconst raw = $input.first().json || {};\nconst list = Array.isArray(raw.people) ? raw.people : [];\nconst items = [];\nfor (const p of list) {\n  if (!p || !p.speak) continue;\n  const phone = String(p.phone || '').replace(/\\D/g, '');\n  const text = String(p.text || '').trim();\n  if (!phone || !text) continue;\n  items.push({\n    json: {\n      to: phone,\n      phoneNumberId: PHONE_NUMBER_ID,\n      text: text.length > 4000 ? text.slice(0, 3990) + '…' : text\n    }\n  });\n}\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0],
+      "id": "deliveryDailyPrep0001",
+      "name": "Prepare pings"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "={{ $json.phoneNumberId }}",
+        "recipientPhoneNumber": "={{ $json.to }}",
+        "messageType": "text",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [720, 0],
+      "id": "deliveryDailySend0001",
+      "name": "Send WhatsApp",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "TpVfkoyKY6eZDl87",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "08:00 Lagos": { "main": [[{ "node": "Fetch digest", "type": "main", "index": 0 }]] },
+    "Fetch digest": { "main": [[{ "node": "Prepare pings", "type": "main", "index": 0 }]] },
+    "Prepare pings": { "main": [[{ "node": "Send WhatsApp", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

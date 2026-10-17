@@ -60,6 +60,10 @@
         <svg class="ico"><use href="#i-projects"/></svg>
         <span>Projects</span>
       </a>
+      <a class="nav-link{{if eq .Nav "delivery"}} on{{end}}" href="/admin/delivery">
+        <svg class="ico"><use href="#i-workers"/></svg>
+        <span>Delivery</span>
+      </a>
       {{if .CanPeople}}
       <a class="nav-link{{if eq .Nav "users"}} on{{end}}" href="/admin/users">
         <svg class="ico"><use href="#i-people"/></svg>
@@ -78,6 +82,9 @@
           </a>
           <a role="menuitem" href="/admin/docs" {{if eq .Nav "docs"}}class="on"{{end}}>
             <svg class="ico"><use href="#i-docs"/></svg> Docs
+          </a>
+          <a role="menuitem" href="/admin/guide" {{if eq .Nav "guide"}}class="on"{{end}}>
+            <svg class="ico"><use href="#i-chat"/></svg> Guide
           </a>
           <a role="menuitem" href="/admin/workflows" {{if eq .Nav "flows"}}class="on"{{end}}>
             <svg class="ico"><use href="#i-n8n"/></svg> n8n
@@ -130,6 +137,25 @@
     {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
     {{template "content" .}}
   </main>
+  {{if .User}}
+  <div class="guide-dock">
+    <section class="guide-panel" id="guide-panel" hidden>
+      <header>
+        <p class="kicker">Desk</p>
+        <h2>How to use this</h2>
+        <button type="button" class="ghost" id="guide-close" aria-label="Close guide">Close</button>
+      </header>
+      <div class="guide-log" id="guide-log"></div>
+      <form id="guide-form">
+        <label class="sr-only" for="guide-q">Your question</label>
+        <textarea id="guide-q" name="q" rows="2" required maxlength="500" placeholder="What do you want to do?"></textarea>
+        <button type="submit">Send</button>
+      </form>
+      <p class="guide-foot">Does not stamp Accept. This is not the worker Ask.</p>
+    </section>
+    <button type="button" class="guide-fab" id="guide-fab" aria-controls="guide-panel" aria-expanded="false">How?</button>
+  </div>
+  {{end}}
   <script>
   (function () {
     function activate(root, id) {
@@ -207,6 +233,101 @@
         d.removeAttribute("open");
       });
     });
+    (function () {
+      var fab = document.getElementById("guide-fab");
+      var panel = document.getElementById("guide-panel");
+      var form = document.getElementById("guide-form");
+      var log = document.getElementById("guide-log");
+      var close = document.getElementById("guide-close");
+      var box = document.getElementById("guide-q");
+      if (!fab || !panel || !form || !log || !box) return;
+      var history = [];
+      function openGuide() {
+        panel.hidden = false;
+        fab.setAttribute("aria-expanded", "true");
+        box.focus();
+      }
+      function closeGuide() {
+        panel.hidden = true;
+        fab.setAttribute("aria-expanded", "false");
+      }
+      fab.addEventListener("click", function () {
+        if (panel.hidden) openGuide();
+        else closeGuide();
+      });
+      if (close) close.addEventListener("click", closeGuide);
+      function addBubble(who, text, hrefs) {
+        var b = document.createElement("div");
+        b.className = "bubble " + who;
+        var parts = String(text || "").split(/(\/admin\/[^\s<]+)/);
+        parts.forEach(function (part) {
+          if (part.indexOf("/admin/") === 0) {
+            var a = document.createElement("a");
+            a.href = part;
+            a.textContent = part;
+            b.appendChild(a);
+          } else {
+            b.appendChild(document.createTextNode(part));
+          }
+        });
+        if (hrefs && hrefs.length) {
+          var nav = document.createElement("p");
+          nav.className = "guide-links";
+          hrefs.forEach(function (h) {
+            if (!h || h.indexOf("/admin/") !== 0) return;
+            var a = document.createElement("a");
+            a.href = h;
+            a.textContent = h.replace(/^\/admin\//, "");
+            nav.appendChild(a);
+          });
+          if (nav.childNodes.length) b.appendChild(nav);
+        }
+        log.appendChild(b);
+        log.scrollTop = log.scrollHeight;
+      }
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var q = box.value.trim();
+        if (!q) return;
+        box.value = "";
+        addBubble("handler", q);
+        history.push({ role: "user", content: q });
+        var pending = document.createElement("div");
+        pending.className = "bubble worker";
+        pending.textContent = "Looking it up…";
+        log.appendChild(pending);
+        log.scrollTop = log.scrollHeight;
+        fetch("/admin/guide/ask", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: q,
+            page: location.pathname + location.search,
+            history: history.slice(-8)
+          })
+        }).then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        }).then(function (got) {
+          pending.remove();
+          var answer = (got.data && got.data.answer) || (got.ok ? "" : "Could not reach the guide.");
+          if (!answer) answer = "I do not have an answer yet. Open Docs or ask the owner.";
+          addBubble("worker", answer, got.data && got.data.hrefs);
+          history.push({ role: "assistant", content: answer });
+        }).catch(function () {
+          pending.remove();
+          addBubble("worker", "Could not reach the guide. Open /admin/docs or try again.");
+        });
+      });
+      box.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      });
+    })();
   })();
   </script>
 </body>

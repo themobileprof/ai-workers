@@ -18,7 +18,9 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
+	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
+	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
 //go:embed templates/*.html static/*
@@ -33,7 +35,9 @@ type Server struct {
 	place        PlaceFunc
 	legal        PlaceFunc
 	hr           PlaceFunc
+	seo          PlaceFunc
 	workers      map[string]PlaceFunc
+	guide        llm.Completer
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
@@ -83,6 +87,12 @@ type pageData struct {
 	CanAsk         bool
 	Mandates       []CommunityMandate
 	Mandate        *CommunityMandate
+	WorkItems      []WorkItem
+	DeliveryBets   []DeliveryBet
+	SeoBriefs      []SeoBrief
+	SeoKinds       []seo.Spec
+	CanSEO         bool
+	GuideAsks      []GuideAsk
 }
 
 type kv struct {
@@ -92,6 +102,9 @@ type kv struct {
 
 func New(store *Store, internalToken string) (*Server, error) {
 	if err := mustPlaybookFiles(); err != nil {
+		return nil, err
+	}
+	if err := mustGuideFiles(); err != nil {
 		return nil, err
 	}
 	funcMap := template.FuncMap{
@@ -105,7 +118,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"officeMenuOn": officeMenuOn,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -158,13 +171,21 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/legal", s.legalGET)
 	mux.HandleFunc("POST /admin/legal/{id}/approve", s.legalStamp("approved"))
 	mux.HandleFunc("POST /admin/legal/{id}/reject", s.legalStamp("rejected"))
-	mux.HandleFunc("GET /admin/hr", s.hrGET)
-	mux.HandleFunc("POST /admin/hr/roles", s.hrRolePOST)
-	mux.HandleFunc("POST /admin/hr/roles/{id}/open", s.hrRoleStamp("open"))
-	mux.HandleFunc("POST /admin/hr/roles/{id}/close", s.hrRoleStamp("closed"))
-	mux.HandleFunc("POST /admin/hr/applications", s.hrApplicationPOST)
-	mux.HandleFunc("POST /admin/hr/applications/{id}/shortlist", s.hrApplicationStamp("shortlisted"))
-	mux.HandleFunc("POST /admin/hr/applications/{id}/reject", s.hrApplicationStamp("rejected"))
+	mux.HandleFunc("GET /admin/seo", s.seoGET)
+	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
+	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
+	mux.HandleFunc("POST /admin/seo/{id}/reject", s.seoStamp("rejected"))
+	mux.HandleFunc("POST /admin/projects/{id}/seo", s.projectSEO)
+	mux.HandleFunc("GET /admin/hr", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/delivery", http.StatusSeeOther)
+	})
+	mux.HandleFunc("GET /admin/delivery", s.deliveryGET)
+	mux.HandleFunc("POST /admin/delivery/items", s.deliveryItemPOST)
+	mux.HandleFunc("POST /admin/delivery/items/{id}/done", s.deliveryItemStamp("done"))
+	mux.HandleFunc("POST /admin/delivery/items/{id}/skip", s.deliveryItemStamp("skipped"))
+	mux.HandleFunc("POST /admin/delivery/ask", s.deliveryAskPOST)
+	mux.HandleFunc("POST /admin/delivery/pace", s.deliveryPacePOST)
+	mux.HandleFunc("POST /admin/projects/{id}/work", s.projectWorkPOST)
 	mux.HandleFunc("GET /admin/desks", s.desksIndex)
 	mux.HandleFunc("GET /admin/desks/{slug}", s.deskGET)
 	mux.HandleFunc("POST /admin/desks/{slug}/ask", s.deskAskPOST)
@@ -187,6 +208,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/workflows", s.workflowsGET)
 	mux.HandleFunc("GET /admin/docs", s.docsIndex)
 	mux.HandleFunc("GET /admin/docs/{slug}", s.docsPage)
+	mux.HandleFunc("GET /admin/guide", s.guideGET)
+	mux.HandleFunc("GET /admin/guide/asked.md", s.guideAskedMarkdown)
+	mux.HandleFunc("POST /admin/guide/ask", s.guideAskPOST)
 	mux.HandleFunc("GET /internal/v1/community/mandate", s.internalCommunityMandate)
 	mux.HandleFunc("GET /internal/v1/community/mandates", s.internalCommunityMandates)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
@@ -196,8 +220,13 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/v1/projects/{id}/proposal", s.internalProposal)
 	mux.HandleFunc("GET /internal/v1/legal-drafts", s.internalLegalDraftsGET)
 	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
+	mux.HandleFunc("GET /internal/v1/seo-briefs", s.internalSeoBriefsGET)
+	mux.HandleFunc("POST /internal/v1/seo-briefs", s.internalSeoBriefsPOST)
 	mux.HandleFunc("GET /internal/v1/hr/roles", s.internalHrRoles)
 	mux.HandleFunc("POST /internal/v1/hr/applications", s.internalHrApplicationsPOST)
+	mux.HandleFunc("GET /internal/v1/delivery/context", s.internalDeliveryContext)
+	mux.HandleFunc("GET /internal/v1/delivery/digest", s.internalDeliveryDigest)
+	mux.HandleFunc("POST /internal/v1/delivery/checkin", s.internalDeliveryCheckin)
 	mux.HandleFunc("POST /internal/v1/jobs", s.internalJobsPOST)
 }
 
@@ -352,6 +381,7 @@ func (s *Server) userEditGET(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	person.HoursPerWeek = s.store.UserPace(r.Context(), person.ID)
 	s.render(w, "users", pageData{Title: "Amend " + person.Name, Nav: "users", User: u, Editing: &person, OwnerCount: s.owners(r.Context()), Roles: deskRoles()})
 }
 
@@ -368,11 +398,12 @@ func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	caps := withLoginCap(r.Form["cap"], r.Form["desk"])
-	_, err := s.store.CreateUser(r.Context(), r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), caps, r.Form["desk"])
+	created, err := s.store.CreateUser(r.Context(), r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), caps, r.Form["desk"])
 	if err != nil {
 		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
+	_ = s.store.SetUserPace(r.Context(), created.ID, parsePace(r.FormValue("hours_per_week")))
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 
@@ -409,6 +440,7 @@ func (s *Server) userSave(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
+	_ = s.store.SetUserPace(r.Context(), id, parsePace(r.FormValue("hours_per_week")))
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 
@@ -562,6 +594,12 @@ func statusCount(items any, status string) int {
 	n := 0
 	switch xs := items.(type) {
 	case []LegalDraft:
+		for _, d := range xs {
+			if d.Status == status {
+				n++
+			}
+		}
+	case []SeoBrief:
 		for _, d := range xs {
 			if d.Status == status {
 				n++

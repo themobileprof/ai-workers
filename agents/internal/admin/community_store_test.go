@@ -17,6 +17,9 @@ func TestMandateJSON(t *testing.T) {
 	if got["slug"] != "lms" || got["site_url"] != "https://lms.themobileprof.com" {
 		t.Fatalf("%+v", got)
 	}
+	if got["project_slug"] != "academy" {
+		t.Fatalf("lms mandate must pin academy, got %+v", got)
+	}
 }
 
 func TestCommunityTemplateRenders(t *testing.T) {

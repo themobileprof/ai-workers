@@ -1,6 +1,10 @@
 package llm
 
-import "os"
+import (
+	"errors"
+	"os"
+	"strings"
+)
 
 const (
 	ProviderGemini Provider = "gemini"
@@ -51,13 +55,46 @@ func ConfigsFromEnv() (text Config, vision Config) {
 }
 
 func NewStack(text, vision Config) (Stack, error) {
-	primary, err := New(text)
-	if err != nil {
-		return Stack{}, err
+	var chain []Completer
+	var first Config
+	var lastErr error
+	try := func(cfg Config) {
+		if strings.TrimSpace(cfg.APIKey) == "" || strings.TrimSpace(cfg.Model) == "" {
+			if lastErr == nil {
+				lastErr = errors.New("LLM_API_KEY is empty")
+			}
+			return
+		}
+		if cfg.Timeout <= 0 && text.Timeout > 0 {
+			cfg.Timeout = text.Timeout
+		}
+		c, err := New(cfg)
+		if err != nil {
+			lastErr = err
+			return
+		}
+		if first.APIKey == "" {
+			first = cfg
+		}
+		chain = append(chain, c)
 	}
-	s := Stack{Completer: primary, Provider: text.Provider, Model: text.Model}
-	if text.Provider == ProviderGemini {
-		s.VisionModel = text.Model
+	try(text)
+	for _, extra := range extraTextConfigs(text) {
+		try(extra)
+	}
+	if len(chain) == 0 {
+		if lastErr == nil {
+			lastErr = errors.New("LLM_API_KEY is empty")
+		}
+		return Stack{}, lastErr
+	}
+	primary := Completer(chain[0])
+	if len(chain) > 1 {
+		primary = &fallback{chain: chain}
+	}
+	s := Stack{Completer: primary, Provider: first.Provider, Model: first.Model}
+	if first.Provider == ProviderGemini {
+		s.VisionModel = first.Model
 		return s, nil
 	}
 	if vision.APIKey == "" {
@@ -70,6 +107,32 @@ func NewStack(text, vision Config) (Stack, error) {
 	s.VisionModel = vision.Model
 	s.Completer = &router{text: primary, vision: v}
 	return s, nil
+}
+
+// extraTextConfigs are other providers with keys in the environment.
+// Tried in order after the primary when that call errors (desk guide and workers).
+func extraTextConfigs(primary Config) []Config {
+	var out []Config
+	for _, p := range []Provider{ProviderDeepSeek, ProviderGemini, ProviderOpenAI, ProviderAnthropic} {
+		if p == primary.Provider {
+			continue
+		}
+		key := strings.TrimSpace(os.Getenv(envPrefix(p) + "_API_KEY"))
+		if p == ProviderGemini && key == "" {
+			key = strings.TrimSpace(os.Getenv("GOOGLE_API_KEY"))
+		}
+		if key == "" {
+			continue
+		}
+		out = append(out, Config{
+			Provider: p,
+			Model:    firstNonEmpty(os.Getenv(envPrefix(p)+"_MODEL"), defaultModel(p)),
+			APIKey:   key,
+			BaseURL:  strings.TrimSpace(os.Getenv(envPrefix(p) + "_BASE_URL")),
+			Timeout:  primary.Timeout,
+		})
+	}
+	return out
 }
 
 func envPrefix(p Provider) string {

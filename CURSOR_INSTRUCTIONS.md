@@ -59,7 +59,7 @@ This VM is RAM-bound. n8n (Node) already owns the expensive slice. The worker mu
 
 Python is allowed later **only** as an optional sidecar if a job truly needs a Python-only library (heavy OCR/PDF). That is not v1. Do not pre-create an empty Python service.
 
-LLM provider switching does **not** require LiteLLM. A small Go `Completer` interface with OpenAI / Anthropic / DeepSeek / Gemini clients, selected by `LLM_PROVIDER` plus `DEEPSEEK_API_KEY` / `GEMINI_API_KEY` (or the older `LLM_API_KEY`) in `.env`, is the whole abstraction we need. Receipt photos are OCR’d with Gemini (`GEMINI_API_KEY`, default `gemini-3.6-flash`) while chat can stay on DeepSeek.
+LLM provider switching does **not** require LiteLLM. A small Go `Completer` interface with OpenAI / Anthropic / DeepSeek / Gemini clients, selected by `LLM_PROVIDER` plus `DEEPSEEK_API_KEY` / `GEMINI_API_KEY` (or the older `LLM_API_KEY`) in `.env`, is the whole abstraction we need. If the primary text call errors, Go tries the other providers that have keys set (desk How? guide included). Receipt photos are OCR’d with Gemini (`GEMINI_API_KEY`, default `gemini-3.6-flash`) while chat can stay on DeepSeek.
 
 Build the worker as `CGO_ENABLED=0 GOOS=linux GOARCH=arm64` (this host is Oracle aarch64). **Do not compile on the VM.** CI and `scripts/deploy.sh` cross-compile on GitHub Actions or the laptop; the VM copies `agents/dist/agents` into distroless (`Dockerfile.runtime`). A local `docker compose up --build` may still compile via `agents/Dockerfile` on a machine that can spare RAM. Do not install a Go toolchain on the host.
 
@@ -132,7 +132,7 @@ Every department handler takes `task_description` and `context_data` (JSON objec
 }
 ```
 
-The worker does **not** share n8n's Postgres database. n8n owns execution state and is the Zoho/Paystack client. Department handlers are request/response (they read desk overlays such as community mandates). Company desk state (users, **handler desks** assigned one-or-more per person, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **HR roles and applications** proposed until a human opens or Shortlists, **desk jobs + handler↔worker chat**, **community mandates**, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. n8n calls `POST /departments/{name}` and internal JSON with `X-Internal-Token`: `GET /internal/v1/community/mandate`, `/internal/v1/community/mandates`, `/internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/hr/roles`, `POST /internal/v1/hr/applications`, `POST /internal/v1/jobs`. Proposal, legal, HR, and job POSTs do not commit the stamp. Chat never stamps Accept.
+The worker does **not** share n8n's Postgres database. n8n owns execution state and is the Zoho/Paystack client. Department handlers are request/response (they read desk overlays such as community mandates and Delivery pace). Company desk state (users, **handler desks** assigned one-or-more per person, capabilities, settings, **projects** with committed journey/gate plus an uncommitted proposal, **legal drafts** proposed until a human Accepts, **SEO briefs** proposed until a human Accepts, **delivery tasks** capped by stamp and hours/week, **desk jobs + handler↔worker chat**, **community mandates**, **guide asks** from the How? bot, sessions) lives in a **separate** host Postgres database `aiworkers`, served as HTML from the same Go process at `/admin`. n8n calls `POST /departments/{name}` and internal JSON with `X-Internal-Token`: `GET /internal/v1/community/mandate`, `/internal/v1/community/mandates`, `/internal/v1/whatsapp-accounts`, `/internal/v1/settings`, `/internal/v1/projects`, `/internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET|POST /internal/v1/seo-briefs`, `GET /internal/v1/delivery/context`, `GET /internal/v1/delivery/digest`, `POST /internal/v1/delivery/checkin`, `POST /internal/v1/jobs`. Proposal, legal, and job POSTs do not commit the stamp. Own Delivery check-ins may apply immediately. Chat never stamps Accept. Recruiting is off: onboard on People (hours/week) and a Face seat.
 
 ### Layout
 
@@ -142,19 +142,21 @@ agents/
   go.mod
   cmd/server/main.go
   internal/contract/     # request/response structs
-  internal/llm/          # Completer + OpenAI / Anthropic / DeepSeek / Gemini (vision OCR)
+  internal/llm/          # Completer + OpenAI / Anthropic / DeepSeek / Gemini (vision OCR); env keys are text fallbacks
   internal/departments/internalops/
   internal/departments/growth/
   internal/departments/crm/
   internal/departments/productdev/
   internal/departments/community/
   internal/departments/legal/   # parent clerk: TMP templates in git; desk files proposed drafts
-  internal/departments/hr/      # parent clerk: JD templates in git; desk files proposed roles/apps
+  internal/departments/seo/      # parent clerk: titles/meta/outlines; desk files proposed briefs. Cannot publish.
+  internal/departments/delivery/  # PM: stamp caps, pace, assign to People seated on bets. Academy is a bet.
   internal/journeys/       # idea→PMF playbooks (gates). Agent places; desk commits.
-  internal/admin/          # company desk HTML + store. Defaults, projects + stamps, legal drafts, HR roles/apps.
+  internal/admin/          # company desk HTML + store. Defaults, projects + stamps, legal drafts, seo briefs, delivery tasks.
                            # Handler desks: /admin/desks/{slug} jobs + chat. People assigns desks; they appear on that user's sign-in, not Board.
                            # /admin/docs = player sheets (you/owner/bdm/project-face/field/handler) then worker specimens.
                            # Player HTML: steps, flow, do/don't — no JSON. Later-boxes if unwired. Printable. Keep them true to the wire.
+                           # Desk How? bot: guide/handbook.md + guide/faq.md + playbooks. Live questions in Postgres; /admin/guide and /admin/guide/asked.md for Cursor to fold back into faq.md.
 ```
 
 ### Module mapping
@@ -162,15 +164,16 @@ agents/
 1. **`internalops` (Operations Room)**
     - *Accounts:* LLM extracts vendor/amount/currency/email and chooses a Zoho document (`expense` paid, `bill` we owe, `invoice` we raise, `lookup`, `preview`). Extra HTTP route `/departments/accounts`. n8n is the Zoho **and** Paystack client (`books-write` + `paystack-paid`): taxes from `GET /settings/taxes`, invoice total from Books, Paystack amount in kobo from that total, webhook verifies then `POST /customerpayments`. Telegram/WhatsApp is the audit trail. Do **not** compute VAT/WHT in Go — that duplicates Books.
     - *Legal:* Extra HTTP route `/departments/legal` on the same process. Catalog templates in git (NDA, contractor, IP assignment, project face, customer terms) name TheMobileProf Technologies. The worker drafts or flags; `cannot_send` is always true. Desk `/admin/legal` and the project card store **proposed** drafts attached to a project + optional person. Humans Accept. **Telegram ops watch:** after the primary department, n8n calls the same route with `action: watch`. The clerk stays silent on greetings and retail receipts; it appends a Legal note for labour, CAC, NDPR/NITDA, CBN-ish payments, tax process, and contract gotchas. Watch does not halt Zoho and does not save a desk row. Not on customer WhatsApp. Do not invent citations, do not file at CAC, do not reuse info@ `/approve`.
-    - *HR:* Extra HTTP route `/departments/hr` on the same process. Catalog JD templates in git (intern, contractor, assistant, employee) name TheMobileProf Technologies. The worker drafts JDs and scores applicants; `cannot_hire` and `cannot_send` are always true. Desk `/admin/hr` stores **proposed** roles and applications (optional project on a role). Humans open a role, Shortlist, or Turn away. Telegram `/hr` is chat-first; info@ CVs file via `POST /internal/v1/hr/applications`. WhatsApp `/hr` is allowlisted like `/accounts`. People on `/admin/users` are login/access, not applicants. Do not run PAYE, do not email candidates, do not reuse info@ `/approve`. Tentacle payroll is later.
+    - *Delivery:* Extra HTTP route `/departments/delivery`. Stamp on each bet sets max open tasks (parked/killed 0, idea 1, testing 3, selling 5, fundable 4). Academy is a bet. Pace is `hours_per_week` on People. Seat on Face to onboard. Worker proposes plans; Accept writes tasks. Own `/today` check-ins may apply immediately. `/approve` is not a stamp.
     - *Grant Hunting:* Startup metadata vs grant eligibility parameters. Still chat-only via `/ops`.
 2. **`growth` (Front Office)**
     - *Marketing:* Platform-customized social copy (Twitter/X, LinkedIn) with local market context.
     - *Sales & Support:* Incoming queries (WhatsApp Business / live chat); calendar booking metadata on high intent. High-intent chats set `record_lead` so n8n can upsert a Zoho Books contact.
+    - *SEO:* Extra HTTP route `/departments/seo`. Page titles, meta, H1, outlines, audit punch lists. Proposed until a human Accepts on `/admin/seo`. `cannot_publish` is always true. No GSC, no crawl, no rank tracker. WhatsApp `/seo` is allowlisted like `/legal`. Do not reuse info@ `/approve`.
 3. **`crm` (Pipeline)**
     - Qualify, update, follow up, pipeline stages. Extra HTTP route on the same Go process (`/departments/crm`), not a new container. n8n writes Zoho **Books contacts** (existing OAuth). Do not add a Zoho CRM credential unless they buy Zoho CRM.
 4. **`community` (Community Manager)**
-    - *Welcome, weekly intro, progress, lesson help, FAQ, moderation, engagement.* One **mandate** per student room (desk `/admin/community`): brief + catalog + `telegram_chat_id`. Host on the **Academy Telegram** bot — Cloud API WhatsApp cannot join ordinary groups. n8n attaches the mandate via `GET /internal/v1/community/mandate`. Monday 09:00 Lagos (`commWeeklyPing01`) introduces the host. Stay silent on chatter (`speak: false`). Escalate to a human when the catalog does not cover it. Not sales and not ops. Ops prefixes on the Academy bot are refused. On customer WhatsApp, unauthorized `/accounts`, `/ops`, `/legal`, or `/hr` is `access_denied` — those departments never run.
+    - *Welcome, weekly intro, progress, lesson help, FAQ, moderation, engagement.* One **mandate** per student room (desk `/admin/community`): brief + catalog + `telegram_chat_id`. Host on the **Academy Telegram** bot — Cloud API WhatsApp cannot join ordinary groups. Weekly intro is skipped when the linked bet’s stamp has no pings (parked/killed/idea). n8n attaches the mandate via `GET /internal/v1/community/mandate`. Stay silent on chatter (`speak: false`). Escalate to a human when the catalog does not cover it. Ops prefixes on the Academy bot are refused. On customer WhatsApp, unauthorized `/accounts`, `/ops`, `/legal`, or `/seo` is `access_denied`.
 5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
@@ -193,9 +196,9 @@ Do **not** ask the founder to click nodes. Workflows live in `n8n/workflows/*.js
 
 - Compose mounts `./n8n/workflows` read-only at `/home/node/workflows`.
 - Owner assignment: `n8n/instance.json` (`projectId` on import; `--userId` re-owns and fails on n8n 2.x).
-- Re-importing the same `id` updates the workflow. Import deactivates. `./scripts/sync-n8n-workflows.sh` republishes webhooks, the community weekly cron (`commWeeklyPing01`), Academy Telegram (`acadTelegram00001`), **and** Execute Workflow children (`booksWriteDoc0001`, `crmUpsertCont0001`, `emailOutbox000001`). Override with `N8N_PUBLISH=id1,id2` if needed. An inactive Books write replies on WhatsApp as `Workflow is not active and cannot be executed.` A GitHub Release runs that script on the VM after Compose rebuild (`scripts/deploy.sh`). Do not deploy on every merge to `main`.
+- Re-importing the same `id` updates the workflow. Import deactivates. `./scripts/sync-n8n-workflows.sh` republishes webhooks, the community weekly cron (`commWeeklyPing01`), Academy Telegram (`acadTelegram00001`), Delivery morning ping (`deliveryDaily00001`), **and** Execute Workflow children (`booksWriteDoc0001`, `crmUpsertCont0001`, `emailOutbox000001`). Override with `N8N_PUBLISH=id1,id2` if needed. An inactive Books write replies on WhatsApp as `Workflow is not active and cannot be executed.` A GitHub Release runs that script on the VM after Compose rebuild (`scripts/deploy.sh`). Do not deploy on every merge to `main`.
 - Manual-trigger smoke tests do not need publishing. Webhook/Telegram/WhatsApp/cron flows **must** be published so production URLs work.
-- n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,hr}` with `X-Internal-Token`. Community mandate: `GET http://agents:8000/internal/v1/community/mandate`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Third-party inventory: `TOOLS.md` (GitHub). Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
+    - n8n HTTP Request nodes call `http://agents:8000/departments/{internal-ops,accounts,growth,product-dev,community,crm,legal,delivery,seo}` with `X-Internal-Token`. Community mandate: `GET http://agents:8000/internal/v1/community/mandate`. WhatsApp allowlist: `GET http://agents:8000/internal/v1/whatsapp-accounts`. Desk defaults: `GET http://agents:8000/internal/v1/settings` (org, paid-through, expense accounts, Paystack currency). Delivery overlay: `GET http://agents:8000/internal/v1/delivery/context`. Third-party inventory: `TOOLS.md` (GitHub). Zoho Books writes go through n8n (`n8n/workflows/books-write.json`), never the Go worker. First body must be **static JSON** (`context_data` an object). Expressions only after a trigger exists.
 
 ---
 
@@ -209,3 +212,5 @@ When asked to implement (not before), generate:
 4. Department packages + `internal/llm` provider switch, contract-compliant JSON.
 
 Follow `SERVER_INIT_INSTRUCTIONS.md` for host Postgres, firewall, and boot order.
+
+When people have used the desk How? bot: the founder pastes `/admin/guide/asked.md` (or you read `/admin/guide`). Fold unanswered or weakly answered items into `agents/internal/admin/guide/faq.md`. If a playbook was wrong, fix `playbook/*.html` and `guide/handbook.md`. Those files are what the bot embeds. Do not invent screens or stamps.

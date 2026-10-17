@@ -2,6 +2,8 @@ package llm
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -82,6 +84,7 @@ func TestNewRejectsEmptyKeyAndUnknownProvider(t *testing.T) {
 }
 
 func TestNewStack(t *testing.T) {
+	clearLLMEnv(t)
 	if _, err := NewStack(Config{}, Config{}); err == nil {
 		t.Fatal("empty text")
 	}
@@ -95,6 +98,73 @@ func TestNewStack(t *testing.T) {
 	)
 	if err != nil || s.VisionModel != defaultGeminiModel {
 		t.Fatalf("vision %+v %v", s, err)
+	}
+}
+
+func TestNewStackFallsBackWhenPrimaryHasNoKey(t *testing.T) {
+	clearLLMEnv(t)
+	t.Setenv("GEMINI_API_KEY", "AQ.fallback")
+	t.Setenv("GEMINI_MODEL", defaultGeminiModel)
+	s, err := NewStack(Config{Provider: ProviderDeepSeek}, Config{})
+	if err != nil || s.Provider != ProviderGemini || s.Completer == nil {
+		t.Fatalf("%+v %v", s, err)
+	}
+}
+
+func TestExtraTextConfigsSkipsPrimary(t *testing.T) {
+	clearLLMEnv(t)
+	t.Setenv("DEEPSEEK_API_KEY", "sk-ds")
+	t.Setenv("GEMINI_API_KEY", "AQ.g")
+	t.Setenv("OPENAI_API_KEY", "sk-oa")
+	got := extraTextConfigs(Config{Provider: ProviderDeepSeek, APIKey: "sk-ds", Model: "deepseek-chat"})
+	if len(got) != 2 || got[0].Provider != ProviderGemini || got[1].Provider != ProviderOpenAI {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestFallbackCompleter(t *testing.T) {
+	f := &fallback{chain: []Completer{
+		stubLLM{err: errors.New("primary down")},
+		stubLLM{text: "from gemini"},
+	}}
+	got, err := f.Complete(context.Background(), Request{Messages: []Message{{Role: "user", Content: "hi"}}})
+	if err != nil || got != "from gemini" {
+		t.Fatalf("%s %v", got, err)
+	}
+	dead := &fallback{chain: []Completer{stubLLM{err: errors.New("a")}, stubLLM{err: errors.New("b")}}}
+	if _, err := dead.Complete(context.Background(), Request{}); err == nil || !strings.Contains(err.Error(), "a") {
+		t.Fatalf("%v", err)
+	}
+}
+
+func TestOpenAICompatPlainOmitsJSONMode(t *testing.T) {
+	var sawFormat bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		sawFormat = strings.Contains(string(raw), "response_format")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"ok"}}]}`))
+	}))
+	t.Cleanup(srv.Close)
+	c := &openAICompat{client: srv.Client(), apiKey: "sk", model: "gpt", baseURL: srv.URL}
+	if _, err := c.Complete(context.Background(), Request{Plain: true, Messages: []Message{{Role: "user", Content: "hi"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if sawFormat {
+		t.Fatal("plain requests must omit response_format")
+	}
+}
+
+func clearLLMEnv(t *testing.T) {
+	t.Helper()
+	for _, k := range []string{
+		"LLM_PROVIDER", "LLM_API_KEY", "LLM_MODEL", "LLM_BASE_URL",
+		"DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "DEEPSEEK_BASE_URL",
+		"GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_BASE_URL", "GOOGLE_API_KEY",
+		"OPENAI_API_KEY", "OPENAI_MODEL", "OPENAI_BASE_URL",
+		"ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "ANTHROPIC_BASE_URL",
+	} {
+		t.Setenv(k, "")
 	}
 }
 
@@ -181,8 +251,12 @@ func TestEnvPrefixAndDefaultModel(t *testing.T) {
 
 type stubLLM struct {
 	text string
+	err  error
 }
 
 func (s stubLLM) Complete(context.Context, Request) (string, error) {
+	if s.err != nil {
+		return "", s.err
+	}
 	return s.text, nil
 }

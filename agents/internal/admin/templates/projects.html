@@ -63,7 +63,9 @@
   <nav class="tabs" role="tablist" aria-label="Project">
     <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Stamp</button>
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
+    <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
+    <button type="button" role="tab" data-tab="work" aria-controls="tab-work">Work <span class="count">{{len .WorkItems}}</span></button>
     <button type="button" role="tab" data-tab="face" aria-controls="tab-face">Face</button>
   </nav>
   <div class="tab-panels">
@@ -190,6 +192,66 @@
       {{end}}
     </section>
 
+    <section role="tabpanel" id="tab-seo" data-tab="seo">
+      <h3>SEO briefs</h3>
+      <p class="hint">Parent worker. Files as <strong>proposed</strong> until you Accept. The clerk cannot publish the live page — copy from the desk. It does not crawl or read Search Console.</p>
+      {{if .SeoBriefs}}
+      {{range .SeoBriefs}}
+      <section class="proposal">
+        <p class="kicker">{{.KindLabel}}{{if .URL}} · {{.URL}}{{end}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Meta}}<p>{{.Meta}}</p>{{end}}
+        {{if .H1}}<p class="hint">H1: {{.H1}}</p>{{end}}
+        {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        {{if .Proposed}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/seo/{{.ID}}/approve">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/seo/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+        {{else if eq .Status "approved"}}
+        <p class="hint">Accepted. Copy the text. Publishing is not wired — do not use info@ <code>/approve</code>.</p>
+        {{end}}
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No SEO briefs on this project yet.</p>
+      {{end}}
+      {{if .CanSEO}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/seo" class="person add">
+        <p class="hint">Ask. Writes a proposed row only. Paste the page — the worker does not crawl.</p>
+        <div class="fields">
+          <label>Kind
+            <select name="action">
+              {{range .SeoKinds}}
+              <option value="{{.ID}}">{{.Label}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>URL<input name="url" value="{{.Project.URL}}" placeholder="https://…"></label>
+          <label>Keyword<input name="keyword" placeholder="Ikeja mortgage rates"></label>
+        </div>
+        <label>Notes or pasted HTML
+          <textarea name="human_feedback" rows="5" placeholder="Paste title, H1, and a slice of the page."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask SEO</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">SEO clerk is off until the LLM env is set, or this person is not ticked for the SEO desk.</p>
+      {{end}}
+    </section>
+
     <section role="tabpanel" id="tab-card" data-tab="card">
       <form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
         <label>Name
@@ -236,9 +298,54 @@
       </form>
     </section>
 
+    <section role="tabpanel" id="tab-work" data-tab="work">
+      <h3>Work on this bet</h3>
+      {{range .DeliveryBets}}
+      <p class="hint">Stamp <strong>{{.Stage}}</strong> allows {{.Engagement.MaxOpenTasks}} open tasks ({{.Open}} used). Academy is not special. Parked and killed hold none. Seat people on Face, set hours on People — that is how they get work.</p>
+      {{end}}
+      {{if .WorkItems}}
+      <div class="ledger">
+      <table class="roster">
+        <thead><tr><th>Task</th><th>Who</th><th>Hours</th><th></th></tr></thead>
+        <tbody>
+          {{range .WorkItems}}
+          <tr>
+            <td><strong>{{.Title}}</strong> <span class="stamp {{if eq .Status "open"}}brass{{else}}ok{{end}}">{{.Status}}</span></td>
+            <td>{{if .Assignee}}{{.Assignee}}{{else}}—{{end}}</td>
+            <td>{{.Hours}}</td>
+            <td class="row-actions">
+              {{if eq .Status "open"}}
+              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done"><button type="submit">Done</button></form>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="hint">No tasks on this bet yet.</p>
+      {{end}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/work" class="person add">
+        <div class="fields">
+          <label>Task<input name="title" required></label>
+          <label>Who
+            <select name="assignee_id">
+              <option value="">Unassigned</option>
+              {{range .Roster}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
+          <label>Due<input name="due" type="date"></label>
+        </div>
+        <div class="actions"><button type="submit">Add task</button></div>
+      </form>
+    </section>
     <section role="tabpanel" id="tab-face" data-tab="face">
       <h3>Face of this project</h3>
-      <p class="hint">Cofounder is the public face. Assistant helps that person. Owner and BDM see every project without sitting here. Seats are not directors of TheMobileProf.</p>
+      <p class="hint">Cofounder is the public face. Assistant helps that person. Owner and BDM see every project without sitting here. Seats are not directors of TheMobileProf. Seating someone here is how Delivery may assign them tasks.</p>
       {{if .Project.Members}}
       <div class="ledger">
       <table class="roster">

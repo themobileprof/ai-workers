@@ -1,0 +1,119 @@
+{{define "content"}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Across bets</p>
+    <h2>Delivery</h2>
+    <p class="lede">Stamp sets how many open tasks a bet may hold. Your hours/week cap the rest. Academy is one bet. Seat a person on the Face tab to give them work — that is onboarding, not hiring.</p>
+  </div>
+  <div class="actions">
+    <a class="ghost" href="/admin/desks/delivery"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
+    <a class="ghost" href="/admin/docs/delivery"><svg class="ico"><use href="#i-docs"/></svg> Sheet</a>
+  </div>
+</section>
+
+<div class="tabset" data-tabs data-default="today">
+  <nav class="tabs" role="tablist" aria-label="Delivery">
+    <button type="button" role="tab" data-tab="today" aria-controls="tab-today">Today <span class="count">{{len .WorkItems}}</span></button>
+    <button type="button" role="tab" data-tab="bets" aria-controls="tab-bets">Bets <span class="count">{{len .DeliveryBets}}</span></button>
+    <button type="button" role="tab" data-tab="ask" aria-controls="tab-ask">Ask plan</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-today" data-tab="today">
+      {{if .WorkItems}}
+      <div class="ledger">
+      <table class="roster">
+        <thead>
+          <tr>
+            <th>Bet</th>
+            <th>Task</th>
+            <th>Who</th>
+            <th>Hours</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .WorkItems}}
+          <tr>
+            <td>{{.Project}}<br><span class="stamp {{if eq .Status "open"}}brass{{else if eq .Status "done"}}ok{{else}}dark{{end}}">{{.Status}} · {{.Stage}}</span></td>
+            <td><strong>{{.Title}}</strong>{{if .Due}}<br><span class="hint">due {{.Due}}</span>{{end}}</td>
+            <td>{{if .Assignee}}{{.Assignee}}{{else}}unassigned{{end}}</td>
+            <td>{{.Hours}}</td>
+            <td class="row-actions">
+              {{if eq .Status "open"}}
+              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done"><button type="submit">Done</button></form>
+              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/skip"><button class="ghost" type="submit">Skip</button></form>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="hint">No tasks yet. Add one on a selling or testing bet, or Ask plan.</p>
+      {{end}}
+      <form method="post" action="/admin/delivery/items" class="person add">
+        <div class="fields">
+          <label>Bet
+            <select name="project_id" required>
+              <option value="">Choose…</option>
+              {{range .DeliveryBets}}
+              <option value="{{.ID}}">{{.Name}} ({{.Stage}} · {{.Slots}} slots)</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Task<input name="title" required placeholder="Ship the Ikeja calculator"></label>
+          <label>Who
+            <select name="assignee_id">
+              <option value="">Unassigned</option>
+              {{range .Users}}
+              {{if .Active}}<option value="{{.ID}}">{{.Name}} ({{.HoursPerWeek}}h/wk)</option>{{end}}
+              {{end}}
+            </select>
+          </label>
+          <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
+          <label>Due<input name="due" type="date"></label>
+        </div>
+        <div class="actions">
+          <button type="submit">Add task</button>
+        </div>
+      </form>
+    </section>
+    <section role="tabpanel" id="tab-bets" data-tab="bets">
+      {{range .DeliveryBets}}
+      <section class="proposal">
+        <div class="doc-card-head">
+          <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+          <span class="stamp {{.StageStamp}}">{{.Stage}} · {{.Open}}/{{.Engagement.MaxOpenTasks}}</span>
+        </div>
+        <p>{{.OneLiner}}</p>
+        <p class="hint">{{if eq .Engagement.MaxOpenTasks 0}}Silent. Parked and killed bets get no tasks and no pings.{{else}}Up to {{.Engagement.MaxOpenTasks}} open tasks. Weight {{.Engagement.Weight}}. {{if .Engagement.Pings}}Morning ping on.{{else}}No morning ping.{{end}}{{end}}</p>
+      </section>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-ask" data-tab="ask">
+      {{if .CanAsk}}
+      <form method="post" action="/admin/delivery/ask" class="person">
+        <label>Project (optional — pin idea talk)
+          <select name="project">
+            <option value="">All bets I may see</option>
+            {{range .DeliveryBets}}
+            <option value="{{.Slug}}">{{.Name}}</option>
+            {{end}}
+          </select>
+        </label>
+        <label>What should the week look like?
+          <textarea name="task" rows="4" required placeholder="Turn HomeGauge’s this-week note into tasks for me and the BDM. Respect pace."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask worker</button>
+        </div>
+      </form>
+      <p class="hint">The worker proposes. Accept on the Delivery desk job to write the tasks. Chat never stamps.</p>
+      {{else}}
+      <p class="hint">Worker is off until the LLM env is set. You can still add tasks by hand.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
+{{end}}

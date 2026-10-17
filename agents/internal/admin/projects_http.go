@@ -9,6 +9,7 @@ import (
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
+	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
@@ -289,6 +290,17 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []User, errMsg, flash string) pageData {
 	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
+	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
+	for i := range roster {
+		roster[i].HoursPerWeek = s.store.UserPace(ctx, roster[i].ID)
+	}
+	eng := EngagementFor(p.Stage)
+	open, _ := s.store.CountOpenWork(ctx, p.ID)
+	slots := eng.MaxOpenTasks - open
+	if slots < 0 {
+		slots = 0
+	}
 	return pageData{
 		Title:          "Amend " + p.Name,
 		Nav:            "projects",
@@ -302,6 +314,11 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		CanLegal:       s.legal != nil,
 		Drafts:         drafts,
 		LegalTemplates: legal.Specs(),
+		CanSEO:         s.seo != nil,
+		SeoBriefs:      briefs,
+		SeoKinds:       seo.Specs(),
+		WorkItems:      items,
+		DeliveryBets:   []DeliveryBet{{Project: p, Engagement: eng, Open: open, Slots: slots}},
 		Error:          errMsg,
 		Flash:          flash,
 	}

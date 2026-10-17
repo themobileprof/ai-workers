@@ -133,8 +133,21 @@ func (s *Server) internalCommunityMandates(w http.ResponseWriter, r *http.Reques
 	}
 	out := make([]map[string]any, 0, len(list))
 	for _, m := range list {
-		if m.Active {
-			out = append(out, m.JSON())
+		if !m.Active {
+			continue
+		}
+		row := m.JSON()
+		slug, _ := row["project_slug"].(string)
+		pings := true
+		if slug != "" {
+			if p, err := s.store.GetProjectBySlug(r.Context(), slug); err == nil {
+				pings = EngagementFor(p.Stage).Pings
+				row["project_stage"] = p.Stage
+			}
+		}
+		row["pings"] = pings
+		if pings {
+			out = append(out, row)
 		}
 	}
 	writeJSON(w, map[string]any{"mandates": out})

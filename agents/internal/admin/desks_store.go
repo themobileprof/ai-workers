@@ -329,6 +329,9 @@ func jobFromWorker(desk, source, task string, sd map[string]any, output string) 
 	if id := int64Val(sd["legal_draft_id"]); id > 0 {
 		refKind, refID = "legal_draft", id
 	}
+	if id := int64Val(sd["seo_brief_id"]); id > 0 {
+		refKind, refID = "seo_brief", id
+	}
 	if id := int64Val(sd["hr_role_id"]); id > 0 {
 		refKind, refID = "hr_role", id
 	}
@@ -337,6 +340,9 @@ func jobFromWorker(desk, source, task string, sd map[string]any, output string) 
 	}
 	if id := int64Val(sd["project_id"]); id > 0 && refKind == "" {
 		refKind, refID = "project", id
+	}
+	if boolVal(sd["save_plan"]) {
+		refKind = "delivery_plan"
 	}
 	return DeskJob{
 		Desk:    desk,
@@ -367,6 +373,8 @@ func shouldFileInboundJob(dept string, data map[string]any, sd map[string]any) b
 	switch dept {
 	case "legal":
 		return true
+	case "seo":
+		return true
 	case "hr":
 		if strings.EqualFold(strVal(data["channel"]), "email") {
 			return false
@@ -374,6 +382,8 @@ func shouldFileInboundJob(dept string, data map[string]any, sd map[string]any) b
 		return true
 	case "product-dev":
 		return strVal(sd["suggested_journey"]) != "" || strVal(data["action"]) == "place_on_journey"
+	case "delivery":
+		return boolVal(sd["save_plan"]) || boolVal(sd["needs_human"])
 	default:
 		return false
 	}

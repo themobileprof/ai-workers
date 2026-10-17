@@ -29,6 +29,8 @@ func (s *Server) workerFor(desk Desk) PlaceFunc {
 	switch desk.Slug {
 	case "legal":
 		return s.legal
+	case "seo":
+		return s.seo
 	case "hr":
 		return s.hr
 	case "product-dev":
@@ -44,6 +46,9 @@ func (s *Server) requireDesk(w http.ResponseWriter, r *http.Request, slug string
 		return nil
 	}
 	if !Handles(*u, slug) {
+		if slug == "delivery" && canOffice(u) {
+			return u
+		}
 		http.Error(w, "not assigned to this desk", http.StatusForbidden)
 		return nil
 	}
@@ -161,7 +166,7 @@ func (s *Server) deskAskPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "desks", s.deskListView(r, u, desk, "This worker is not wired on this process", ""))
 		return
 	}
-	resp, err := fn(r.Context(), deskRequest(desk, task, nil, nil))
+	resp, err := fn(r.Context(), s.deskRequestFor(r.Context(), desk, u, task, nil, nil))
 	if err != nil || resp.Status != contract.StatusSuccess {
 		msg := resp.OutputText
 		if msg == "" && err != nil {
@@ -219,7 +224,7 @@ func (s *Server) deskChatPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	thread, _ := s.store.ListJobMessages(r.Context(), job.ID)
-	resp, err := fn(r.Context(), deskRequest(desk, body, &job, thread))
+	resp, err := fn(r.Context(), s.deskRequestFor(r.Context(), desk, u, body, &job, thread))
 	reply := resp.OutputText
 	if reply == "" && err != nil {
 		reply = err.Error()
@@ -250,7 +255,7 @@ func (s *Server) deskStamp(status string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		if err := s.applyJobStamp(r.Context(), job, status); err != nil {
+		if err := s.applyJobStamp(r.Context(), *u, job, status); err != nil {
 			s.deskJobView(w, r, u, desk, id, err.Error(), "")
 			return
 		}
@@ -262,7 +267,7 @@ func (s *Server) deskStamp(status string) http.HandlerFunc {
 	}
 }
 
-func (s *Server) applyJobStamp(ctx context.Context, job DeskJob, status string) error {
+func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, status string) error {
 	if err := s.store.SetDeskJobStatus(ctx, job.ID, status); err != nil {
 		return err
 	}
@@ -298,6 +303,18 @@ func (s *Server) applyJobStamp(ctx context.Context, job DeskJob, status string) 
 		if status == "rejected" {
 			_ = s.store.ClearProposal(ctx, job.RefID)
 		}
+	case "delivery_plan":
+		if status == "accepted" {
+			_, _ = s.store.AcceptPlanItems(ctx, actor, workItemsFromPlan(job.Payload["items"]))
+		}
+	case "seo_brief":
+		mapped := "approved"
+		if status == "rejected" {
+			mapped = "rejected"
+		}
+		if status == "accepted" || status == "rejected" {
+			_ = s.store.SetSeoStatus(ctx, job.RefID, mapped)
+		}
 	}
 	kind := "system"
 	text := "Handler accepted this job. The worker did not stamp it."
@@ -323,19 +340,30 @@ func (s *Server) loadDeskUser(w http.ResponseWriter, r *http.Request) (Desk, *Us
 
 func (d Desk) Path() string { return "/admin/desks/" + d.Slug }
 
-func deskRequest(desk Desk, task string, job *DeskJob, thread []JobMessage) contract.Request {
-	ctx := map[string]any{
+func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task string, job *DeskJob, thread []JobMessage) contract.Request {
+	data := map[string]any{
 		"channel":     "desk",
 		"department":  desk.Department,
-		"cannot_send": true,
-		"cannot_hire": true,
+		"cannot_send":    true,
+		"cannot_hire":    true,
+		"cannot_publish": desk.Slug == "seo",
+	}
+	if u != nil {
+		data["actor_id"] = u.ID
+	}
+	if desk.Slug == "delivery" && s != nil && s.store != nil {
+		for k, v := range s.store.deliveryOverlay(rctx, u, "") {
+			if _, exists := data[k]; !exists {
+				data[k] = v
+			}
+		}
 	}
 	if job != nil {
-		ctx["job_id"] = job.ID
-		ctx["job_title"] = job.Title
-		ctx["job_status"] = job.Status
+		data["job_id"] = job.ID
+		data["job_title"] = job.Title
+		data["job_status"] = job.Status
 		if job.Payload != nil {
-			ctx["job"] = job.Payload
+			data["job"] = job.Payload
 		}
 	}
 	if len(thread) > 0 {
@@ -351,9 +379,9 @@ func deskRequest(desk Desk, task string, job *DeskJob, thread []JobMessage) cont
 			}
 			lines = append(lines, who+": "+m.Body)
 		}
-		ctx["thread"] = lines
+		data["thread"] = lines
 	}
-	raw, _ := json.Marshal(ctx)
+	raw, _ := json.Marshal(data)
 	return contract.Request{TaskDescription: task, ContextData: raw}
 }
 
@@ -401,6 +429,12 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	sd := resp.StructuredData
 	if sd == nil {
 		sd = map[string]any{}
+	}
+	if dept == "delivery" {
+		s.applyDeliveryResponse(ctx, req, resp)
+	}
+	if dept == "seo" {
+		s.applySeoResponse(ctx, req, resp)
 	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return

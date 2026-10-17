@@ -57,7 +57,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `whatsapp`
 - **URL:** https://developers.facebook.com/docs/whatsapp/cloud-api
-- **Role:** Customer 1:1 chat. `/accounts`, `/ops`, `/legal`, and `/hr` are desk-allowlisted. Receipt OCR on allowlisted `/accounts` photos. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
+- **Role:** Customer 1:1 chat. `/accounts`, `/ops`, `/legal`, and `/seo` are desk-allowlisted. `/today` is Delivery for People phones. Receipt OCR on allowlisted `/accounts` photos. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
 - **Where:** n8n Customer WhatsApp. Allowlist from desk People (`whatsapp_accounts`).
 - **Secrets:** Tokens in n8n WhatsApp credentials.
 - **n8n credentials:** `WhatsApp OAuth account`, `WhatsApp account`
@@ -66,7 +66,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `deepseek`
 - **URL:** https://www.deepseek.com/
-- **Role:** Default text LLM for department workers (classifier, chat). Text-only — no OCR.
+- **Role:** Default text LLM for department workers (classifier, chat) and the desk How? guide. Text-only — no OCR. If a call errors, Go tries Gemini / OpenAI / Anthropic when those keys are set.
 - **Where:** Go agents via `LLM_PROVIDER=deepseek`.
 - **Secrets:** `DEEPSEEK_API_KEY` (or `LLM_API_KEY`) on the VM `.env` → agents container.
 - **Env:** `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL`, `DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL`, `DEEPSEEK_BASE_URL`
@@ -75,7 +75,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `gemini`
 - **URL:** https://ai.google.dev/
-- **Role:** Vision OCR for receipt/invoice photos. Default model gemini-3.6-flash. Does not invent amounts when the image is unreadable.
+- **Role:** Vision OCR for receipt/invoice photos. Default model gemini-3.6-flash. Does not invent amounts when the image is unreadable. Also a text fallback when the primary chat provider errors (desk How? bot included).
 - **Where:** Go agents when `context_data` includes `image_base64`. n8n downloads Telegram/WhatsApp photos.
 - **Secrets:** `GEMINI_API_KEY` on the VM `.env` → agents container.
 - **Env:** `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL`
@@ -105,8 +105,8 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `openai`
 - **URL:** https://platform.openai.com/
-- **Role:** Optional text LLM. Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` (or `LLM_API_KEY`).
-- **Where:** Go Completer. Not live unless the env says so.
+- **Role:** Optional text LLM. Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` (or `LLM_API_KEY`). Also tried as a fallback when the primary provider errors.
+- **Where:** Go Completer.
 - **Secrets:** `OPENAI_API_KEY` / `LLM_API_KEY` on the VM `.env`.
 - **Env:** `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`
 
@@ -114,7 +114,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `anthropic`
 - **URL:** https://www.anthropic.com/
-- **Role:** Optional text LLM. Set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`.
-- **Where:** Go Completer. Not live unless the env says so.
+- **Role:** Optional text LLM. Set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`. Also tried as a fallback when the primary provider errors.
+- **Where:** Go Completer.
 - **Secrets:** `ANTHROPIC_API_KEY` on the VM `.env`.
 - **Env:** `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_BASE_URL`

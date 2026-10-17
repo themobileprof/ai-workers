@@ -1,0 +1,28 @@
+{{define "content"}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Desk guide</p>
+    <h2>What people asked</h2>
+    <p class="lede">Every signed-in person can tap <strong>How?</strong> (bottom right) and ask what to do on this desk. Questions land here. Fold the ones the bot missed into <code>faq.md</code> in Cursor so the next deploy knows them.</p>
+  </div>
+  <div class="actions">
+    <a class="ghost" href="/admin/guide/asked.md"><svg class="ico"><use href="#i-docs"/></svg> asked.md</a>
+    <a class="ghost" href="/admin/docs"><svg class="ico"><use href="#i-book"/></svg> Docs</a>
+  </div>
+</section>
+<p class="hint">The bot reads handbook + FAQ + playbooks. It does not stamp Accept. Unsure rows are the ones to teach next.</p>
+{{if .GuideAsks}}
+{{range .GuideAsks}}
+<section class="proposal">
+  <p class="kicker">{{.CreatedAt.Format "2 Jan 15:04"}} · {{if .UserName}}{{.UserName}}{{else}}someone{{end}}{{if .Page}} · {{.Page}}{{end}}</p>
+  <div class="doc-card-head">
+    <h3>{{.Question}}</h3>
+    {{if .Unsure}}<span class="stamp dark">unsure</span>{{else}}<span class="stamp ok">answered</span>{{end}}
+  </div>
+  <p class="hint" style="white-space:pre-wrap">{{.Answer}}</p>
+</section>
+{{end}}
+{{else}}
+<p class="hint">No questions yet. The How? button is on every signed-in page except n8n.</p>
+{{end}}
+{{end}}

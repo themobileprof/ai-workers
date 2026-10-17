@@ -16,8 +16,14 @@ func TestAllDesksUnique(t *testing.T) {
 			t.Fatalf("path %s", d.Path())
 		}
 	}
-	if _, ok := LookupDesk("hr"); !ok {
-		t.Fatal("hr")
+	if _, ok := LookupDesk("delivery"); !ok {
+		t.Fatal("delivery")
+	}
+	if _, ok := LookupDesk("hr"); ok {
+		t.Fatal("hr desk removed")
+	}
+	if _, ok := LookupDesk("seo"); !ok {
+		t.Fatal("seo")
 	}
 	cm, ok := LookupDesk("community")
 	if !ok || cm.BookPath != "/admin/community" {
@@ -36,15 +42,15 @@ func TestAllDesksUnique(t *testing.T) {
 
 func TestHandles(t *testing.T) {
 	owner := User{Role: "owner"}
-	if Handles(owner, "legal") || Handles(owner, "hr") {
+	if Handles(owner, "legal") || Handles(owner, "delivery") {
 		t.Fatal("owner does not implicitly handle desks")
 	}
-	assigned := User{Role: "owner", Desks: []string{"hr"}}
-	if !Handles(assigned, "hr") || Handles(assigned, "legal") {
+	assigned := User{Role: "owner", Desks: []string{"delivery"}}
+	if !Handles(assigned, "delivery") || Handles(assigned, "legal") {
 		t.Fatal("assignment only")
 	}
-	handler := User{Role: "bdm", Desks: []string{"hr", "growth"}}
-	if !Handles(handler, "hr") || Handles(handler, "legal") {
+	handler := User{Role: "bdm", Desks: []string{"delivery", "growth"}}
+	if !Handles(handler, "delivery") || Handles(handler, "legal") {
 		t.Fatal("assigned desks only")
 	}
 	if Handles(handler, "") {
@@ -56,7 +62,7 @@ func TestIsOwnerAndVisibleDesks(t *testing.T) {
 	if isOwner(nil) || canOffice(nil) {
 		t.Fatal("nil")
 	}
-	owner := &User{Role: "owner", Desks: []string{"hr"}}
+	owner := &User{Role: "owner", Desks: []string{"legal"}}
 	if !isOwner(owner) || !canOffice(owner) {
 		t.Fatal("owner")
 	}
@@ -65,7 +71,11 @@ func TestIsOwnerAndVisibleDesks(t *testing.T) {
 		t.Fatal("bdm")
 	}
 	got := visibleDesks(owner)
-	if len(got) != 1 || got[0].Slug != "hr" {
+	slugs := map[string]bool{}
+	for _, d := range got {
+		slugs[d.Slug] = true
+	}
+	if !slugs["legal"] || !slugs["delivery"] {
 		t.Fatalf("%+v", got)
 	}
 	if visibleDesks(nil) != nil {
@@ -74,15 +84,15 @@ func TestIsOwnerAndVisibleDesks(t *testing.T) {
 }
 
 func TestAfterLoginPath(t *testing.T) {
-	owner := User{Role: "owner", Desks: []string{"hr"}}
+	owner := User{Role: "owner", Desks: []string{"legal"}}
 	if afterLoginPath(owner) != "/admin/" {
 		t.Fatal("office lands on Board")
 	}
-	one := User{Role: "cofounder", Desks: []string{"hr"}}
-	if afterLoginPath(one) != "/admin/desks/hr" {
+	one := User{Role: "cofounder", Desks: []string{"legal"}}
+	if afterLoginPath(one) != "/admin/desks/legal" {
 		t.Fatalf("got %s", afterLoginPath(one))
 	}
-	many := User{Role: "assistant", Desks: []string{"hr", "legal"}}
+	many := User{Role: "assistant", Desks: []string{"growth", "legal"}}
 	if afterLoginPath(many) != "/admin/desks" {
 		t.Fatal("picker")
 	}
@@ -93,11 +103,11 @@ func TestAfterLoginPath(t *testing.T) {
 }
 
 func TestDeskNavOn(t *testing.T) {
-	desks := []Desk{{Slug: "hr"}}
-	if deskNavOn("home", desks) || !deskNavOn("desk-hr", desks) || !deskNavOn("hr", desks) {
+	desks := []Desk{{Slug: "legal"}}
+	if deskNavOn("home", desks) || !deskNavOn("desk-legal", desks) || !deskNavOn("legal", desks) {
 		t.Fatal("desk nav")
 	}
-	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") {
+	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") {
 		t.Fatal("office menu")
 	}
 }
@@ -112,8 +122,14 @@ func TestShouldFileInboundJob(t *testing.T) {
 	if !shouldFileInboundJob("legal", map[string]any{"channel": "telegram"}, map[string]any{}) {
 		t.Fatal("telegram legal")
 	}
-	if shouldFileInboundJob("hr", map[string]any{"channel": "email"}, map[string]any{}) {
-		t.Fatal("email hr is filed via applications POST")
+	if !shouldFileInboundJob("seo", map[string]any{"channel": "whatsapp"}, map[string]any{"save_brief": true}) {
+		t.Fatal("seo inbound")
+	}
+	if shouldFileInboundJob("delivery", map[string]any{"channel": "whatsapp"}, map[string]any{"task_type": "today"}) {
+		t.Fatal("delivery ping without save_plan")
+	}
+	if !shouldFileInboundJob("delivery", map[string]any{"channel": "whatsapp"}, map[string]any{"save_plan": true}) {
+		t.Fatal("delivery plan")
 	}
 	if !shouldFileInboundJob("community", map[string]any{"channel": "whatsapp"}, map[string]any{"escalate_to_founder": true}) {
 		t.Fatal("escalate")
@@ -124,7 +140,7 @@ func TestShouldFileInboundJob(t *testing.T) {
 }
 
 func TestWithLoginCap(t *testing.T) {
-	got := withLoginCap([]string{"whatsapp_accounts"}, []string{"hr"})
+	got := withLoginCap([]string{"whatsapp_accounts"}, []string{"legal"})
 	if len(got) != 2 {
 		t.Fatalf("%v", got)
 	}
@@ -141,11 +157,11 @@ func TestDeskFlash(t *testing.T) {
 }
 
 func TestAssignedDesk(t *testing.T) {
-	u := User{Desks: []string{"hr"}}
-	if !assignedDesk(u, "hr") || assignedDesk(u, "legal") {
+	u := User{Desks: []string{"delivery"}}
+	if !assignedDesk(u, "delivery") || assignedDesk(u, "legal") {
 		t.Fatal("assigned")
 	}
-	if assignedDesk((*User)(nil), "hr") {
+	if assignedDesk((*User)(nil), "delivery") {
 		t.Fatal("nil")
 	}
 }
@@ -171,11 +187,11 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 		t.Fatal("unassigned worker on office nav")
 	}
 	handler := pageData{
-		Title:    "HR",
-		Nav:      "desk-hr",
+		Title:    "Legal",
+		Nav:      "desk-legal",
 		User:     &User{ID: 2, Name: "Ada", Role: "cofounder"},
-		NavDesks: []Desk{{Slug: "hr", Title: "HR"}},
-		Desk:     &Desk{Slug: "hr", Title: "HR", Prefix: "/hr"},
+		NavDesks: []Desk{{Slug: "legal", Title: "Legal"}},
+		Desk:     &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"},
 	}
 	buf.Reset()
 	if err := srv.pages["desks"].ExecuteTemplate(&buf, "layout.html", handler); err != nil {
@@ -185,7 +201,7 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 	if strings.Contains(got, `data-nav="home"`) || strings.Contains(got, `href="/admin/projects"`) {
 		t.Fatal("handler should not see office nav")
 	}
-	if !strings.Contains(got, "/admin/desks/hr") || !strings.Contains(got, "Workers") {
+	if !strings.Contains(got, "/admin/desks/legal") || !strings.Contains(got, "Workers") {
 		t.Fatal("assigned desk")
 	}
 }

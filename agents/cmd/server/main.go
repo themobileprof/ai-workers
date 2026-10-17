@@ -16,11 +16,13 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
 	"github.com/samuel/ai-workers/agents/internal/departments/crm"
+	"github.com/samuel/ai-workers/agents/internal/departments/delivery"
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/internalops"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/productdev"
+	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
@@ -72,12 +74,15 @@ func main() {
 				}
 				desk.WithPlacer(call(productdev.Handle))
 				desk.WithLegal(call(legal.Handle))
+				desk.WithSEO(call(seo.Handle))
 				desk.WithHR(call(hr.Handle))
 				desk.WithWorker("accounts", call(internalops.HandleAccounts))
 				desk.WithWorker("internal-ops", call(internalops.Handle))
 				desk.WithWorker("growth", call(growth.Handle))
 				desk.WithWorker("community", call(community.Handle))
 				desk.WithWorker("crm", call(crm.Handle))
+				desk.WithWorker("delivery", call(delivery.Handle))
+				desk.WithGuide(completer)
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")
@@ -96,7 +101,7 @@ func main() {
 			"vision_model": stack.VisionModel,
 			"vision_ready": stack.VisionModel != "",
 			"admin_ready":  adminReady,
-			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "hr"},
+			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "delivery", "seo"},
 		})
 	})
 	internalTok := strings.TrimSpace(os.Getenv("INTERNAL_API_TOKEN"))
@@ -110,6 +115,8 @@ func main() {
 	mux.HandleFunc("POST /departments/community", departmentHandler(completer, completerErr, "community", community.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, "crm", crm.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/delivery", departmentHandler(completer, completerErr, "delivery", delivery.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/seo", departmentHandler(completer, completerErr, "seo", seo.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk, internalTok))
 
 	srv := &http.Server{
@@ -149,6 +156,12 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 		if req.TaskDescription == "" {
 			writeJSON(w, http.StatusBadRequest, contract.Fail("task_description is required"))
 			return
+		}
+		if dept == "delivery" && desk != nil {
+			req = desk.EnrichDelivery(r.Context(), req)
+		}
+		if dept == "seo" && desk != nil {
+			req = desk.EnrichSEO(r.Context(), req)
 		}
 		resp, err := fn(r.Context(), c, req)
 		if err != nil {

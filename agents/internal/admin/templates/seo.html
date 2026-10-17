@@ -1,0 +1,123 @@
+{{define "content"}}
+<section class="hero row">
+  <div>
+    <p class="kicker">Parent worker</p>
+    <h2>SEO</h2>
+    <p class="lede">Titles, meta, and outlines for a bet’s pages. The clerk proposes. You Accept. Nothing is published. <code>/approve</code> on Telegram still only sends info@ drafts.</p>
+  </div>
+  <div class="actions">
+    <a class="ghost" href="/admin/desks/seo"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
+    <a class="ghost" href="/admin/docs/seo"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  </div>
+</section>
+<div class="tabset" data-tabs data-default="proposed">
+  <nav class="tabs" role="tablist" aria-label="SEO briefs">
+    <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .SeoBriefs "proposed"}}</span></button>
+    <button type="button" role="tab" data-tab="accepted" aria-controls="tab-accepted">Accepted <span class="count">{{statusCount .SeoBriefs "approved"}}</span></button>
+    <button type="button" role="tab" data-tab="rejected" aria-controls="tab-rejected">Turned away <span class="count">{{statusCount .SeoBriefs "rejected"}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-proposed" data-tab="proposed">
+      {{if statusCount .SeoBriefs "proposed"}}
+      {{range .SeoBriefs}}
+      {{if .Proposed}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=seo">{{.ProjectName}}</a> · {{.KindLabel}}{{if .URL}} · {{.URL}}{{end}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Meta}}<p>{{.Meta}}</p>{{end}}
+        {{if .H1}}<p class="hint">H1: {{.H1}}</p>{{end}}
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/seo/{{.ID}}/approve">
+            <input type="hidden" name="next" value="/admin/seo">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/seo/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/seo">
+            <button class="ghost" type="submit">Reject</button>
+          </form>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">No proposed briefs. Open a <a class="quiet" href="/admin/projects">project</a> and Ask SEO, or Telegram <code>/seo</code>.</p>
+      {{end}}
+      {{if .CanSEO}}
+      <form method="post" action="/admin/seo/ask" class="person add">
+        <p class="hint">Ask. Writes a proposed row only. Paste the page if you have it — the worker does not crawl.</p>
+        <div class="fields">
+          <label>Bet
+            <select name="project_id" required>
+              <option value="">Choose…</option>
+              {{range .Projects}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Kind
+            <select name="action">
+              {{range .SeoKinds}}
+              <option value="{{.ID}}">{{.Label}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>URL<input name="url" placeholder="https://homegauge.themobileprof.com/rates"></label>
+          <label>Keyword<input name="keyword" placeholder="Ikeja mortgage rates"></label>
+        </div>
+        <label>Notes or pasted HTML
+          <textarea name="human_feedback" rows="5" placeholder="Paste the current title, H1, and a slice of the page. Or: outline for mechanic bookkeeping Lagos."></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit">Ask worker</button>
+        </div>
+      </form>
+      {{else}}
+      <p class="hint">SEO clerk is off until the LLM env is set on this process.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-accepted" data-tab="accepted">
+      {{if statusCount .SeoBriefs "approved"}}
+      {{range .SeoBriefs}}
+      {{if eq .Status "approved"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=seo">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Meta}}<p>{{.Meta}}</p>{{end}}
+        {{if .H1}}<p class="hint">H1: {{.H1}}</p>{{end}}
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        <p class="hint">Accepted. Copy from here. Publishing the live page is not wired.</p>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing accepted yet.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-rejected" data-tab="rejected">
+      {{if statusCount .SeoBriefs "rejected"}}
+      {{range .SeoBriefs}}
+      {{if eq .Status "rejected"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=seo">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing turned away.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
+{{end}}

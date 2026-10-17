@@ -55,6 +55,27 @@ func TestTemplatesParse(t *testing.T) {
 	}
 }
 
+func TestGuideDockOnSignedInLayout(t *testing.T) {
+	s, err := New(nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	s.render(rec, "home", pageData{Title: "Board", Nav: "home", User: &User{Name: "Ada", Role: "owner"}})
+	body := rec.Body.String()
+	if !strings.Contains(body, `class="guide-fab"`) || !strings.Contains(body, "How?") || !strings.Contains(body, "/admin/guide/ask") {
+		t.Fatal("signed-in layout needs How?")
+	}
+	if !strings.Contains(body, `href="/admin/guide"`) {
+		t.Fatal("office Guide link")
+	}
+	login := httptest.NewRecorder()
+	s.render(login, "login", pageData{Title: "Sign in"})
+	if strings.Contains(login.Body.String(), `class="guide-fab"`) {
+		t.Fatal("login must not show How?")
+	}
+}
+
 func TestPlaybookCatalog(t *testing.T) {
 	if err := mustPlaybookFiles(); err != nil {
 		t.Fatal(err)
@@ -82,7 +103,7 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("owner sheet")
 	}
 	face, ok := lookupDoc("project-face")
-	if !ok || !strings.Contains(string(face.Body), "not a director") || !strings.Contains(string(face.Body), "Not wired") {
+	if !ok || !strings.Contains(string(face.Body), "not a director") || !strings.Contains(string(face.Body), "/idea") {
 		t.Fatal("project-face sheet")
 	}
 	field, ok := lookupDoc("field")
@@ -109,9 +130,13 @@ func TestPlaybookCatalog(t *testing.T) {
 	if !ok || !leg.Partial() || !strings.Contains(string(leg.Body), "Not wired") {
 		t.Fatal("legal must stay a partial with a later-box for send")
 	}
-	h, ok := lookupDoc("hr")
-	if !ok || !h.Partial() || !strings.Contains(string(h.Body), "Not wired") {
-		t.Fatal("hr must stay a partial with later-boxes")
+	deliv, ok := lookupDoc("delivery")
+	if !ok || !deliv.Live() || !strings.Contains(string(deliv.Body), "hours/week") {
+		t.Fatal("delivery playbook")
+	}
+	seoDoc, ok := lookupDoc("seo")
+	if !ok || !seoDoc.Partial() || !strings.Contains(string(seoDoc.Body), "Search Console") {
+		t.Fatal("seo playbook")
 	}
 	cm, ok := lookupDoc("community")
 	if !ok || !strings.Contains(string(cm.Body), "lms.themobileprof.com") {

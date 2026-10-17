@@ -3,28 +3,28 @@
 <ol class="steps">
   <li>Owner adds a person on <a href="/admin/users">People</a>: office seat, then <strong>Desks</strong>. Ticking a desk grants <code>web_admin</code>.</li>
   <li>That person signs in. One desk → that worker. Several → the picker. They do not see Board unless they are owner or BDM.</li>
-  <li>On a worker: <strong>Ask</strong> files a proposed job. Chat complements. <strong>Accept</strong> / Turn away stamps. Chat never stamps.</li>
-  <li>Specialized books (Legal, HR, Projects, Community mandates, Defaults) stay one click from the desk that owns them, and still require that desk assignment.</li>
+  <li>On a worker: <strong>Ask</strong> files a proposed job. Chat complements. <strong>Accept</strong> / Turn away stamps. Chat never stamps. The brass <strong>How?</strong> button (bottom right) is the desk guide — it does not file a job.</li>
+  <li>Specialized books (Legal, SEO, Delivery, Projects, Community mandates, Defaults) stay one click from the desk that owns them, and still require that desk assignment.</li>
 </ol>
 
 <p class="hint">Office nav is Board, Projects, People, then an Office menu (Defaults, Docs, n8n). Assigned workers sit under <strong>Workers</strong>. Row ⋮ menus do not scroll the table — they overlay.</p>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · add a handler</p>
-  <p class="you-say">People → Add person → Role <code>assistant</code> → Desks → tick HR (and only HR) → Add.</p>
-  <p class="expect">They sign in and land on <code>/admin/desks/hr</code>. No Board, no eight worker links. Tick Legal later if they should also file NDAs.</p>
+  <p class="you-say">People → Add person → Role <code>assistant</code> → hours/week 6 → Desks → tick Delivery (and only Delivery) → Add. Seat them on a project Face tab.</p>
+  <p class="expect">They sign in and land on <code>/admin/desks/delivery</code>. No Board, no eight worker links. Tick Legal later if they should also file NDAs.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 02 · owner wants Legal too</p>
-  <p class="you-say">People → your own card → Desks → tick Legal (and HR if you handle hiring).</p>
+  <p class="you-say">People → your own card → Desks → tick Legal (and Delivery if you handle the PM book).</p>
   <p class="expect">Owner still lands on Board. Workers menu grows those links. <code>/admin/legal</code> stops 403.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 03 · WhatsApp books right</p>
   <p class="you-say">People → Rights → <code>whatsapp_accounts</code> on the founder number <code>2348033954301</code>.</p>
-  <p class="expect">Customer WhatsApp <code>/accounts</code> <code>/ops</code> <code>/legal</code> <code>/hr</code> only work for allowlisted numbers. A stranger gets the community access-denied reply. Books never runs.</p>
+  <p class="expect">Customer WhatsApp <code>/accounts</code> <code>/ops</code> <code>/legal</code> <code>/seo</code> only work for allowlisted numbers. <code>/today</code> is Delivery if that number is on People. A stranger gets the community access-denied reply. Books never runs.</p>
 </section>
 
 <section class="specimen">

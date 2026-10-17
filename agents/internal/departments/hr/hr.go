@@ -7,23 +7,11 @@ import (
 	"strings"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
-	"github.com/samuel/ai-workers/agents/internal/departments"
 	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
 //go:embed templates/*.md
 var templateFS embed.FS
-
-const overlay = `You are the HR clerk for TheMobileProf Technologies (Lagos), the only CAC-registered company in this office.
-Projects are bets, not companies. A project "cofounder" is a public face, not a director.
-You draft JDs and score applicants against an open JD. You do not hire, fire, or email anyone.
-You do not run PAYE, pension, or NHF. Tentacle (later) owns statutory payroll. Accounts pays when a human asks.
-Do not invent labour-act section numbers. cannot_hire and cannot_send are always true.
-Humans Accept on the company desk. Until then a role or application is a proposal.
-Prefer contractor or intern language unless the handler explicitly wants employment.
-Nigerian/West African commercial English. Plain sentences.
-task_type must be "hr".
-structured_data.prompt_version is "v1".`
 
 type Spec struct {
 	ID    string
@@ -53,61 +41,18 @@ func Lookup(id string) (Spec, bool) {
 }
 
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
-	data := contract.ContextObject(req.ContextData)
-	action, specID := infer(data, req.TaskDescription)
-	system := overlay + "\n\nAction: " + action
-	if spec, ok := Lookup(specID); ok {
-		body, err := templateFS.ReadFile("templates/" + spec.File)
-		if err != nil {
-			return contract.Fail("missing HR template: " + spec.ID), err
-		}
-		system += "\nTemplate id: " + spec.ID + " (" + spec.Label + ")\n\nUse this skeleton. Fill the role, project, and must-haves from context. Leave blanks as [TO BE COMPLETED].\n\n" + string(body)
-	} else if action == "draft_jd" {
-		system += "\nNo catalog template matched. Draft a short TMP JD and set template to contractor unless they clearly asked for intern, assistant, or employee."
-	} else {
-		system += "\nScore or parse the pasted application against open_roles in context. If none match, set role_slug empty and recommendation unclear."
-	}
-	system += `
-
-structured_data MUST include:
-- action: draft_jd | ingest | score | explain
-- template: intern | contractor | assistant | employee | none
-- kind: intern | contractor | assistant | employee
-- role_slug (from open_roles or a new slug; never invent a company)
-- role_title
-- project_slug (from context if present)
-- applicant_name, applicant_email, applicant_phone (from the paste; never invent an email)
-- score: integer 0–100 (0 if drafting a JD)
-- recommendation: shortlist | reject | unclear
-- reasons: string[] (why they fit or fail the JD; required on score/explain)
-- jd: full JD text when action is draft_jd
-- cv_text: the application text when ingest/score
-- cannot_hire: true
-- cannot_send: true
-- save_role: true only when jd is a full draft
-- save_application: true only when there is an applicant to file
-output_text: short next human step. Do not paste the full JD or CV.`
-
-	resp, err := departments.Run(ctx, c, system, departments.UserPrompt(req.TaskDescription, data))
-	if resp.StructuredData == nil {
-		resp.StructuredData = map[string]any{}
-	}
-	resp.StructuredData["task_type"] = "hr"
-	resp.StructuredData["action"] = action
-	resp.StructuredData["cannot_hire"] = true
-	resp.StructuredData["cannot_send"] = true
-	resp.StructuredData["prompt_version"] = "v1"
-	if specID != "" {
-		if _, ok := resp.StructuredData["template"]; !ok {
-			resp.StructuredData["template"] = specID
-		}
-		if spec, ok := Lookup(specID); ok {
-			if _, exists := resp.StructuredData["kind"]; !exists {
-				resp.StructuredData["kind"] = spec.Kind
-			}
-		}
-	}
-	return resp, err
+	return contract.Response{
+		Status: contract.StatusSuccess,
+		OutputText: "Recruiting is off. To give someone work, the owner adds them on People, sets hours per week, and seats them on a project Face tab. Delivery then assigns tasks. This desk does not hire or file applicants.",
+		StructuredData: map[string]any{
+			"task_type":    "hr_closed",
+			"cannot_hire":  true,
+			"cannot_send":  true,
+			"speak":        true,
+			"save_role":    false,
+			"save_application": false,
+		},
+	}, nil
 }
 
 func infer(data map[string]any, task string) (action, templateID string) {

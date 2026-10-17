@@ -37,6 +37,7 @@ func (m CommunityMandate) JSON() map[string]any {
 		"whatsapp_group_id": m.WhatsAppGroupID,
 		"telegram_chat_id":  m.TelegramChatID,
 		"active":            m.Active,
+		"project_slug":      mandateProjectSlug(m.Slug),
 	}
 }
 
