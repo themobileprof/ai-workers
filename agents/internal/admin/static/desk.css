@@ -454,6 +454,7 @@ textarea {
   align-items: start;
   border-left: 4px solid var(--room);
 }
+.tasks > li.dim { opacity: 0.48; }
 .tasks .who { margin: 0; opacity: 0.7; font-size: 0.85rem; }
 .tasks .row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .more {

@@ -3,6 +3,7 @@ package admin
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
@@ -188,12 +189,11 @@ func TestBoardHasThreeTabs(t *testing.T) {
 		data pageData
 		min  int
 	}{
-		{"home", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2}, 3},
 		{"delivery", pageData{Title: "Delivery", Nav: "delivery", User: user, DeliveryBets: []DeliveryBet{{Project: p, Engagement: EngagementFor("testing"), Open: 0, Slots: 3}}}, 3},
 		{"legal", pageData{Title: "Legal", Nav: "legal", User: user}, 3},
 		{"seo", pageData{Title: "SEO", Nav: "seo", User: user, CanSEO: true}, 3},
 		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
-		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, 3},
+		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds()}, 6},
 		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{})}, 3},
 		{"users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, 3},
 	}
@@ -216,6 +216,26 @@ func TestBoardHasThreeTabs(t *testing.T) {
 	}
 	if strings.Contains(homeBuf.String(), `data-tab="desks"`) {
 		t.Fatal("board must not list worker desks")
+	}
+	ev := ProjectEvent{
+		ID: 1, ProjectID: 7, ProjectName: "Apex Clerk", Title: "UNILAG", Kind: "training",
+		StartsOn: time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC),
+		EndsOn:   time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC),
+		Status:   "planned",
+	}
+	var coming strings.Builder
+	if err := srv.pages["home"].ExecuteTemplate(&coming, "layout.html", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, Events: []ProjectEvent{ev}}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(coming.String(), "Coming up") || !strings.Contains(coming.String(), "UNILAG") {
+		t.Fatal("board must list coming dates")
+	}
+	var projBuf strings.Builder
+	if err := srv.pages["projects"].ExecuteTemplate(&projBuf, "layout.html", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds(), Events: []ProjectEvent{ev}}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(projBuf.String(), `data-tab="dates"`) || !strings.Contains(projBuf.String(), "Save date") {
+		t.Fatal("project Dates tab")
 	}
 }
 

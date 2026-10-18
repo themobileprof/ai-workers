@@ -28,6 +28,10 @@ func TestParseFAQ(t *testing.T) {
 	if n < 2 || !strings.Contains(strings.ToLower(hit.A), "people") {
 		t.Fatalf("hit=%q n=%d", hit.A, n)
 	}
+	event, n := bestFAQ("how do I track a training at UNILAG on the academy project", got)
+	if n < 2 || !strings.Contains(strings.ToLower(event.A), "dates") {
+		t.Fatalf("event faq=%q n=%d", event.A, n)
+	}
 }
 
 func TestStripHTML(t *testing.T) {
@@ -70,6 +74,13 @@ func TestAnswerGuideWithoutLLMUsesFAQ(t *testing.T) {
 	})
 	if got.Unsure || !strings.Contains(strings.ToLower(got.Answer), "people") {
 		t.Fatalf("%+v", got)
+	}
+	event := s.answerGuide(context.Background(), guideInput{
+		User:     User{Name: "Ada", Role: "owner"},
+		Question: "How do I track a UNILAG training on TheMobileProf Academy until delivery?",
+	})
+	if event.Unsure || !strings.Contains(strings.ToLower(event.Answer), "dates") {
+		t.Fatalf("%+v", event)
 	}
 }
 

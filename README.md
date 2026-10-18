@@ -14,7 +14,7 @@ Sign in on `/admin/`. You get Board, Projects, People, Defaults, Docs, Guide, n8
 The brass **How?** button (bottom right on every signed-in page except n8n) is a desk guide. It answers what to do and which screen to open. It does not file a job and does not stamp Accept. Questions are stored; owner/BDM review them at `/admin/guide` (download `/admin/guide/asked.md`) and fold durable answers into `agents/internal/admin/guide/faq.md` in Cursor.
 
 - **People** — add a human, pick an office seat, tick the **handler desks** they actually run. Those workers appear when **that person** signs in, not on the Board. Ticking a desk grants `web_admin`.
-- **Projects** — incubated bets (MomLaunchpad, Mechazone, HomeGauge, …). Journey/gate is a stamp. Ask placement writes a proposal; Accept moves it.
+- **Projects** — incubated bets (MomLaunchpad, Mechazone, HomeGauge, …). Journey/gate is a stamp. Ask placement writes a proposal; Accept moves it. **Dates** holds a campus training or field week until you stamp Delivered; Board shows Coming up.
 - **Defaults** — Zoho org and chart-of-accounts ids. Paystack deposit account may stay blank until you create a **Bank** row in Books. Secrets stay in the VM `.env` / n8n Credentials.
 
 If you also handle Legal or SEO, tick those desks on your own People card or the books 403. Delivery is on the Board rail for owner/BDM.

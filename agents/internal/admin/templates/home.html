@@ -3,10 +3,26 @@
   <div>
     <p class="do">Board · owner / BDM</p>
     <h2>Stamp what moved. Seat who is missing.</h2>
-    <p>Each card is a bet under this one company. Open it to Accept a proposal or write this week’s line. Workers do not live here — they appear when a person you ticked on People signs in.</p>
+    <p>Each card is a bet under this one company. Open it to Accept a proposal, put a campus date on Dates, or write this week’s line. Workers do not live here — they appear when a person you ticked on People signs in.</p>
   </div>
   <a class="ghost fill now-go" href="/admin/projects">Open the book</a>
 </aside>
+
+{{if .Events}}
+<h3>Coming up</h3>
+<ol class="tasks">
+  {{range .Events}}
+  <li>
+    <div>
+      <p class="kicker">{{.ProjectName}} · {{.KindLabel}}</p>
+      <h3><a href="/admin/projects/{{.ProjectID}}?tab=dates">{{.Title}}</a></h3>
+      <p class="who">{{.WhenLabel}}{{if .Venue}} · {{.Venue}}{{end}}{{if .Outcome}} → {{.Outcome}}{{end}}</p>
+    </div>
+    <a class="ghost" href="/admin/projects/{{.ProjectID}}?tab=dates">Open</a>
+  </li>
+  {{end}}
+</ol>
+{{end}}
 
 {{if .Projects}}
 <ol class="wall">
@@ -18,6 +34,7 @@
     </div>
     <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
     {{if .Proposal}}<p class="flag">Proposal waiting — open and stamp</p>{{end}}
+    {{if .NextEvent}}<p class="flag">{{.NextEvent.WhenLabel}} · {{.NextEvent.Title}}</p>{{end}}
     {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{else}}<p class="hint">No this-week line.</p>{{end}}
     <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
   </li>

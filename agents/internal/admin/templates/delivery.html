@@ -3,7 +3,7 @@
   <div>
     <p class="do">Delivery · {{statusCount .WorkItems "open"}} open</p>
     <h2>Mark today done. The stamp caps how many.</h2>
-    <p>Hours/week on People is pace. Seat on Face to onboard. Ask plan proposes; you Accept. <code>/approve</code> is not this.</p>
+    <p>Hours/week on People is pace. Seat on Face to onboard. Campus dates live on the bet’s Dates tab — file a task here, stamp Delivered there. Ask plan proposes; you Accept. <code>/approve</code> is not this.</p>
   </div>
   <div class="actions now-go">
     <a class="ghost" href="/admin/desks/delivery">Job chat</a>
@@ -19,6 +19,21 @@
   </nav>
   <div class="tab-panels">
     <section role="tabpanel" id="tab-today" data-tab="today">
+      {{if .Events}}
+      <h3>Coming up</h3>
+      <ol class="tasks">
+        {{range .Events}}
+        <li>
+          <div>
+            <p class="kicker">{{.ProjectName}} · {{.KindLabel}}</p>
+            <h3><a href="/admin/projects/{{.ProjectID}}?tab=dates">{{.Title}}</a></h3>
+            <p class="who">{{.WhenLabel}}{{if .Venue}} · {{.Venue}}{{end}}{{if .Outcome}} → {{.Outcome}}{{end}}</p>
+          </div>
+          <a class="ghost" href="/admin/projects/{{.ProjectID}}?tab=dates">Dates</a>
+        </li>
+        {{end}}
+      </ol>
+      {{end}}
       {{if .WorkItems}}
       <ol class="tasks">
         {{range .WorkItems}}

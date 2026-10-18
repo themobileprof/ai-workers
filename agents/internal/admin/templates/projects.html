@@ -57,7 +57,7 @@
   <div>
     <p class="do">This bet · {{.Project.StageLabel}}</p>
     <h2>{{.Project.Name}}</h2>
-    <p>{{.Project.OneLiner}}{{if .Project.Proposal}} A proposal is waiting on Stamp — Accept moves the gate.{{else}} Write this week on Card. Seat a face so Delivery can assign work.{{end}}</p>
+    <p>{{.Project.OneLiner}}{{if .Project.Proposal}} A proposal is waiting on Stamp — Accept moves the gate.{{else if .Project.NextEvent}} Next: {{.Project.NextEvent.WhenLabel}} · {{.Project.NextEvent.Title}}. File Delivery tasks. Stamp Delivered after it happened.{{else}} Write this week on Card. Put a campus training on Dates. Seat a face so Delivery can assign work.{{end}}</p>
   </div>
   <span class="stamp {{.Project.StageStamp}}">{{.Project.StageLabel}}</span>
 </aside>
@@ -67,6 +67,7 @@
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
     <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
+    <button type="button" role="tab" data-tab="dates" aria-controls="tab-dates">Dates <span class="count">{{len .Events}}</span></button>
     <button type="button" role="tab" data-tab="work" aria-controls="tab-work">Work <span class="count">{{len .WorkItems}}</span></button>
     <button type="button" role="tab" data-tab="face" aria-controls="tab-face">Face</button>
   </nav>
@@ -300,6 +301,75 @@
       </form>
     </section>
 
+    <section role="tabpanel" id="tab-dates" data-tab="dates">
+      <h3>Dated work on this bet</h3>
+      <p class="hint">A training, field week, or launch that must survive This week changing. Community mandates stay Telegram rooms — do not park UNILAG there. Stamp Delivered when it happened. <code>/approve</code> is still only the info@ draft.</p>
+      {{if .Events}}
+      <ol class="tasks">
+        {{range .Events}}
+        <li class="{{if not .Planned}}dim{{end}}">
+          <div>
+            <p class="kicker">{{.KindLabel}} · {{.WhenLabel}}</p>
+            <h3>{{.Title}}</h3>
+            <p class="who">{{if .Venue}}{{.Venue}}{{end}}{{if .Audience}} · {{.Audience}}{{end}}{{if .Outcome}} → {{.Outcome}}{{end}}</p>
+            <p class="hint"><span class="stamp {{.StatusStamp}}">{{.Status}}</span></p>
+          </div>
+          {{if .Planned}}
+          <div class="row-actions">
+            <form class="inline" method="post" action="/admin/projects/{{$.Project.ID}}/events/{{.ID}}/delivered"><button type="submit">Delivered</button></form>
+            <form class="inline" method="post" action="/admin/projects/{{$.Project.ID}}/events/{{.ID}}/skip"><button class="ghost" type="submit">Skip</button></form>
+          </div>
+          {{end}}
+        </li>
+        {{end}}
+      </ol>
+      {{range .Events}}
+      {{if .Planned}}
+      <form method="post" action="/admin/projects/{{$.Project.ID}}/events/{{.ID}}/task" class="person add">
+        <p class="hint">File a Delivery task due {{.WhenLabel}}. Stamp caps still apply.</p>
+        <div class="fields">
+          <label>Task for {{.Title}}<input name="title" placeholder="Confirm UNILAG lab"></label>
+          <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
+        </div>
+        <div class="actions"><button type="submit">Add task on Delivery</button></div>
+      </form>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">No dates yet. Add the UNILAG week (or any campus training) below.</p>
+      {{end}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/events" class="person add">
+        <p class="hint">Name the date. Copy it onto This week if that line should be the agenda until you deliver.</p>
+        <div class="fields">
+          <label>What
+            <input name="title" required placeholder="Linux on Mobile — UNILAG">
+          </label>
+          <label>Kind
+            <select name="kind">
+              {{range .EventKinds}}
+              <option value="{{.ID}}">{{.Label}}</option>
+              {{end}}
+            </select>
+          </label>
+        </div>
+        <div class="fields">
+          <label>Starts<input name="starts_on" type="date" required></label>
+          <label>Ends<input name="ends_on" type="date"></label>
+        </div>
+        <div class="fields">
+          <label>Where<input name="venue" placeholder="University of Lagos"></label>
+          <label>Who<input name="audience" placeholder="Final year Computer Science"></label>
+        </div>
+        <label>What success looks like
+          <input name="outcome" placeholder="sign-ups for lms.themobileprof.com">
+        </label>
+        <label class="chk"><input type="checkbox" name="set_week" value="on" checked> Set as this week’s line</label>
+        <div class="actions">
+          <button type="submit">Save date</button>
+        </div>
+      </form>
+    </section>
+
     <section role="tabpanel" id="tab-work" data-tab="work">
       <h3>Work on this bet</h3>
       {{range .DeliveryBets}}
@@ -408,13 +478,28 @@
   <div>
     <p class="do">Projects · incubation</p>
     <h2>One card per bet. Stamp the gate. Write this week.</h2>
-    <p>Not a second company. Fundable means paying customers. A glowing card has a proposal the worker cannot commit.</p>
+    <p>Not a second company. Fundable means paying customers. A glowing card has a proposal the worker cannot commit. Campus trainings live on Dates.</p>
   </div>
   <a class="ghost fill now-go" href="/admin/projects/new">
     <svg class="ico"><use href="#i-plus"/></svg>
     Open a project
   </a>
 </aside>
+{{if .Events}}
+<h3>Coming up</h3>
+<ol class="tasks">
+  {{range .Events}}
+  <li>
+    <div>
+      <p class="kicker">{{.ProjectName}} · {{.KindLabel}}</p>
+      <h3><a href="/admin/projects/{{.ProjectID}}?tab=dates">{{.Title}}</a></h3>
+      <p class="who">{{.WhenLabel}}{{if .Venue}} · {{.Venue}}{{end}}</p>
+    </div>
+    <a class="ghost" href="/admin/projects/{{.ProjectID}}?tab=dates">Open</a>
+  </li>
+  {{end}}
+</ol>
+{{end}}
 {{if .Projects}}
 <ol class="wall">
   {{range .Projects}}
@@ -426,6 +511,7 @@
     <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
     <p>{{.OneLiner}}</p>
     {{if .Proposal}}<p class="flag">Proposal waiting</p>{{end}}
+    {{if .NextEvent}}<p class="flag">{{.NextEvent.WhenLabel}} · {{.NextEvent.Title}}</p>{{end}}
     {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{end}}
     <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}Face: you / BDM{{end}}</p>
   </li>

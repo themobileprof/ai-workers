@@ -57,3 +57,11 @@ Open Delivery (`/admin/delivery`) and stamp the item done (or skip). `/today` ch
 ## What should a field person do?
 
 They often have no login. The this-week line on the project card is the mission. They go to the place and bring named people back. The desk stamps GO/PIVOT/KILL. They are not a director of TheMobileProf.
+
+## How do I track a training, campus week, or dated event on a project?
+
+Open the bet (`/admin/projects` → TheMobileProf Academy). Open the **Dates** tab. Name it (e.g. Linux on Mobile — UNILAG), set 17–19 Nov 2026, venue, audience, and what success looks like (sign-ups for lms.themobileprof.com). Tick “Set as this week’s line” so Board keeps the agenda. Stamp **Delivered** when it happened.
+
+Then file the work: on that date, “Add task on Delivery” (or Delivery itself). The project stamp still caps open tasks. Seat campus helpers on Face as assistant.
+
+Do not invent a second company. Do not put the event only in Community mandates (those are Academy Telegram student rooms). Do not use `/approve`. The intern-mission loop is still later — Dates + Delivery is the memory.

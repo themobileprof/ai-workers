@@ -93,6 +93,8 @@ type pageData struct {
 	SeoKinds       []seo.Spec
 	CanSEO         bool
 	GuideAsks      []GuideAsk
+	Events         []ProjectEvent
+	EventKinds     []stageSpec
 }
 
 type kv struct {
@@ -186,6 +188,10 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/delivery/ask", s.deliveryAskPOST)
 	mux.HandleFunc("POST /admin/delivery/pace", s.deliveryPacePOST)
 	mux.HandleFunc("POST /admin/projects/{id}/work", s.projectWorkPOST)
+	mux.HandleFunc("POST /admin/projects/{id}/events", s.projectEventPOST)
+	mux.HandleFunc("POST /admin/projects/{id}/events/{eid}/delivered", s.projectEventStamp("delivered"))
+	mux.HandleFunc("POST /admin/projects/{id}/events/{eid}/skip", s.projectEventStamp("skipped"))
+	mux.HandleFunc("POST /admin/projects/{id}/events/{eid}/task", s.projectEventTaskPOST)
 	mux.HandleFunc("GET /admin/desks", s.desksIndex)
 	mux.HandleFunc("GET /admin/desks/{slug}", s.deskGET)
 	mux.HandleFunc("POST /admin/desks/{slug}/ask", s.deskAskPOST)

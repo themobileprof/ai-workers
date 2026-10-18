@@ -130,8 +130,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Incubation",
 		Path:     "/admin/projects",
 		Wire:     "live",
-		Summary:  "Bets under one company. Field humans bring named next steps. The worker proposes a gate; you stamp.",
-		Prefixes: []string{"Ask placement", "/validate", "this-week note"},
+		Summary:  "Bets under one company. Field humans bring named next steps. Dates hold a campus training until you deliver. The worker proposes a gate; you stamp.",
+		Prefixes: []string{"Ask placement", "/validate", "Dates", "this-week note"},
 	},
 	{
 		Slug:     "growth",
@@ -193,7 +193,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Project PM",
 		Path:     "POST /departments/delivery",
 		Wire:     "live",
-		Summary:  "Tasks across bets. Stamp sets how many. Pace is hours/week on People. Seat on Face to onboard. /today and /idea. Academy is one bet.",
+		Summary:  "Tasks across bets. Stamp sets how many. Pace is hours/week on People. Seat on Face to onboard. /today sees upcoming Dates. Academy is one bet.",
 		Prefixes: []string{"/today", "/pm", "/idea"},
 	},
 	{

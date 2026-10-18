@@ -49,6 +49,8 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	allow, _ := s.store.WhatsAppAccounts(r.Context())
 	settings, _ := s.store.Settings(r.Context())
 	projects, _ := s.store.ListProjects(r.Context())
+	events, _ := s.store.ListProjectEvents(r.Context(), 0, true)
+	attachNextEvents(projects, events)
 	s.render(w, "home", pageData{
 		Title:        "Board",
 		Nav:          "home",
@@ -58,6 +60,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		UserCount:    len(users),
 		SettingCount: len(settings),
 		Projects:     projects,
+		Events:       events,
 	})
 }
 
@@ -67,7 +70,9 @@ func (s *Server) projectsGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	projects, err := s.store.ListProjects(r.Context())
-	data := pageData{Title: "Projects", Nav: "projects", User: u, Projects: projects, Stages: projectStages(), Journeys: journeys.All()}
+	events, _ := s.store.ListProjectEvents(r.Context(), 0, true)
+	attachNextEvents(projects, events)
+	data := pageData{Title: "Projects", Nav: "projects", User: u, Projects: projects, Stages: projectStages(), Journeys: journeys.All(), Events: events}
 	if err != nil {
 		data.Error = err.Error()
 	}
@@ -104,6 +109,9 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 	flash := placementFlash(okq)
 	if flash == "" {
 		flash = legalFlash(okq)
+	}
+	if flash == "" {
+		flash = eventFlash(okq)
 	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
@@ -258,6 +266,8 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
+	upcoming, _ := s.store.ListProjectEvents(r.Context(), 0, true)
+	attachNextEvents(projects, upcoming)
 	out := make([]map[string]any, 0, len(projects))
 	for _, p := range projects {
 		members := make([]map[string]any, 0, len(p.Members))
@@ -270,7 +280,7 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 				"seat":    m.Seat,
 			})
 		}
-		out = append(out, map[string]any{
+		row := map[string]any{
 			"id":         p.ID,
 			"name":       p.Name,
 			"slug":       p.Slug,
@@ -283,7 +293,11 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 			"proposal":   p.Proposal,
 			"members":    members,
 			"updated_at": p.UpdatedAt,
-		})
+		}
+		if p.NextEvent != nil {
+			row["next_event"] = eventJSON(*p.NextEvent)
+		}
+		out = append(out, row)
 	}
 	writeJSON(w, map[string]any{"projects": out})
 }
@@ -292,6 +306,14 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
 	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
 	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
+	events, _ := s.store.ListProjectEvents(ctx, p.ID, false)
+	for _, e := range events {
+		if e.Planned() {
+			ev := e
+			p.NextEvent = &ev
+			break
+		}
+	}
 	for i := range roster {
 		roster[i].HoursPerWeek = s.store.UserPace(ctx, roster[i].ID)
 	}
@@ -319,6 +341,8 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		SeoKinds:       seo.Specs(),
 		WorkItems:      items,
 		DeliveryBets:   []DeliveryBet{{Project: p, Engagement: eng, Open: open, Slots: slots}},
+		Events:         events,
+		EventKinds:     eventKinds(),
 		Error:          errMsg,
 		Flash:          flash,
 	}

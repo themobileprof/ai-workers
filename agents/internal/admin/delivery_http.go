@@ -110,6 +110,7 @@ func (s *Server) deliveryView(r *http.Request, u *User, errMsg, flash string) pa
 		}
 		bets = append(bets, DeliveryBet{Project: p, Engagement: eng, Open: open, Slots: slots})
 	}
+	events, _ := s.store.ListProjectEvents(r.Context(), 0, true)
 	return pageData{
 		Title:        "Delivery",
 		Nav:          "delivery",
@@ -118,6 +119,7 @@ func (s *Server) deliveryView(r *http.Request, u *User, errMsg, flash string) pa
 		Projects:     projects,
 		Users:        users,
 		DeliveryBets: bets,
+		Events:       events,
 		CanAsk:       s.workers != nil && s.workers["delivery"] != nil,
 		Error:        errMsg,
 		Flash:        flash,

@@ -125,7 +125,7 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("desk playbook")
 	}
 	proj, ok := lookupDoc("projects")
-	if !ok || !proj.Live() || !strings.Contains(string(proj.Body), "this-week") {
+	if !ok || !proj.Live() || !strings.Contains(string(proj.Body), "this-week") || !strings.Contains(string(proj.Body), "Dates") {
 		t.Fatal("projects playbook")
 	}
 	prod, ok := lookupDoc("product-dev")

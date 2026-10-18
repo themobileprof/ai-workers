@@ -25,6 +25,7 @@ type Project struct {
 	Gate      string
 	Proposal  *Proposal
 	Members   []ProjectMember
+	NextEvent *ProjectEvent
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -142,6 +143,21 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS url TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS journey TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS gate TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS proposal JSONB;
+CREATE TABLE IF NOT EXISTS project_events (
+  id BIGSERIAL PRIMARY KEY,
+  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'training',
+  starts_on DATE NOT NULL,
+  ends_on DATE,
+  venue TEXT NOT NULL DEFAULT '',
+  audience TEXT NOT NULL DEFAULT '',
+  outcome TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'planned',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS project_events_soon_idx ON project_events (starts_on) WHERE status = 'planned';
 `)
 	return err
 }

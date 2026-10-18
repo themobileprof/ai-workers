@@ -373,6 +373,24 @@ func (s *Store) deliveryOverlay(ctx context.Context, actor *User, projectSlug st
 			out["project_slug"] = slug
 		}
 	}
+	upcoming, _ := s.ListProjectEvents(ctx, 0, true)
+	var visibleIDs map[int64]bool
+	if actor != nil {
+		visibleIDs = map[int64]bool{}
+		for _, p := range visible {
+			visibleIDs[p.ID] = true
+		}
+	}
+	filtered := upcoming
+	if visibleIDs != nil {
+		filtered = nil
+		for _, e := range upcoming {
+			if visibleIDs[e.ProjectID] {
+				filtered = append(filtered, e)
+			}
+		}
+	}
+	out["upcoming_events"] = upcomingEventJSON(filtered)
 	return out
 }
 
@@ -399,6 +417,13 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 	if err != nil {
 		return nil
 	}
+	projects, _ := s.ListProjects(ctx)
+	byProject := map[int64]Project{}
+	for _, p := range projects {
+		byProject[p.ID] = p
+	}
+	upcoming, _ := s.ListProjectEvents(ctx, 0, true)
+	today := time.Now()
 	var out []map[string]any
 	for _, u := range users {
 		if !u.Active || u.Phone == "" {
@@ -422,11 +447,18 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 			}
 			lines = append(lines, line)
 		}
-		if len(lines) == 0 {
+		coming := comingEventLines(u, upcoming, byProject, today)
+		if len(lines) == 0 && len(coming) == 0 {
 			continue
 		}
-		text := "Today on the desk (" + u.Name + "):\n- " + strings.Join(lines, "\n- ")
-		text += "\n\nReply /today done 1, still on 2 — or open Delivery. Planning stays on the desk."
+		text := "Today on the desk (" + u.Name + "):"
+		if len(lines) > 0 {
+			text += "\n- " + strings.Join(lines, "\n- ")
+		}
+		if len(coming) > 0 {
+			text += "\nComing up:\n- " + strings.Join(coming, "\n- ")
+		}
+		text += "\n\nReply /today done 1, still on 2 — or open Delivery. Dates live on the bet."
 		out = append(out, map[string]any{
 			"user_id": u.ID, "name": u.Name, "phone": u.Phone, "text": text, "speak": true,
 		})
