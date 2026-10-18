@@ -34,7 +34,7 @@ func TestCommunityTemplateRenders(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := buf.String()
-	if !strings.Contains(got, "Community mandates") || !strings.Contains(got, "New mandate") {
+	if !strings.Contains(got, "Academy Telegram") || !strings.Contains(got, "New mandate") {
 		t.Fatal(got)
 	}
 	m := CommunityMandate{ID: 1, Title: "Academy LMS", SiteURL: "https://lms.themobileprof.com", Brief: "Host the room.", Catalog: "Mini, Path, Professional", Active: true}

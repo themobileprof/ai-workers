@@ -12,11 +12,14 @@
     {{end}}{{end}}
   </aside>
   <div class="playbook">
-    <section class="hero">
-      <p class="kicker">Field playbook</p>
-      <h2>Hand them a sheet</h2>
-      <p class="lede">Start with <a href="/admin/docs/you">How you fit</a>. Print the page that matches their People card. Worker pages below are specimens for the person who runs that desk — JSON and later-boxes live there, not on the role sheets.</p>
-    </section>
+    <aside class="now" aria-label="What to do">
+      <div>
+        <p class="do">Docs · print a sheet</p>
+        <h2>Start at How you fit. Then their seat.</h2>
+        <p>Player sheets have no JSON. Worker pages below are specimens for the handler — later-boxes live there.</p>
+      </div>
+      <a class="ghost fill now-go" href="/admin/docs/you">How you fit</a>
+    </aside>
     <h3>Your sheet</h3>
     <ol class="doc-index">
       {{range .Docs}}{{if .Player}}

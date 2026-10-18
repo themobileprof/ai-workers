@@ -1,10 +1,12 @@
 {{define "content"}}
 {{if .Amend}}
-<section class="hero">
-  <p class="kicker">Seeds</p>
-  <h2>Amend defaults</h2>
-  <p class="lede"><a class="quiet" href="/admin/settings">Back to the list</a>. Secrets (Paystack, LLM, Zoho OAuth) stay in <code>.env</code> / n8n, not here.</p>
-</section>
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Defaults · amend</p>
+    <h2>Books ids live here. Tokens do not.</h2>
+    <p><a class="quiet" href="/admin/settings">Back to the ledger</a>. Paystack, LLM, and Zoho OAuth stay in <code>.env</code> / n8n.</p>
+  </div>
+</aside>
 <form method="post" action="/admin/settings" class="settings">
   <div class="tabset" data-tabs data-default="g0">
     <nav class="tabs" role="tablist" aria-label="Defaults">
@@ -35,17 +37,14 @@
   </div>
 </form>
 {{else}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Seeds</p>
-    <h2>Accounts defaults</h2>
-    <p class="lede">n8n Books write, Paystack paid, and CRM upsert read these on every run via <code>GET /internal/v1/settings</code>. WhatsApp allowlist still comes from people with <code>whatsapp_accounts</code>. Seeded ids can be amended, not struck.</p>
+    <p class="do">Defaults · ledger</p>
+    <h2>These ids go to n8n on every Books write.</h2>
+    <p>WhatsApp allowlist still comes from People. Seeded ids can be amended, not struck. Secrets stay off this page.</p>
   </div>
-  <a class="ghost" href="/admin/settings/edit">
-    <svg class="ico"><use href="#i-defaults"/></svg>
-    Amend
-  </a>
-</section>
+  <a class="ghost fill now-go" href="/admin/settings/edit">Amend ids</a>
+</aside>
 {{if .SettingGroups}}
 <div class="tabset" data-tabs data-default="g0">
   <nav class="tabs" role="tablist" aria-label="Defaults">

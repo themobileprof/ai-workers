@@ -1,78 +1,40 @@
 {{define "content"}}
-<section class="hero">
-  <p class="kicker">Tonight’s board</p>
-  <h2>Which bets are moving</h2>
-  <p class="lede">Projects live under TheMobileProf Technologies. Assign handler desks on People — those workers appear when that person signs in, not here.</p>
-</section>
-<div class="tabset" data-tabs data-default="tonight">
-  <nav class="tabs" role="tablist" aria-label="Board">
-    <button type="button" role="tab" data-tab="tonight" aria-controls="tab-tonight">
-      <svg class="ico"><use href="#i-pulse"/></svg> Tonight
-    </button>
-    <button type="button" role="tab" data-tab="projects" aria-controls="tab-projects">
-      <svg class="ico"><use href="#i-projects"/></svg> Projects <span class="count">{{len .Projects}}</span>
-    </button>
-    <button type="button" role="tab" data-tab="whatsapp" aria-controls="tab-whatsapp">
-      <svg class="ico"><use href="#i-whatsapp"/></svg> WhatsApp <span class="count">{{len .Allowlist}}</span>
-    </button>
-  </nav>
-  <div class="tab-panels">
-    <section role="tabpanel" id="tab-tonight" data-tab="tonight">
-      <div class="grid-3">
-        <article class="stat">
-          <svg class="ico"><use href="#i-projects"/></svg>
-          <p class="kicker">Projects</p>
-          <p class="num">{{len .Projects}}</p>
-        </article>
-        <article class="stat">
-          <svg class="ico"><use href="#i-people"/></svg>
-          <p class="kicker">People</p>
-          <p class="num">{{.UserCount}}</p>
-        </article>
-        <article class="stat">
-          <svg class="ico"><use href="#i-whatsapp"/></svg>
-          <p class="kicker">WhatsApp accounts</p>
-          <p class="num">{{len .Allowlist}}</p>
-        </article>
-      </div>
-      <p class="hint">Pulse only. Open Projects for the book, or People to assign a worker to a handler.</p>
-    </section>
-    <section role="tabpanel" id="tab-projects" data-tab="projects">
-      <h3>Projects</h3>
-      <p class="hint">Stage is the agenda. Fundable means paying customers. <a class="quiet" href="/admin/projects">Open the book</a>.</p>
-      {{if .Projects}}
-      <ul class="doc-index">
-        {{range .Projects}}
-        <li class="doc-card">
-          <div class="doc-card-head">
-            <p class="kicker">{{.Slug}}</p>
-            <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
-          </div>
-          <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
-          <p>{{.OneLiner}}</p>
-          {{if .Gate}}<p class="path">{{.JourneyLabel}} · {{.GateLabel}}</p>{{end}}
-          {{if .Proposal}}<p class="hint">Open proposal — stamp not moved.</p>{{end}}
-          {{if .URL}}<p class="path"><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a></p>{{end}}
-          {{if .Notes}}<p class="path">This week: {{.Notes}}</p>{{end}}
-          <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
-        </li>
-        {{end}}
-      </ul>
-      {{else}}
-      <p class="hint">None yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
-      {{end}}
-    </section>
-    <section role="tabpanel" id="tab-whatsapp" data-tab="whatsapp">
-      <h3>Live allowlist</h3>
-      <p class="hint">Active users with the <code>whatsapp_accounts</code> capability. Customer WhatsApp reads this on every message.</p>
-      {{if .Allowlist}}
-      <ul class="phones">
-        {{range .Allowlist}}<li><code>{{.}}</code></li>{{end}}
-      </ul>
-      {{else}}
-      <p class="hint">Empty — nobody on WhatsApp can reach /accounts until you grant the capability.</p>
-      {{end}}
-    </section>
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Board · owner / BDM</p>
+    <h2>Stamp what moved. Seat who is missing.</h2>
+    <p>Each card is a bet under this one company. Open it to Accept a proposal or write this week’s line. Workers do not live here — they appear when a person you ticked on People signs in.</p>
   </div>
-</div>
+  <a class="ghost fill now-go" href="/admin/projects">Open the book</a>
+</aside>
+
+{{if .Projects}}
+<ol class="wall">
+  {{range .Projects}}
+  <li class="{{if .Proposal}}waiting{{else if or (eq .Stage "killed") (eq .Stage "parked")}}dim{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">{{.Slug}}</p>
+      <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+    </div>
+    <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+    {{if .Proposal}}<p class="flag">Proposal waiting — open and stamp</p>{{end}}
+    {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{else}}<p class="hint">No this-week line.</p>{{end}}
+    <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
+  </li>
+  {{end}}
+</ol>
+{{else}}
+<p class="hint">No bets yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
+{{end}}
+
+<p class="pulse">
+  <span><strong>{{len .Projects}}</strong> bets</span>
+  <span><strong>{{.UserCount}}</strong> people</span>
+  <span><strong>{{len .Allowlist}}</strong> WhatsApp numbers</span>
+</p>
+{{if .Allowlist}}
+<p class="hint">Books / legal / SEO on customer WhatsApp: {{range $i, $p := .Allowlist}}{{if $i}}, {{end}}<code>{{$p}}</code>{{end}}. Grant that on a People card.</p>
+{{else}}
+<p class="hint">Nobody is allowlisted for WhatsApp books. Tick <code>whatsapp_accounts</code> on People.</p>
+{{end}}
 {{end}}

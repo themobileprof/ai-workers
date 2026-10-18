@@ -1,15 +1,15 @@
 {{define "content"}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Across bets</p>
-    <h2>Delivery</h2>
-    <p class="lede">Stamp sets how many open tasks a bet may hold. Your hours/week cap the rest. Academy is one bet. Seat a person on the Face tab to give them work — that is onboarding, not hiring.</p>
+    <p class="do">Delivery · {{statusCount .WorkItems "open"}} open</p>
+    <h2>Mark today done. The stamp caps how many.</h2>
+    <p>Hours/week on People is pace. Seat on Face to onboard. Ask plan proposes; you Accept. <code>/approve</code> is not this.</p>
   </div>
-  <div class="actions">
-    <a class="ghost" href="/admin/desks/delivery"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
-    <a class="ghost" href="/admin/docs/delivery"><svg class="ico"><use href="#i-docs"/></svg> Sheet</a>
+  <div class="actions now-go">
+    <a class="ghost" href="/admin/desks/delivery">Job chat</a>
+    <a class="ghost" href="/admin/docs/delivery">Sheet</a>
   </div>
-</section>
+</aside>
 
 <div class="tabset" data-tabs data-default="today">
   <nav class="tabs" role="tablist" aria-label="Delivery">
@@ -20,64 +20,55 @@
   <div class="tab-panels">
     <section role="tabpanel" id="tab-today" data-tab="today">
       {{if .WorkItems}}
-      <div class="ledger">
-      <table class="roster">
-        <thead>
-          <tr>
-            <th>Bet</th>
-            <th>Task</th>
-            <th>Who</th>
-            <th>Hours</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .WorkItems}}
-          <tr>
-            <td>{{.Project}}<br><span class="stamp {{if eq .Status "open"}}brass{{else if eq .Status "done"}}ok{{else}}dark{{end}}">{{.Status}} · {{.Stage}}</span></td>
-            <td><strong>{{.Title}}</strong>{{if .Due}}<br><span class="hint">due {{.Due}}</span>{{end}}</td>
-            <td>{{if .Assignee}}{{.Assignee}}{{else}}unassigned{{end}}</td>
-            <td>{{.Hours}}</td>
-            <td class="row-actions">
-              {{if eq .Status "open"}}
-              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done"><button type="submit">Done</button></form>
-              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/skip"><button class="ghost" type="submit">Skip</button></form>
-              {{end}}
-            </td>
-          </tr>
+      <ol class="tasks">
+        {{range .WorkItems}}
+        <li>
+          <div>
+            <p class="kicker">{{.Project}} · {{.Stage}}</p>
+            <h3>{{.Title}}</h3>
+            <p class="who">{{if .Assignee}}{{.Assignee}}{{else}}unassigned{{end}} · {{.Hours}}h{{if .Due}} · due {{.Due}}{{end}} · {{.Status}}</p>
+          </div>
+          {{if eq .Status "open"}}
+          <div class="row-actions">
+            <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done"><button type="submit">Done</button></form>
+            <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/skip"><button class="ghost" type="submit">Skip</button></form>
+          </div>
           {{end}}
-        </tbody>
-      </table>
-      </div>
+        </li>
+        {{end}}
+      </ol>
       {{else}}
       <p class="hint">No tasks yet. Add one on a selling or testing bet, or Ask plan.</p>
       {{end}}
-      <form method="post" action="/admin/delivery/items" class="person add">
-        <div class="fields">
-          <label>Bet
-            <select name="project_id" required>
-              <option value="">Choose…</option>
-              {{range .DeliveryBets}}
-              <option value="{{.ID}}">{{.Name}} ({{.Stage}} · {{.Slots}} slots)</option>
-              {{end}}
-            </select>
-          </label>
-          <label>Task<input name="title" required placeholder="Ship the Ikeja calculator"></label>
-          <label>Who
-            <select name="assignee_id">
-              <option value="">Unassigned</option>
-              {{range .Users}}
-              {{if .Active}}<option value="{{.ID}}">{{.Name}} ({{.HoursPerWeek}}h/wk)</option>{{end}}
-              {{end}}
-            </select>
-          </label>
-          <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
-          <label>Due<input name="due" type="date"></label>
-        </div>
-        <div class="actions">
-          <button type="submit">Add task</button>
-        </div>
-      </form>
+      <details class="more">
+        <summary>Add a task by hand</summary>
+        <form method="post" action="/admin/delivery/items" class="person add">
+          <div class="fields">
+            <label>Bet
+              <select name="project_id" required>
+                <option value="">Choose…</option>
+                {{range .DeliveryBets}}
+                <option value="{{.ID}}">{{.Name}} ({{.Stage}} · {{.Slots}} slots)</option>
+                {{end}}
+              </select>
+            </label>
+            <label>Task<input name="title" required placeholder="Ship the Ikeja calculator"></label>
+            <label>Who
+              <select name="assignee_id">
+                <option value="">Unassigned</option>
+                {{range .Users}}
+                {{if .Active}}<option value="{{.ID}}">{{.Name}} ({{.HoursPerWeek}}h/wk)</option>{{end}}
+                {{end}}
+              </select>
+            </label>
+            <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
+            <label>Due<input name="due" type="date"></label>
+          </div>
+          <div class="actions">
+            <button type="submit">Add task</button>
+          </div>
+        </form>
+      </details>
     </section>
     <section role="tabpanel" id="tab-bets" data-tab="bets">
       {{range .DeliveryBets}}

@@ -1,18 +1,18 @@
 {{define "content"}}
 {{if .Desk}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Handler desk</p>
-    <h2>{{.Desk.Title}}</h2>
-    <p class="lede">{{.Desk.Help}} The worker proposes. You complement in chat and Accept. Prefix <code>{{.Desk.Prefix}}</code>.</p>
+    <p class="do">{{.Desk.Title}} handler · {{statusCount .Jobs "proposed"}} waiting</p>
+    <h2>{{if .Job}}This job: stamp after you read it.{{else if statusCount .Jobs "proposed"}}Open a proposed job. Chat does not Accept.{{else}}Ask the worker. Then wait for a proposal.{{end}}</h2>
+    <p>{{.Desk.Help}} Prefix <code>{{.Desk.Prefix}}</code>. The worker cannot stamp.</p>
   </div>
-  <div class="actions">
-    {{if .Desk.BookPath}}<a class="ghost" href="{{.Desk.BookPath}}"><svg class="ico"><use href="#i-book"/></svg> {{.Desk.BookLabel}}</a>{{end}}
-    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  <div class="actions now-go">
+    {{if .Desk.BookPath}}<a class="ghost fill" href="{{.Desk.BookPath}}">{{.Desk.BookLabel}}</a>{{end}}
+    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}">Sheet</a>
   </div>
-</section>
+</aside>
 
-<div class="tabset" data-tabs data-default="{{if .Job}}job{{else}}jobs{{end}}">
+<div class="tabset" data-tabs data-default="{{if .Job}}job{{else if statusCount .Jobs "proposed"}}jobs{{else}}ask{{end}}">
   <nav class="tabs" role="tablist" aria-label="{{.Desk.Title}} desk">
     <button type="button" role="tab" data-tab="ask" aria-controls="tab-ask">Ask</button>
     <button type="button" role="tab" data-tab="job" aria-controls="tab-job">This job</button>
@@ -102,12 +102,14 @@
   </div>
 </div>
 {{else}}
-<section class="hero">
-  <p class="kicker">Handler desks</p>
-  <h2>Your workers</h2>
-  <p class="lede">Each department worker has a handler desk. Chat on a job, then Accept. The worker cannot stamp.</p>
-</section>
-<div class="tabset" data-tabs data-default="desks">
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Your desks</p>
+    <h2>Pick the worker you run. Ask, then Accept.</h2>
+    <p>You only see desks ticked on your People card. Chat never stamps.</p>
+  </div>
+</aside>
+<div class="tabset" data-tabs data-default="{{if statusCount .Jobs "proposed"}}recent{{else}}desks{{end}}">
   <nav class="tabs" role="tablist" aria-label="Handler desks">
     <button type="button" role="tab" data-tab="desks" aria-controls="tab-desks">Desks <span class="count">{{len .NavDesks}}</span></button>
     <button type="button" role="tab" data-tab="recent" aria-controls="tab-recent">Recent jobs <span class="count">{{len .Jobs}}</span></button>

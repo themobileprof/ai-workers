@@ -611,6 +611,32 @@ func statusCount(items any, status string) int {
 				n++
 			}
 		}
+	case []DeskJob:
+		for _, j := range xs {
+			if status == "proposed" {
+				if j.Proposed() {
+					n++
+				}
+			} else if j.Status == status {
+				n++
+			}
+		}
+	case []WorkItem:
+		for _, it := range xs {
+			if status == "open" {
+				if it.Open() {
+					n++
+				}
+			} else if it.Status == status {
+				n++
+			}
+		}
+	case []GuideAsk:
+		for _, a := range xs {
+			if status == "unsure" && a.Unsure {
+				n++
+			}
+		}
 	}
 	return n
 }

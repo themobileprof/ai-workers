@@ -1,16 +1,15 @@
 {{define "content"}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Desk guide</p>
-    <h2>What people asked</h2>
-    <p class="lede">Every signed-in person can tap <strong>How?</strong> (bottom right) and ask what to do on this desk. Questions land here. Fold the ones the bot missed into <code>faq.md</code> in Cursor so the next deploy knows them.</p>
+    <p class="do">Guide · {{statusCount .GuideAsks "unsure"}} unsure</p>
+    <h2>Teach the misses. Fold them into faq.md.</h2>
+    <p>How? (bottom right) is the desk guide, not a worker. Unsure rows are the next lesson. Download asked.md for Cursor.</p>
   </div>
-  <div class="actions">
-    <a class="ghost" href="/admin/guide/asked.md"><svg class="ico"><use href="#i-docs"/></svg> asked.md</a>
-    <a class="ghost" href="/admin/docs"><svg class="ico"><use href="#i-book"/></svg> Docs</a>
+  <div class="actions now-go">
+    <a class="ghost fill" href="/admin/guide/asked.md">asked.md</a>
+    <a class="ghost" href="/admin/docs">Docs</a>
   </div>
-</section>
-<p class="hint">The bot reads handbook + FAQ + playbooks. It does not stamp Accept. Unsure rows are the ones to teach next.</p>
+</aside>
 {{if .GuideAsks}}
 {{range .GuideAsks}}
 <section class="proposal">

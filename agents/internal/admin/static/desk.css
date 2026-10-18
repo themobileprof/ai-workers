@@ -10,6 +10,7 @@
   --field: #0a1822;
   --panel: rgba(8, 22, 32, 0.78);
   --night: #05090e;
+  --room: #4ec8ee;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
@@ -93,7 +94,7 @@ body {
   font-size: 0.64rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--brass);
+  color: var(--room);
   margin: 0 0 0.12rem;
 }
 h1, h2, h3 {
@@ -187,7 +188,7 @@ h1, h2, h3 {
 .out button, button, .ghost.fill {
   font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
-  background: var(--brass);
+  background: var(--room);
   color: #04202b;
   border: 0;
   padding: 0.55rem 0.9rem;
@@ -375,6 +376,110 @@ textarea {
 .login-card button { justify-self: start; margin-top: 0.35rem; }
 .hero { margin-bottom: 1.35rem; }
 .hero h2 { font-size: 2.05rem; }
+.now {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.85rem 1.25rem;
+  align-items: center;
+  padding: 1.05rem 1.2rem 1.1rem;
+  margin: 0 0 1.5rem;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--room) 16%, transparent), rgba(8, 22, 32, 0.55));
+  border: 1px solid color-mix(in srgb, var(--room) 42%, var(--line));
+  border-left: 5px solid var(--room);
+  border-radius: 0.85rem;
+}
+.now .do {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--room);
+  margin: 0 0 0.28rem;
+}
+.now h2 {
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.12;
+  margin: 0 0 0.35rem;
+  max-width: 22ch;
+}
+.now p { margin: 0; max-width: 40rem; opacity: 0.82; }
+.now .actions { margin: 0; }
+.now-go { justify-self: end; }
+.wall, .people, .tasks {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.6rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.wall {
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+}
+.wall > li, .people > li, .tasks > li {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 0.85rem;
+  padding: 0.95rem 1rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.wall > li.waiting {
+  border-color: color-mix(in srgb, var(--room) 70%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--room) 25%, transparent);
+}
+.wall > li.dim, .people > li.dim { opacity: 0.48; }
+.wall h3, .people h3, .tasks h3 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+.wall h3 a, .people h3 a, .tasks h3 a { color: inherit; text-decoration: none; }
+.wall h3 a:hover, .people h3 a:hover { border-bottom: 1px solid var(--room); }
+.flag {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--room);
+}
+.week { margin: 0; font-size: 0.92rem; }
+.people {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.people .meta { margin: 0; font-size: 0.82rem; opacity: 0.7; }
+.tasks > li {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  border-left: 4px solid var(--room);
+}
+.tasks .who { margin: 0; opacity: 0.7; font-size: 0.85rem; }
+.tasks .row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.more {
+  margin: 1.2rem 0 0.4rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.9rem 0.85rem;
+}
+.more > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.55rem 0;
+  color: var(--room);
+}
+.pulse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem 1.8rem;
+  margin: 1.6rem 0 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  opacity: 0.75;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+.pulse strong { font-family: "Fraunces", Georgia, serif; font-size: 1.15rem; font-weight: 700; margin-right: 0.3rem; color: var(--paper); opacity: 1; }
 .tabset { margin: 0 0 0.5rem; }
 .tabs {
   display: flex;
@@ -410,7 +515,7 @@ textarea {
 .tabs [role="tab"].on {
   opacity: 1;
   color: #04202b;
-  background: var(--brass);
+  background: var(--room);
 }
 .tabs [role="tab"].on .ico { stroke: #04202b; }
 .tabs [role="tab"] .count {
@@ -458,7 +563,7 @@ textarea {
   flex-wrap: wrap;
 }
 .quiet {
-  color: var(--brass);
+  color: var(--room);
   text-decoration: none;
   font-family: "IBM Plex Sans", sans-serif;
   font-size: 0.86rem;
@@ -707,7 +812,7 @@ code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.88em;
   border-radius: 0.8rem;
 }
 .doc-card h3 a { color: var(--paper); text-decoration: none; }
-.doc-card h3 a:hover { color: var(--brass); }
+.doc-card h3 a:hover { color: var(--room); }
 .doc-card p { margin: 0.35rem 0 0; opacity: 0.82; }
 .playbook .steps {
   margin: 0 0 1.6rem;
@@ -894,6 +999,46 @@ body.gate .guide-dock { display: none; }
   font-size: 0.72rem;
   color: var(--muted);
 }
+body.room::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--room);
+  z-index: 40;
+  pointer-events: none;
+}
+body.room .sky-glow {
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--room) 32%, transparent), transparent 70%);
+}
+body[data-room="home"] { --room: #4ec8ee; }
+body[data-room="projects"] { --room: #e8a84a; }
+body[data-room="users"] { --room: #f0a07a; }
+body[data-room="delivery"] { --room: #5dcc8a; }
+body[data-room="legal"] { --room: #d4b483; }
+body[data-room="seo"] { --room: #c478e8; }
+body[data-room="community"] { --room: #7aa8ff; }
+body[data-room="docs"] { --room: #e7d7b8; }
+body[data-room="settings"] { --room: #8aa4b0; }
+body[data-room="guide"] { --room: #4ec8ee; }
+body[data-room="flows"] { --room: #4ec8ee; }
+body[data-room^="desk"] { --room: #ff8a5b; }
+body[data-room="legal"] .proposal,
+body[data-room="legal"] .folio {
+  background: #14110c;
+  border-color: rgba(212, 180, 131, 0.45);
+}
+body[data-room="legal"] .legal-body {
+  background: #1c1812;
+  color: #f3ead8;
+}
+body[data-room="seo"] .proposal h3 { font-style: italic; }
+body[data-room="docs"] .playbook {
+  background: rgba(231, 215, 184, 0.04);
+  padding: 0.4rem 0.2rem 1rem;
+}
 @media (max-width: 800px) {
   .mast { flex-wrap: wrap; }
   .brand { min-width: 0; }
@@ -907,4 +1052,6 @@ body.gate .guide-dock { display: none; }
   .tabs { width: 100%; }
   .guide-dock { right: 0.7rem; bottom: 0.7rem; left: 0.7rem; max-width: none; }
   .guide-panel { width: 100%; }
+  .now { grid-template-columns: 1fr; }
+  .now-go { justify-self: start; }
 }

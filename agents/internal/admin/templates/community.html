@@ -1,15 +1,15 @@
 {{define "content"}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Room voice</p>
-    <h2>Community mandates</h2>
-    <p class="lede">One brief per student room. Cloud API WhatsApp cannot join ordinary groups — host on the Academy Telegram bot. Paste the Telegram chat id from an n8n execution after you add the bot. The worker reads this catalog; it does not invent courses. Escalate still files a job on the Community desk.</p>
+    <p class="do">Community · {{len .Mandates}} rooms</p>
+    <h2>One mandate per Academy Telegram room.</h2>
+    <p>Paste <code>telegram_chat_id</code> after the Academy bot is in the group. WhatsApp Cloud API cannot join ordinary groups. The catalog is the ground truth — missing a course means escalate.</p>
   </div>
-  <div class="actions">
-    <a class="ghost" href="/admin/desks/community"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
-    <a class="ghost" href="/admin/docs/community"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  <div class="actions now-go">
+    <a class="ghost" href="/admin/desks/community">Job chat</a>
+    <a class="ghost" href="/admin/docs/community">Sheet</a>
   </div>
-</section>
+</aside>
 {{if .Flash}}<p class="hint">{{.Flash}}</p>{{end}}
 {{if .Error}}<p class="hint">{{.Error}}</p>{{end}}
 

@@ -1,10 +1,12 @@
 {{define "content"}}
 {{if .Adding}}
-<section class="hero">
-  <p class="kicker">Incubation</p>
-  <h2>Open a project</h2>
-  <p class="lede"><a class="quiet" href="/admin/projects">Back to the book</a>. This is a bet under TheMobileProf Technologies, not a second company. Accounts, Legal, and HR stay on the parent.</p>
-</section>
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">New bet</p>
+    <h2>Name the pain. Who pays.</h2>
+    <p><a class="quiet" href="/admin/projects">Back to the book</a>. This sits under TheMobileProf Technologies — not a second company. Accounts, Legal, and SEO stay on the parent.</p>
+  </div>
+</aside>
 <form method="post" action="/admin/projects" class="settings">
   <label>Name
     <span class="hint">Working title. Customers still buy from TheMobileProf until you spin out.</span>
@@ -51,14 +53,14 @@
   </div>
 </form>
 {{else if .Project}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Incubation</p>
+    <p class="do">This bet · {{.Project.StageLabel}}</p>
     <h2>{{.Project.Name}}</h2>
-    <p class="lede">{{.Project.OneLiner}}</p>
+    <p>{{.Project.OneLiner}}{{if .Project.Proposal}} A proposal is waiting on Stamp — Accept moves the gate.{{else}} Write this week on Card. Seat a face so Delivery can assign work.{{end}}</p>
   </div>
   <span class="stamp {{.Project.StageStamp}}">{{.Project.StageLabel}}</span>
-</section>
+</aside>
 <div class="tabset" data-tabs data-default="stamp">
   <nav class="tabs" role="tablist" aria-label="Project">
     <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Stamp</button>
@@ -402,57 +404,33 @@
   </div>
 </div>
 {{else}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Incubation</p>
-    <h2>Projects</h2>
-    <p class="lede">Bets under one registered company. Stage is the portfolio stamp. The gate is this week’s proof. Fundable means paying customers, not a deck.</p>
+    <p class="do">Projects · incubation</p>
+    <h2>One card per bet. Stamp the gate. Write this week.</h2>
+    <p>Not a second company. Fundable means paying customers. A glowing card has a proposal the worker cannot commit.</p>
   </div>
-  <a class="ghost fill" href="/admin/projects/new">
+  <a class="ghost fill now-go" href="/admin/projects/new">
     <svg class="ico"><use href="#i-plus"/></svg>
     Open a project
   </a>
-</section>
+</aside>
 {{if .Projects}}
-<div class="ledger">
-<table class="roster">
-  <thead>
-    <tr>
-      <th>Project</th>
-      <th>Gate</th>
-      <th>This week</th>
-      <th>Face</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {{range .Projects}}
-    <tr {{if or (eq .Stage "killed") (eq .Stage "parked")}}class="dim"{{end}}>
-      <td>
-        <strong>{{.Name}}</strong><br>
-        <span class="hint">{{.OneLiner}}</span>
-        {{if .URL}}<br><a class="quiet" href="{{.URL}}" rel="noopener">{{.URL}}</a>{{end}}
-      </td>
-      <td>
-        <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
-        {{if .Gate}}<br><span class="hint">{{.JourneyLabel}}: {{.GateLabel}}</span>{{end}}
-        {{if .Proposal}}<br><span class="pill">proposal</span>{{end}}
-      </td>
-      <td>{{if .Notes}}{{.Notes}}{{else}}<span class="hint">none</span>{{end}}</td>
-      <td>{{if .MemberNames}}{{.MemberNames}}{{else}}<span class="hint">you / BDM</span>{{end}}</td>
-      <td class="row-actions">
-        <details class="menu kebab">
-          <summary aria-label="Actions for {{.Name}}"><svg class="ico"><use href="#i-more"/></svg></summary>
-          <div class="menu-pop">
-            <a href="/admin/projects/{{.ID}}">Amend</a>
-          </div>
-        </details>
-      </td>
-    </tr>
-    {{end}}
-  </tbody>
-</table>
-</div>
+<ol class="wall">
+  {{range .Projects}}
+  <li class="{{if .Proposal}}waiting{{else if or (eq .Stage "killed") (eq .Stage "parked")}}dim{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">{{if .Gate}}{{.JourneyLabel}} · {{.GateLabel}}{{else}}{{.Slug}}{{end}}</p>
+      <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
+    </div>
+    <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+    <p>{{.OneLiner}}</p>
+    {{if .Proposal}}<p class="flag">Proposal waiting</p>{{end}}
+    {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{end}}
+    <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}Face: you / BDM{{end}}</p>
+  </li>
+  {{end}}
+</ol>
 {{else}}
 <p class="hint">No projects yet. Open one when an idea is worth a one-liner.</p>
 {{end}}

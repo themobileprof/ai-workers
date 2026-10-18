@@ -66,6 +66,12 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(body, `class="guide-fab"`) || !strings.Contains(body, "How?") || !strings.Contains(body, "/admin/guide/ask") {
 		t.Fatal("signed-in layout needs How?")
 	}
+	if !strings.Contains(body, `data-room="home"`) || !strings.Contains(body, `class="now"`) {
+		t.Fatal("board must be a distinct room with a now strip")
+	}
+	if !strings.Contains(body, "Stamp what moved") {
+		t.Fatal("board job line")
+	}
 	if !strings.Contains(body, `href="/admin/guide"`) {
 		t.Fatal("office Guide link")
 	}

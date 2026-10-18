@@ -1,10 +1,12 @@
 {{define "content"}}
 {{if .Adding}}
-<section class="hero">
-  <p class="kicker">Roster</p>
-  <h2>Add person</h2>
-  <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
-</section>
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">People · add</p>
+    <h2>Name, phone, desk tick. That is the login.</h2>
+    <p><a class="quiet" href="/admin/users">Back to the roster</a>. Hours/week is Delivery pace. Seat them on a project Face tab to onboard. Recruiting is closed.</p>
+  </div>
+</aside>
 <form class="person add" method="post" action="/admin/users">
   <div class="tabset" data-tabs data-default="person">
     <nav class="tabs" role="tablist" aria-label="Add person">
@@ -58,11 +60,13 @@
   </div>
 </form>
 {{else if .Editing}}
-<section class="hero">
-  <p class="kicker">Roster</p>
-  <h2>Amend {{.Editing.Name}}</h2>
-  <p class="lede"><a class="quiet" href="/admin/users">Back to the list</a></p>
-</section>
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">People · amend</p>
+    <h2>{{.Editing.Name}}</h2>
+    <p><a class="quiet" href="/admin/users">Back to the roster</a>. Tick desks they will run. Face seats live on the project card, not here.</p>
+  </div>
+</aside>
 <form class="person" method="post" action="/admin/users/{{.Editing.ID}}">
   <div class="tabset" data-tabs data-default="person">
     <nav class="tabs" role="tablist" aria-label="Amend person">
@@ -122,66 +126,32 @@
 </form>
 {{end}}
 {{else}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Roster</p>
-    <h2>People and permissions</h2>
-    <p class="lede">Names on the book. Office seat is owner / BDM / cofounder / assistant. Assign one or more handler desks on the card — that person sees those workers after they sign in. Seat cofounders on a <a href="/admin/projects">project</a>.</p>
+    <p class="do">People · owner only</p>
+    <h2>Add a human. Tick the desks they run.</h2>
+    <p>That tick is their login. Seat a cofounder or assistant on a <a class="quiet" href="/admin/projects">project Face tab</a>. Hours/week is Delivery pace. This is not hiring.</p>
   </div>
-  <a class="ghost fill" href="/admin/users/new">
+  <a class="ghost fill now-go" href="/admin/users/new">
     <svg class="ico"><use href="#i-plus"/></svg>
     Add person
   </a>
-</section>
+</aside>
 {{if .Users}}
-<div class="ledger">
-<table class="roster">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Phone</th>
-      <th>Email</th>
-      <th>Role</th>
-      <th>Desks</th>
-      <th>Rights</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {{range .Users}}
-    <tr {{if not .Active}}class="dim"{{end}}>
-      <td>
-        <strong>{{.Name}}</strong>
-        {{if not .Active}}<span class="stamp">off</span>{{end}}
-      </td>
-      <td><code>{{.Phone}}</code></td>
-      <td>{{if .Email}}{{.Email}}{{else}}—{{end}}</td>
-      <td><span class="role">{{.Role}}</span></td>
-      <td class="caps">
-        {{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}—{{end}}
-      </td>
-      <td class="caps">
-        {{range .Caps}}<span class="pill">{{.}}</span>{{end}}
-        {{if not .Caps}}—{{end}}
-      </td>
-      <td class="row-actions">
-        <details class="menu kebab">
-          <summary aria-label="Actions for {{.Name}}"><svg class="ico"><use href="#i-more"/></svg></summary>
-          <div class="menu-pop">
-            <a href="/admin/users/{{.ID}}">Amend</a>
-            {{if canRemove $.User . $.OwnerCount}}
-            <form class="out" method="post" action="/admin/users/{{.ID}}/delete" onsubmit="return confirm('Strike this person from the roster?');">
-              <button class="danger-text" type="submit">Remove</button>
-            </form>
-            {{end}}
-          </div>
-        </details>
-      </td>
-    </tr>
-    {{end}}
-  </tbody>
-</table>
-</div>
+<ol class="people">
+  {{range .Users}}
+  <li class="{{if not .Active}}dim{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">{{.Role}}</p>
+      {{if not .Active}}<span class="stamp">off</span>{{end}}
+    </div>
+    <h3><a href="/admin/users/{{.ID}}">{{.Name}}</a></h3>
+    <p class="meta">{{if .Phone}}<code>{{.Phone}}</code>{{end}}{{if .Email}} · {{.Email}}{{end}}{{if .HoursPerWeek}} · {{.HoursPerWeek}}h/wk{{end}}</p>
+    <p class="prefixes">{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}<span class="hint">no desk — cannot sign in</span>{{end}}</p>
+    <p><a class="ghost" href="/admin/users/{{.ID}}">Amend</a></p>
+  </li>
+  {{end}}
+</ol>
 {{else}}
 <p class="hint">Nobody on the roster yet.</p>
 {{end}}

@@ -1,15 +1,15 @@
 {{define "content"}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Parent worker</p>
-    <h2>SEO</h2>
-    <p class="lede">Titles, meta, and outlines for a bet’s pages. The clerk proposes. You Accept. Nothing is published. <code>/approve</code> on Telegram still only sends info@ drafts.</p>
+    <p class="do">SEO book · {{statusCount .SeoBriefs "proposed"}} waiting</p>
+    <h2>Accept copy. Publishing is still you.</h2>
+    <p>Titles, meta, outlines. The clerk cannot publish, crawl, or read Search Console. Copy from the brief after you stamp.</p>
   </div>
-  <div class="actions">
-    <a class="ghost" href="/admin/desks/seo"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
-    <a class="ghost" href="/admin/docs/seo"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  <div class="actions now-go">
+    <a class="ghost" href="/admin/desks/seo">Ask a brief</a>
+    <a class="ghost" href="/admin/docs/seo">Sheet</a>
   </div>
-</section>
+</aside>
 <div class="tabset" data-tabs data-default="proposed">
   <nav class="tabs" role="tablist" aria-label="SEO briefs">
     <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .SeoBriefs "proposed"}}</span></button>
