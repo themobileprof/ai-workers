@@ -71,7 +71,7 @@
                 {{end}}
               </select>
             </label>
-            <label>Task<input name="title" required placeholder="Ship the Ikeja calculator"></label>
+            <label>Task<input name="title" required></label>
             <label>Who
               <select name="assignee_id">
                 <option value="">Unassigned</option>
@@ -97,7 +97,7 @@
           <span class="stamp {{.StageStamp}}">{{.Stage}} · {{.Open}}/{{.Engagement.MaxOpenTasks}}</span>
         </div>
         <p>{{.OneLiner}}</p>
-        <p class="hint">{{if eq .Engagement.MaxOpenTasks 0}}Parked or killed: add no tasks.{{else}}You may hold {{.Engagement.MaxOpenTasks}} open tasks. {{if .Engagement.Pings}}Morning WhatsApp ping is on.{{else}}No morning ping on this stamp.{{end}}{{end}}</p>
+        <p class="hint">{{if eq .Engagement.MaxOpenTasks 0}}Parked or killed: add no tasks.{{else}}You may hold {{.Engagement.MaxOpenTasks}} open tasks. {{if .Engagement.Pings}}Morning WhatsApp ping is on.{{else}}No morning ping at this stage.{{end}}{{end}}</p>
       </section>
       {{end}}
     </section>
@@ -113,7 +113,7 @@
           </select>
         </label>
         <label>What should the week look like?
-          <textarea name="task" rows="4" required placeholder="Turn HomeGauge’s this-week note into tasks for me and the BDM. Respect pace."></textarea>
+          <textarea name="task" rows="4" required placeholder="What should the week look like?"></textarea>
         </label>
         <div class="actions">
           <button type="submit">Ask worker</button>

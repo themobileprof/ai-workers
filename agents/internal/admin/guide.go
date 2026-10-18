@@ -29,10 +29,11 @@ type GuideAsk struct {
 }
 
 type GuideReply struct {
-	Answer string   `json:"answer"`
-	Hrefs  []string `json:"hrefs"`
-	Unsure bool     `json:"unsure"`
-	Source string   `json:"source,omitempty"`
+	Answer string      `json:"answer"`
+	Hrefs  []string    `json:"hrefs"`
+	Unsure bool        `json:"unsure"`
+	Source string      `json:"source,omitempty"`
+	Draft  *GuideDraft `json:"draft,omitempty"`
 }
 
 type guideInput struct {
@@ -41,6 +42,8 @@ type guideInput struct {
 	Page     string
 	History  []llm.Message
 	Prior    []GuideAsk
+	Draft    *GuideDraft
+	World    formWorld
 }
 
 type faqEntry struct {
@@ -149,6 +152,11 @@ func bestFAQ(question string, entries []faqEntry) (faqEntry, int) {
 	bestN := 0
 	for _, e := range entries {
 		n := overlap(qtok, tokens(e.Q+" "+e.A))
+		// Short asks like "what is stamp" lose stop-words; if every leftover
+		// token is in the question title, treat it as a hit.
+		if len(qtok) > 0 && overlap(qtok, tokens(e.Q)) == len(qtok) {
+			n += 2
+		}
 		if n > bestN {
 			bestN = n
 			best = e
@@ -209,7 +217,7 @@ func slugFromPage(page string) string {
 
 func runtimeDeskMap() string {
 	var b strings.Builder
-	b.WriteString("Workers (Ask files a job; Accept stamps):\n")
+	b.WriteString("Workers (Ask files a job; Accept is your yes):\n")
 	for _, d := range AllDesks() {
 		b.WriteString("- ")
 		b.WriteString(d.Title)
@@ -225,7 +233,7 @@ func runtimeDeskMap() string {
 		b.WriteString(d.Help)
 		b.WriteString("\n")
 	}
-	b.WriteString("\nStamp caps (open tasks): parked/killed 0, idea 1, testing 3, selling 5, fundable 4.\n")
+	b.WriteString("\nStage caps (open tasks): parked/killed 0, idea 1, testing 3, selling 5, fundable 4.\n")
 	b.WriteString("Docs: /admin/docs then /admin/docs/{slug}. Player sheets first (you, owner, bdm, project-face, field, handler).\n")
 	return b.String()
 }
@@ -252,6 +260,14 @@ func buildGuideContext(in guideInput) (string, []string) {
 	b.WriteString(strings.Join(in.User.Desks, ", "))
 	b.WriteString("\nPage they are on: ")
 	b.WriteString(in.Page)
+	b.WriteString("\n\n# Fillable forms\n")
+	b.WriteString(catalogPrompt(allowedCatalog(in.User, in.Page)))
+	if wp := worldPrompt(in.World); wp != "" {
+		b.WriteString("\n")
+		b.WriteString(wp)
+	}
+	b.WriteString("\n# Open form\n")
+	b.WriteString(draftPrompt(in.Draft))
 	b.WriteString("\n\n# Map\n")
 	b.WriteString(runtimeDeskMap())
 	b.WriteString("\n# Handbook\n")
@@ -300,7 +316,7 @@ func buildGuideContext(in guideInput) (string, []string) {
 	return pack, hrefs
 }
 
-func parseGuideModel(raw string) GuideReply {
+func parseGuideLLM(raw string) guideLLM {
 	s := strings.TrimSpace(raw)
 	s = strings.TrimPrefix(s, "```json")
 	s = strings.TrimPrefix(s, "```")
@@ -308,14 +324,23 @@ func parseGuideModel(raw string) GuideReply {
 	s = strings.TrimSpace(s)
 	if i := strings.Index(s, "{"); i >= 0 {
 		if j := strings.LastIndex(s, "}"); j > i {
-			var out GuideReply
-			if json.Unmarshal([]byte(s[i:j+1]), &out) == nil && strings.TrimSpace(out.Answer) != "" {
+			var out guideLLM
+			if json.Unmarshal([]byte(s[i:j+1]), &out) == nil {
 				out.Hrefs = cleanHrefs(out.Hrefs)
+				out.Recipe = strings.TrimSpace(out.Recipe)
 				return out
 			}
 		}
 	}
-	return GuideReply{Answer: s}
+	return guideLLM{Answer: s}
+}
+
+func parseGuideModel(raw string) GuideReply {
+	m := parseGuideLLM(raw)
+	if strings.TrimSpace(m.Answer) == "" {
+		return GuideReply{Answer: strings.TrimSpace(raw)}
+	}
+	return GuideReply{Answer: m.Answer, Hrefs: m.Hrefs, Unsure: m.Unsure}
 }
 
 func cleanHrefs(in []string) []string {
@@ -358,17 +383,25 @@ func (s *Server) answerGuide(ctx context.Context, in guideInput) GuideReply {
 	if s != nil && s.store != nil && len(in.Prior) == 0 {
 		in.Prior, _ = s.store.RecentGuideQA(ctx, 12)
 	}
+	in.World = s.loadFormWorld(ctx)
 	pack, extraHrefs := buildGuideContext(in)
 	if s == nil || s.guide == nil {
+		if wiz, ok := continueDraft(in, in.World); ok {
+			wiz.Hrefs = cleanHrefs(append(wiz.Hrefs, extraHrefs...))
+			return wiz
+		}
 		rep := faqFallback(in.Question)
 		rep.Hrefs = cleanHrefs(append(rep.Hrefs, extraHrefs...))
 		return rep
 	}
 	sys := `You are the desk guide for TheMobileProf Technologies, one Lagos company. Signed-in people ask what to do and how on this website.
-Answer only from the supplied handbook, FAQ, map, and playbook excerpts. If it is not there, set unsure true and say so — do not invent stamps, vendors, or screens.
-Never stamp Accept. Never send email. Never publish. Never hire. /approve on Telegram only sends a pending info@ draft. Recruiting is closed; onboard on People (hours/week) and a project Face seat.
-Point at /admin/... paths. Keep the answer to a short list or two short paragraphs. Nigerian English is fine. No emoji.
-Reply with a JSON object only: {"answer":"...","unsure":false,"hrefs":["/admin/docs/delivery"]}`
+Answer only from the supplied handbook, FAQ, map, playbook excerpts, and fillable-form catalog. If it is not there, set unsure true and say so — do not invent stages, vendors, screens, or recipe ids.
+If the user wants to accomplish a desk form (add a date, task, person, Ask a worker, …), set recipe to that catalog id and put extracted field values in fields. Dates must be YYYY-MM-DD. Compare their intent to the catalog — do not use keyword lists of your own outside that catalog. New forms appear in the catalog; you pick by meaning.
+If they are continuing an open form, keep that recipe and fill more fields. If they want a different form, switch recipe. If they cancel, set cancel true and recipe "".
+If they only want an explanation, leave recipe "".
+Never Accept for the user. Never send email. Never publish. Never hire. Never pick a form that Accepts, rejects, deletes, or marks Done. /approve on Telegram only sends a pending info@ draft. Recruiting is closed. Stamp is an old word for Accept (the Decide tab). Submit in Help? posts the page form; you only collect fields. The brass button is Help? (it used to say How?).
+Point at /admin/... paths. Keep the answer short. Nigerian English is fine. No emoji.
+Reply with a JSON object only: {"answer":"...","unsure":false,"hrefs":["/admin/docs/delivery"],"recipe":"","fields":{},"cancel":false}`
 	msgs := make([]llm.Message, 0, len(in.History)+2)
 	for _, m := range in.History {
 		role := m.Role
@@ -390,13 +423,23 @@ Reply with a JSON object only: {"answer":"...","unsure":false,"hrefs":["/admin/d
 	msgs = append(msgs, llm.Message{Role: "user", Content: "Knowledge:\n" + pack + "\n\nQuestion:\n" + in.Question})
 	raw, err := s.guide.Complete(ctx, llm.Request{System: sys, Messages: msgs, Plain: true})
 	if err != nil || strings.TrimSpace(raw) == "" {
+		if wiz, ok := continueDraft(in, in.World); ok {
+			wiz.Hrefs = cleanHrefs(append(wiz.Hrefs, extraHrefs...))
+			return wiz
+		}
 		rep := faqFallback(in.Question)
 		rep.Hrefs = cleanHrefs(append(rep.Hrefs, extraHrefs...))
 		return rep
 	}
-	rep := parseGuideModel(raw)
-	rep.Source = "llm"
-	rep.Hrefs = cleanHrefs(append(rep.Hrefs, extraHrefs...))
+	model := parseGuideLLM(raw)
+	if wiz, ok := applyLLMForm(in, model, in.World); ok {
+		wiz.Hrefs = cleanHrefs(append(wiz.Hrefs, extraHrefs...))
+		if wiz.Source == "" {
+			wiz.Source = "llm"
+		}
+		return wiz
+	}
+	rep := GuideReply{Answer: model.Answer, Hrefs: cleanHrefs(append(model.Hrefs, extraHrefs...)), Unsure: model.Unsure, Source: "llm"}
 	if strings.TrimSpace(rep.Answer) == "" {
 		rep = faqFallback(in.Question)
 		rep.Hrefs = cleanHrefs(append(rep.Hrefs, extraHrefs...))

@@ -6,7 +6,7 @@
     <h2>Answer three things, then open it</h2>
     <ol class="recipe">
       <li>Name: a working title. Customers still buy from TheMobileProf.</li>
-      <li>One-liner: who pays, and for what. Use the example in the box.</li>
+      <li>One-liner: who pays, and for what.</li>
       <li>Click <strong>Open project</strong>. Add dates and people after it exists.</li>
     </ol>
     <p><a class="quiet" href="/admin/projects">Back to Projects</a></p>
@@ -14,20 +14,20 @@
 </aside>
 <form method="post" action="/admin/projects" class="settings">
   <label>Name
-    <span class="hint">Short title. Example: Mechazone.</span>
+    <span class="hint">Short working title.</span>
     <input name="name" required>
   </label>
   <label>Slug
     <span class="hint">Leave blank unless you already have one. It becomes the name if empty.</span>
-    <input name="slug" placeholder="mechanic-books">
+    <input name="slug">
   </label>
   <label>One-liner
     <span class="hint">Who pays, for what. Required.</span>
-    <input name="one_liner" required placeholder="Lagos mechanic workshops pay for a WhatsApp books clerk.">
+    <input name="one_liner" required>
   </label>
   <label>Public URL
     <span class="hint">The site people already type. Leave blank if there is none yet.</span>
-    <input name="url" placeholder="https://momlaunchpad.com">
+    <input name="url" placeholder="https://">
   </label>
   <label>Stage
     <span class="hint">Leave as Idea unless you already know it is testing, selling, parked, or killed.</span>
@@ -49,8 +49,8 @@
     </select>
   </label>
   <label>This week
-    <span class="hint">One sentence the field person can finish. Example: Talk to five workshop owners in Ikeja.</span>
-    <input name="notes" placeholder="Talk to five workshop owners on Ikeja.">
+    <span class="hint">One sentence the field person can finish this week.</span>
+    <input name="notes">
   </label>
   <div class="actions">
     <button type="submit">Open project</button>
@@ -65,7 +65,7 @@
     <p>{{.Project.OneLiner}}</p>
     <ol class="recipe">
       {{if .Project.Proposal}}
-      <li>Open <strong>Stamp</strong>. Click <strong>Accept</strong> if the gate is right, or <strong>Reject</strong>.</li>
+      <li>Open <strong>Decide</strong>. Click <strong>Accept</strong> if you agree (that is your yes), or <strong>Reject</strong>.</li>
       {{end}}
       {{if .Project.NextEvent}}
       <li>Open <strong>Dates</strong>. Add tasks for {{.Project.NextEvent.Title}}. Click <strong>Delivered</strong> after {{.Project.NextEvent.WhenLabel}}.</li>
@@ -79,7 +79,7 @@
 </aside>
 <div class="tabset" data-tabs data-default="stamp">
   <nav class="tabs" role="tablist" aria-label="Project">
-    <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Stamp</button>
+    <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Decide</button>
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
     <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
@@ -89,6 +89,12 @@
   </nav>
   <div class="tab-panels">
     <section role="tabpanel" id="tab-stamp" data-tab="stamp">
+      <h3>You decide the stage</h3>
+      <ol class="recipe">
+        <li>A worker may suggest the next stage (Idea, Testing, Selling…). That is only a proposal.</li>
+        <li>Click <strong>Accept</strong> if you agree — that is your yes. Chat cannot do this.</li>
+        <li>Click <strong>Reject</strong> to leave the stage as it is. Or Ask placement for a new suggestion.</li>
+      </ol>
       {{if .Project.Proposal}}
       <section class="proposal">
         <p class="kicker">Open proposal</p>
@@ -105,7 +111,7 @@
           </form>
         </div>
         <form method="post" action="/admin/projects/{{.Project.ID}}/proposal/amend" class="settings">
-          <label>Amend then stamp
+          <label>Change it, then Accept
             <select name="placement" required>
               {{range $j := $.Journeys}}
               {{range $j.Gates}}
@@ -123,9 +129,9 @@
       {{end}}
       {{if .CanPlace}}
       <form method="post" action="/admin/projects/{{.Project.ID}}/place" class="person add">
-        <p class="hint">Type any new evidence, then click Ask placement. A proposal appears above — it does not change the stamp until you Accept.</p>
+        <p class="hint">Type any new evidence, then click Ask placement. A proposal appears above — the stage does not change until you Accept.</p>
         <label>Feedback for the agent
-          <input name="human_feedback" placeholder="We already have 12 paid Academy seats this month.">
+          <input name="human_feedback" placeholder="Any new evidence for the worker.">
         </label>
         <div class="actions">
           <button type="submit">Ask placement</button>
@@ -201,10 +207,10 @@
           </label>
         </div>
         <label>Name if they are not on the roster
-          <input name="counterparty_name" placeholder="Ada Okonkwo">
+          <input name="counterparty_name">
         </label>
         <label>Notes or pasted contract
-          <textarea name="human_feedback" rows="5" placeholder="Pilot NDA for Ada on Mechazone. Or paste a vendor contract to flag."></textarea>
+          <textarea name="human_feedback" rows="5" placeholder="Notes, or paste a contract to review."></textarea>
         </label>
         <div class="actions">
           <button type="submit">Ask draft</button>
@@ -265,7 +271,7 @@
             </select>
           </label>
           <label>URL<input name="url" value="{{.Project.URL}}" placeholder="https://…"></label>
-          <label>Keyword<input name="keyword" placeholder="Ikeja mortgage rates"></label>
+          <label>Keyword<input name="keyword"></label>
         </div>
         <label>Notes or pasted HTML
           <textarea name="human_feedback" rows="5" placeholder="Paste title, H1, and a slice of the page."></textarea>
@@ -302,7 +308,7 @@
           </select>
         </label>
         <label>Committed journey and gate
-          <span class="hint">Changing this yourself is the stamp. It drops any waiting proposal.</span>
+          <span class="hint">Saving a different journey here is your yes. It drops any waiting proposal.</span>
           <select name="placement">
             <option value="">unset</option>
             {{range $j := $.Journeys}}
@@ -354,9 +360,9 @@
       {{range .Events}}
       {{if .Planned}}
       <form method="post" action="/admin/projects/{{$.Project.ID}}/events/{{.ID}}/task" class="person add">
-        <p class="hint">Name the task (or leave blank to use the date title). Due {{.WhenLabel}}. This bet’s stamp still caps how many can be open.</p>
+        <p class="hint">Name the task (or leave blank to use the date title). Due {{.WhenLabel}}. This project’s stage still limits how many tasks can be open.</p>
         <div class="fields">
-          <label>Task for {{.Title}}<input name="title" placeholder="Confirm UNILAG lab"></label>
+          <label>Task for {{.Title}}<input name="title"></label>
           <label>Hours<input name="hours" type="number" min="0.5" step="0.5" value="1"></label>
         </div>
         <div class="actions"><button type="submit">Add task on Delivery</button></div>
@@ -364,13 +370,13 @@
       {{end}}
       {{end}}
       {{else}}
-      <p class="hint">No dates yet. Use the form below — example: Linux on Mobile, 17–19 Nov, University of Lagos.</p>
+      <p class="hint">No dates yet. Fill the form below.</p>
       {{end}}
       <form method="post" action="/admin/projects/{{.Project.ID}}/events" class="person add">
         <p class="hint">Fill the boxes, leave “Set as this week’s line” ticked if this is the agenda, then Save date.</p>
         <div class="fields">
           <label>What
-            <input name="title" required placeholder="Linux on Mobile — UNILAG">
+            <input name="title" required>
           </label>
           <label>Kind
             <select name="kind">
@@ -385,11 +391,11 @@
           <label>Ends<input name="ends_on" type="date"></label>
         </div>
         <div class="fields">
-          <label>Where<input name="venue" placeholder="University of Lagos"></label>
-          <label>Who<input name="audience" placeholder="Final year Computer Science"></label>
+          <label>Where<input name="venue"></label>
+          <label>Who<input name="audience"></label>
         </div>
         <label>What success looks like
-          <input name="outcome" placeholder="sign-ups for lms.themobileprof.com">
+          <input name="outcome">
         </label>
         <label class="chk"><input type="checkbox" name="set_week" value="on" checked> Set as this week’s line</label>
         <div class="actions">
@@ -402,7 +408,7 @@
       <h3>Work on this project</h3>
       {{range .DeliveryBets}}
       <ol class="recipe">
-        <li>This stamp allows <strong>{{.Engagement.MaxOpenTasks}}</strong> open tasks ({{.Open}} used). Parked and killed allow none.</li>
+        <li>This stage allows <strong>{{.Engagement.MaxOpenTasks}}</strong> open tasks ({{.Open}} used). Parked and killed allow none.</li>
         <li>Type the task, pick who (they must be on Face, unless they are owner or BDM), click <strong>Add task</strong>.</li>
         <li>Click <strong>Done</strong> when it is finished.</li>
       </ol>
@@ -515,8 +521,8 @@
     <p class="do">Projects · pick a card</p>
     <h2>Open a card, then use the tabs</h2>
     <ol class="recipe">
-      <li>Click a card. A glow means a worker is waiting on Stamp.</li>
-      <li>Work the tabs: Stamp → Dates → Work → Face.</li>
+      <li>Click a card. A glow means a worker is waiting on Decide.</li>
+      <li>Work the tabs: Decide → Dates → Work → Face.</li>
       <li>Click <strong>Open a project</strong> only when you have a new idea and a paying customer in mind.</li>
     </ol>
   </div>

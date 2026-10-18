@@ -63,7 +63,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Board · People · Projects",
 		Wire:     "live",
-		Summary:  "You run the Lagos office. Workers propose. You stamp. You add people and seat them on bets.",
+		Summary:  "You run the Lagos office. Workers propose. You click Accept. You add people and seat them on bets.",
 		Prefixes: []string{"People", "Ops Telegram", "/approve is email only"},
 	},
 	{
@@ -73,7 +73,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Board · Projects",
 		Wire:     "live",
-		Summary:  "Same Board as the owner. You stamp bets. You do not add people — ask the owner.",
+		Summary:  "Same Board as the owner. You Accept on bets. You do not add people — ask the owner.",
 		Prefixes: []string{"Board", "Ask placement", "this-week note"},
 	},
 	{
@@ -103,7 +103,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Workers menu · Ask → Accept",
 		Wire:     "live",
-		Summary:  "You were ticked on a People card. Ask, chat, Accept. Chat never stamps. JSON specimens live on the worker pages.",
+		Summary:  "You were ticked on a People card. Ask, chat, Accept. Chat never Accepts. JSON specimens live on the worker pages.",
 		Prefixes: []string{"Ask", "Accept", "Turn away"},
 	},
 	{
@@ -121,7 +121,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Humans",
 		Path:     "/admin/",
 		Wire:     "live",
-		Summary:  "Board for owner/BDM. Handler desks appear when that person signs in. Chat does not stamp Accept.",
+		Summary:  "Board for owner/BDM. Handler desks appear when that person signs in. Chat does not Accept.",
 		Prefixes: []string{"People", "Workers menu", "Ask → Accept"},
 	},
 	{
@@ -130,7 +130,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Incubation",
 		Path:     "/admin/projects",
 		Wire:     "live",
-		Summary:  "Bets under one company. Field humans bring named next steps. Dates hold a campus training until you deliver. The worker proposes a gate; you stamp.",
+		Summary:  "Bets under one company. Field humans bring named next steps. Dates hold a campus training until you deliver. The worker proposes a gate; you Accept on Decide.",
 		Prefixes: []string{"Ask placement", "/validate", "Dates", "this-week note"},
 	},
 	{
@@ -193,7 +193,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Project PM",
 		Path:     "POST /departments/delivery",
 		Wire:     "live",
-		Summary:  "Tasks across bets. Stamp sets how many. Pace is hours/week on People. Seat on Face to onboard. /today sees upcoming Dates. Academy is one bet.",
+		Summary:  "Tasks across bets. Stage sets how many. Pace is hours/week on People. Seat on Face to onboard. /today sees upcoming Dates. Academy is one bet.",
 		Prefixes: []string{"/today", "/pm", "/idea"},
 	},
 	{

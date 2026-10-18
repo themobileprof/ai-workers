@@ -1043,6 +1043,39 @@ body.gate .guide-dock { display: none; }
   font-size: 0.72rem;
   color: var(--muted);
 }
+.guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.guide-chips .ghost {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+}
+.guide-draft {
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.7rem 0.55rem;
+  background: var(--field);
+  display: grid;
+  gap: 0.45rem;
+}
+.guide-draft .kicker { margin: 0; }
+.guide-draft dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.65rem;
+  font-size: 0.82rem;
+}
+.guide-draft dt { color: var(--muted); }
+.guide-draft dd { margin: 0; }
+.guide-draft .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
 body.room::before {
   content: "";
   position: fixed;

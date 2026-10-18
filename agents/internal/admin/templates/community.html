@@ -52,13 +52,13 @@
         <p class="hint">List only courses this room may talk about. If a course is missing here, the worker must ask you — it will not guess.</p>
         <div class="fields">
           <label>Title
-            <input name="title" required value="{{if .Mandate}}{{.Mandate.Title}}{{end}}" placeholder="Academy LMS">
+            <input name="title" required value="{{if .Mandate}}{{.Mandate.Title}}{{end}}">
           </label>
           <label>Slug
-            <input name="slug" value="{{if .Mandate}}{{.Mandate.Slug}}{{end}}" placeholder="lms">
+            <input name="slug" value="{{if .Mandate}}{{.Mandate.Slug}}{{end}}">
           </label>
           <label>Site
-            <input name="site_url" value="{{if .Mandate}}{{.Mandate.SiteURL}}{{end}}" placeholder="https://lms.themobileprof.com">
+            <input name="site_url" value="{{if .Mandate}}{{.Mandate.SiteURL}}{{end}}" placeholder="https://">
           </label>
         </div>
         <div class="fields">
@@ -79,7 +79,7 @@
           <textarea name="brief" rows="8" required placeholder="What this room is for, when to speak, when to escalate.">{{if .Mandate}}{{.Mandate.Brief}}{{end}}</textarea>
         </label>
         <label>Catalog
-          <textarea name="catalog" rows="10" required placeholder="Courses the worker may name. Mini, Path, Professional…">{{if .Mandate}}{{.Mandate.Catalog}}{{end}}</textarea>
+          <textarea name="catalog" rows="10" required placeholder="Courses this room may name.">{{if .Mandate}}{{.Mandate.Catalog}}{{end}}</textarea>
         </label>
         <div class="actions">
           <button type="submit">Save mandate</button>

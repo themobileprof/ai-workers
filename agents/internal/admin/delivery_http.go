@@ -13,7 +13,7 @@ import (
 func deliveryFlash(ok string) string {
 	switch ok {
 	case "saved":
-		return "Task saved. Stamp caps still apply — a parked bet cannot hold work."
+		return "Task saved. A parked or killed project cannot hold work."
 	case "done":
 		return "Marked done."
 	case "skipped":
@@ -145,11 +145,11 @@ func (s *Server) deliveryItemPOST(w http.ResponseWriter, r *http.Request) {
 	eng := EngagementFor(p.Stage)
 	open, _ := s.store.CountOpenWork(r.Context(), p.ID)
 	if eng.MaxOpenTasks <= 0 {
-		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" is "+p.Stage+" — no tasks until the stamp moves", ""))
+		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" is "+p.Stage+" — no tasks until you Accept a new stage on Decide", ""))
 		return
 	}
 	if open >= eng.MaxOpenTasks {
-		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" already holds "+strconv.Itoa(eng.MaxOpenTasks)+" open tasks for this stamp", ""))
+		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" already holds "+strconv.Itoa(eng.MaxOpenTasks)+" open tasks at this stage", ""))
 		return
 	}
 	if aid > 0 {

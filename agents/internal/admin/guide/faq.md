@@ -17,15 +17,37 @@ Owner only (BDM cannot add people):
 2. Tick Legal and/or SEO.
 3. Sign out and sign in again. Delivery is already on the Board rail for owner/BDM.
 
-## What is the difference between How? and Ask?
+## What is Stamp? What does Decide mean?
 
-How? (bottom right) explains which screen to use. It does not file a job. Ask on a worker desk or book files a proposed job. Chat a fix if needed. Accept or Turn away stamps. Chat never stamps.
+Stamp is not a badge you collect. It is an old word for **your yes**.
+
+A worker can only propose. The coloured label on a card (Idea, Testing, Selling…) is the **stage**. The stage does not change until you click **Accept**.
+
+1. Open the project → **Decide** (the first tab).
+2. Read the proposal. Click **Accept** if you agree — that yes is the stamp.
+3. Click **Reject** to leave the stage as it is. Chat, Help?, and Telegram `/approve` never do this.
+
+The stage then caps how many Delivery tasks that project may hold: idea 1, testing 3, selling 5, fundable 4, parked/killed 0.
+
+On Legal, SEO, and a worker desk the same click is **Accept** or **Turn away**.
+
+## Can Help? fill a form for me?
+
+Yes. You can type on the page, or talk to **Help?** (bottom right — it used to say How?) — same result. The guide reads your intent (LLM) and picks a form from the desk catalog, then asks for each missing box. **Submit** posts that form. It never clicks **Accept**. New forms join the catalog; there is no keyword list to reprogram.
+
+1. Open **Help?** (bottom right). Tap a chip or say what you need done.
+2. Answer the next box it asks. Say **cancel** to stop.
+3. Check the summary. Click **Submit** (or **Open form** and type it yourself).
+
+## What is the difference between Help? and Ask?
+
+**Help?** (bottom right) explains a button **or** walks the same form as the page. Submit in Help? posts that form. Ask on a worker desk is one of those forms — it files a **proposed** job. Chat a fix if needed. **Accept** or **Turn away** is still your yes or no. Help? never Accepts.
 
 ## How do I assign work this week?
 
 1. Seat the person on the project Face tab (unless they are owner or BDM).
 2. Open Delivery (`/admin/delivery`) → Add a task by hand, or Ask plan then Accept on Job chat.
-3. Or WhatsApp `/today` from a People phone. Stamp caps: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling.
+3. Or WhatsApp `/today` from a People phone. How many tasks you may hold depends on the project’s stage: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling.
 
 ## How do I onboard someone onto a bet?
 
@@ -43,7 +65,7 @@ Student rooms are Academy Telegram, not WhatsApp groups (Cloud API cannot join o
 
 ## How do I file an NDA?
 
-Tick Legal on the handler. Workers → Legal → Ask “Draft an NDA for Ada on Mechazone.” Wait for the proposed job. Chat a fix. Accept on the job or on `/admin/legal`. Copy the body from the Legal book if you need the document. The worker cannot send it.
+Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wait for the proposed job. Chat a fix. Accept on the job or on `/admin/legal`. Copy the body from the Legal book if you need the document. The worker cannot send it.
 
 ## How do I ask for SEO copy?
 
@@ -61,7 +83,7 @@ Board is owner and BDM. Handlers land on Workers. Project faces should not see t
 
 ## Someone sent a CV. Do we hire them in HR?
 
-No. Recruiting is closed. Onboard people you already know via People + Face. Inbound CVs go to Growth as a conversation, not a hire stamp.
+No. Recruiting is closed. Onboard people you already know via People + Face. Inbound CVs go to Growth as a conversation, not a hire.
 
 ## How do I mark a delivery task done?
 
@@ -73,12 +95,12 @@ No. Recruiting is closed. Onboard people you already know via People + Face. Inb
 
 1. Read this week’s line on the project card. That is the mission.
 2. Go to the place. Bring named people back.
-3. The desk stamps GO / PIVOT / KILL. They often have no login. They are not a director of TheMobileProf.
+3. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
 
 ## How do I track a training, campus week, or dated event on a project?
 
-1. Open Projects → TheMobileProf Academy → **Dates**.
-2. Fill What (e.g. Linux on Mobile — UNILAG), start/end (17–19 Nov 2026), Where, Who, and success (sign-ups for lms.themobileprof.com). Leave “Set as this week’s line” ticked. Click **Save date**.
-3. Click **Add task on Delivery** for the work. After the week, click **Delivered**.
+1. Open the project → **Dates**.
+2. Fill What, start date, Where, Who, and success. Leave “Set as this week’s line” ticked if this is the agenda. Click **Save date**.
+3. Click **Add task on Delivery** for the work. After it happened, click **Delivered**.
 
 Seat campus helpers on Face as assistant. Do not put this in Community (those are Telegram student rooms). Do not use `/approve`.

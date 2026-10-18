@@ -66,7 +66,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `deepseek`
 - **URL:** https://www.deepseek.com/
-- **Role:** Default text LLM for department workers (classifier, chat) and the desk How? guide. Text-only — no OCR. If a call errors, Go tries Gemini / OpenAI / Anthropic when those keys are set.
+- **Role:** Default text LLM for department workers (classifier, chat) and the desk Help? guide. Text-only — no OCR. If a call errors, Go tries Gemini / OpenAI / Anthropic when those keys are set.
 - **Where:** Go agents via `LLM_PROVIDER=deepseek`.
 - **Secrets:** `DEEPSEEK_API_KEY` (or `LLM_API_KEY`) on the VM `.env` → agents container.
 - **Env:** `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL`, `DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL`, `DEEPSEEK_BASE_URL`
@@ -75,7 +75,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `gemini`
 - **URL:** https://ai.google.dev/
-- **Role:** Vision OCR for receipt/invoice photos. Default model gemini-3.6-flash. Does not invent amounts when the image is unreadable. Also a text fallback when the primary chat provider errors (desk How? bot included).
+- **Role:** Vision OCR for receipt/invoice photos. Default model gemini-3.6-flash. Does not invent amounts when the image is unreadable. Also a text fallback when the primary chat provider errors (desk Help? bot included).
 - **Where:** Go agents when `context_data` includes `image_base64`. n8n downloads Telegram/WhatsApp photos.
 - **Secrets:** `GEMINI_API_KEY` on the VM `.env` → agents container.
 - **Env:** `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL`

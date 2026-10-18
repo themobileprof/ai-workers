@@ -4,7 +4,7 @@
     <p class="do">Board · do this now</p>
     <h2>Check each card</h2>
     <ol class="recipe">
-      <li>If a card says <strong>Proposal waiting</strong>, open it → <strong>Stamp</strong> → <strong>Accept</strong> or <strong>Reject</strong>.</li>
+      <li>If a card says <strong>Proposal waiting</strong>, open it → <strong>Decide</strong> → <strong>Accept</strong> (your yes) or <strong>Reject</strong>.</li>
       <li>If <strong>Coming up</strong> lists a date, open it → add the work → click <strong>Delivered</strong> when it happened.</li>
       <li>If a card has no person, open it → <strong>Face</strong> → seat someone.</li>
     </ol>
@@ -37,7 +37,7 @@
       <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
     </div>
     <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
-    {{if .Proposal}}<p class="flag">Proposal waiting — open and stamp</p>{{end}}
+    {{if .Proposal}}<p class="flag">Proposal waiting — open Decide and Accept</p>{{end}}
     {{if .NextEvent}}<p class="flag">{{.NextEvent.WhenLabel}} · {{.NextEvent.Title}}</p>{{end}}
     {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{else}}<p class="hint">No this-week line — open Card and write one.</p>{{end}}
     <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No person yet — open Face and seat someone.</p>{{end}}

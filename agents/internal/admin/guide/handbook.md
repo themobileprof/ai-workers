@@ -1,6 +1,6 @@
 # Desk handbook
 
-This is the how-to for the signed-in company desk at TheMobileProf Technologies (Lagos). One CAC company. Workers propose. Humans stamp. The How? button answers from this file, the FAQ, and the Docs playbooks. It never stamps Accept, never sends mail, never publishes a page, never hires anyone.
+This is the how-to for the signed-in company desk at TheMobileProf Technologies (Lagos). One CAC company. Workers propose. You click **Accept** on the **Decide** tab (that yes used to be called a stamp). The **Help?** button answers from this file, the FAQ, and the Docs playbooks. It never Accepts, never sends mail, never publishes a page, never hires anyone.
 
 ## Sign in and what you see
 
@@ -15,22 +15,22 @@ This is the how-to for the signed-in company desk at TheMobileProf Technologies 
 - Hours/week is Delivery pace. Seat the person on a project **Face** tab (cofounder or assistant) to onboard them onto that bet.
 - Tick only the workers they will run. Ticking Legal is what stops `/admin/legal` from 403. Same for SEO.
 - Rights: `whatsapp_accounts` allowlists that phone for customer WhatsApp `/accounts`, `/ops`, `/legal`, `/seo`. `/today` is Delivery if that number is on People.
-- Recruiting is closed. There is no hire stamp. Inbound CVs go to Growth. Do not use HR as a department. Do not treat `/approve` as a hire.
+- Recruiting is closed. There is no hire Accept. Inbound CVs go to Growth. Do not use HR as a department. Do not treat `/approve` as a hire.
 
 ## Board, Projects, Delivery
 
 Do this, in order:
 
-1. Board `/admin/` — look at each card. Open **Proposal waiting** → Stamp → Accept or Reject. Open **Coming up** dates.
-2. Projects `/admin/projects` — click a card. Work the tabs: Stamp, then Dates, then Work, then Face. Academy LMS is a bet, not a second company. Ask placement writes a proposal; Accept moves the stamp. Chat never stamps.
-3. Delivery `/admin/delivery` — click Done on today’s tasks. To plan a week: Ask plan, then Accept on Job chat. Stamp caps: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace. Seat on Face so they can receive tasks.
+1. Board `/admin/` — look at each card. Open **Proposal waiting** → **Decide** → Accept or Reject. Open **Coming up** dates.
+2. Projects `/admin/projects` — click a card. Work the tabs: Decide, then Dates, then Work, then Face. Academy LMS is a bet, not a second company. Ask placement writes a proposal; Accept changes the stage. Chat never Accepts.
+3. Delivery `/admin/delivery` — click Done on today’s tasks. To plan a week: Ask plan, then Accept on Job chat. How many tasks: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace. Seat on Face so they can receive tasks.
 4. Own `/today` check-ins may apply immediately. Accept still belongs to a human for plans the worker proposed.
 
-## How? vs worker Ask
+## Help? vs worker Ask
 
-- **How?** (bottom right on every signed-in page) is this guide. It tells you which screen to open and which button to press. It does not file a job.
-- Worker **Ask** (on `/admin/desks/{slug}` or a book such as Legal/SEO/Delivery) files a **proposed** job. Then chat a fix if needed. Then **Accept** or Turn away.
-- Chat never stamps. The worker JSON never writes `approved`.
+- **Help?** (bottom right on every signed-in page) is this guide. It tells you which screen to open, **or** fills the same form as the page (dates, tasks, People, Ask…). The LLM matches what you meant to the form catalog; Submit posts that form. It never Accepts.
+- Worker **Ask** (on `/admin/desks/{slug}` or a book such as Legal/SEO/Delivery) files a **proposed** job. You can type that form on the page or walk it in Help?. Then chat a fix if needed. Then **Accept** or Turn away.
+- Chat never Accepts. The worker JSON never writes `approved`.
 
 ## Handler desks
 
@@ -43,7 +43,7 @@ Do this, in order:
 - SEO `/seo` — titles, meta, outlines, audit punch lists. Accept on `/admin/seo`. The worker cannot publish, crawl, or read Search Console.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.
 - Ops `/ops` — operations room. Accounts via `/ops` still writes Books. `/ops legal` is chat-only; filing is `/legal`.
-- Product `/validate` — placement and validation. Journey stamps stay on the project card.
+- Product `/validate` — placement and validation. Accept on the project **Decide** tab writes the stage.
 
 ## Docs
 
@@ -55,7 +55,7 @@ Do this, in order:
 - Defaults `/admin/settings` — Zoho org and chart-of-accounts ids. Secrets stay in the VM `.env` / n8n Credentials.
 - Docs `/admin/docs`.
 - n8n `/admin/workflows` — iframe of the editor. Do not treat it as the desk.
-- Guide `/admin/guide` — questions people asked How?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
+- Guide `/admin/guide` — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
 
 ## Chat prefixes (not this website)
 
@@ -75,13 +75,13 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 | growth |
 | none, group | community (Academy Telegram student rooms) |
 
-`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal, project, delivery, or SEO stamp.
+`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal, project, delivery, or SEO decision.
 
 Academy bot refuses ops prefixes. Do not add the ops bot to a class group.
 
 ## Hard no
 
-- Do not stamp by chatting.
+- Do not Accept by chatting.
 - Do not publish from the SEO worker.
 - Do not send from the Legal worker.
 - Do not hire through HR.

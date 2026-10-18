@@ -1,6 +1,6 @@
 # Live asks are not this file
 
-Questions people type into **How?** are stored in Postgres (`guide_asks`) on the VM. Git cannot see them.
+Questions people type into **Help?** are stored in Postgres (`guide_asks`) on the VM. Git cannot see them.
 
 When you come back to Cursor with real questions:
 

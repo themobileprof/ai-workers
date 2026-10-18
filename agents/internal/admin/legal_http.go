@@ -21,7 +21,7 @@ func (s *Server) WithLegal(fn PlaceFunc) {
 func legalFlash(ok string) string {
 	switch ok {
 	case "drafted":
-		return "Draft saved as proposed. Accept still belongs to a human. The worker cannot stamp approved or send it."
+		return "Draft saved as proposed. Accept still belongs to a human. The worker cannot mark it approved or send it."
 	case "legal_ok":
 		return "Draft accepted. Copy from the desk — sending to the other party is not wired."
 	case "legal_no":

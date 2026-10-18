@@ -63,8 +63,11 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	rec := httptest.NewRecorder()
 	s.render(rec, "home", pageData{Title: "Board", Nav: "home", User: &User{Name: "Ada", Role: "owner"}})
 	body := rec.Body.String()
-	if !strings.Contains(body, `class="guide-fab"`) || !strings.Contains(body, "How?") || !strings.Contains(body, "/admin/guide/ask") {
-		t.Fatal("signed-in layout needs How?")
+	if !strings.Contains(body, `class="guide-fab"`) || !strings.Contains(body, "Help?") || !strings.Contains(body, "/admin/guide/ask") {
+		t.Fatal("signed-in layout needs Help?")
+	}
+	if !strings.Contains(body, "Fill it or ask") || !strings.Contains(body, "submitDraft") {
+		t.Fatal("Help? must walk page forms")
 	}
 	if !strings.Contains(body, `data-room="home"`) || !strings.Contains(body, `class="now"`) {
 		t.Fatal("board must be a distinct room with a now strip")
@@ -83,7 +86,7 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	login := httptest.NewRecorder()
 	s.render(login, "login", pageData{Title: "Sign in"})
 	if strings.Contains(login.Body.String(), `class="guide-fab"`) {
-		t.Fatal("login must not show How?")
+		t.Fatal("login must not show Help?")
 	}
 }
 

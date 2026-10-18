@@ -26,7 +26,7 @@ func hrFlash(ok string) string {
 	case "role_closed":
 		return "Role closed. Nothing was emailed."
 	case "app_filed":
-		return "Application saved as proposed. Shortlist or turn away — the clerk cannot stamp it."
+		return "Application saved as proposed. Shortlist or turn away — the clerk cannot Accept it."
 	case "app_yes":
 		return "Shortlisted. Offer letter and payroll are not wired."
 	case "app_no":

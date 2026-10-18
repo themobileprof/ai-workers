@@ -351,13 +351,13 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 func placementFlash(ok string) string {
 	switch ok {
 	case "placed":
-		return "Proposal saved. It has not moved the stamp — Accept, Amend, or Reject."
+		return "Proposal saved. The stage has not changed — Accept, Amend, or Reject on Decide."
 	case "accepted":
-		return "Stamp moved. The proposal is closed."
+		return "You accepted. The project’s stage is updated and the proposal is closed."
 	case "rejected":
-		return "Proposal dropped. Committed journey and gate are unchanged."
+		return "Proposal dropped. The project’s stage is unchanged."
 	case "amended":
-		return "You wrote the stamp. The proposal is closed."
+		return "You set the stage yourself. The proposal is closed."
 	default:
 		return ""
 	}
@@ -394,13 +394,13 @@ func (s *Server) projectPlace(w http.ResponseWriter, r *http.Request) {
 			msg = err.Error()
 		}
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Placement did not save a stamp: "+msg, ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Placement did not save a proposal: "+msg, ""))
 		return
 	}
 	prop, err := proposalFromStructured(resp.StructuredData)
 	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Worker returned an invalid proposal (stamp untouched): "+err.Error(), ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "Worker returned an invalid proposal (stage unchanged): "+err.Error(), ""))
 		return
 	}
 	if err := s.store.SetProposal(r.Context(), p.ID, prop); err != nil {

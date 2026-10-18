@@ -317,7 +317,7 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		}
 	}
 	kind := "system"
-	text := "Handler accepted this job. The worker did not stamp it."
+	text := "Handler accepted this job. The worker did not Accept it."
 	if status == "rejected" {
 		text = "Handler turned this job away. Nothing was sent."
 	}
@@ -390,7 +390,7 @@ func deskFlash(ok string) string {
 	case "asked":
 		return "Worker started a proposed job. Chat here; Accept still belongs to you."
 	case "chat":
-		return "Worker replied. This chat does not stamp Accept."
+		return "Worker replied. This chat does not Accept."
 	case "noted":
 		return "Note saved. This worker is not wired on this process, so there is no reply."
 	case "job_ok":

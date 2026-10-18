@@ -28,9 +28,17 @@ func TestParseFAQ(t *testing.T) {
 	if n < 2 || !strings.Contains(strings.ToLower(hit.A), "people") {
 		t.Fatalf("hit=%q n=%d", hit.A, n)
 	}
+	form, n := bestFAQ("can how fill a form for me", got)
+	if n < 2 || !strings.Contains(strings.ToLower(form.A), "submit") {
+		t.Fatalf("form faq=%q n=%d", form.A, n)
+	}
 	event, n := bestFAQ("how do I track a training at UNILAG on the academy project", got)
 	if n < 2 || !strings.Contains(strings.ToLower(event.A), "dates") {
 		t.Fatalf("event faq=%q n=%d", event.A, n)
+	}
+	stamp, n := bestFAQ("what is stamp", got)
+	if n < 2 || !strings.Contains(strings.ToLower(stamp.A), "accept") {
+		t.Fatalf("stamp faq=%q n=%d", stamp.A, n)
 	}
 }
 
@@ -79,8 +87,15 @@ func TestAnswerGuideWithoutLLMUsesFAQ(t *testing.T) {
 		User:     User{Name: "Ada", Role: "owner"},
 		Question: "How do I track a UNILAG training on TheMobileProf Academy until delivery?",
 	})
-	if event.Unsure || !strings.Contains(strings.ToLower(event.Answer), "dates") {
+	if event.Unsure || event.Draft != nil || !strings.Contains(strings.ToLower(event.Answer), "dates") {
 		t.Fatalf("%+v", event)
+	}
+	stamp := s.answerGuide(context.Background(), guideInput{
+		User:     User{Name: "Ada", Role: "owner"},
+		Question: "What is stamp?",
+	})
+	if stamp.Unsure || !strings.Contains(strings.ToLower(stamp.Answer), "accept") {
+		t.Fatalf("%+v", stamp)
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 func eventFlash(ok string) string {
 	switch ok {
 	case "dated":
-		return "Date saved on this bet. Add Delivery tasks and stamp Delivered when it actually happened."
+		return "Date saved on this bet. Add Delivery tasks and click Delivered when it actually happened."
 	case "week":
 		return "Date saved and copied onto This week. Delivery still holds the tasks."
 	case "delivered":
@@ -128,7 +128,7 @@ func (s *Server) projectEventTaskPOST(w http.ResponseWriter, r *http.Request) {
 	open, _ := s.store.CountOpenWork(r.Context(), p.ID)
 	if eng.MaxOpenTasks <= 0 || open >= eng.MaxOpenTasks {
 		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, p.Name+" has no open task slots on this stamp", ""))
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, p.Name+" has no open task slots at this stage", ""))
 		return
 	}
 	due := ev.EndsOn.Format("2006-01-02")

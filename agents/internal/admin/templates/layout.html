@@ -142,18 +142,18 @@
     <section class="guide-panel" id="guide-panel" hidden>
       <header>
         <p class="kicker">Desk</p>
-        <h2>What should I click?</h2>
+        <h2>Fill it or ask</h2>
         <button type="button" class="ghost" id="guide-close" aria-label="Close guide">Close</button>
       </header>
       <div class="guide-log" id="guide-log"></div>
       <form id="guide-form">
         <label class="sr-only" for="guide-q">Your question</label>
-        <textarea id="guide-q" name="q" rows="2" required maxlength="500" placeholder="Example: How do I add the UNILAG training?"></textarea>
+        <textarea id="guide-q" name="q" rows="2" required maxlength="500" placeholder="Add a date, add a task, or ask which button"></textarea>
         <button type="submit">Send</button>
       </form>
-      <p class="guide-foot">Tells you which button. Does not Accept or send mail.</p>
+      <p class="guide-foot">Same as the page forms. Does not Accept or send mail.</p>
     </section>
-    <button type="button" class="guide-fab" id="guide-fab" aria-controls="guide-panel" aria-expanded="false">How?</button>
+    <button type="button" class="guide-fab" id="guide-fab" aria-controls="guide-panel" aria-expanded="false" aria-label="Help — explain or fill a form">Help?</button>
   </div>
   {{end}}
   <script>
@@ -242,9 +242,14 @@
       var box = document.getElementById("guide-q");
       if (!fab || !panel || !form || !log || !box) return;
       var history = [];
+      var draft = null;
       function openGuide() {
         panel.hidden = false;
         fab.setAttribute("aria-expanded", "true");
+        if (!log.childNodes.length) {
+          addBubble("worker", "I can explain a button, or fill the same form as the page with you. Tap a chip or say it in a sentence. Submit when the summary is right. I never click Accept.");
+          addChips(["Add a date", "Add a task", "Add a person", "Ask a worker"]);
+        }
         box.focus();
       }
       function closeGuide() {
@@ -256,7 +261,94 @@
         else closeGuide();
       });
       if (close) close.addEventListener("click", closeGuide);
-      function addBubble(who, text, hrefs) {
+      function addChips(labels) {
+        var row = document.createElement("div");
+        row.className = "guide-chips";
+        labels.forEach(function (label) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "ghost";
+          btn.textContent = label;
+          btn.addEventListener("click", function () {
+            box.value = label;
+            form.requestSubmit();
+          });
+          row.appendChild(btn);
+        });
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+      }
+      function submitDraft(d) {
+        if (!d || !d.ready || !d.action || d.action.indexOf("/admin/") !== 0) return;
+        var f = document.createElement("form");
+        f.method = "post";
+        f.action = d.action;
+        (d.fields || []).forEach(function (field) {
+          if (!field || field.omit || field.value == null || field.value === "") return;
+          var parts = field.multi ? String(field.value).split(",") : [field.value];
+          parts.forEach(function (v) {
+            v = String(v).trim();
+            if (!v) return;
+            var inp = document.createElement("input");
+            inp.type = "hidden";
+            inp.name = field.name;
+            inp.value = v;
+            f.appendChild(inp);
+          });
+        });
+        document.body.appendChild(f);
+        f.submit();
+      }
+      function addDraftCard(d) {
+        if (!d || !d.recipe) return;
+        var card = document.createElement("div");
+        card.className = "guide-draft";
+        var h = document.createElement("p");
+        h.className = "kicker";
+        h.textContent = d.title || "Form";
+        card.appendChild(h);
+        if (d.fields && d.fields.length) {
+          var list = document.createElement("dl");
+          d.fields.forEach(function (field) {
+            if (!field || field.value === "" || field.value == null) return;
+            var dt = document.createElement("dt");
+            dt.textContent = field.label || field.name;
+            var dd = document.createElement("dd");
+            dd.textContent = field.kind === "secret" ? "••••" : field.value;
+            list.appendChild(dt);
+            list.appendChild(dd);
+          });
+          if (list.childNodes.length) card.appendChild(list);
+        }
+        var actions = document.createElement("div");
+        actions.className = "actions";
+        if (d.ready && d.action) {
+          var go = document.createElement("button");
+          go.type = "button";
+          go.textContent = d.button || "Submit";
+          go.addEventListener("click", function () { submitDraft(d); });
+          actions.appendChild(go);
+        }
+        if (d.href && d.href.indexOf("/admin/") === 0) {
+          var open = document.createElement("a");
+          open.className = "ghost";
+          open.href = d.href;
+          open.textContent = "Open form";
+          actions.appendChild(open);
+        }
+        var stop = document.createElement("button");
+        stop.type = "button";
+        stop.className = "ghost";
+        stop.textContent = "Cancel";
+        stop.addEventListener("click", function () {
+          box.value = "cancel";
+          form.requestSubmit();
+        });
+        actions.appendChild(stop);
+        card.appendChild(actions);
+        log.appendChild(card);
+      }
+      function addBubble(who, text, hrefs, d) {
         var b = document.createElement("div");
         b.className = "bubble " + who;
         var parts = String(text || "").split(/(\/admin\/[^\s<]+)/);
@@ -283,6 +375,7 @@
           if (nav.childNodes.length) b.appendChild(nav);
         }
         log.appendChild(b);
+        if (d) addDraftCard(d);
         log.scrollTop = log.scrollHeight;
       }
       form.addEventListener("submit", function (e) {
@@ -290,8 +383,8 @@
         var q = box.value.trim();
         if (!q) return;
         box.value = "";
-        addBubble("handler", q);
-        history.push({ role: "user", content: q });
+        addBubble("handler", draft && draft.secret ? "••••" : q);
+        history.push({ role: "user", content: draft && draft.secret ? "(password)" : q });
         var pending = document.createElement("div");
         pending.className = "bubble worker";
         pending.textContent = "Looking it up…";
@@ -304,7 +397,8 @@
           body: JSON.stringify({
             question: q,
             page: location.pathname + location.search,
-            history: history.slice(-8)
+            history: history.slice(-8),
+            draft: draft ? { recipe: draft.recipe, values: draft.values || {} } : null
           })
         }).then(function (res) {
           return res.json().then(function (data) {
@@ -314,7 +408,8 @@
           pending.remove();
           var answer = (got.data && got.data.answer) || (got.ok ? "" : "Could not reach the guide.");
           if (!answer) answer = "I do not have an answer yet. Open Docs or ask the owner.";
-          addBubble("worker", answer, got.data && got.data.hrefs);
+          draft = (got.data && got.data.draft) || null;
+          addBubble("worker", answer, got.data && got.data.hrefs, draft);
           history.push({ role: "assistant", content: answer });
         }).catch(function () {
           pending.remove();

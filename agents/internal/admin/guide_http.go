@@ -63,6 +63,7 @@ func (s *Server) guideAskPOST(w http.ResponseWriter, r *http.Request) {
 		Question string        `json:"question"`
 		Page     string        `json:"page"`
 		History  []llm.Message `json:"history"`
+		Draft    *GuideDraft   `json:"draft"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -80,14 +81,16 @@ func (s *Server) guideAskPOST(w http.ResponseWriter, r *http.Request) {
 	if page != "" && !strings.HasPrefix(page, "/admin") {
 		page = ""
 	}
-	rep := s.answerGuide(r.Context(), guideInput{
+	in := guideInput{
 		User:     *u,
 		Question: q,
 		Page:     page,
 		History:  body.History,
-	})
+		Draft:    sanitizeIncomingDraft(body.Draft),
+	}
+	rep := s.answerGuide(r.Context(), in)
 	if s.store != nil {
-		_ = s.store.InsertGuideAsk(r.Context(), u.ID, q, rep.Answer, page, rep.Unsure)
+		_ = s.store.InsertGuideAsk(r.Context(), u.ID, redactGuideQuestion(q, in), rep.Answer, page, rep.Unsure)
 	}
 	writeJSON(w, rep)
 }
