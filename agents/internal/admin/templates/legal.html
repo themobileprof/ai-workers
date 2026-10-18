@@ -1,9 +1,13 @@
 {{define "content"}}
 <aside class="now" aria-label="What to do">
   <div>
-    <p class="do">Legal book · {{statusCount .Drafts "proposed"}} waiting</p>
-    <h2>Read the draft. Accept or turn away.</h2>
-    <p>Nothing is emailed. The worker cannot send. <code>/approve</code> only sends a pending info@ draft — not this stamp.</p>
+    <p class="do">Legal · {{statusCount .Drafts "proposed"}} waiting</p>
+    <h2>Read, then Accept or Turn away</h2>
+    <ol class="recipe">
+      <li>Open <strong>Proposed</strong> and read the draft.</li>
+      <li>Click <strong>Accept</strong> if it is right, or <strong>Turn away</strong>.</li>
+      <li>Copy the accepted text yourself. This page does not email anyone. <code>/approve</code> is not this.</li>
+    </ol>
   </div>
   <div class="actions now-go">
     <a class="ghost" href="/admin/desks/legal">Ask a draft</a>
@@ -44,7 +48,7 @@
       {{end}}
       {{end}}
       {{else}}
-      <p class="hint">No proposed drafts. Open a <a class="quiet" href="/admin/projects">project</a> and Ask draft, or Telegram <code>/legal</code>.</p>
+      <p class="hint">Nothing waiting. Open a <a class="quiet" href="/admin/projects">project</a> → Legal → Ask draft, or send Telegram <code>/legal</code>.</p>
       {{end}}
     </section>
     <section role="tabpanel" id="tab-accepted" data-tab="accepted">
@@ -60,7 +64,7 @@
         {{if .NeedsLawyer}}<p class="hint">Needs a human lawyer before signature.</p>{{end}}
         {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
         {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
-        <p class="hint">Accepted. Copy from here. Sending the other party is not wired.</p>
+        <p class="hint">Accepted. Copy the text. Sending it to the other party is still you, in the real world.</p>
       </section>
       {{end}}
       {{end}}

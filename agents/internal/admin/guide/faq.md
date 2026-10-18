@@ -4,11 +4,18 @@ Durable answers. Add a `##` question when real people ask something this file do
 
 ## How do I add someone to the office?
 
-Owner only. Open People (`/admin/users`) → Add. Name, phone in `234…` form, office seat, hours/week, then tick the desks they will run. That tick is their login. Seat them on a project Face tab (cofounder or assistant) to onboard them onto a bet. BDM cannot add people.
+Owner only (BDM cannot add people):
+
+1. Open People (`/admin/users`) → Add person.
+2. Person tab: name, phone in `234…` form, a login they will remember, hours/week (6 is fine).
+3. Desks tab: tick only the workers they will run. That tick is their login.
+4. Click Add. Then open the project → Face → seat them as cofounder or assistant.
 
 ## Why do I get 403 on Legal or SEO?
 
-Those books require the matching desk tick on your People card. Owner: open People → your card → Desks → tick Legal and/or SEO. Delivery is already on the Board rail for owner/BDM.
+1. Ask the owner to open People → your card → Desks.
+2. Tick Legal and/or SEO.
+3. Sign out and sign in again. Delivery is already on the Board rail for owner/BDM.
 
 ## What is the difference between How? and Ask?
 
@@ -16,11 +23,15 @@ How? (bottom right) explains which screen to use. It does not file a job. Ask on
 
 ## How do I assign work this week?
 
-Delivery (`/admin/delivery`) or `/today` from an allowlisted phone. Stamp on the project caps how many open tasks (idea 1, testing 3, selling 5, fundable 4, parked/killed 0). Pace is hours/week on the People card. Seat the person on the Face tab first. The worker proposes; you Accept.
+1. Seat the person on the project Face tab (unless they are owner or BDM).
+2. Open Delivery (`/admin/delivery`) → Add a task by hand, or Ask plan then Accept on Job chat.
+3. Or WhatsApp `/today` from a People phone. Stamp caps: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling.
 
 ## How do I onboard someone onto a bet?
 
-People card: hours/week. Project card: Face tab, cofounder or assistant. Seat is not a login. Login is the desk tick on People.
+1. People → their card: set hours/week.
+2. Project → Face: pick them, seat cofounder or assistant, click Seat them.
+3. Seat is not a login. Login is the desk tick on People.
 
 ## What does /approve do?
 
@@ -44,7 +55,9 @@ Board is owner and BDM. Handlers land on Workers. Project faces should not see t
 
 ## How do I change Zoho or Paystack ids?
 
-Defaults (`/admin/settings`), owner/BDM. Those are Books account ids, not secrets. API tokens stay in the VM `.env` or n8n Credentials.
+1. Open Defaults (`/admin/settings`) → Amend ids.
+2. Paste the Zoho Books account numbers. These are ids, not secrets.
+3. Save. API tokens stay in the VM `.env` or n8n Credentials — never on this page.
 
 ## Someone sent a CV. Do we hire them in HR?
 
@@ -52,16 +65,20 @@ No. Recruiting is closed. Onboard people you already know via People + Face. Inb
 
 ## How do I mark a delivery task done?
 
-Open Delivery (`/admin/delivery`) and stamp the item done (or skip). `/today` check-ins from your own People phone may apply immediately. Do not use `/approve`.
+1. Open Delivery (`/admin/delivery`).
+2. Click **Done** on the task (or **Skip**).
+3. Or WhatsApp `/today done …` from your own People phone. Do not use `/approve`.
 
 ## What should a field person do?
 
-They often have no login. The this-week line on the project card is the mission. They go to the place and bring named people back. The desk stamps GO/PIVOT/KILL. They are not a director of TheMobileProf.
+1. Read this week’s line on the project card. That is the mission.
+2. Go to the place. Bring named people back.
+3. The desk stamps GO / PIVOT / KILL. They often have no login. They are not a director of TheMobileProf.
 
 ## How do I track a training, campus week, or dated event on a project?
 
-Open the bet (`/admin/projects` → TheMobileProf Academy). Open the **Dates** tab. Name it (e.g. Linux on Mobile — UNILAG), set 17–19 Nov 2026, venue, audience, and what success looks like (sign-ups for lms.themobileprof.com). Tick “Set as this week’s line” so Board keeps the agenda. Stamp **Delivered** when it happened.
+1. Open Projects → TheMobileProf Academy → **Dates**.
+2. Fill What (e.g. Linux on Mobile — UNILAG), start/end (17–19 Nov 2026), Where, Who, and success (sign-ups for lms.themobileprof.com). Leave “Set as this week’s line” ticked. Click **Save date**.
+3. Click **Add task on Delivery** for the work. After the week, click **Delivered**.
 
-Then file the work: on that date, “Add task on Delivery” (or Delivery itself). The project stamp still caps open tasks. Seat campus helpers on Face as assistant.
-
-Do not invent a second company. Do not put the event only in Community mandates (those are Academy Telegram student rooms). Do not use `/approve`. The intern-mission loop is still later — Dates + Delivery is the memory.
+Seat campus helpers on Face as assistant. Do not put this in Community (those are Telegram student rooms). Do not use `/approve`.

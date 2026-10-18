@@ -69,8 +69,13 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(body, `data-room="home"`) || !strings.Contains(body, `class="now"`) {
 		t.Fatal("board must be a distinct room with a now strip")
 	}
-	if !strings.Contains(body, "Stamp what moved") {
-		t.Fatal("board job line")
+	if !strings.Contains(body, "Check each card") || !strings.Contains(body, `class="recipe"`) {
+		t.Fatal("board must list numbered steps")
+	}
+	deliv := httptest.NewRecorder()
+	s.render(deliv, "delivery", pageData{Title: "Delivery", Nav: "delivery", User: &User{Name: "Ada", Role: "owner"}})
+	if !strings.Contains(deliv.Body.String(), "Close today’s list") || !strings.Contains(deliv.Body.String(), `class="recipe"`) {
+		t.Fatal("delivery must list numbered steps")
 	}
 	if !strings.Contains(body, `href="/admin/guide"`) {
 		t.Fatal("office Guide link")

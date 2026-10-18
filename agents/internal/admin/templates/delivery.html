@@ -2,8 +2,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Delivery · {{statusCount .WorkItems "open"}} open</p>
-    <h2>Mark today done. The stamp caps how many.</h2>
-    <p>Hours/week on People is pace. Seat on Face to onboard. Campus dates live on the bet’s Dates tab — file a task here, stamp Delivered there. Ask plan proposes; you Accept. <code>/approve</code> is not this.</p>
+    <h2>Close today’s list</h2>
+    <ol class="recipe">
+      <li>For each open task, click <strong>Done</strong> (or <strong>Skip</strong>).</li>
+      <li>If Coming up shows a date with no task, open Dates on that project and add one.</li>
+      <li>To plan a week: <strong>Ask plan</strong> → wait → <strong>Accept</strong> on Job chat. Do not use <code>/approve</code>.</li>
+    </ol>
   </div>
   <div class="actions now-go">
     <a class="ghost" href="/admin/desks/delivery">Job chat</a>
@@ -53,7 +57,7 @@
         {{end}}
       </ol>
       {{else}}
-      <p class="hint">No tasks yet. Add one on a selling or testing bet, or Ask plan.</p>
+      <p class="hint">No tasks yet. Open Add a task by hand below, or Ask plan.</p>
       {{end}}
       <details class="more">
         <summary>Add a task by hand</summary>
@@ -93,7 +97,7 @@
           <span class="stamp {{.StageStamp}}">{{.Stage}} · {{.Open}}/{{.Engagement.MaxOpenTasks}}</span>
         </div>
         <p>{{.OneLiner}}</p>
-        <p class="hint">{{if eq .Engagement.MaxOpenTasks 0}}Silent. Parked and killed bets get no tasks and no pings.{{else}}Up to {{.Engagement.MaxOpenTasks}} open tasks. Weight {{.Engagement.Weight}}. {{if .Engagement.Pings}}Morning ping on.{{else}}No morning ping.{{end}}{{end}}</p>
+        <p class="hint">{{if eq .Engagement.MaxOpenTasks 0}}Parked or killed: add no tasks.{{else}}You may hold {{.Engagement.MaxOpenTasks}} open tasks. {{if .Engagement.Pings}}Morning WhatsApp ping is on.{{else}}No morning ping on this stamp.{{end}}{{end}}</p>
       </section>
       {{end}}
     </section>
@@ -115,7 +119,7 @@
           <button type="submit">Ask worker</button>
         </div>
       </form>
-      <p class="hint">The worker proposes. Accept on the Delivery desk job to write the tasks. Chat never stamps.</p>
+      <p class="hint">Type what the week should look like, click Ask worker. Then open Job chat and click Accept to write the tasks.</p>
       {{else}}
       <p class="hint">Worker is off until the LLM env is set. You can still add tasks by hand.</p>
       {{end}}

@@ -19,10 +19,12 @@ This is the how-to for the signed-in company desk at TheMobileProf Technologies 
 
 ## Board, Projects, Delivery
 
-- Board `/admin/` — owner/BDM. Bets, this week’s line, and Coming up (campus dates from each bet’s Dates tab).
-- Projects `/admin/projects` — incubated bets under this one company (Academy LMS is a bet, not a second company). Journey/gate is a stamp. **Ask placement** writes a proposal; **Accept** moves it. Chat never stamps. A dated training or campus week lives on the **Dates** tab (and can copy onto This week). Stamp Delivered when it happened.
-- Delivery `/admin/delivery` — tasks across bets. Stamp on the project sets how many open tasks: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. `/today` `/pm` `/idea` on chat. Pace is hours/week on People. Seat on Face to onboard. Dates can file a task due that day.
-- Own `/today` check-ins may apply immediately. Accept still belongs to a human for plans the worker proposed.
+Do this, in order:
+
+1. Board `/admin/` — look at each card. Open **Proposal waiting** → Stamp → Accept or Reject. Open **Coming up** dates.
+2. Projects `/admin/projects` — click a card. Work the tabs: Stamp, then Dates, then Work, then Face. Academy LMS is a bet, not a second company. Ask placement writes a proposal; Accept moves the stamp. Chat never stamps.
+3. Delivery `/admin/delivery` — click Done on today’s tasks. To plan a week: Ask plan, then Accept on Job chat. Stamp caps: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace. Seat on Face so they can receive tasks.
+4. Own `/today` check-ins may apply immediately. Accept still belongs to a human for plans the worker proposed.
 
 ## How? vs worker Ask
 

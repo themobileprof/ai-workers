@@ -3,8 +3,13 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">People · add</p>
-    <h2>Name, phone, desk tick. That is the login.</h2>
-    <p><a class="quiet" href="/admin/users">Back to the roster</a>. Hours/week is Delivery pace. Seat them on a project Face tab to onboard. Recruiting is closed.</p>
+    <h2>Three tabs, then Add</h2>
+    <ol class="recipe">
+      <li><strong>Person:</strong> name, phone starting 234, password, hours (6 is fine).</li>
+      <li><strong>Desks:</strong> tick only the workers they will click. That tick is their login.</li>
+      <li><strong>Rights:</strong> tick <code>whatsapp_accounts</code> only if they send receipts from that phone. Then click <strong>Add</strong>.</li>
+    </ol>
+    <p><a class="quiet" href="/admin/users">Back to People</a>. After this, seat them on a project Face tab.</p>
   </div>
 </aside>
 <form class="person add" method="post" action="/admin/users">
@@ -21,7 +26,7 @@
           <label>Phone<input name="phone" placeholder="234…"></label>
           <label>Email<input name="email" type="email"></label>
           <label>Role
-            <span class="hint">Office seat. owner and bdm sit on the parent. cofounder / assistant belong on a project.</span>
+            <span class="hint">owner or bdm = office. cofounder or assistant = they sit on a project Face tab next.</span>
             <select name="role">
               {{range .Roles}}
               <option value="{{.}}" {{if eq . "cofounder"}}selected{{end}}>{{.}}</option>
@@ -29,7 +34,7 @@
             </select>
           </label>
           <label>Hours / week
-            <span class="hint">Pace for Delivery. Slow default is 6. Seat them on a project Face tab so they can receive tasks.</span>
+            <span class="hint">How many hours Delivery may give them this week. 6 is the slow default.</span>
             <input name="hours_per_week" type="number" min="1" step="0.5" value="6">
           </label>
           <label>Password<input name="password" type="password" placeholder="required for web login" autocomplete="new-password"></label>
@@ -38,7 +43,7 @@
       <section role="tabpanel" id="tab-desks" data-tab="desks">
         <fieldset>
           <legend>Handler desks</legend>
-          <p class="hint">Workers this person handles. They see those desks when they sign in — not on the company Board. Ticking a desk grants web_admin.</p>
+          <p class="hint">Tick a desk and they can sign in and see that worker. They will not see Board unless they are owner or BDM. Leave all empty if they only work in the field with no login.</p>
           {{range .DeskCatalog}}
           <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}"> {{.Title}} <code>{{.Prefix}}</code></label>
           {{end}}
@@ -64,7 +69,12 @@
   <div>
     <p class="do">People · amend</p>
     <h2>{{.Editing.Name}}</h2>
-    <p><a class="quiet" href="/admin/users">Back to the roster</a>. Tick desks they will run. Face seats live on the project card, not here.</p>
+    <ol class="recipe">
+      <li>Fix name, phone, or hours on Person if needed.</li>
+      <li>On Desks, tick only the workers they should still run.</li>
+      <li>Click <strong>Save</strong>. To put them on a project, open that card → Face — not this page.</li>
+    </ol>
+    <p><a class="quiet" href="/admin/users">Back to People</a></p>
   </div>
 </aside>
 <form class="person" method="post" action="/admin/users/{{.Editing.ID}}">
@@ -81,7 +91,7 @@
           <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
           <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
           <label>Role
-            <span class="hint">Office seat. Seat a cofounder or assistant on the project card. Handler desks are on Desks.</span>
+            <span class="hint">owner or bdm = office. cofounder or assistant still need a Face seat on the project card.</span>
             <select name="role">
               {{range $.Roles}}
               <option value="{{.}}" {{if eq $.Editing.Role .}}selected{{end}}>{{.}}</option>
@@ -89,7 +99,7 @@
             </select>
           </label>
           <label>Hours / week
-            <span class="hint">Pace for Delivery. Seat them on a project to onboard them onto tasks — not an HR JD.</span>
+            <span class="hint">How many hours Delivery may give them this week.</span>
             <input name="hours_per_week" type="number" min="1" step="0.5" value="{{if .Editing.HoursPerWeek}}{{.Editing.HoursPerWeek}}{{else}}6{{end}}">
           </label>
           <label>New password<input name="password" type="password" placeholder="leave blank to keep" autocomplete="new-password"></label>
@@ -98,7 +108,7 @@
       <section role="tabpanel" id="tab-desks" data-tab="desks">
         <fieldset>
           <legend>Handler desks</legend>
-          <p class="hint">Workers this person handles. They see those desks when they sign in — not on the company Board. Ticking a desk grants web_admin.</p>
+          <p class="hint">Tick a desk and they can sign in to that worker. Untick to take it away.</p>
           {{range .DeskCatalog}}
           <label class="chk"><input type="checkbox" name="desk" value="{{.Slug}}" {{if assigned $.Editing .Slug}}checked{{end}}> {{.Title}} <code>{{.Prefix}}</code></label>
           {{end}}
@@ -129,8 +139,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">People · owner only</p>
-    <h2>Add a human. Tick the desks they run.</h2>
-    <p>That tick is their login. Seat a cofounder or assistant on a <a class="quiet" href="/admin/projects">project Face tab</a>. Hours/week is Delivery pace. This is not hiring.</p>
+    <h2>Add the next person</h2>
+    <ol class="recipe">
+      <li>Click <strong>Add person</strong>.</li>
+      <li>Fill name, phone (234…), password. Tick only the desks they will run.</li>
+      <li>Then open a project → <strong>Face</strong> and seat them. That is not a hire.</li>
+    </ol>
   </div>
   <a class="ghost fill now-go" href="/admin/users/new">
     <svg class="ico"><use href="#i-plus"/></svg>
@@ -147,13 +161,13 @@
     </div>
     <h3><a href="/admin/users/{{.ID}}">{{.Name}}</a></h3>
     <p class="meta">{{if .Phone}}<code>{{.Phone}}</code>{{end}}{{if .Email}} · {{.Email}}{{end}}{{if .HoursPerWeek}} · {{.HoursPerWeek}}h/wk{{end}}</p>
-    <p class="prefixes">{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}<span class="hint">no desk — cannot sign in</span>{{end}}</p>
+    <p class="prefixes">{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}<span class="hint">no desk — they cannot sign in until you tick one</span>{{end}}</p>
     <p><a class="ghost" href="/admin/users/{{.ID}}">Amend</a></p>
   </li>
   {{end}}
 </ol>
 {{else}}
-<p class="hint">Nobody on the roster yet.</p>
+<p class="hint">Nobody on People yet. Click Add person.</p>
 {{end}}
 {{end}}
 {{end}}

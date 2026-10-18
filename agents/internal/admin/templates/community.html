@@ -2,8 +2,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Community · {{len .Mandates}} rooms</p>
-    <h2>One mandate per Academy Telegram room.</h2>
-    <p>Paste <code>telegram_chat_id</code> after the Academy bot is in the group. WhatsApp Cloud API cannot join ordinary groups. The catalog is the ground truth — missing a course means escalate.</p>
+    <h2>Connect each Telegram room</h2>
+    <ol class="recipe">
+      <li>Open the room (or <strong>New mandate</strong>).</li>
+      <li>Add the Academy Telegram bot to that group and send a message.</li>
+      <li>Copy <code>telegram_chat_id</code> from n8n into this form and save. Do not put campus trainings here.</li>
+    </ol>
   </div>
   <div class="actions now-go">
     <a class="ghost" href="/admin/desks/community">Job chat</a>
@@ -39,13 +43,13 @@
       </section>
       {{end}}
       {{else}}
-      <p class="hint">No rooms yet. Seed should have created Academy LMS. Use New mandate.</p>
+      <p class="hint">No rooms yet. Open New mandate and name the Telegram group.</p>
       {{end}}
     </section>
     <section role="tabpanel" id="tab-edit" data-tab="edit">
       <form method="post" action="/admin/community" class="person add">
         {{if .Mandate}}<input type="hidden" name="id" value="{{.Mandate.ID}}">{{end}}
-        <p class="hint">The catalog is the ground truth. Leave a course off this list and the worker must escalate instead of guessing.</p>
+        <p class="hint">List only courses this room may talk about. If a course is missing here, the worker must ask you — it will not guess.</p>
         <div class="fields">
           <label>Title
             <input name="title" required value="{{if .Mandate}}{{.Mandate.Title}}{{end}}" placeholder="Academy LMS">

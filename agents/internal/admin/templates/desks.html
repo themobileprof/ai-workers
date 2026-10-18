@@ -2,9 +2,30 @@
 {{if .Desk}}
 <aside class="now" aria-label="What to do">
   <div>
-    <p class="do">{{.Desk.Title}} handler · {{statusCount .Jobs "proposed"}} waiting</p>
-    <h2>{{if .Job}}This job: stamp after you read it.{{else if statusCount .Jobs "proposed"}}Open a proposed job. Chat does not Accept.{{else}}Ask the worker. Then wait for a proposal.{{end}}</h2>
-    <p>{{.Desk.Help}} Prefix <code>{{.Desk.Prefix}}</code>. The worker cannot stamp.</p>
+    <p class="do">{{.Desk.Title}} · {{statusCount .Jobs "proposed"}} waiting</p>
+    {{if .Job}}
+    <h2>Finish this job</h2>
+    <ol class="recipe">
+      <li>Read the worker’s reply on <strong>This job</strong>.</li>
+      <li>If it is wrong, type a fix and click <strong>Send to worker</strong>.</li>
+      <li>When it is right, click <strong>Accept</strong>. Click <strong>Turn away</strong> if you do not want it.</li>
+    </ol>
+    {{else if statusCount .Jobs "proposed"}}
+    <h2>Open a waiting job</h2>
+    <ol class="recipe">
+      <li>Open <strong>Jobs</strong>.</li>
+      <li>Click the one marked proposed.</li>
+      <li>Read it, then <strong>Accept</strong> or <strong>Turn away</strong>. Chat does not Accept.</li>
+    </ol>
+    {{else}}
+    <h2>Ask first</h2>
+    <ol class="recipe">
+      <li>Open <strong>Ask</strong>.</li>
+      <li>Type the task in plain language. Click <strong>Ask worker</strong>.</li>
+      <li>Wait, then open <strong>This job</strong> and Accept.</li>
+    </ol>
+    {{end}}
+    <p>{{.Desk.Help}} Chat prefix: <code>{{.Desk.Prefix}}</code>.</p>
   </div>
   <div class="actions now-go">
     {{if .Desk.BookPath}}<a class="ghost fill" href="{{.Desk.BookPath}}">{{.Desk.BookLabel}}</a>{{end}}
@@ -22,7 +43,7 @@
     <section role="tabpanel" id="tab-ask" data-tab="ask">
       {{if .CanAsk}}
       <form method="post" action="/admin/desks/{{.Desk.Slug}}/ask" class="person add">
-        <p class="hint">Ask the worker. Files a proposed job. Chat does not stamp Accept.</p>
+        <p class="hint">Type what you need in plain language, then Ask worker. A job appears — it is not done until you Accept.</p>
         <label>Task
           <textarea name="task" rows="3" required placeholder="What should this worker draft or flag?"></textarea>
         </label>
@@ -105,8 +126,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Your desks</p>
-    <h2>Pick the worker you run. Ask, then Accept.</h2>
-    <p>You only see desks ticked on your People card. Chat never stamps.</p>
+    <h2>Open the worker you run</h2>
+    <ol class="recipe">
+      <li>Click the desk.</li>
+      <li>Ask: type what you need, click Ask worker.</li>
+      <li>This job: read, then Accept or Turn away. Typing in chat does not Accept.</li>
+    </ol>
   </div>
 </aside>
 <div class="tabset" data-tabs data-default="{{if statusCount .Jobs "proposed"}}recent{{else}}desks{{end}}">
@@ -127,7 +152,7 @@
         {{end}}
       </ul>
       {{else}}
-      <p class="hint">No desks assigned. The owner grants handler roles on People.</p>
+      <p class="hint">No desks on your card. Ask the owner to open People → you → Desks and tick one.</p>
       {{end}}
     </section>
     <section role="tabpanel" id="tab-recent" data-tab="recent">

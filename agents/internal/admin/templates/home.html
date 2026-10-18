@@ -1,11 +1,15 @@
 {{define "content"}}
 <aside class="now" aria-label="What to do">
   <div>
-    <p class="do">Board · owner / BDM</p>
-    <h2>Stamp what moved. Seat who is missing.</h2>
-    <p>Each card is a bet under this one company. Open it to Accept a proposal, put a campus date on Dates, or write this week’s line. Workers do not live here — they appear when a person you ticked on People signs in.</p>
+    <p class="do">Board · do this now</p>
+    <h2>Check each card</h2>
+    <ol class="recipe">
+      <li>If a card says <strong>Proposal waiting</strong>, open it → <strong>Stamp</strong> → <strong>Accept</strong> or <strong>Reject</strong>.</li>
+      <li>If <strong>Coming up</strong> lists a date, open it → add the work → click <strong>Delivered</strong> when it happened.</li>
+      <li>If a card has no person, open it → <strong>Face</strong> → seat someone.</li>
+    </ol>
   </div>
-  <a class="ghost fill now-go" href="/admin/projects">Open the book</a>
+  <a class="ghost fill now-go" href="/admin/projects">Open Projects</a>
 </aside>
 
 {{if .Events}}
@@ -35,13 +39,13 @@
     <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
     {{if .Proposal}}<p class="flag">Proposal waiting — open and stamp</p>{{end}}
     {{if .NextEvent}}<p class="flag">{{.NextEvent.WhenLabel}} · {{.NextEvent.Title}}</p>{{end}}
-    {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{else}}<p class="hint">No this-week line.</p>{{end}}
-    <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No face seated — you or the BDM.{{end}}</p>
+    {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{else}}<p class="hint">No this-week line — open Card and write one.</p>{{end}}
+    <p class="hint">{{if .MemberNames}}{{.MemberNames}}{{else}}No person yet — open Face and seat someone.</p>{{end}}
   </li>
   {{end}}
 </ol>
 {{else}}
-<p class="hint">No bets yet. <a class="quiet" href="/admin/projects/new">Open a project</a> with a one-liner.</p>
+<p class="hint">No projects yet. <a class="quiet" href="/admin/projects/new">Open a project</a>: name it, then write who pays and for what.</p>
 {{end}}
 
 <p class="pulse">
@@ -50,8 +54,8 @@
   <span><strong>{{len .Allowlist}}</strong> WhatsApp numbers</span>
 </p>
 {{if .Allowlist}}
-<p class="hint">Books / legal / SEO on customer WhatsApp: {{range $i, $p := .Allowlist}}{{if $i}}, {{end}}<code>{{$p}}</code>{{end}}. Grant that on a People card.</p>
+<p class="hint">These phones may send receipts on WhatsApp: {{range $i, $p := .Allowlist}}{{if $i}}, {{end}}<code>{{$p}}</code>{{end}}. To add one: People → that person → Rights → tick <code>whatsapp_accounts</code>.</p>
 {{else}}
-<p class="hint">Nobody is allowlisted for WhatsApp books. Tick <code>whatsapp_accounts</code> on People.</p>
+<p class="hint">No phone may send receipts on WhatsApp yet. People → the bookkeeper → Rights → tick <code>whatsapp_accounts</code>.</p>
 {{end}}
 {{end}}
