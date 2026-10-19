@@ -1,0 +1,766 @@
+{
+  "id": "filesPlace0000001",
+  "name": "Files place",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "filesPlace0000001trig",
+      "name": "Every 2 minutes"
+    },
+    {
+      "parameters": {
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        200,
+        0
+      ],
+      "id": "filesPlace0000001set",
+      "name": "Fetch settings"
+    },
+    {
+      "parameters": {
+        "url": "http://agents:8000/internal/v1/file-filings?status=accepted",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        400,
+        0
+      ],
+      "id": "filesPlace0000001list",
+      "name": "Fetch accepted filings"
+    },
+    {
+      "parameters": {
+        "jsCode": "const settings = $('Fetch settings').first().json || {};\nconst driveId = String(settings['drive.shared_drive_id'] || '').trim();\nif (!driveId) {\n  return [];\n}\nconst body = $input.first().json || {};\nconst list = Array.isArray(body.filings) ? body.filings : [];\nreturn list.filter((f) => f && f.id && f.telegram_file_id).map((f) => ({ json: {\n  id: f.id,\n  slug: String(f.slug || ''),\n  folder: String(f.folder || ''),\n  filename: String(f.filename || 'document'),\n  path: String(f.path || ''),\n  mime: String(f.mime || 'application/octet-stream'),\n  telegram_file_id: String(f.telegram_file_id || ''),\n  drive_id: driveId\n} }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "id": "filesPlace0000001exp",
+      "name": "Each filing"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "fileId": "={{ $json.telegram_file_id }}",
+        "download": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        0
+      ],
+      "id": "filesPlace0000001dl",
+      "name": "Download Telegram file",
+      "credentials": {
+        "telegramApi": {
+          "id": "GD7WqGif3v6QlSbc",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "files-place-tg"
+    },
+    {
+      "parameters": {
+        "jsCode": "const filing = $('Each filing').item.json;\nconst item = $input.first();\nconst bins = item.binary || {};\nconst key = Object.keys(bins)[0];\nif (!key || !bins[key] || !bins[key].data) {\n  return [{ json: { ...filing, place_error: 'telegram download empty', skip_upload: true } }];\n}\nreturn [{ json: { ...filing, skip_upload: false }, binary: { data: bins[key] } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "filesPlace0000001bin",
+      "name": "Keep binary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "filesPlace0000001ifc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip_upload }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "filesPlace0000001if",
+      "name": "Download failed"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "corpora",
+              "value": "drive"
+            },
+            {
+              "name": "driveId",
+              "value": "={{ $json.drive_id }}"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name='\" + $json.slug + \"' and '\" + $json.drive_id + \"' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false\" }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1400,
+        160
+      ],
+      "id": "filesPlace0000001s1",
+      "name": "Find project folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "googleDriveCred001",
+          "name": "Google Drive"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const filing = $('Keep binary').item.json;\nconst found = $input.first().json || {};\nconst files = found.files || [];\nconst id = files[0] && files[0].id ? String(files[0].id) : '';\nreturn [{ json: { ...filing, project_folder_id: id, need_project_folder: !id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        160
+      ],
+      "id": "filesPlace0000001p1",
+      "name": "Project folder id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id,name",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.slug, mimeType: 'application/vnd.google-apps.folder', parents: [$json.drive_id] }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1800,
+        280
+      ],
+      "id": "filesPlace0000001c1",
+      "name": "Create project folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "googleDriveCred001",
+          "name": "Google Drive"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Project folder id').item.json;\nlet id = row.project_folder_id;\nif (row.need_project_folder) {\n  const created = $input.first().json || {};\n  id = String(created.id || id || '');\n}\nreturn [{ json: { ...row, project_folder_id: id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        160
+      ],
+      "id": "filesPlace0000001m1",
+      "name": "Use project folder"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "corpora",
+              "value": "drive"
+            },
+            {
+              "name": "driveId",
+              "value": "={{ $json.drive_id }}"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name='\" + $json.folder + \"' and '\" + $json.project_folder_id + \"' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false\" }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2200,
+        160
+      ],
+      "id": "filesPlace0000001s2",
+      "name": "Find subfolder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "googleDriveCred001",
+          "name": "Google Drive"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const filing = $('Use project folder').item.json;\nconst found = $input.first().json || {};\nconst files = found.files || [];\nconst id = files[0] && files[0].id ? String(files[0].id) : '';\nreturn [{ json: { ...filing, subfolder_id: id, need_subfolder: !id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        160
+      ],
+      "id": "filesPlace0000001p2",
+      "name": "Subfolder id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id,name",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.folder, mimeType: 'application/vnd.google-apps.folder', parents: [$json.project_folder_id] }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2600,
+        280
+      ],
+      "id": "filesPlace0000001c2",
+      "name": "Create subfolder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "googleDriveCred001",
+          "name": "Google Drive"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Subfolder id').item.json;\nlet id = row.subfolder_id;\nif (row.need_subfolder) {\n  const created = $input.first().json || {};\n  id = String(created.id || id || '');\n}\nconst bin = $('Keep binary').item.binary || {};\nreturn [{ json: { ...row, subfolder_id: id }, binary: bin }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        160
+      ],
+      "id": "filesPlace0000001m2",
+      "name": "Use subfolder"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.drive_id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.subfolder_id }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3000,
+        160
+      ],
+      "id": "filesPlace0000001up",
+      "name": "Upload to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "googleDriveCred001",
+          "name": "Google Drive"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let filing;\ntry { filing = $('Use subfolder').item.json; } catch (e) { filing = $('Keep binary').item.json; }\nconst up = $input.first().json || {};\nif (filing.skip_upload) {\n  return [{ json: { id: filing.id, drive_file_id: '', drive_url: '', error: filing.place_error || 'telegram download empty' } }];\n}\nconst driveId = String(up.id || up.fileId || '');\nconst url = String(up.webViewLink || up.url || (driveId ? ('https://drive.google.com/file/d/' + driveId + '/view') : ''));\nconst err = driveId ? '' : String((up.error && up.error.message) || up.message || filing.place_error || 'Drive upload did not return a file id');\nreturn [{ json: { id: filing.id, drive_file_id: driveId, drive_url: url, error: err } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        160
+      ],
+      "id": "filesPlace0000001res",
+      "name": "Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agents:8000/internal/v1/file-filings/{{ $json.id }}/placed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ drive_file_id: $json.drive_file_id, drive_url: $json.drive_url, error: $json.error }) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3400,
+        80
+      ],
+      "id": "filesPlace0000001ok",
+      "name": "Mark placed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "filesPlace0000001npf",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.need_project_folder }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1700,
+        160
+      ],
+      "id": "filesPlace0000001np",
+      "name": "Need project folder"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "filesPlace0000001nsf",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.need_subfolder }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2500,
+        160
+      ],
+      "id": "filesPlace0000001ns",
+      "name": "Need subfolder"
+    }
+  ],
+  "connections": {
+    "Every 2 minutes": {
+      "main": [
+        [
+          {
+            "node": "Fetch settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch settings": {
+      "main": [
+        [
+          {
+            "node": "Fetch accepted filings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch accepted filings": {
+      "main": [
+        [
+          {
+            "node": "Each filing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Each filing": {
+      "main": [
+        [
+          {
+            "node": "Download Telegram file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Telegram file": {
+      "main": [
+        [
+          {
+            "node": "Keep binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep binary": {
+      "main": [
+        [
+          {
+            "node": "Download failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download failed": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find project folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find project folder": {
+      "main": [
+        [
+          {
+            "node": "Project folder id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project folder id": {
+      "main": [
+        [
+          {
+            "node": "Need project folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create project folder": {
+      "main": [
+        [
+          {
+            "node": "Use project folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use project folder": {
+      "main": [
+        [
+          {
+            "node": "Find subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find subfolder": {
+      "main": [
+        [
+          {
+            "node": "Subfolder id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subfolder id": {
+      "main": [
+        [
+          {
+            "node": "Need subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create subfolder": {
+      "main": [
+        [
+          {
+            "node": "Use subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use subfolder": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result": {
+      "main": [
+        [
+          {
+            "node": "Mark placed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need project folder": {
+      "main": [
+        [
+          {
+            "node": "Create project folder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use project folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need subfolder": {
+      "main": [
+        [
+          {
+            "node": "Create subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Use subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

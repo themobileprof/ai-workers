@@ -45,6 +45,13 @@ func settingCatalog() []settingGroupSpec {
 				{Key: "paystack.currency", Label: "Charge currency", Help: "NGN. Amount in kobo is Books invoice.total × 100."},
 			},
 		},
+		{
+			Title: "Google Drive · data room",
+			Help:  "Shared Drive id (not a My Drive folder). OAuth stays in n8n. Accept on Files writes here; the worker never uploads.",
+			Fields: []SettingField{
+				{Key: "drive.shared_drive_id", Label: "Shared Drive id", Help: "From Drive URL /drive/u/0/folders/… on a Shared Drive. Leave blank until the n8n Google Drive credential exists."},
+			},
+		},
 	}
 }
 
@@ -61,6 +68,7 @@ func defaultSettings() map[string]any {
 		"zoho.account.uncategorized_id":   "1300646000000035005",
 		"zoho.deposit_to_account_id":      "",
 		"paystack.currency":               "NGN",
+		"drive.shared_drive_id":           "",
 	}
 }
 

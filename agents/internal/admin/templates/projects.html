@@ -81,6 +81,7 @@
   <nav class="tabs" role="tablist" aria-label="Project">
     <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Decide</button>
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
+    <button type="button" role="tab" data-tab="files" aria-controls="tab-files">Files <span class="count">{{len .Filings}}</span></button>
     <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
     <button type="button" role="tab" data-tab="dates" aria-controls="tab-dates">Dates <span class="count">{{len .Events}}</span></button>
@@ -218,6 +219,42 @@
       </form>
       {{else}}
       <p class="hint">Legal clerk is off until the LLM env is set on this process.</p>
+      {{end}}
+    </section>
+
+    <section role="tabpanel" id="tab-files" data-tab="files">
+      <h3>Files on this project</h3>
+      <ol class="recipe">
+        <li>Send the file on ops Telegram with <code>/file</code>, or drop a PDF in that chat.</li>
+        <li>The clerk picks a subdirectory from the catalog. Click <strong>Accept</strong> if the path is right.</li>
+        <li>Drive write is after Accept. This tab does not upload by itself.</li>
+      </ol>
+      {{if .Filings}}
+      {{range .Filings}}
+      <section class="proposal">
+        <p class="kicker">{{.FolderLabel}} · {{.Filename}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Path}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        {{if .DriveURL}}<p class="hint"><a class="quiet" href="{{.DriveURL}}">Open in Drive</a></p>{{end}}
+        {{if .Proposed}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/files/{{.ID}}/accept">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/files/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
+            <button class="ghost" type="submit">Turn away</button>
+          </form>
+        </div>
+        {{end}}
+      </section>
+      {{end}}
+      {{else}}
+      <p class="hint">No files on this bet yet. Send one on ops Telegram.</p>
       {{end}}
     </section>
 

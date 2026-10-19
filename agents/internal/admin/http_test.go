@@ -83,6 +83,9 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(body, `href="/admin/guide"`) {
 		t.Fatal("office Guide link")
 	}
+	if !strings.Contains(body, `href="/admin/files"`) {
+		t.Fatal("office Files link")
+	}
 	login := httptest.NewRecorder()
 	s.render(login, "login", pageData{Title: "Sign in"})
 	if strings.Contains(login.Body.String(), `class="guide-fab"`) {

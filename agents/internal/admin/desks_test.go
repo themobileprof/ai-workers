@@ -107,7 +107,7 @@ func TestDeskNavOn(t *testing.T) {
 	if deskNavOn("home", desks) || !deskNavOn("desk-legal", desks) || !deskNavOn("legal", desks) {
 		t.Fatal("desk nav")
 	}
-	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") {
+	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") || !officeMenuOn("files") {
 		t.Fatal("office menu")
 	}
 }

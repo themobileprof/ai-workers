@@ -305,6 +305,7 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []User, errMsg, flash string) pageData {
 	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
 	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	filings, _ := s.store.ListFileFilings(ctx, p.ID, "")
 	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
 	events, _ := s.store.ListProjectEvents(ctx, p.ID, false)
 	for _, e := range events {
@@ -343,6 +344,7 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		DeliveryBets:   []DeliveryBet{{Project: p, Engagement: eng, Open: open, Slots: slots}},
 		Events:         events,
 		EventKinds:     eventKinds(),
+		Filings:        filings,
 		Error:          errMsg,
 		Flash:          flash,
 	}

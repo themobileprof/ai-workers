@@ -41,6 +41,7 @@ Do this, in order:
 - CRM `/crm` — pipeline notes. n8n writes Zoho Books contacts, not Zoho CRM.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN without a prefix; it does not save a desk row.
 - SEO `/seo` — titles, meta, outlines, audit punch lists. Accept on `/admin/seo`. The worker cannot publish, crawl, or read Search Console.
+- Files `/file` — data room. Drop a PDF on ops Telegram. Accept on `/admin/files`. n8n writes Google Drive. The worker cannot upload or invent a folder.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.
 - Ops `/ops` — operations room. Accounts via `/ops` still writes Books. `/ops legal` is chat-only; filing is `/legal`.
 - Product `/validate` — placement and validation. Accept on the project **Decide** tab writes the stage.
@@ -52,7 +53,8 @@ Do this, in order:
 
 ## Office menu (owner / BDM)
 
-- Defaults `/admin/settings` — Zoho org and chart-of-accounts ids. Secrets stay in the VM `.env` / n8n Credentials.
+- Defaults `/admin/settings` — Zoho org and chart-of-accounts ids. Shared Drive id for Files. Secrets stay in the VM `.env` / n8n Credentials.
+- Files `/admin/files` — proposed data-room paths. Accept writes Drive via n8n.
 - Docs `/admin/docs`.
 - n8n `/admin/workflows` — iframe of the editor. Do not treat it as the desk.
 - Guide `/admin/guide` — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
@@ -67,6 +69,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/ops` | internal-ops (WhatsApp allowlisted) |
 | `/legal` | legal (WhatsApp allowlisted) |
 | `/seo` | seo (WhatsApp allowlisted) |
+| `/file` | files (ops Telegram; Accept on Files) |
 | `/today` `/pm` `/idea` | delivery |
 | `/growth` | growth |
 | `/crm` | crm |
@@ -84,6 +87,7 @@ Academy bot refuses ops prefixes. Do not add the ops bot to a class group.
 - Do not Accept by chatting.
 - Do not publish from the SEO worker.
 - Do not send from the Legal worker.
+- Do not write Drive from the Files worker.
 - Do not hire through HR.
 - Do not invent a second CAC company for a project face.
 - Do not put Zoho/Paystack tokens in git or in the Go worker.

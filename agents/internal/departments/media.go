@@ -8,11 +8,12 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
-const maxImageBytes = 5 << 20
+const maxImageBytes = 12 << 20
 
 var imageContextKeys = []string{
 	"image_base64", "image_mime", "image_mime_type", "has_image",
-	"photo_file_id", "whatsapp_media_id", "image_id",
+	"file_base64", "file_mime", "document_base64", "document_mime",
+	"whatsapp_media_id", "image_id",
 }
 
 // TakeImages pulls receipt bytes out of context_data so they are not echoed
@@ -25,6 +26,7 @@ func TakeImages(data map[string]any) []llm.Image {
 	for _, k := range imageContextKeys {
 		delete(data, k)
 	}
+	// Keep telegram_file_id / photo_file_id so n8n can re-download after Accept.
 	if nested, ok := data["image"].(map[string]any); ok {
 		if b64 == "" {
 			b64, mime = imageFields(nested)
@@ -35,18 +37,33 @@ func TakeImages(data map[string]any) []llm.Image {
 	if err != nil || len(raw) == 0 {
 		return nil
 	}
-	if mime == "" || mime == "application/octet-stream" {
-		mime = sniffMIME(raw)
+	if mime == "" || mime == "application/octet-stream" || mime == "image/jpeg" && bytes.HasPrefix(raw, []byte("%PDF")) {
+		sniffed := sniffMIME(raw)
+		if mime == "" || mime == "application/octet-stream" || sniffed == "application/pdf" {
+			mime = sniffed
+		}
 	}
 	return []llm.Image{{MIME: mime, Data: raw}}
 }
 
 func imageFields(m map[string]any) (b64, mime string) {
-	b64 = asString(m["image_base64"])
+	b64 = asString(m["file_base64"])
+	if b64 == "" {
+		b64 = asString(m["document_base64"])
+	}
+	if b64 == "" {
+		b64 = asString(m["image_base64"])
+	}
 	if b64 == "" {
 		b64 = asString(m["base64"])
 	}
-	mime = asString(m["image_mime"])
+	mime = asString(m["file_mime"])
+	if mime == "" {
+		mime = asString(m["document_mime"])
+	}
+	if mime == "" {
+		mime = asString(m["image_mime"])
+	}
 	if mime == "" {
 		mime = asString(m["image_mime_type"])
 	}
@@ -82,6 +99,8 @@ func decodeImage(b64 string) ([]byte, error) {
 
 func sniffMIME(b []byte) string {
 	switch {
+	case bytes.HasPrefix(b, []byte("%PDF")):
+		return "application/pdf"
 	case bytes.HasPrefix(b, []byte{0xFF, 0xD8, 0xFF}):
 		return "image/jpeg"
 	case bytes.HasPrefix(b, []byte{0x89, 0x50, 0x4E, 0x47}):

@@ -43,4 +43,26 @@ func TestSniffMIME(t *testing.T) {
 	if sniffMIME([]byte("nope")) != "image/jpeg" {
 		t.Fatal("default")
 	}
+	if sniffMIME([]byte("%PDF-1.4")) != "application/pdf" {
+		t.Fatal("pdf")
+	}
+}
+
+func TestTakeImagesKeepsTelegramFileID(t *testing.T) {
+	data := map[string]any{
+		"file_base64":       "JVBERg==",
+		"file_mime":         "application/pdf",
+		"telegram_file_id":  "tg-1",
+		"filename":          "paper.pdf",
+	}
+	imgs := TakeImages(data)
+	if len(imgs) != 1 || imgs[0].MIME != "application/pdf" {
+		t.Fatalf("imgs=%+v", imgs)
+	}
+	if data["telegram_file_id"] != "tg-1" || data["filename"] != "paper.pdf" {
+		t.Fatalf("lost file id: %+v", data)
+	}
+	if _, ok := data["file_base64"]; ok {
+		t.Fatal("file_base64 should be stripped")
+	}
 }

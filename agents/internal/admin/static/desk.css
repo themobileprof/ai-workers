@@ -1095,6 +1095,7 @@ body[data-room="projects"] { --room: #e8a84a; }
 body[data-room="users"] { --room: #f0a07a; }
 body[data-room="delivery"] { --room: #5dcc8a; }
 body[data-room="legal"] { --room: #d4b483; }
+body[data-room="files"] { --room: #b8a06a; }
 body[data-room="seo"] { --room: #c478e8; }
 body[data-room="community"] { --room: #7aa8ff; }
 body[data-room="docs"] { --room: #e7d7b8; }

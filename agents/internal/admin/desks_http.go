@@ -436,6 +436,9 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	if dept == "seo" {
 		s.applySeoResponse(ctx, req, resp)
 	}
+	if dept == "files" {
+		s.applyFilesResponse(ctx, req, resp)
+	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return
 	}

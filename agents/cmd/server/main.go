@@ -17,6 +17,7 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
 	"github.com/samuel/ai-workers/agents/internal/departments/crm"
 	"github.com/samuel/ai-workers/agents/internal/departments/delivery"
+	"github.com/samuel/ai-workers/agents/internal/departments/files"
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/internalops"
@@ -101,7 +102,7 @@ func main() {
 			"vision_model": stack.VisionModel,
 			"vision_ready": stack.VisionModel != "",
 			"admin_ready":  adminReady,
-			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "delivery", "seo"},
+			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "delivery", "seo", "files"},
 		})
 	})
 	internalTok := strings.TrimSpace(os.Getenv("INTERNAL_API_TOKEN"))
@@ -117,6 +118,7 @@ func main() {
 	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/delivery", departmentHandler(completer, completerErr, "delivery", delivery.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/seo", departmentHandler(completer, completerErr, "seo", seo.Handle, desk, internalTok))
+	mux.HandleFunc("POST /departments/files", departmentHandler(completer, completerErr, "files", files.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk, internalTok))
 
 	srv := &http.Server{
@@ -146,7 +148,7 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 			writeJSON(w, http.StatusServiceUnavailable, contract.Fail("LLM is not configured: "+errString(initErr)))
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 8<<20)
+		r.Body = http.MaxBytesReader(w, r.Body, 16<<20)
 		var req contract.Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, contract.Fail("invalid JSON: "+err.Error()))
@@ -162,6 +164,9 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 		}
 		if dept == "seo" && desk != nil {
 			req = desk.EnrichSEO(r.Context(), req)
+		}
+		if dept == "files" && desk != nil {
+			req = desk.EnrichFiles(r.Context(), req)
 		}
 		resp, err := fn(r.Context(), c, req)
 		if err != nil {

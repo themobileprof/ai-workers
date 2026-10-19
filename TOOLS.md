@@ -118,3 +118,13 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Where:** Go Completer.
 - **Secrets:** `ANTHROPIC_API_KEY` on the VM `.env`.
 - **Env:** `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_BASE_URL`
+
+### Google Drive
+
+- **Id:** `google-drive`
+- **URL:** https://drive.google.com/
+- **Role:** Company data room (Shared Drive). Ops Telegram `/file` proposes a project folder; Accept on Files; n8n uploads. The Go worker never holds OAuth tokens and never writes Drive itself.
+- **Where:** n8n credential Google Drive. Shared Drive id on desk Defaults (`drive.shared_drive_id`).
+- **Secrets:** OAuth tokens in n8n only. Never `.env`, never the Go worker.
+- **n8n credentials:** `Google Drive`
+- **Desk keys:** `drive.shared_drive_id`

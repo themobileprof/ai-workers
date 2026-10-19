@@ -97,6 +97,14 @@ No. Recruiting is closed. Onboard people you already know via People + Face. Inb
 2. Go to the place. Bring named people back.
 3. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
 
+## How do I file a PDF into the data room?
+
+1. On ops Telegram, send the file with **`/file`**, or drop a PDF in that chat. A caption may name the bet.
+2. Open Office → **Files**. Read the proposed path (`project / folder / filename`).
+3. Click **Accept** if it is right. n8n writes Google Drive after that. Chat never files. Paste the Shared Drive id on Defaults first.
+
+Office papers (CAC, TIN, bank letters) go under TheMobileProf, not a bet. Do not send class files to the Academy bot. Do not use `/approve`.
+
 ## How do I track a training, campus week, or dated event on a project?
 
 1. Open the project → **Dates**.

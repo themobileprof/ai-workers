@@ -179,6 +179,15 @@ var docCatalog = []DocMeta{
 		Prefixes: []string{"/legal", "Telegram watch", "desk Ask draft"},
 	},
 	{
+		Slug:     "files",
+		Title:    "Files",
+		Kicker:   "Data room",
+		Path:     "POST /departments/files",
+		Wire:     "partial",
+		Summary:  "Ops Telegram /file or a dropped PDF proposes a project folder from the catalog. Humans Accept. n8n writes Google Drive after that. The worker cannot upload or invent a folder.",
+		Prefixes: []string{"/file", "dropped PDF", "desk Files"},
+	},
+	{
 		Slug:     "seo",
 		Title:    "SEO",
 		Kicker:   "Parent clerk",

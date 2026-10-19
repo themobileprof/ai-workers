@@ -95,6 +95,7 @@ type pageData struct {
 	GuideAsks      []GuideAsk
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
+	Filings        []FileFiling
 }
 
 type kv struct {
@@ -120,7 +121,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"officeMenuOn": officeMenuOn,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -173,6 +174,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/legal", s.legalGET)
 	mux.HandleFunc("POST /admin/legal/{id}/approve", s.legalStamp("approved"))
 	mux.HandleFunc("POST /admin/legal/{id}/reject", s.legalStamp("rejected"))
+	mux.HandleFunc("GET /admin/files", s.filesGET)
+	mux.HandleFunc("POST /admin/files/{id}/accept", s.filesStamp("accepted"))
+	mux.HandleFunc("POST /admin/files/{id}/reject", s.filesStamp("rejected"))
 	mux.HandleFunc("GET /admin/seo", s.seoGET)
 	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
 	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
@@ -234,6 +238,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/delivery/digest", s.internalDeliveryDigest)
 	mux.HandleFunc("POST /internal/v1/delivery/checkin", s.internalDeliveryCheckin)
 	mux.HandleFunc("POST /internal/v1/jobs", s.internalJobsPOST)
+	mux.HandleFunc("GET /internal/v1/file-filings", s.internalFileFilingsGET)
+	mux.HandleFunc("POST /internal/v1/file-filings", s.internalFileFilingsPOST)
+	mux.HandleFunc("POST /internal/v1/file-filings/{id}/placed", s.internalFilePlacedPOST)
 }
 
 func RegisterPublic(mux *http.ServeMux) {
@@ -569,6 +576,18 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) *User {
 	return u
 }
 
+func (s *Server) requireOffice(w http.ResponseWriter, r *http.Request) *User {
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return nil
+	}
+	if !canOffice(u) {
+		http.Redirect(w, r, afterLoginPath(*u), http.StatusSeeOther)
+		return nil
+	}
+	return u
+}
+
 func (s *Server) currentUser(r *http.Request) *User {
 	c, err := r.Cookie("desk_session")
 	if err != nil || c.Value == "" {
@@ -614,6 +633,16 @@ func statusCount(items any, status string) int {
 	case []Integration:
 		for _, it := range xs {
 			if it.Status == status {
+				n++
+			}
+		}
+	case []FileFiling:
+		for _, d := range xs {
+			if status == "accepted" {
+				if d.Status == "accepted" || d.Status == "filed" {
+					n++
+				}
+			} else if d.Status == status {
 				n++
 			}
 		}

@@ -1,0 +1,91 @@
+{{define "content"}}
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Files · {{statusCount .Filings "proposed"}} waiting</p>
+    <h2>Read the path, then Accept</h2>
+    <ol class="recipe">
+      <li>Send the file on ops Telegram (<code>/file</code>, or drop a PDF). The clerk picks a project folder from the catalog.</li>
+      <li>Open <strong>Proposed</strong>. Click <strong>Accept</strong> if the path is right, or <strong>Turn away</strong>.</li>
+      <li>Drive write happens after Accept. Chat never files. Paste the Shared Drive id on Defaults first.</li>
+    </ol>
+  </div>
+  <div class="actions now-go">
+    <a class="ghost" href="/admin/settings">Defaults</a>
+    <a class="ghost" href="/admin/docs/files">Sheet</a>
+  </div>
+</aside>
+<div class="tabset" data-tabs data-default="proposed">
+  <nav class="tabs" role="tablist" aria-label="Filings">
+    <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .Filings "proposed"}}</span></button>
+    <button type="button" role="tab" data-tab="accepted" aria-controls="tab-accepted">In Drive <span class="count">{{statusCount .Filings "accepted"}}</span></button>
+    <button type="button" role="tab" data-tab="rejected" aria-controls="tab-rejected">Turned away <span class="count">{{statusCount .Filings "rejected"}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-proposed" data-tab="proposed">
+      {{if statusCount .Filings "proposed"}}
+      {{range .Filings}}
+      {{if .Proposed}}
+      <section class="proposal">
+        <p class="kicker">{{if .ProjectID}}<a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=files">{{.ScopeLabel}}</a>{{else}}{{.ScopeLabel}}{{end}} · {{.FolderLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Path}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/files/{{.ID}}/accept">
+            <input type="hidden" name="next" value="/admin/files">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/files/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/files">
+            <button class="ghost" type="submit">Turn away</button>
+          </form>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing waiting. Send a PDF on ops Telegram with <code>/file</code>, or drop the file in that chat.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-accepted" data-tab="accepted">
+      {{if statusCount .Filings "accepted"}}
+      {{range .Filings}}
+      {{if or (eq .Status "accepted") (eq .Status "filed")}}
+      <section class="proposal">
+        <p class="kicker">{{.ScopeLabel}} · {{.FolderLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Path}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .DriveURL}}<p class="hint"><a class="quiet" href="{{.DriveURL}}">Open in Drive</a></p>{{end}}
+        {{if and (eq .Status "accepted") (not .DriveFileID)}}<p class="hint">Accepted. Waiting for n8n to write Drive. Shared Drive id is on Defaults.</p>{{end}}
+        {{if .PlaceError}}<p class="hint">{{.PlaceError}}</p>{{end}}
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing in Drive yet.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-rejected" data-tab="rejected">
+      {{if statusCount .Filings "rejected"}}
+      {{range .Filings}}
+      {{if eq .Status "rejected"}}
+      <section class="proposal">
+        <p class="kicker">{{.ScopeLabel}} · {{.FolderLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Path}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing turned away.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
+{{end}}

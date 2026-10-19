@@ -32,6 +32,7 @@ Keep this section in sync with every channel change. IDs are not secrets. The ve
 | Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/accounts` `/ops` expenses; CRM contact upsert |
 | Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email; Email outbox approved sends |
 | Zoho Mail info@ IMAP | `imap` | `w6VyL4iDdwX5XgIM` | Inbound info@ |
+| Google Drive | `googleDriveOAuth2Api` | `googleDriveCred001` | Files place (Shared Drive upload). Create in n8n; bind the nodes if import id differs. Paste the Shared Drive id on Defaults. |
 
 SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL, user `info@themobileprof.com`. App password stays in n8n only.
 
@@ -53,7 +54,9 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | yes (sub-workflow) | Upsert a Books customer from `record_lead`. Must be published — Execute Workflow cannot call an inactive child. |
 | `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. Must be published. |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/today` `/pm` `/idea` Delivery; Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/smoke-files.json` | `smkFilesHttp00001` | no | Manual POST files worker (classify; must not write Drive) |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/file` data room; `/today` `/pm` `/idea` Delivery; Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
 | `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or Delivery. |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1; prefixes; Books writes, `/legal`, and `/seo` only for desk-allowlisted numbers; `/today` is Delivery for People phones; CRM upsert on high intent |
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
@@ -74,12 +77,13 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/ops` | internal-ops |
 | `/legal` | legal |
 | `/seo` | seo |
+| `/file` | files (ops Telegram only; Accept on Files) |
 | `/today` `/pm` `/idea` | delivery |
 | `/validate` | product-dev |
 | none, 1:1 | growth (ops Telegram and customer WhatsApp). Academy Telegram 1:1 stays community. |
 | none, group | community |
 
-On the **Academy** bot, `/accounts` `/ops` `/legal` `/seo` `/hr` `/approve` `/kill` `/growth` `/crm` `/validate` `/today` `/idea` are refused. Those stay on the ops bot.
+On the **Academy** bot, `/accounts` `/ops` `/legal` `/seo` `/file` `/hr` `/approve` `/kill` `/growth` `/crm` `/validate` `/today` `/idea` are refused. Those stay on the ops bot.
 
 Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable), then paste `context_data.telegram_chat_id` from the n8n execution onto the mandate. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram (and any leftover WhatsApp) room. Do not add the **ops** bot to student groups.
 
