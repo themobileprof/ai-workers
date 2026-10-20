@@ -474,6 +474,31 @@ textarea {
   border-color: color-mix(in srgb, var(--room) 70%, var(--line));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--room) 25%, transparent);
 }
+.run {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+}
+.run > li {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 0.85rem;
+  padding: 0.95rem 1rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.run > li.waiting {
+  border-color: color-mix(in srgb, var(--room) 70%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--room) 25%, transparent);
+}
+.run > li.done { opacity: 0.72; }
+.run h3 { font-size: 1.2rem; margin: 0; }
+.run p { margin: 0; opacity: 0.82; }
+.run .actions { margin-top: 0.35rem; }
 .wall > li.dim, .people > li.dim { opacity: 0.48; }
 .wall h3, .people h3, .tasks h3 {
   font-size: 1.2rem;

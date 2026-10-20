@@ -265,6 +265,18 @@
         }
         box.focus();
       }
+      window.deskHelp = function (q) {
+        if (!q) return;
+        openGuide();
+        box.value = q;
+        form.requestSubmit();
+      };
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-help]");
+        if (!btn) return;
+        e.preventDefault();
+        window.deskHelp(btn.getAttribute("data-help"));
+      });
       function closeGuide() {
         panel.hidden = true;
         fab.setAttribute("aria-expanded", "false");

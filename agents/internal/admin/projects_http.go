@@ -142,7 +142,7 @@ func (s *Server) projectsPOST(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	http.Redirect(w, r, projectURL(p.ID, "stamp", ""), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "run", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
@@ -324,6 +324,18 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 	if slots < 0 {
 		slots = 0
 	}
+	canLegal := s.legal != nil && (Handles(*u, "legal") || canOffice(u))
+	canSEO := s.seo != nil && (Handles(*u, "seo") || canOffice(u))
+	steps := projectRun(runInput{
+		Project:  p,
+		Drafts:   drafts,
+		Briefs:   briefs,
+		Filings:  filings,
+		Items:    items,
+		Events:   events,
+		CanLegal: canLegal,
+		CanSEO:   canSEO,
+	})
 	return pageData{
 		Title:          "Amend " + p.Name,
 		Nav:            "projects",
@@ -345,6 +357,8 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		Events:         events,
 		EventKinds:     eventKinds(),
 		Filings:        filings,
+		RunSteps:       steps,
+		RunLeft:        runMustLeft(steps),
 		Error:          errMsg,
 		Flash:          flash,
 	}

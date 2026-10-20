@@ -152,7 +152,8 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"home", "home", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2}, "Apex Clerk"},
 		{"list", "projects", pageData{Title: "Projects", Nav: "projects", User: user, Projects: []Project{p}, Stages: projectStages()}, "Proposal waiting"},
 		{"new", "projects", pageData{Title: "Add", Nav: "projects", User: user, Adding: true, Stages: projectStages(), Journeys: journeys.All()}, "consumer_subscription"},
-		{"edit", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true}, "Ada"},
+		{"edit", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true, RunSteps: projectRun(runInput{Project: p}), RunLeft: 4}, "Base kit"},
+		{"edit-face", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true}, "Ada"},
 		{"proposal", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, "You decide"},
 		{"ask-draft", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanLegal: true, LegalTemplates: legal.Specs()}, "Ask draft"},
 		{"legal", "legal", pageData{Title: "Legal", Nav: "legal", User: user, Drafts: []LegalDraft{{ID: 3, ProjectID: 7, ProjectName: "Apex Clerk", Title: "NDA", Template: "nda", Status: "proposed", Body: "TheMobileProf Technologies", CounterpartyName: "Ada"}}, CanLegal: true}, "Apex Clerk"},
@@ -194,7 +195,7 @@ func TestBoardHasThreeTabs(t *testing.T) {
 		{"legal", pageData{Title: "Legal", Nav: "legal", User: user}, 3},
 		{"seo", pageData{Title: "SEO", Nav: "seo", User: user, CanSEO: true}, 3},
 		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
-		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds()}, 6},
+		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds()}, 7},
 		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{}), Tab: "company"}, 3},
 		{"users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, 3},
 	}

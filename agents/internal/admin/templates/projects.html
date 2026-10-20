@@ -7,7 +7,7 @@
     <ol class="recipe">
       <li>Name: a working title. Customers still buy from TheMobileProf.</li>
       <li>One-liner: who pays, and for what.</li>
-      <li>Click <strong>Open project</strong>. Add dates and people after it exists.</li>
+      <li>Click <strong>Open project</strong>. <strong>Run</strong> then walks the same base kit every bet uses.</li>
     </ol>
     <p><a class="quiet" href="/admin/projects">Back to Projects</a></p>
   </div>
@@ -67,18 +67,21 @@
       {{if .Project.Proposal}}
       <li>Open <strong>Decide</strong>. Click <strong>Accept</strong> if you agree (that is your yes), or <strong>Reject</strong>.</li>
       {{end}}
+      {{if .RunLeft}}
+      <li>Open <strong>Run</strong>. Do the step marked <strong>now</strong>. Help? can fill that form. It never Accepts.</li>
+      {{else}}
+      <li>Base kit is filled. Open <strong>Run</strong> for this gate’s mission, or Legal / Files / SEO as needed.</li>
+      {{end}}
       {{if .Project.NextEvent}}
       <li>Open <strong>Dates</strong>. Add tasks for {{.Project.NextEvent.Title}}. Click <strong>Delivered</strong> after {{.Project.NextEvent.WhenLabel}}.</li>
-      {{else}}
-      <li>Open <strong>Dates</strong> for a campus week, or <strong>Card</strong> to write this week’s line.</li>
       {{end}}
-      <li>Open <strong>Work</strong> to add tasks. Open <strong>Face</strong> to seat who will do them.</li>
     </ol>
   </div>
   <span class="stamp {{.Project.StageStamp}}">{{.Project.StageLabel}}</span>
 </aside>
-<div class="tabset" data-tabs data-default="stamp">
+<div class="tabset" data-tabs data-default="{{if .Project.Proposal}}stamp{{else}}run{{end}}">
   <nav class="tabs" role="tablist" aria-label="Project">
+    <button type="button" role="tab" data-tab="run" aria-controls="tab-run">Run{{if .RunLeft}} <span class="count">{{.RunLeft}}</span>{{end}}</button>
     <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Decide</button>
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
     <button type="button" role="tab" data-tab="files" aria-controls="tab-files">Files <span class="count">{{len .Filings}}</span></button>
@@ -89,6 +92,39 @@
     <button type="button" role="tab" data-tab="face" aria-controls="tab-face">Face</button>
   </nav>
   <div class="tab-panels">
+    <section role="tabpanel" id="tab-run" data-tab="run">
+      <h3>Base kit for this bet</h3>
+      <ol class="recipe">
+        <li>Do the step marked <strong>now</strong>. Each one is a form already on this project.</li>
+        <li><strong>Help?</strong> can walk that form. It never Accepts or sends mail.</li>
+        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, and SEO wait until you need them.</li>
+      </ol>
+      {{template "page-reads" (guideReads "projects")}}
+      {{if .RunSteps}}
+      <ol class="run">
+        {{range .RunSteps}}
+        <li class="{{if .Done}}done{{else if .Now}}waiting{{end}}">
+          <div class="doc-card-head">
+            <p class="kicker">{{.Kind}}</p>
+            <span class="stamp {{.StampClass}}">{{.StampLabel}}</span>
+          </div>
+          <h3>{{.Title}}</h3>
+          <p>{{.Why}}</p>
+          {{if .Detail}}<p class="hint">{{.Detail}}</p>{{end}}
+          {{if not .Done}}
+          <ol class="recipe">
+            {{range .How}}<li>{{.}}</li>{{end}}
+          </ol>
+          <div class="actions">
+            <a class="ghost fill" href="{{.Href}}">{{.Button}}</a>
+            {{if .Help}}<button type="button" class="ghost" data-help="{{.Help}}">Help? walk this</button>{{end}}
+          </div>
+          {{end}}
+        </li>
+        {{end}}
+      </ol>
+      {{end}}
+    </section>
     <section role="tabpanel" id="tab-stamp" data-tab="stamp">
       <h3>You decide the stage</h3>
       <ol class="recipe">
@@ -556,10 +592,10 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Projects · pick a card</p>
-    <h2>Open a card, then use the tabs</h2>
+    <h2>Open a card, then Run</h2>
     <ol class="recipe">
       <li>Click a card. A glow means a worker is waiting on Decide.</li>
-      <li>Work the tabs: Decide → Dates → Work → Face.</li>
+      <li>Open <strong>Run</strong>. Do the step marked now. Same kit for every bet.</li>
       <li>Click <strong>Open a project</strong> only when you have a new idea and a paying customer in mind.</li>
     </ol>
   </div>
@@ -591,8 +627,9 @@
       <p class="kicker">{{if .Gate}}{{.JourneyLabel}} · {{.GateLabel}}{{else}}{{.Slug}}{{end}}</p>
       <span class="stamp {{.StageStamp}}">{{.StageLabel}}</span>
     </div>
-    <h3><a href="/admin/projects/{{.ID}}">{{.Name}}</a></h3>
+    <h3><a href="/admin/projects/{{.ID}}?tab=run">{{.Name}}</a></h3>
     <p>{{.OneLiner}}</p>
+    {{if .RunLabel}}<p class="flag">{{.RunLabel}}</p>{{end}}
     {{if .Proposal}}<p class="flag">Proposal waiting</p>{{end}}
     {{if .NextEvent}}<p class="flag">{{.NextEvent.WhenLabel}} · {{.NextEvent.Title}}</p>{{end}}
     {{if .Notes}}<p class="week">This week: {{.Notes}}</p>{{end}}

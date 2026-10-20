@@ -97,6 +97,8 @@ type pageData struct {
 	EventKinds     []stageSpec
 	Filings        []FileFiling
 	Tab            string
+	RunSteps       []RunStep
+	RunLeft        int
 }
 
 type kv struct {

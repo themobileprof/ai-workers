@@ -130,8 +130,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Incubation",
 		Path:     "/admin/projects",
 		Wire:     "live",
-		Summary:  "Bets under one company. Field humans bring named next steps. Dates hold a campus training until you deliver. The worker proposes a gate; you Accept on Decide.",
-		Prefixes: []string{"Ask placement", "/validate", "Dates", "this-week note"},
+		Summary:  "Bets under one company. Run walks the same base kit for every bet. Field humans bring named next steps. Dates hold a campus training until you deliver. The worker proposes a gate; you Accept on Decide.",
+		Prefixes: []string{"Run", "Ask placement", "/validate", "Dates", "this-week note"},
 	},
 	{
 		Slug:     "growth",

@@ -34,7 +34,7 @@ func guideReads(kind string) []DeskLink {
 		)
 	case "product-dev":
 		out = append(out,
-			DeskLink{Href: "/admin/projects", Label: "Projects", Why: "Accept on Decide writes the stage. Chat never stamps."},
+			DeskLink{Href: "/admin/projects", Label: "Projects", Why: "Run walks the base kit. Accept on Decide writes the stage."},
 		)
 	case "files":
 		out = append(out,

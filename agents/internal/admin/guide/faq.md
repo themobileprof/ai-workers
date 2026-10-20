@@ -2,6 +2,16 @@
 
 Durable answers. Add a `##` question when real people ask something this file does not cover. Live asks sit in Postgres until someone folds them here.
 
+## How do I start or run a project?
+
+Every bet uses the same base kit. **Run** walks it in order.
+
+1. Open the project (or **Open a project**, then you land on Run).
+2. Do the step marked **now**: Card (who pays + this week), Face, Decide (Ask placement, then Accept), Dates, Work.
+3. After those, Run shows this gate’s mission, then Legal / Files / SEO as needed. **Help? walk this** fills the same form. It never Accepts.
+
+Campus trainings are Dates, not Community. Chat never stamps the stage.
+
 ## How do I add someone to the office?
 
 Owner only (BDM cannot add people):

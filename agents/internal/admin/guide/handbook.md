@@ -22,7 +22,7 @@ This is the how-to for the signed-in company desk at TheMobileProf Technologies 
 Do this, in order:
 
 1. Board `/admin/` — look at each card. Open **Proposal waiting** → **Decide** → Accept or Reject. Open **Coming up** dates.
-2. Projects `/admin/projects` — click a card. Work the tabs: Decide, then Dates, then Work, then Face. Academy LMS is a bet, not a second company. Ask placement writes a proposal; Accept changes the stage. Chat never Accepts.
+2. Projects `/admin/projects` — click a card. **Run** is the wizard: same base kit for every bet (Card, Face, Decide, Dates, Work), then this gate’s mission, then Legal / Files / SEO as needed. Help? can fill a step. Ask placement writes a proposal; Accept on Decide changes the stage. Chat never Accepts. Academy LMS is a bet, not a second company.
 3. Delivery `/admin/delivery` — click Done on today’s tasks. To plan a week: Ask plan, then Accept on Job chat. How many tasks: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace. Seat on Face so they can receive tasks.
 4. Own `/today` check-ins may apply immediately. Accept still belongs to a human for plans the worker proposed.
 
