@@ -53,7 +53,7 @@ Do this, in order:
 
 ## Office menu (owner / BDM)
 
-- Defaults `/admin/settings` — Zoho org and chart-of-accounts ids. Shared Drive id for Files. Secrets stay in the VM `.env` / n8n Credentials.
+- Defaults `/admin/settings` — one Save per vendor tab (Company, Zoho, Paystack, Drive). Saving one tab does not wipe the others. Secrets stay in the VM `.env` / n8n Credentials.
 - Files `/admin/files` — proposed data-room paths. Accept writes Drive via n8n.
 - Docs `/admin/docs`.
 - n8n `/admin/workflows` — iframe of the editor. Do not treat it as the desk.

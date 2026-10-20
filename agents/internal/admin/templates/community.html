@@ -8,10 +8,11 @@
       <li>Add the Academy Telegram bot to that group and send a message.</li>
       <li>Copy <code>telegram_chat_id</code> from n8n into this form and save. Do not put campus trainings here.</li>
     </ol>
+    {{template "page-reads" (guideReads "community")}}
   </div>
   <div class="actions now-go">
     <a class="ghost" href="/admin/desks/community">Job chat</a>
-    <a class="ghost" href="/admin/docs/community">Sheet</a>
+    <a class="ghost" href="/admin/docs/community">Community sheet</a>
   </div>
 </aside>
 {{if .Flash}}<p class="hint">{{.Flash}}</p>{{end}}

@@ -25,11 +25,12 @@
       <li>Wait, then open <strong>This job</strong> and Accept.</li>
     </ol>
     {{end}}
-    <p>{{.Desk.Help}} Chat prefix: <code>{{.Desk.Prefix}}</code>.</p>
+    <p>{{.Desk.Help}} Chat prefix: <code>{{.Desk.Prefix}}</code>. <strong>Help?</strong> (bottom right) can walk the same Ask form.</p>
+    {{template "page-reads" .Desk.GuideLinks}}
   </div>
   <div class="actions now-go">
     {{if .Desk.BookPath}}<a class="ghost fill" href="{{.Desk.BookPath}}">{{.Desk.BookLabel}}</a>{{end}}
-    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}">Sheet</a>
+    <a class="ghost" href="/admin/docs/{{.Desk.Slug}}">{{.Desk.Title}} sheet</a>
   </div>
 </aside>
 
@@ -132,6 +133,7 @@
       <li>Ask: type what you need, click Ask worker.</li>
       <li>This job: read, then Accept or Turn away. Typing in chat does not Accept.</li>
     </ol>
+    {{template "page-reads" (guideReads "handler")}}
   </div>
 </aside>
 <div class="tabset" data-tabs data-default="{{if statusCount .Jobs "proposed"}}recent{{else}}desks{{end}}">

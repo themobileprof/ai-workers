@@ -140,6 +140,16 @@
     {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
     {{template "content" .}}
   </main>
+  {{define "page-reads"}}
+  {{if .}}
+  <p class="do">Read</p>
+  <ol class="recipe">
+    {{range .}}
+    <li><a href="{{.Href}}">{{.Label}}</a> — {{.Why}}</li>
+    {{end}}
+  </ol>
+  {{end}}
+  {{end}}
   {{if .User}}
   <div class="guide-dock">
     <section class="guide-panel" id="guide-panel" hidden>

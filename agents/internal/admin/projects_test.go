@@ -195,7 +195,7 @@ func TestBoardHasThreeTabs(t *testing.T) {
 		{"seo", pageData{Title: "SEO", Nav: "seo", User: user, CanSEO: true}, 3},
 		{"desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal"}, CanAsk: true}, 3},
 		{"projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds()}, 6},
-		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{})}, 3},
+		{"settings", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: settingGroupsFrom(map[string]string{}), Tab: "company"}, 3},
 		{"users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, 3},
 	}
 	for _, tc := range pages {
@@ -237,6 +237,60 @@ func TestBoardHasThreeTabs(t *testing.T) {
 	}
 	if !strings.Contains(projBuf.String(), `data-tab="dates"`) || !strings.Contains(projBuf.String(), "Save date") {
 		t.Fatal("project Dates tab")
+	}
+}
+
+func TestDefaultsOneFormPerGroup(t *testing.T) {
+	srv, err := New(nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := &User{ID: 1, Name: "Sam", Role: "owner"}
+	groups := settingGroupsFrom(map[string]string{})
+	if len(groups) < 4 {
+		t.Fatalf("groups %d", len(groups))
+	}
+	for _, g := range groups {
+		if g.ID == "" || len(g.Recipe) == 0 || g.DocHref == "" {
+			t.Fatalf("group %+v", g)
+		}
+	}
+	var buf strings.Builder
+	data := pageData{Title: "Amend defaults", Nav: "settings", User: user, SettingGroups: groups, Amend: true, Tab: "drive"}
+	if err := srv.pages["settings"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+		t.Fatal(err)
+	}
+	got := buf.String()
+	if strings.Contains(got, "Save defaults") || strings.Contains(got, "Paste Books ids") {
+		t.Fatal("one wrapping form")
+	}
+	if n := strings.Count(got, "Save this group"); n < 4 {
+		t.Fatalf("save buttons %d", n)
+	}
+	if n := strings.Count(got, `action="/admin/settings"`); n < 4 {
+		t.Fatalf("forms %d", n)
+	}
+	if !strings.Contains(got, `data-tab="drive"`) || !strings.Contains(got, "/admin/docs/files") {
+		t.Fatal("drive tab docs")
+	}
+	var view strings.Builder
+	if err := srv.pages["settings"].ExecuteTemplate(&view, "layout.html", pageData{Title: "Defaults", Nav: "settings", User: user, SettingGroups: groups, Tab: "zoho"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(view.String(), "Amend this group") || !strings.Contains(view.String(), "/admin/docs/accounts") {
+		t.Fatal("view docs")
+	}
+	legal, ok := LookupDesk("legal")
+	if !ok {
+		t.Fatal("legal desk")
+	}
+	var desk strings.Builder
+	if err := srv.pages["desks"].ExecuteTemplate(&desk, "layout.html", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &legal, CanAsk: true}); err != nil {
+		t.Fatal(err)
+	}
+	body := desk.String()
+	if !strings.Contains(body, "/admin/docs/legal") || !strings.Contains(body, "/admin/docs/handler") {
+		t.Fatal("desk reads")
 	}
 }
 

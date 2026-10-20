@@ -3,69 +3,84 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Defaults · amend</p>
-    <h2>Paste Books ids, then save</h2>
+    <h2>Save one vendor at a time</h2>
     <ol class="recipe">
-      <li>Open the tab for the id you have (org, expense account, …).</li>
-      <li>Paste the number from Zoho Books. Do not paste API keys.</li>
-      <li>Click <strong>Save defaults</strong>.</li>
+      <li>Open the tab for that vendor (Company, Zoho, Paystack, Drive).</li>
+      <li>Fill only that tab. Secrets stay in n8n / the VM <code>.env</code> — never here.</li>
+      <li>Click <strong>Save this group</strong>. Other tabs keep their values.</li>
     </ol>
-    <p><a class="quiet" href="/admin/settings">Back to Defaults</a>. Paystack, LLM, and Zoho OAuth stay in the VM <code>.env</code>.</p>
+    {{template "page-reads" (guideReads "desk")}}
+    <p><a class="quiet" href="/admin/settings{{if .Tab}}?tab={{.Tab}}{{end}}">Back to Defaults</a></p>
   </div>
 </aside>
-<form method="post" action="/admin/settings" class="settings">
-  <div class="tabset" data-tabs data-default="g0">
-    <nav class="tabs" role="tablist" aria-label="Defaults">
-      {{range $i, $g := .SettingGroups}}
-      <button type="button" role="tab" data-tab="g{{$i}}" aria-controls="tab-g{{$i}}">{{$g.Title}}</button>
-      {{end}}
-    </nav>
-    <div class="tab-panels">
-      {{range $i, $g := .SettingGroups}}
-      <section role="tabpanel" id="tab-g{{$i}}" data-tab="g{{$i}}">
+<div class="tabset" data-tabs data-default="{{.Tab}}">
+  <nav class="tabs" role="tablist" aria-label="Defaults">
+    {{range .SettingGroups}}
+    <button type="button" role="tab" data-tab="{{.ID}}" aria-controls="tab-{{.ID}}">{{.Title}}</button>
+    {{end}}
+  </nav>
+  <div class="tab-panels">
+    {{range .SettingGroups}}
+    <section role="tabpanel" id="tab-{{.ID}}" data-tab="{{.ID}}">
+      <form method="post" action="/admin/settings" class="settings">
+        <input type="hidden" name="group" value="{{.ID}}">
         <fieldset>
-          <legend>{{$g.Title}}</legend>
-          {{if $g.Help}}<p class="hint">{{$g.Help}}</p>{{end}}
-          {{range $g.Fields}}
+          <legend>{{.Title}}</legend>
+          {{if .Recipe}}
+          <ol class="recipe">
+            {{range .Recipe}}<li>{{.}}</li>{{end}}
+          </ol>
+          {{end}}
+          {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
+          {{if .DocHref}}<p class="hint">Read: <a href="{{.DocHref}}">{{.DocLabel}}</a></p>{{end}}
+          {{range .Fields}}
           <label>{{.Label}}
             <span class="hint"><code>{{.Key}}</code>{{if .Help}} — {{.Help}}{{end}}</span>
             <input name="{{.Key}}" value="{{.Value}}">
           </label>
           {{end}}
         </fieldset>
-      </section>
-      {{end}}
-    </div>
+        <div class="actions">
+          <button type="submit">Save this group</button>
+          <a class="ghost" href="/admin/settings?tab={{.ID}}">Cancel</a>
+        </div>
+      </form>
+    </section>
+    {{end}}
   </div>
-  <div class="actions">
-    <button type="submit">Save defaults</button>
-    <a class="ghost" href="/admin/settings">Cancel</a>
-  </div>
-</form>
+</div>
 {{else}}
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Defaults · ledger</p>
-    <h2>These numbers go to Books writes</h2>
+    <h2>One form per vendor</h2>
     <ol class="recipe">
-      <li>Read the list. Blank means n8n has nothing for that field.</li>
-      <li>Click <strong>Amend ids</strong> and paste the Zoho number.</li>
+      <li>Open the tab for the vendor you have (Company, Zoho, Paystack, Drive).</li>
+      <li>Click <strong>Amend this group</strong> on that tab. Blank means n8n has nothing for that field.</li>
       <li>WhatsApp phones are not here — tick them on People → Rights.</li>
     </ol>
+    {{template "page-reads" (guideReads "desk")}}
   </div>
-  <a class="ghost fill now-go" href="/admin/settings/edit">Amend ids</a>
+  <a class="ghost fill now-go" href="/admin/settings/edit{{if .Tab}}?tab={{.Tab}}{{end}}">Amend this group</a>
 </aside>
 {{if .SettingGroups}}
-<div class="tabset" data-tabs data-default="g0">
+<div class="tabset" data-tabs data-default="{{.Tab}}">
   <nav class="tabs" role="tablist" aria-label="Defaults">
-    {{range $i, $g := .SettingGroups}}
-    <button type="button" role="tab" data-tab="g{{$i}}" aria-controls="tab-g{{$i}}">{{$g.Title}}</button>
+    {{range .SettingGroups}}
+    <button type="button" role="tab" data-tab="{{.ID}}" aria-controls="tab-{{.ID}}">{{.Title}}</button>
     {{end}}
   </nav>
   <div class="tab-panels">
-    {{range $i, $g := .SettingGroups}}
-    <section role="tabpanel" id="tab-g{{$i}}" data-tab="g{{$i}}">
-      {{if $g.Help}}<p class="hint">{{$g.Help}}</p>{{end}}
-      {{if $g.Fields}}
+    {{range .SettingGroups}}
+    <section role="tabpanel" id="tab-{{.ID}}" data-tab="{{.ID}}">
+      {{if .Recipe}}
+      <ol class="recipe">
+        {{range .Recipe}}<li>{{.}}</li>{{end}}
+      </ol>
+      {{end}}
+      {{if .Help}}<p class="hint">{{.Help}}</p>{{end}}
+      {{if .DocHref}}<p class="hint">Read: <a href="{{.DocHref}}">{{.DocLabel}}</a></p>{{end}}
+      {{if .Fields}}
       <div class="ledger">
       <table class="roster">
         <thead>
@@ -75,7 +90,7 @@
           </tr>
         </thead>
         <tbody>
-          {{range $g.Fields}}
+          {{range .Fields}}
           <tr>
             <td>{{.Label}}<br><code>{{.Key}}</code></td>
             <td>{{if .Value}}{{.Value}}{{else}}<span class="hint">blank</span>{{end}}</td>
@@ -85,6 +100,9 @@
       </table>
       </div>
       {{end}}
+      <div class="actions">
+        <a class="ghost" href="/admin/settings/edit?tab={{.ID}}">Amend this group</a>
+      </div>
     </section>
     {{end}}
   </div>

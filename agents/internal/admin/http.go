@@ -96,6 +96,7 @@ type pageData struct {
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
 	Filings        []FileFiling
+	Tab            string
 }
 
 type kv struct {
@@ -119,6 +120,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"statusCount":  statusCount,
 		"deskNavOn":    deskNavOn,
 		"officeMenuOn": officeMenuOn,
+		"guideReads":   guideReads,
 	}
 	pages := map[string]*template.Template{}
 	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files"} {
@@ -479,13 +481,30 @@ func (s *Server) userDelete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 
+func settingsTab(r *http.Request, groups []SettingGroupView) string {
+	tab := strings.TrimSpace(r.URL.Query().Get("tab"))
+	if tab == "" {
+		tab = strings.TrimSpace(r.FormValue("group"))
+	}
+	for _, g := range groups {
+		if g.ID == tab {
+			return tab
+		}
+	}
+	if len(groups) > 0 {
+		return groups[0].ID
+	}
+	return ""
+}
+
 func (s *Server) settingsGET(w http.ResponseWriter, r *http.Request) {
 	u := s.requireAdmin(w, r)
 	if u == nil {
 		return
 	}
 	raw, err := s.store.Settings(r.Context())
-	data := pageData{Title: "Defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw)}
+	groups := settingGroupsFrom(raw)
+	data := pageData{Title: "Defaults", Nav: "settings", User: u, SettingGroups: groups, Tab: settingsTab(r, groups)}
 	if err != nil {
 		data.Error = err.Error()
 	}
@@ -498,7 +517,8 @@ func (s *Server) settingsEditGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	raw, err := s.store.Settings(r.Context())
-	data := pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw), Amend: true}
+	groups := settingGroupsFrom(raw)
+	data := pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: groups, Amend: true, Tab: settingsTab(r, groups)}
 	if err != nil {
 		data.Error = err.Error()
 	}
@@ -527,11 +547,16 @@ func (s *Server) settingsPOST(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if err := s.store.SetSetting(r.Context(), k, vs[0]); err != nil {
-			s.render(w, "settings", pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: settingGroupsFrom(raw), Amend: true, Error: err.Error()})
+			groups := settingGroupsFrom(raw)
+			s.render(w, "settings", pageData{Title: "Amend defaults", Nav: "settings", User: u, SettingGroups: groups, Amend: true, Tab: settingsTab(r, groups), Error: err.Error()})
 			return
 		}
 	}
-	http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
+	loc := "/admin/settings"
+	if group := strings.TrimSpace(r.FormValue("group")); group != "" {
+		loc += "?tab=" + url.QueryEscape(group)
+	}
+	http.Redirect(w, r, loc, http.StatusSeeOther)
 }
 
 func (s *Server) internalAllowlist(w http.ResponseWriter, r *http.Request) {

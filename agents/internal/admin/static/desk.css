@@ -408,6 +408,8 @@ textarea {
 }
 .now p { margin: 0.35rem 0 0; max-width: 42rem; opacity: 0.82; }
 .now .do + h2 + p { margin-top: 0; }
+.now .recipe + .do { margin-top: 0.9rem; }
+.recipe a { color: var(--brass); }
 .now .actions { margin: 0.15rem 0 0; }
 .now-go,
 .now > .stamp,

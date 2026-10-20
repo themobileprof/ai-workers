@@ -40,6 +40,34 @@ func TestAllDesksUnique(t *testing.T) {
 	}
 }
 
+func TestDeskGuideLinksPointAtSheet(t *testing.T) {
+	for _, d := range AllDesks() {
+		if d.Help == "" {
+			t.Fatalf("%s empty help", d.Slug)
+		}
+		got := d.GuideLinks()
+		if len(got) < 2 {
+			t.Fatalf("%s guide links %d", d.Slug, len(got))
+		}
+		sheet := "/admin/docs/" + d.Slug
+		found := false
+		for _, l := range got {
+			if l.Href == sheet && l.Why != "" {
+				found = true
+			}
+			if l.Label == "" || l.Why == "" {
+				t.Fatalf("%s empty link %+v", d.Slug, l)
+			}
+		}
+		if !found {
+			t.Fatalf("%s missing sheet %s in %+v", d.Slug, sheet, got)
+		}
+	}
+	if n := len(guideReads("files")); n < 2 {
+		t.Fatalf("files reads %d", n)
+	}
+}
+
 func TestHandles(t *testing.T) {
 	owner := User{Role: "owner"}
 	if Handles(owner, "legal") || Handles(owner, "delivery") {

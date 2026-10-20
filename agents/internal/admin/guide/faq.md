@@ -77,9 +77,11 @@ Board is owner and BDM. Handlers land on Workers. Project faces should not see t
 
 ## How do I change Zoho or Paystack ids?
 
-1. Open Defaults (`/admin/settings`) → Amend ids.
-2. Paste the Zoho Books account numbers. These are ids, not secrets.
-3. Save. API tokens stay in the VM `.env` or n8n Credentials — never on this page.
+Each vendor has its own form. Saving one tab does not wipe the others.
+
+1. Open Defaults (`/admin/settings`) → the tab for that vendor (Company, Zoho, Paystack, Drive).
+2. Click **Amend this group**. Paste only those fields. These are ids, not secrets.
+3. Click **Save this group**. API tokens stay in the VM `.env` or n8n Credentials — never on this page.
 
 ## Someone sent a CV. Do we hire them in HR?
 

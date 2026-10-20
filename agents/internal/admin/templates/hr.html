@@ -1,15 +1,20 @@
 {{define "content"}}
-<section class="hero row">
+<aside class="now" aria-label="What to do">
   <div>
-    <p class="kicker">Parent worker</p>
-    <h2>HR</h2>
-    <p class="lede">JDs and applicants for TheMobileProf Technologies. The clerk proposes. You Shortlist or Turn away. This is not payroll. People on the roster stay on <a class="quiet" href="/admin/users">People</a>.</p>
+    <p class="do">HR · recruiting closed</p>
+    <h2>Roster is People, not this book</h2>
+    <ol class="recipe">
+      <li>Onboard people you already know on <strong>People</strong>, then seat them on Face.</li>
+      <li>Inbound CVs go to Growth as a conversation, not a hire.</li>
+      <li>This book does not payroll, email, or click Accept on a job. There is no HR worker desk.</li>
+    </ol>
+    {{template "page-reads" (guideReads "hr")}}
   </div>
-  <div class="actions">
-    <a class="ghost" href="/admin/desks/hr"><svg class="ico"><use href="#i-chat"/></svg> Job chat</a>
-    <a class="ghost" href="/admin/docs/hr"><svg class="ico"><use href="#i-docs"/></svg> Playbook</a>
+  <div class="actions now-go">
+    <a class="ghost fill" href="/admin/users">People</a>
+    <a class="ghost" href="/admin/docs/you">How you fit</a>
   </div>
-</section>
+</aside>
 
 <div class="tabset" data-tabs data-default="ask">
   <nav class="tabs" role="tablist" aria-label="HR">

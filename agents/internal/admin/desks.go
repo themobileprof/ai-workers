@@ -11,17 +11,24 @@ type Desk struct {
 	BookLabel  string
 }
 
+// DeskLink is a specific Docs or book pointer shown on a worker or book page.
+type DeskLink struct {
+	Href  string
+	Label string
+	Why   string
+}
+
 func AllDesks() []Desk {
 	return []Desk{
-		{Slug: "accounts", Title: "Accounts", Department: "accounts", Prefix: "/accounts", Help: "Books classifier. Handler confirms what Zoho already posted or a lookup the worker flagged.", BookPath: "/admin/settings", BookLabel: "Defaults"},
-		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Front office copy and replies. Handler complements drafts that must not send themselves."},
-		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Room voice with a mandate per Academy Telegram group. Handler steps in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
-		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Pipeline notes. Handler confirms a contact the worker asked a human to review."},
-		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "NDA and contract proposals. Accept still lives on the Legal book.", BookPath: "/admin/legal", BookLabel: "Legal book"},
-		{Slug: "seo", Title: "SEO", Department: "seo", Prefix: "/seo", Help: "Page titles, meta, outlines. Accept still lives on the SEO book. The worker cannot publish.", BookPath: "/admin/seo", BookLabel: "SEO book"},
-		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. The project’s stage sets how many. Pace is on the person. Seat them on the Face tab to onboard.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
-		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books; grants stay chat until you Accept a job."},
-		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. Accept on the project Decide tab writes the stage.", BookPath: "/admin/projects", BookLabel: "Projects"},
+		{Slug: "accounts", Title: "Accounts", Department: "accounts", Prefix: "/accounts", Help: "This worker names the Zoho document. It does not compute VAT or withhold tax. Confirm what Books already posted, then Accept.", BookPath: "/admin/settings?tab=zoho", BookLabel: "Zoho ids"},
+		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Drafts replies and front-office copy. It cannot send WhatsApp or email itself. You copy or send."},
+		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Voice for one Academy Telegram room at a time. Campus trainings are project Dates, not rooms. Step in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
+		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Pipeline notes only. It cannot create a sale. Confirm a contact the worker asked a human to review."},
+		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "Proposes NDAs and contracts. Accept still lives on the Legal book. Copy the text yourself — it does not email anyone.", BookPath: "/admin/legal", BookLabel: "Legal book"},
+		{Slug: "seo", Title: "SEO", Department: "seo", Prefix: "/seo", Help: "Proposes titles, meta, and outlines. Accept on the SEO book. You paste onto the live page. It cannot publish or read Search Console.", BookPath: "/admin/seo", BookLabel: "SEO book"},
+		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. The project’s stage caps how many. Pace is hours/week on People. Seat them on Face before they get work.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
+		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books. Grants stay chat until you Accept a job here."},
+		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. Accept on the project Decide tab writes the stage. Chat never stamps.", BookPath: "/admin/projects", BookLabel: "Projects"},
 	}
 }
 
@@ -32,6 +39,15 @@ func LookupDesk(slug string) (Desk, bool) {
 		}
 	}
 	return Desk{}, false
+}
+
+// GuideLinks are the Docs and books this desk should point at — not a generic Sheet button.
+func (d Desk) GuideLinks() []DeskLink {
+	out := guideReads(d.Slug)
+	if d.BookPath != "" {
+		out = prependLink(out, DeskLink{Href: d.BookPath, Label: d.BookLabel, Why: "The page where this work is accepted."})
+	}
+	return out
 }
 
 func DeskByDepartment(dept string) (Desk, bool) {

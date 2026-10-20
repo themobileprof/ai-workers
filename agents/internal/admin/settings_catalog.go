@@ -9,24 +9,44 @@ type SettingField struct {
 }
 
 type settingGroupSpec struct {
-	Title  string
-	Help   string
-	Fields []SettingField
+	ID       string
+	Title    string
+	Help     string
+	Recipe   []string
+	DocHref  string
+	DocLabel string
+	Fields   []SettingField
 }
 
 func settingCatalog() []settingGroupSpec {
 	return []settingGroupSpec{
 		{
-			Title: "Company",
-			Help:  "Shown on the desk and used as the Lagos clock for Books dates.",
+			ID:       "company",
+			Title:    "Company",
+			Help:     "Shown on the desk and used as the Lagos clock for Books dates.",
+			DocHref:  "/admin/docs/desk",
+			DocLabel: "Company desk sheet",
+			Recipe: []string{
+				"Legal name matches CAC / Books — TheMobileProf Technologies.",
+				"Timezone is Africa/Lagos unless you have a reason to change it.",
+				"Click Save on this tab only. Other vendors keep their values.",
+			},
 			Fields: []SettingField{
 				{Key: "company.name", Label: "Legal name", Help: "TheMobileProf Technologies in Books."},
 				{Key: "company.timezone", Label: "Timezone", Help: "IANA name. Expense and invoice dates use this when the chat has no date."},
 			},
 		},
 		{
-			Title: "Zoho Books · accounts",
-			Help:  "n8n Books write and Paystack paid read these on every run. Copy the ids from Books → Accountant → Chart of Accounts (hover the account). Go never computes tax.",
+			ID:       "zoho",
+			Title:    "Zoho Books · accounts",
+			Help:     "n8n Books write and Paystack paid read these on every run. Copy the ids from Books → Accountant → Chart of Accounts (hover the account). Go never computes tax.",
+			DocHref:  "/admin/docs/accounts",
+			DocLabel: "Accounts sheet",
+			Recipe: []string{
+				"Open Books → Accountant → Chart of Accounts.",
+				"Hover the account, copy the id. Do not paste API keys or OAuth tokens.",
+				"Click Save on this tab. Paystack and Drive stay as they are.",
+			},
 			Fields: []SettingField{
 				{Key: "zoho.organization_id", Label: "Organization id", Help: "Books org TheMobileProf Technologies."},
 				{Key: "zoho.paid_through_account_id", Label: "Paid-through account", Help: "Petty Cash (or the cash/bank you spend from) for already-paid expenses."},
@@ -39,15 +59,31 @@ func settingCatalog() []settingGroupSpec {
 			},
 		},
 		{
-			Title: "Paystack · public",
-			Help:  "The secret key stays in the VM .env (n8n only). This row is currency for Payment Requests.",
+			ID:       "paystack",
+			Title:    "Paystack · public",
+			Help:     "The secret key stays in the VM .env (n8n only). This row is currency for Payment Requests.",
+			DocHref:  "/admin/docs/accounts",
+			DocLabel: "Accounts sheet",
+			Recipe: []string{
+				"Currency is NGN unless a Payment Request is in another currency.",
+				"The secret key stays in the VM .env — never paste it here.",
+				"Click Save on this tab only.",
+			},
 			Fields: []SettingField{
 				{Key: "paystack.currency", Label: "Charge currency", Help: "NGN. Amount in kobo is Books invoice.total × 100."},
 			},
 		},
 		{
-			Title: "Google Drive · data room",
-			Help:  "Shared Drive id (not a My Drive folder). OAuth stays in n8n. Accept on Files writes here; the worker never uploads.",
+			ID:       "drive",
+			Title:    "Google Drive · data room",
+			Help:     "Shared Drive id (not a My Drive folder). OAuth stays in n8n. Accept on Files writes here; the worker never uploads.",
+			DocHref:  "/admin/docs/files",
+			DocLabel: "Files sheet",
+			Recipe: []string{
+				"Open the Shared Drive in Google Drive (not a personal My Drive folder).",
+				"Copy the id from the URL after /folders/.",
+				"Click Save on this tab. The n8n credential must be named Google Drive.",
+			},
 			Fields: []SettingField{
 				{Key: "drive.shared_drive_id", Label: "Shared Drive id", Help: "From Drive URL /drive/u/0/folders/… on a Shared Drive. Leave blank until the n8n Google Drive credential exists."},
 			},
@@ -88,16 +124,20 @@ type SettingFieldView struct {
 }
 
 type SettingGroupView struct {
-	Title  string
-	Help   string
-	Fields []SettingFieldView
+	ID       string
+	Title    string
+	Help     string
+	Recipe   []string
+	DocHref  string
+	DocLabel string
+	Fields   []SettingFieldView
 }
 
 func settingGroupsFrom(values map[string]string) []SettingGroupView {
 	seen := catalogSettingKeys()
 	var groups []SettingGroupView
 	for _, g := range settingCatalog() {
-		view := SettingGroupView{Title: g.Title, Help: g.Help}
+		view := SettingGroupView{ID: g.ID, Title: g.Title, Help: g.Help, Recipe: g.Recipe, DocHref: g.DocHref, DocLabel: g.DocLabel}
 		for _, f := range g.Fields {
 			view.Fields = append(view.Fields, SettingFieldView{SettingField: f, Value: values[f.Key]})
 		}
@@ -114,7 +154,13 @@ func settingGroupsFrom(values map[string]string) []SettingGroupView {
 		})
 	}
 	if len(extra) > 0 {
-		groups = append(groups, SettingGroupView{Title: "Other", Help: "Keys on this desk that are not in the accounts catalog.", Fields: extra})
+		groups = append(groups, SettingGroupView{
+			ID:     "other",
+			Title:  "Other",
+			Help:   "Keys on this desk that are not in the accounts catalog.",
+			Recipe: []string{"Change a key only if you know why it is here.", "Click Save on this tab. Catalog tabs keep their values."},
+			Fields: extra,
+		})
 	}
 	return groups
 }
