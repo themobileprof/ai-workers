@@ -179,6 +179,34 @@ func formCatalog() []formRecipe {
 			},
 		},
 		{
+			ID: "add_crm", Title: "Add a CRM contact", Button: "Save contact",
+			Action: "/admin/crm", Href: "/admin/crm",
+			Use: "Save a person or company on the CRM book. Does not send mail. Same as Office → CRM.",
+			Fields: []formField{
+				{Name: "name", Label: "Name", Prompt: "Their name.", Kind: "text", Required: true},
+				{Name: "company", Label: "Company", Prompt: "Company, or skip.", Kind: "text"},
+				{Name: "email", Label: "Email", Prompt: "Email, or skip. Never invent one.", Kind: "text"},
+				{Name: "phone", Label: "Phone", Prompt: "Phone as 234…, or skip. Never invent one.", Kind: "text"},
+				{Name: "project_id", Label: "Project", Prompt: "Which bet, or skip for the company.", Kind: "project"},
+				{Name: "offer", Label: "Offer", Prompt: "What they want to buy, or already bought. One line, or skip. Never invent.", Kind: "text"},
+				{Name: "stage", Label: "Stage", Prompt: "new, qualified, proposal, or nurture. Skip for new.", Kind: "select", Default: "new", Options: []string{"new", "qualified", "proposal", "nurture"}},
+				{Name: "next_action", Label: "Next action", Prompt: "The next human step. One line, or skip.", Kind: "text"},
+				{Name: "next_action_by", Label: "By", Prompt: "Due date as YYYY-MM-DD, or skip.", Kind: "date"},
+				{Name: "notes", Label: "Story", Prompt: "Short rolling story. What they asked, last move.", Kind: "textarea"},
+			},
+		},
+		{
+			ID: "log_crm", Title: "Log a CRM touch", Button: "Log touch",
+			Action: "/admin/crm/{contact_id}/log", Href: "/admin/crm/{contact_id}",
+			Use: "Log a call, WhatsApp, or note on a person. Does not send. Same as Office → CRM → the person → Log.",
+			Fields: []formField{
+				{Name: "contact_id", Label: "Person", Prompt: "Which CRM contact id? Open the person on Office → CRM if you do not know.", Kind: "text", Required: true, PathOnly: true},
+				{Name: "channel", Label: "Channel", Prompt: "call, whatsapp, email, or note.", Kind: "select", Default: "call", Options: []string{"call", "whatsapp", "email", "desk"}},
+				{Name: "direction", Label: "Direction", Prompt: "they reached us (in), we reached them (out), or a note.", Kind: "select", Default: "in", Options: []string{"in", "out", "note"}},
+				{Name: "body", Label: "What happened", Prompt: "What was said. This is a record, not a message to send.", Kind: "textarea", Required: true},
+			},
+		},
+		{
 			ID: "add_grant", Title: "Add a grant row", Button: "Save grant",
 			Action: "/admin/grants", Href: "/admin/grants",
 			Use: "Save a grant deadline and next action. Does not submit an application. Same as Office → Grants.",
@@ -433,6 +461,11 @@ func resolveAction(r formRecipe, values map[string]string) string {
 	repl := func(s string) string {
 		s = strings.ReplaceAll(s, "{project_id}", strings.TrimSpace(values["project_id"]))
 		s = strings.ReplaceAll(s, "{desk}", strings.TrimSpace(values["desk"]))
+		cid := strings.TrimSpace(values["contact_id"])
+		if !digitsOnly(cid) {
+			cid = ""
+		}
+		s = strings.ReplaceAll(s, "{contact_id}", cid)
 		return s
 	}
 	path = repl(path)

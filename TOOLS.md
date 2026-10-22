@@ -20,7 +20,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `zoho-books`
 - **URL:** https://www.zoho.com/books/
 - **Role:** Ledger. Expenses, bills, invoices, contacts, customer payments, tax_id. Go never computes VAT/WHT.
-- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert, Ops Telegram `/crm` lookup). Org ids and chart-of-accounts ids on the desk Defaults.
+- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert for invoices, Ops Telegram `/crm` Books fallback). The CRM story lives on the desk (`GET /internal/v1/crm/contacts`). Org ids and chart-of-accounts ids on the desk Defaults.
 - **Secrets:** OAuth tokens in n8n credential Zoho Books. Never `.env`, never the Go worker.
 - **n8n credentials:** `Zoho Books`
 - **Desk keys:** `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id`, `zoho.account.advertising_id`, `zoho.account.lodging_id`, `zoho.account.uncategorized_id`, `zoho.deposit_to_account_id`
@@ -29,7 +29,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `zoho-mail`
 - **URL:** https://www.zoho.com/mail/
-- **Role:** Company mailbox info@themobileprof.com. SMTP out (a pending draft a human asked for). IMAP in (CRM thread summary; important mail pings owner/BDM).
+- **Role:** Company mailbox info@themobileprof.com. SMTP out (a pending draft a human asked for). IMAP in (CRM thread summary on Office → CRM; important mail pings owner/BDM).
 - **Where:** n8n credentials. SMTP smtppro.zoho.com:465. IMAP imappro.zoho.com:993.
 - **Secrets:** App password in n8n only.
 - **n8n credentials:** `Zoho Mail info@`, `Zoho Mail info@ IMAP`
@@ -57,7 +57,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `whatsapp`
 - **URL:** https://developers.facebook.com/docs/whatsapp/cloud-api
-- **Role:** Customer 1:1 chat and CRM. Bare DMs are Growth; every successful DM with a phone upserts a Zoho Books contact. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) are refused — staff use ops Telegram. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
+- **Role:** Customer 1:1 chat and CRM. Bare DMs are Growth; every successful DM with a phone files Office → CRM and upserts a Zoho Books contact for invoices. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) are refused — staff use ops Telegram. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
 - **Where:** n8n Customer WhatsApp. No admin-phone allowlist.
 - **Secrets:** Tokens in n8n WhatsApp credentials.
 - **n8n credentials:** `WhatsApp OAuth account`, `WhatsApp account`

@@ -446,6 +446,9 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	if dept == "internal-ops" {
 		s.applyGrantResponse(ctx, req, resp)
 	}
+	if dept == "crm" || dept == "growth" {
+		s.applyCRMResponse(ctx, req, resp)
+	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return
 	}

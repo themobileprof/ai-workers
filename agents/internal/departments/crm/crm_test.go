@@ -52,7 +52,7 @@ func TestHandleReadsEmailCorrespondence(t *testing.T) {
 	if resp.Status != contract.StatusSuccess || resp.StructuredData["task_type"] != "follow_up" {
 		t.Fatalf("%+v", resp)
 	}
-	if !strings.Contains(stub.got.System, "client story") {
+	if !strings.Contains(stub.got.System, "client story") || !strings.Contains(stub.got.System, "timeline") {
 		t.Fatal("crm prompt must tell the model to read email correspondence")
 	}
 	if !strings.Contains(stub.got.System, "Do not draft a reply") {

@@ -89,6 +89,27 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(body, `href="/admin/grants"`) {
 		t.Fatal("office Grants link")
 	}
+	if !strings.Contains(body, `href="/admin/crm"`) {
+		t.Fatal("office CRM link")
+	}
+	crmPage := httptest.NewRecorder()
+	s.render(crmPage, "crm", pageData{
+		Title: "CRM", Nav: "crm", User: &User{Name: "Ada", Role: "owner"},
+		Contacts: []CRMContact{{ID: 1, Name: "Chinedu", Company: "Apex", Stage: "new"}},
+	})
+	crmBody := crmPage.Body.String()
+	if !strings.Contains(crmBody, "People and the story so far") || !strings.Contains(crmBody, "Chinedu") || !strings.Contains(crmBody, `href="/admin/crm/1"`) {
+		t.Fatal("crm book")
+	}
+	person := httptest.NewRecorder()
+	s.render(person, "crm", pageData{
+		Title: "Chinedu", Nav: "crm", User: &User{Name: "Ada", Role: "owner"},
+		Contact: &CRMContact{ID: 1, Name: "Chinedu", Company: "Apex", Stage: "qualified", Offer: "WhatsApp books"},
+		CRMEvents: []CRMEvent{{Channel: "call", Direction: "in", Summary: "Asked for a demo"}},
+	})
+	if !strings.Contains(person.Body.String(), "Asked for a demo") || !strings.Contains(person.Body.String(), "Log a call") {
+		t.Fatal("crm person timeline")
+	}
 	login := httptest.NewRecorder()
 	s.render(login, "login", pageData{Title: "Sign in"})
 	if strings.Contains(login.Body.String(), `class="guide-fab"`) {
@@ -161,6 +182,10 @@ func TestPlaybookCatalog(t *testing.T) {
 	cm, ok := lookupDoc("community")
 	if !ok || !strings.Contains(string(cm.Body), "lms.themobileprof.com") {
 		t.Fatal("community LMS specimen")
+	}
+	crmDoc, ok := lookupDoc("crm")
+	if !ok || !strings.Contains(string(crmDoc.Body), "Office → CRM") {
+		t.Fatal("crm playbook")
 	}
 	later := DocMeta{Slug: "x", Wire: "later"}
 	if !later.Later() || later.Href() != "/admin/docs/x" || later.WireLabel() != "Not wired" {

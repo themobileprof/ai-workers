@@ -55,7 +55,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	filings, _ := s.store.ListFileFilings(r.Context(), 0, "")
 	jobs, _ := s.store.ListDeskJobs(r.Context(), "", 40)
 	grants, _ := s.store.ListGrants(r.Context())
-	s.render(w, "home", pageData{
+	data := pageData{
 		Title:        "Board",
 		Nav:          "home",
 		User:         u,
@@ -66,7 +66,9 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		Projects:     projects,
 		Events:       events,
 		Rollup:       buildRollup(projects, items, filings, jobs, grants),
-	})
+	}
+	data.Rollup.Contacts = s.store.CountOpenCRM(r.Context())
+	s.render(w, "home", data)
 }
 
 func (s *Server) projectsGET(w http.ResponseWriter, r *http.Request) {

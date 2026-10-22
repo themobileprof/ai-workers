@@ -155,10 +155,10 @@ var docCatalog = []DocMeta{
 		Slug:     "crm",
 		Title:    "CRM",
 		Kicker:   "Pipeline",
-		Path:     "POST /departments/crm",
+		Path:     "POST /departments/crm · /admin/crm",
 		Wire:     "live",
-		Summary:  "Qualify or update a person. Inbound info@ files a thread summary; important mail pings owner/BDM and the matching cofounder. n8n writes Zoho Books contacts, not Zoho CRM.",
-		Prefixes: []string{"/crm", "info@ inbound"},
+		Summary:  "The conversion book. WhatsApp, info@, calls, and /crm file a timeline on the person. Offer and stage are the pitch. Won stays for a later upsell. It does not send.",
+		Prefixes: []string{"/crm", "info@ inbound", "Office → CRM"},
 	},
 	{
 		Slug:     "accounts",

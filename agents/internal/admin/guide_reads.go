@@ -76,7 +76,7 @@ func shortDocWhy(kind, summary string) string {
 	case "community":
 		return "Academy Telegram rooms. WhatsApp Cloud API cannot join ordinary groups."
 	case "crm":
-		return "Qualify or update a person. info@ files a thread summary. n8n writes Books contacts, not Zoho CRM."
+		return "The conversion book. WhatsApp, info@, calls, and /crm file a timeline. It does not send."
 	case "legal":
 		return "Specimens for NDAs. The worker cannot send the document."
 	case "seo":

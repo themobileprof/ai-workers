@@ -1,0 +1,212 @@
+{{define "content"}}
+{{if .Contact}}
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">{{.Contact.Stage}}{{if .Contact.Offer}} · {{.Contact.Offer}}{{end}}</p>
+    <h2>{{.Contact.Name}}</h2>
+    <ol class="recipe">
+      <li>Read the timeline. Email, WhatsApp, and calls land here. Nothing is sent from this page.</li>
+      <li>Log a call or a note. Set the next human step and the offer.</li>
+      <li><strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits.</li>
+    </ol>
+    {{template "page-reads" (guideReads "crm")}}
+    <p><a class="quiet" href="/admin/crm">Back to CRM</a></p>
+  </div>
+  <a class="ghost fill now-go" href="/admin/docs/crm">CRM sheet</a>
+</aside>
+
+<div class="tabset" data-tabs data-default="story">
+  <nav class="tabs" role="tablist" aria-label="{{.Contact.Name}}">
+    <button type="button" role="tab" data-tab="story" aria-controls="tab-story">Story <span class="count">{{len .CRMEvents}}</span></button>
+    <button type="button" role="tab" data-tab="log" aria-controls="tab-log">Log</button>
+    <button type="button" role="tab" data-tab="person" aria-controls="tab-person">Person</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-story" data-tab="story">
+      <div class="doc-card-head">
+        <p class="kicker">{{if .Contact.Company}}{{.Contact.Company}}{{else}}Person{{end}}{{if .Contact.ProjectName}} · {{.Contact.ProjectName}}{{end}}{{if .Contact.Email}} · {{.Contact.Email}}{{end}}{{if .Contact.Phone}} · {{.Contact.Phone}}{{end}}</p>
+        <span class="stamp {{.Contact.StatusStamp}}">{{.Contact.Stage}}</span>
+      </div>
+      {{if .Contact.NextAction}}<p class="week">Next: {{.Contact.NextAction}}{{if .Contact.NextActionBy}} · {{.Contact.NextActionBy}}{{end}}</p>{{end}}
+      <div class="row-actions">
+        <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/won"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button type="submit">Won</button></form>
+        <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/nurture"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button class="ghost" type="submit">Nurture</button></form>
+        <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/lost"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button class="ghost" type="submit">Lost</button></form>
+      </div>
+      <div class="thread">
+        {{range .CRMEvents}}
+        <article class="bubble {{if eq .Direction "in"}}worker{{else if eq .Direction "out"}}handler{{else}}system{{end}}">
+          <p class="kicker">{{.KindLabel}} · {{.WhenLabel}}</p>
+          <h3>{{.Summary}}</h3>
+          {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        </article>
+        {{else}}
+        <p class="hint">No touches yet. A WhatsApp, an info@ letter, or Log will file the first one.</p>
+        {{end}}
+      </div>
+    </section>
+    <section role="tabpanel" id="tab-log" data-tab="log">
+      <form method="post" action="/admin/crm/{{.Contact.ID}}/log" class="person add">
+        <p class="hint">A call, a WhatsApp, or a note on this person. This does not send mail or WhatsApp.</p>
+        <div class="fields">
+          <label>Channel
+            <select name="channel">
+              <option value="call">call</option>
+              <option value="whatsapp">whatsapp</option>
+              <option value="email">email</option>
+              <option value="desk">note</option>
+            </select>
+          </label>
+          <label>Direction
+            <select name="direction">
+              <option value="in">they reached us</option>
+              <option value="out">we reached them</option>
+              <option value="note">note</option>
+            </select>
+          </label>
+          <label>What happened<textarea name="body" rows="4" required></textarea></label>
+        </div>
+        <button type="submit">Log touch</button>
+      </form>
+    </section>
+    <section role="tabpanel" id="tab-person" data-tab="person">
+      <form method="post" action="/admin/crm/{{.Contact.ID}}" class="person add">
+        <div class="fields">
+          <label>Name<input name="name" value="{{.Contact.Name}}" required></label>
+          <label>Company<input name="company" value="{{.Contact.Company}}"></label>
+          <label>Email<input name="email" type="email" value="{{.Contact.Email}}"></label>
+          <label>Phone<input name="phone" value="{{.Contact.Phone}}" placeholder="234…"></label>
+          <label>Bet
+            <select name="project_id">
+              <option value="">Company (not one bet)</option>
+              {{range .Projects}}
+              <option value="{{.ID}}" {{if eq .ID $.Contact.ProjectID}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+            </select>
+          </label>
+          <label>Offer<input name="offer" value="{{.Contact.Offer}}" placeholder="What they want, or already bought"></label>
+          <label>Stage
+            <select name="stage">
+              <option value="new" {{if eq $.Contact.Stage "new"}}selected{{end}}>new</option>
+              <option value="qualified" {{if eq $.Contact.Stage "qualified"}}selected{{end}}>qualified</option>
+              <option value="proposal" {{if eq $.Contact.Stage "proposal"}}selected{{end}}>proposal</option>
+              <option value="nurture" {{if eq $.Contact.Stage "nurture"}}selected{{end}}>nurture</option>
+              <option value="won" {{if eq $.Contact.Stage "won"}}selected{{end}}>won</option>
+              <option value="lost" {{if eq $.Contact.Stage "lost"}}selected{{end}}>lost</option>
+            </select>
+          </label>
+          <label>Next action<input name="next_action" value="{{.Contact.NextAction}}"></label>
+          <label>By<input name="next_action_by" type="date" value="{{.Contact.NextActionBy}}"></label>
+          <label>Briefing<textarea name="notes" rows="3">{{.Contact.Notes}}</textarea></label>
+        </div>
+        <button type="submit">Save person</button>
+      </form>
+    </section>
+  </div>
+</div>
+{{else}}
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">CRM · {{statusCount .Contacts "open"}} open</p>
+    <h2>People and the story so far</h2>
+    <ol class="recipe">
+      <li>WhatsApp, info@, and <code>/crm</code> file a row. Open the person for the timeline.</li>
+      <li>Log calls on the person. Set the next human step and the offer. Nothing is sent.</li>
+      <li><strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits.</li>
+    </ol>
+    {{template "page-reads" (guideReads "crm")}}
+  </div>
+  <a class="ghost fill now-go" href="/admin/docs/crm">CRM sheet</a>
+</aside>
+
+<div class="tabset" data-tabs data-default="open">
+  <nav class="tabs" role="tablist" aria-label="CRM">
+    <button type="button" role="tab" data-tab="open" aria-controls="tab-open">Open <span class="count">{{statusCount .Contacts "open"}}</span></button>
+    <button type="button" role="tab" data-tab="closed" aria-controls="tab-closed">Closed <span class="count">{{statusCount .Contacts "closed"}}</span></button>
+    <button type="button" role="tab" data-tab="add" aria-controls="tab-add">Add</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-open" data-tab="open">
+      {{if .Contacts}}
+      <ol class="tasks">
+        {{range .Contacts}}
+        {{if .Open}}
+        <li>
+          <div>
+            <p class="kicker">{{.Stage}}{{if .Offer}} · {{.Offer}}{{end}}{{if .Company}} · {{.Company}}{{end}}{{if .ProjectName}} · {{.ProjectName}}{{end}}{{if .LastChannel}} · {{.LastChannel}}{{end}}{{if .NextActionBy}} · {{.NextActionBy}}{{end}}</p>
+            <h3><a href="/admin/crm/{{.ID}}">{{.Name}}</a></h3>
+            {{if .Email}}<p class="who">{{.Email}}{{if .Phone}} · {{.Phone}}{{end}}</p>{{else if .Phone}}<p class="who">{{.Phone}}</p>{{end}}
+            {{if .NextAction}}<p class="week">Next: {{.NextAction}}</p>{{end}}
+          </div>
+          <div class="row-actions">
+            <a class="ghost" href="/admin/crm/{{.ID}}">Open</a>
+            <form class="inline" method="post" action="/admin/crm/{{.ID}}/won"><button type="submit">Won</button></form>
+            <form class="inline" method="post" action="/admin/crm/{{.ID}}/nurture"><button class="ghost" type="submit">Nurture</button></form>
+            <form class="inline" method="post" action="/admin/crm/{{.ID}}/lost"><button class="ghost" type="submit">Lost</button></form>
+          </div>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{else}}
+      <p class="hint">No contacts yet. A customer WhatsApp, an info@ thread, or Add will file the first row.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-closed" data-tab="closed">
+      {{if .Contacts}}
+      <ol class="tasks">
+        {{range .Contacts}}
+        {{if not .Open}}
+        <li>
+          <div>
+            <p class="kicker">{{.Stage}}{{if .Offer}} · {{.Offer}}{{end}}{{if .Company}} · {{.Company}}{{end}}{{if .ProjectName}} · {{.ProjectName}}{{end}}</p>
+            <h3><a href="/admin/crm/{{.ID}}">{{.Name}}</a></h3>
+            {{if .Email}}<p class="who">{{.Email}}{{if .Phone}} · {{.Phone}}{{end}}</p>{{else if .Phone}}<p class="who">{{.Phone}}</p>{{end}}
+          </div>
+          <div class="row-actions">
+            <a class="ghost" href="/admin/crm/{{.ID}}">Open</a>
+            <form class="inline" method="post" action="/admin/crm/{{.ID}}/nurture"><button class="ghost" type="submit">Nurture</button></form>
+          </div>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{else}}
+      <p class="hint">Won and lost stay here for a later upsell. Nurture brings a row back to Open.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-add" data-tab="add">
+      <form method="post" action="/admin/crm" class="person add">
+        <div class="fields">
+          <label>Name<input name="name" required></label>
+          <label>Company<input name="company"></label>
+          <label>Email<input name="email" type="email"></label>
+          <label>Phone<input name="phone" placeholder="234…"></label>
+          <label>Bet
+            <select name="project_id">
+              <option value="">Company (not one bet)</option>
+              {{range .Projects}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Offer<input name="offer" placeholder="What they want to buy"></label>
+          <label>Stage
+            <select name="stage">
+              <option value="new">new</option>
+              <option value="qualified">qualified</option>
+              <option value="proposal">proposal</option>
+              <option value="nurture">nurture</option>
+            </select>
+          </label>
+          <label>Next action<input name="next_action"></label>
+          <label>By<input name="next_action_by" type="date"></label>
+          <label>Story<textarea name="notes" rows="3"></textarea></label>
+        </div>
+        <button type="submit">Save contact</button>
+      </form>
+    </section>
+  </div>
+</div>
+{{end}}
+{{end}}

@@ -9,6 +9,7 @@ type BoardRollup struct {
 	FilesGo   int
 	JobsWait  int
 	Grants    int
+	Contacts  int
 	Burn      string
 }
 

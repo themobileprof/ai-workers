@@ -115,15 +115,15 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone upserts a Zoho Books contact.
+Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone files **Office → CRM** and upserts a Zoho Books contact for invoices.
 
 It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply.
 
 ### CRM (`/crm`) — live
 
-Qualify or update a person. n8n writes **Zoho Books contacts**. There is no Zoho CRM app. Inbound info@ files a rolling thread summary on the contact. Noise is dropped. Important mail pings owner and BDM, and a cofounder only if the thread is clearly their bet. `/crm` looks up those notes before it answers.
+A first-party book on the desk (**Office → CRM**). This is where conversion lives: a person, an offer, a stage, and a timeline of email, WhatsApp, and calls. WhatsApp, info@, `/crm`, and a logged call file a touch on that person. Owner and BDM see every row; a cofounder sees contacts on their bet. Important mail still pings owner and BDM. Won stays on the book for a later upsell. n8n still upserts a **Zoho Books contact** when there is an email or phone, so invoices can match. There is no Zoho CRM app.
 
-It is **not** a cold-outreach sequencer. It does not send mail.
+It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. Notification sequences and upsell plays come later and still need a human.
 
 ### Community (`/cm`) — live — keep
 
@@ -169,13 +169,14 @@ Journeys in git (examples): consumer subscription, Academy catalog, invited AUM,
 
 ## 7. What is later (real gaps)
 
-These are on the desk now: grant rows, Delivery backlog, delay-to-write week plans, catalog-matched Files, hypothesis/mission/spend on the Card, Board rollup. Inbound info@ files a story; it does not auto-send. `/approve` still sends a pending draft a human asked for.
+These are on the desk now: grant rows, the CRM book (person + offer + timeline of email / WhatsApp / calls), Delivery backlog, delay-to-write week plans, catalog-matched Files, hypothesis/mission/spend on the Card, Board rollup. Inbound info@ files a story on CRM; it does not auto-send. `/approve` still sends a pending draft a human asked for.
 
 Still later:
 
 1. WhatsApp a mission to a field phone (do not use customer WhatsApp). GO / PIVOT / KILL stays Accept on Decide.
 2. Burn-by-bet **from Books tracking categories** (Card can hold a monthly NGN figure you paste; Go still does not compute VAT).
 3. Search Console later — still no publish.
+4. CRM notification sequences (email / WhatsApp) and upsell plays, fired from the person timeline. A human still Accepts or `/approve`. Do not auto-text the customer.
 
 Community stays Telegram rooms, not a campus timetable.
 

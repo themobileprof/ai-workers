@@ -97,6 +97,9 @@ type pageData struct {
 	EventKinds     []stageSpec
 	Filings        []FileFiling
 	Grants         []Grant
+	Contacts       []CRMContact
+	Contact        *CRMContact
+	CRMEvents      []CRMEvent
 	Rollup         BoardRollup
 	Tab            string
 	RunSteps       []RunStep
@@ -127,7 +130,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"guideReads":   guideReads,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files", "grants"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files", "grants", "crm"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -188,6 +191,14 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/grants", s.grantsPOST)
 	mux.HandleFunc("POST /admin/grants/{id}/done", s.grantStamp("done"))
 	mux.HandleFunc("POST /admin/grants/{id}/drop", s.grantStamp("dropped"))
+	mux.HandleFunc("GET /admin/crm", s.crmGET)
+	mux.HandleFunc("POST /admin/crm", s.crmPOST)
+	mux.HandleFunc("GET /admin/crm/{id}", s.crmPersonGET)
+	mux.HandleFunc("POST /admin/crm/{id}", s.crmPersonPOST)
+	mux.HandleFunc("POST /admin/crm/{id}/log", s.crmLogPOST)
+	mux.HandleFunc("POST /admin/crm/{id}/won", s.crmStamp("won"))
+	mux.HandleFunc("POST /admin/crm/{id}/lost", s.crmStamp("lost"))
+	mux.HandleFunc("POST /admin/crm/{id}/nurture", s.crmStamp("nurture"))
 	mux.HandleFunc("GET /admin/seo", s.seoGET)
 	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
 	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
@@ -238,6 +249,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/staff", s.internalStaffGET)
 	mux.HandleFunc("GET /internal/v1/mail/watchers", s.internalMailWatchersGET)
+	mux.HandleFunc("GET /internal/v1/crm/contacts", s.internalCRMContactsGET)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
 	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)
 	mux.HandleFunc("GET /internal/v1/journeys", s.internalJourneys)
@@ -718,6 +730,20 @@ func statusCount(items any, status string) int {
 	case []Grant:
 		for _, g := range xs {
 			if g.Status == status || (status == "open" && g.Open()) {
+				n++
+			}
+		}
+	case []CRMContact:
+		for _, c := range xs {
+			if status == "open" {
+				if c.Open() {
+					n++
+				}
+			} else if status == "closed" {
+				if !c.Open() {
+					n++
+				}
+			} else if c.Stage == status {
 				n++
 			}
 		}

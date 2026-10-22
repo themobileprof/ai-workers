@@ -60,11 +60,11 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Office bot. Fetch staff by Telegram id. Prefixes only within that People seat; `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/file` data room; `/today` `/pm` `/idea` Delivery; Legal **watch** on every real task; `/crm` leads (looks up Books notes); `/approve` `/kill` `/stop` email drafts (owner/BDM) |
 | `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
 | `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or Delivery. |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. Every DM with a phone upserts a Books contact. Office prefixes refused. No admin-phone allowlist. |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. Every DM with a phone files Office → CRM and upserts a Books contact for invoices. Office prefixes refused. No admin-phone allowlist. |
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
 | `n8n/workflows/delivery-daily.json` | `deliveryDaily00001` | yes | 08:00 Lagos: Telegram today’s tasks to People who have a Telegram id and open work on pinging bets |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; delay-to-send (15 min office hours / 60 after hours); `/approve` sends now; `/stop` `/kill` drop. Must be published. |
-| `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → CRM thread summary on the Books contact. No draft, no send. Important mail pings owner/BDM and the matching cofounder. CVs and noise are dropped. |
+| `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → CRM thread summary on Office → CRM (Books contact if there is an email). No draft, no send. Important mail pings owner/BDM and the matching cofounder. CVs and noise are dropped. |
 | `n8n/workflows/delay-apply.json` | `delayApply0000001` | yes | Every 2 minutes: apply Delivery plans whose delay has elapsed |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
@@ -93,7 +93,7 @@ Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cann
 
 Ops Telegram is gated by People `telegram_id` (`GET /internal/v1/staff?telegram_id=`). Unknown ids get the number to paste on People. `/approve` `/stop` `/kill` only run for owner and BDM. Prefixes follow that card’s seat and desk ticks. After the primary department, Legal **watches** the task (`POST /departments/legal` with `action: watch`) and may append a Legal note. Greetings and retail receipts stay silent. Watch does not halt Books and does not run on customer WhatsApp.
 
-Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, SEO, or Delivery. Bare DMs are Growth. n8n upserts a Zoho Books contact for every successful customer DM that has a phone.
+Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, SEO, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM and upserts a Zoho Books contact for invoices.
 
 Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops` for staff who may Accounts) are downloaded and OCR’d with Gemini. WhatsApp photos stay growth — not receipts. A failed read must not invent amounts.
 
@@ -129,7 +129,7 @@ The Cloud API number is the customer line. Do not allowlist staff phones on it. 
   - `preview` — hypothetical: apply the tax **percentage stored in Books**, post nothing.
 - Do not compute VAT/WHT in the Go worker. If a Zoho call 401s, reconnect the **Zoho Books** credential with scopes: `ZohoBooks.settings.READ`, `ZohoBooks.expenses.CREATE`, `ZohoBooks.expenses.READ`, `ZohoBooks.bills.CREATE`, `ZohoBooks.bills.READ`, `ZohoBooks.invoices.CREATE`, `ZohoBooks.invoices.READ`, `ZohoBooks.invoices.UPDATE`, `ZohoBooks.contacts.CREATE`, `ZohoBooks.contacts.READ`, `ZohoBooks.customerpayments.CREATE`, `ZohoBooks.customerpayments.READ`, `ZohoBooks.reports.READ`.
 - Ops Telegram reply is the audit trail (Books totals + document id + Paystack URL). Customer WhatsApp never writes Books.
-- CRM path: every successful customer WhatsApp DM with a phone, plus `/crm` or inbound info@ (the letter, not a reply) → upsert **Books contact** (`POST`/`PUT /books/v3/contacts`). `/crm` looks up existing Books notes so follow-up has the story. Important inbound pings watchers. This is the CRM. Do **not** add a Zoho CRM OAuth app unless you buy Zoho CRM; Books contacts already sit on the existing credential.
+- CRM path: every successful customer WhatsApp DM with a phone, plus `/crm` or inbound info@ → file **Office → CRM** (`/admin/crm`) as a touch on that person’s timeline, and upsert a **Books contact** when there is an email or phone (`POST`/`PUT /books/v3/contacts`). Log a call on the person. The desk book is conversion. Books is for invoices. Important inbound pings watchers. Do **not** add a Zoho CRM OAuth app unless they buy Zoho CRM.
 - Defaults live on the desk (`/admin/settings`): `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id` / `advertising_id` / `lodging_id` / `uncategorized_id`, optional `zoho.deposit_to_account_id` (a **Bank** account for Paystack customerpayments, not Petty Cash). Seeded org `939049468`, Petty Cash `…361`, Other Expenses `…460`, Office Supplies `…400`, Advertising `…403`, Lodging `…32023`, Uncategorized `…35005`.
 - Do not put Zoho tokens in `.env` or the Go worker.
 
@@ -158,7 +158,7 @@ Fathom is the cheap notetaker. n8n is the door. Delivery proposes; you Accept. C
 
 - Company address: **`info@themobileprof.com`**. From display name: `TheMobileProf`.
 - Outbound: n8n **Send Email** + credential `Zoho Mail info@`. Paid Zoho Mail SMTP is `smtppro.zoho.com` / `465` SSL (fallback `smtp.zoho.com` if a send fails).
-- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → CRM files a rolling story on the Books contact. Nothing is drafted or sent. Newsletters, no-reply, and CVs are dropped. If CRM marks the mail **important**, n8n `GET /internal/v1/mail/watchers` and Telegram-pings owner and BDM, plus a cofounder only when `project_slug` matches their Face seat. `/crm` still looks those notes up. `/approve` `/stop` `/kill` remain for a pending draft a human asked for — inbound no longer stores one.
+- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → CRM files a rolling story on Office → CRM (`GET /internal/v1/crm/contacts` for the prior desk story; Books notes if that is all n8n has). Nothing is drafted or sent. Newsletters, no-reply, and CVs are dropped. If CRM marks the mail **important**, n8n `GET /internal/v1/mail/watchers` and Telegram-pings owner and BDM, plus a cofounder only when `project_slug` matches their Face seat. `/crm` still looks those notes up. `/approve` `/stop` `/kill` remain for a pending draft a human asked for — inbound no longer stores one.
 - Skips mail From `info@themobileprof.com` (loop) and subjects matching `n8n smoke`.
 - Message the ops bot once (`/help`) after deploy so outbox learns `ops_chat_id`; otherwise the draft is still stored and `/approve` still works, but you will not get the Telegram card.
 - Replies are a new message with `Re:` subject (n8n SMTP does not set `In-Reply-To`).
@@ -283,7 +283,7 @@ Approved customer replies use the same SMTP node inside **Email outbox**. Depart
 
 1. Enable IMAP on the mailbox (Zoho Mail → Settings → Mail Accounts → IMAP).
 2. Credential **Zoho Mail info@ IMAP** (`w6VyL4iDdwX5XgIM`): `imappro.zoho.com`, `993`, SSL, user `info@themobileprof.com`, same app password as SMTP.
-3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Customer mail: a story lands on the Books contact; nothing is sent. If it looks important, owner and BDM get a Telegram briefing. A CV / “I am applying” mail is dropped.
+3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Customer mail: a story lands on Office → CRM; nothing is sent. If it looks important, owner and BDM get a Telegram briefing. A CV / “I am applying” mail is dropped.
 4. First, `/help` the ops bot so it records your chat id.
 
 ---
@@ -344,7 +344,7 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 2. Telegram bot + Ops workflow + getWebhookInfo clean.
 3. **Smoke: send email** — Execute; confirm mail in `info@`.
 4. WhatsApp is already live; keep using prefixes.
-5. Email inbound is live: customer mail `info@` → CRM story on the Books contact. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
+5. Email inbound is live: customer mail `info@` → CRM story on Office → CRM. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
 6. Only then: intern mission on WhatsApp.
 
 If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker.

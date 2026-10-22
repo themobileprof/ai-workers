@@ -29,6 +29,10 @@ func TestAllDesksUnique(t *testing.T) {
 	if !ok || cm.BookPath != "/admin/community" {
 		t.Fatal("community mandates book")
 	}
+	crmDesk, ok := LookupDesk("crm")
+	if !ok || crmDesk.BookPath != "/admin/crm" {
+		t.Fatal("crm book")
+	}
 	if _, ok := DeskByDepartment("internal-ops"); !ok {
 		t.Fatal("ops")
 	}
@@ -135,7 +139,7 @@ func TestDeskNavOn(t *testing.T) {
 	if deskNavOn("home", desks) || !deskNavOn("desk-legal", desks) || !deskNavOn("legal", desks) {
 		t.Fatal("desk nav")
 	}
-	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") || !officeMenuOn("files") {
+	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") || !officeMenuOn("files") || !officeMenuOn("crm") {
 		t.Fatal("office menu")
 	}
 }

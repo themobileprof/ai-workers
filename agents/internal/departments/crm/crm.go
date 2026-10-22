@@ -1,4 +1,4 @@
-// Package crm qualifies or updates a person. n8n writes Zoho Books contacts, not Zoho CRM.
+// Package crm qualifies or updates a person. The desk book is Office → CRM. n8n still writes Zoho Books contacts for invoices, not Zoho CRM.
 package crm
 
 import (
@@ -21,7 +21,7 @@ Classify into exactly one task_type:
 - file_thread: Inbound info@ from a real person or company that is not urgent. record_lead true. notify false. File the story only.
 - important: Inbound info@ that needs a human now: money, payment dispute, legal/CAC/NDPR, an angry or named client, a deadline this week, or they are waiting on a decision. record_lead true. notify true.
 
-When context_data.channel is email, this is inbound info@. Do not draft a reply. Do not claim mail was sent. Use noise, file_thread, or important — not qualify_lead. correspondence / existing_contact is the client story. notes must be a short rolling story (what they asked, last move, outstanding next step) — not "Inbound email:" plus a subject. If existing_contact.notes is present, continue that story; do not contradict it with invented facts. notify_reason is a short line if notify is true. project_slug only if context_data.projects clearly names that bet; otherwise leave it empty — do not guess a cofounder. output_text is a 3–6 line briefing a human can read on Telegram (or one line if noise).
+When context_data.channel is email, this is inbound info@. Do not draft a reply. Do not claim mail was sent. Use noise, file_thread, or important — not qualify_lead. correspondence / existing_contact is the client story (desk CRM first, including existing_contact.timeline; Books notes if that is all n8n has). notes must be a short rolling story (what they asked, last move, outstanding next step) — not "Inbound email:" plus a subject. If existing_contact.notes is present, continue that story; do not contradict it with invented facts. notify_reason is a short line if notify is true. project_slug only if context_data.projects clearly names that bet; otherwise leave it empty — do not guess a cofounder. output_text is a 3–6 line briefing a human can read on Telegram (or one line if noise).
 
 When this is a real person or company (not a hypothetical, not noise), set structured_data.record_lead true and include:
 - contact_name (required if record_lead)
@@ -29,6 +29,7 @@ When this is a real person or company (not a hypothetical, not noise), set struc
 - email (only if present in the task or context_data)
 - phone (E.164 if you can; if context_data.from looks like a WhatsApp number and no other phone, use it)
 - pipeline_stage: one of new, qualified, proposal, won, lost, nurture
+- offer (one line: what they want to buy or already bought; do not invent)
 - intent_score (0-1)
 - next_action (short)
 - next_action_by (YYYY-MM-DD if you set a date)
