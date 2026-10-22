@@ -1,8 +1,8 @@
-<p class="lede">Pipeline notes for a person or company. n8n upserts a <strong>Zoho Books contact</strong> on the existing Books OAuth. There is no Zoho CRM app.</p>
+<p class="lede">Pipeline notes for a person or company. n8n upserts a <strong>Zoho Books contact</strong> on the existing Books OAuth. There is no Zoho CRM app. Inbound info@ is correspondence, not a subject line.</p>
 
 <ol class="steps">
   <li>WhatsApp or Telegram: <code>/crm Ada from Acme in Yaba asked for a demo. Phone 0803…</code></li>
-  <li>Growth or inbound email can also set <code>record_lead</code>. Same upsert path (<code>crmUpsertCont0001</code>).</li>
+  <li>A customer mail to info@ calls CRM with the letter and the unsent draft. Notes on the Books contact hold the rolling story. <code>/crm</code> looks those notes up before it answers.</li>
   <li>Never invent email or phone. If WhatsApp <code>context_data.from</code> is digits, that is the phone.</li>
 </ol>
 
@@ -29,6 +29,12 @@
   <p class="spec-no">Specimen 03 · update a record</p>
   <p class="you-say"><code>/crm Apex Motors is now at proposal. They want a 30-day pilot, still 2348091112222.</code></p>
   <p class="expect"><code>task_type</code> update_record or pipeline. Same upsert. Do not invent revenue.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · inbound email story</p>
+  <p class="you-say">A client mails info@ about a 30-day pilot. Later: <code>/crm follow up Apex</code>.</p>
+  <p class="expect"><code>task_type</code> follow_up. <code>context_data.correspondence</code> is their letter; <code>draft_reply</code> is the unsent info@ draft; <code>existing_contact.notes</code> is the prior Books story. Notes stay a short rolling story, not <code>Inbound email: subject</code>. CRM does not send the mail.</p>
 </section>
 
 <section class="later">

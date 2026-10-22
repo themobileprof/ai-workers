@@ -121,9 +121,9 @@ It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth.
 
 ### CRM (`/crm`) — live
 
-Qualify or update a person. n8n writes **Zoho Books contacts**. There is no Zoho CRM app.
+Qualify or update a person. n8n writes **Zoho Books contacts**. There is no Zoho CRM app. Inbound info@ passes the letter (and the draft reply) to CRM so the contact notes hold the story; `/crm` looks up those notes before it answers.
 
-It is **not** a cold-outreach sequencer.
+It is **not** a cold-outreach sequencer. It does not send mail.
 
 ### Community (`/cm`) — live — keep
 

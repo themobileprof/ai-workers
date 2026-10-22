@@ -157,8 +157,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Pipeline",
 		Path:     "POST /departments/crm",
 		Wire:     "live",
-		Summary:  "Qualify or update a person. n8n writes Zoho Books contacts, not Zoho CRM.",
-		Prefixes: []string{"/crm"},
+		Summary:  "Qualify or update a person. Inbound info@ and /crm both read the correspondence. n8n writes Zoho Books contacts, not Zoho CRM.",
+		Prefixes: []string{"/crm", "info@ inbound"},
 	},
 	{
 		Slug:     "accounts",

@@ -20,7 +20,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `zoho-books`
 - **URL:** https://www.zoho.com/books/
 - **Role:** Ledger. Expenses, bills, invoices, contacts, customer payments, tax_id. Go never computes VAT/WHT.
-- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert). Org ids and chart-of-accounts ids on the desk Defaults.
+- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert, Ops Telegram `/crm` lookup). Org ids and chart-of-accounts ids on the desk Defaults.
 - **Secrets:** OAuth tokens in n8n credential Zoho Books. Never `.env`, never the Go worker.
 - **n8n credentials:** `Zoho Books`
 - **Desk keys:** `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id`, `zoho.account.advertising_id`, `zoho.account.lodging_id`, `zoho.account.uncategorized_id`, `zoho.deposit_to_account_id`
@@ -29,7 +29,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `zoho-mail`
 - **URL:** https://www.zoho.com/mail/
-- **Role:** Company mailbox info@themobileprof.com. SMTP out (approved drafts), IMAP in (growth drafts).
+- **Role:** Company mailbox info@themobileprof.com. SMTP out (approved drafts), IMAP in (growth drafts; CRM reads the letter for follow-up notes).
 - **Where:** n8n credentials. SMTP smtppro.zoho.com:465. IMAP imappro.zoho.com:993.
 - **Secrets:** App password in n8n only.
 - **n8n credentials:** `Zoho Mail info@`, `Zoho Mail info@ IMAP`

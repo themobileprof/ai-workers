@@ -735,6 +735,156 @@
       ],
       "id": "d7e8f901-2345-4abc-9def-telegrstid01",
       "name": "Staff id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrcrmctx0c",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $('Prepare task').item.json.department }}",
+              "rightValue": "crm"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        160
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx01",
+      "name": "Needs CRM story"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        40
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx02",
+      "name": "Fetch desk settings CRM",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings CRM').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nlet prep = $('Prepare task').first().json;\ntry { prep = $('Attach file').first().json; } catch (e) {}\nprep = JSON.parse(JSON.stringify(prep));\nconst organization_id = deskSetting('zoho.organization_id', '939049468');\nconst text = String(prep.task_description || '') + ' ' + JSON.stringify(prep.context_data || {});\nconst emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\nconst email = emailMatch ? emailMatch[0].toLowerCase() : '';\nlet phone = '';\nconst phoneMatch = text.match(/\\+?234\\d{10}|\\b\\d{10,15}\\b/);\nif (phoneMatch) phone = phoneMatch[0].replace(/[^\\d+]/g, '');\nlet contact_name = '';\nconst named = text.match(/\\b(?:with|for|from)\\s+([A-Z][A-Za-z0-9&.\\-']+(?:\\s+[A-Z][A-Za-z0-9&.\\-']+){0,3})/);\nif (named) contact_name = named[1].trim();\nconst rest = String(prep.task_description || '').trim();\nif (!contact_name && rest && rest.length < 120) {\n  const lead = rest.match(/^([A-Z][A-Za-z0-9&.\\-']+(?:\\s+[A-Z][A-Za-z0-9&.\\-']+){0,4})/);\n  if (lead) contact_name = lead[1].trim();\n  else {\n    const any = rest.match(/([A-Z][A-Za-z0-9&.\\-']+(?:\\s+[A-Z][A-Za-z0-9&.\\-']+){0,3})/);\n    if (any) contact_name = any[1].trim();\n  }\n}\nif (!email && !phone && !contact_name) {\n  return [{ json: Object.assign({}, prep, { skip_lookup: true, organization_id }) }];\n}\nreturn [{ json: Object.assign({}, prep, { skip_lookup: false, organization_id, lookup_email: email, lookup_phone: phone, lookup_name: contact_name }) }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        40
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx03",
+      "name": "Pick CRM lookup"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d7e8f901-2345-4abc-9def-telegrcrmctx4c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip_lookup }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1080,
+        40
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx04",
+      "name": "Skip CRM lookup"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify(Object.assign({ organization_id: $json.organization_id, per_page: 5 }, $json.lookup_email ? { email: $json.lookup_email } : ($json.lookup_phone ? { phone: $json.lookup_phone } : { contact_name: $json.lookup_name }))) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1280,
+        120
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx05",
+      "name": "Search Books for CRM",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let prep = $('Pick CRM lookup').first().json;\nprep = JSON.parse(JSON.stringify(prep));\nconst ctx = Object.assign({}, prep.context_data || {});\ntry {\n  const res = $input.first().json || {};\n  const list = Array.isArray(res.contacts) ? res.contacts : [];\n  let hit = list[0];\n  const wantEmail = String(prep.lookup_email || '').toLowerCase();\n  if (wantEmail) {\n    hit = list.find((c) => String(c.email || '').toLowerCase() === wantEmail) || hit;\n  }\n  if (hit) {\n    ctx.existing_contact = {\n      contact_id: hit.contact_id ? String(hit.contact_id) : '',\n      contact_name: String(hit.contact_name || '').trim(),\n      company_name: String(hit.company_name || '').trim(),\n      email: String(hit.email || '').trim(),\n      phone: String(hit.phone || hit.mobile || '').trim(),\n      notes: String(hit.notes || '').trim().slice(0, 2000)\n    };\n  }\n} catch (e) {}\ndelete prep.skip_lookup;\ndelete prep.organization_id;\ndelete prep.lookup_email;\ndelete prep.lookup_phone;\ndelete prep.lookup_name;\nprep.context_data = ctx;\nreturn [{ json: prep }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        120
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrcrmctx06",
+      "name": "Attach CRM story"
     }
   ],
   "connections": {
@@ -1043,7 +1193,7 @@
         ],
         [
           {
-            "node": "Call department",
+            "node": "Needs CRM story",
             "type": "main",
             "index": 0
           }
@@ -1065,7 +1215,7 @@
       "main": [
         [
           {
-            "node": "Call department",
+            "node": "Needs CRM story",
             "type": "main",
             "index": 0
           }
@@ -1099,6 +1249,86 @@
         [
           {
             "node": "Fetch staff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs CRM story": {
+      "main": [
+        [
+          {
+            "node": "Fetch desk settings CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call department",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch desk settings CRM": {
+      "main": [
+        [
+          {
+            "node": "Pick CRM lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick CRM lookup": {
+      "main": [
+        [
+          {
+            "node": "Skip CRM lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip CRM lookup": {
+      "main": [
+        [
+          {
+            "node": "Call department",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Books for CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Books for CRM": {
+      "main": [
+        [
+          {
+            "node": "Attach CRM story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach CRM story": {
+      "main": [
+        [
+          {
+            "node": "Call department",
             "type": "main",
             "index": 0
           }
