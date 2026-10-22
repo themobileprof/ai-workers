@@ -370,7 +370,8 @@
         0
       ],
       "id": "d7e8f901-2345-4abc-9def-telegrexec001",
-      "name": "Remember ops chat"
+      "name": "Remember ops chat",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {

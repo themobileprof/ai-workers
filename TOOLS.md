@@ -13,7 +13,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Role:** Orchestration: webhooks, cron, Zoho/Paystack client, execution logs. Public `/webhook*` and an allowlisted editor at `/home` (plus `/signin*`, `/rest*`, `/assets*`). Not a catch-all on the hostname.
 - **Where:** Docker service n8n. Desk iframes `/home`.
 - **Secrets:** `N8N_ENCRYPTION_KEY` and `N8N_LICENSE_ACTIVATION_KEY` on the VM `.env`. Per-app tokens live in n8n Credentials, not git.
-- **Env:** `N8N_ENCRYPTION_KEY`, `N8N_LICENSE_ACTIVATION_KEY`, `N8N_HOST`, `N8N_PROTOCOL`, `N8N_WEBHOOK_URL`
+- **Env:** `N8N_ENCRYPTION_KEY`, `N8N_LICENSE_ACTIVATION_KEY`, `N8N_HOST`, `N8N_PROTOCOL`, `N8N_WEBHOOK_URL`, `N8N_BLOCK_ENV_ACCESS_IN_NODE`
 
 ### Zoho Books
 
