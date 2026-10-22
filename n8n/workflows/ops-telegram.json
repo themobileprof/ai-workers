@@ -361,7 +361,9 @@
           "value": "emailOutbox000001",
           "mode": "id"
         },
-        "options": {}
+        "options": {
+          "waitForSubWorkflow": false
+        }
       },
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -842,6 +844,11 @@
       "main": [
         [
           {
+            "node": "Help only",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "Remember ops chat",
             "type": "main",
             "index": 0
@@ -851,13 +858,7 @@
     },
     "Remember ops chat": {
       "main": [
-        [
-          {
-            "node": "Help only",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Ops command": {
