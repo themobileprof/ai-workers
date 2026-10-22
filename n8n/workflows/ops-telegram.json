@@ -687,7 +687,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ 'http://agents:8000/internal/v1/staff?telegram_id=' + $json.message.from.id }}",
+        "url": "http://agents:8000/internal/v1/staff",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -699,6 +699,15 @@
         },
         "options": {
           "timeout": 5000
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "telegram_id",
+              "value": "={{ $json.telegram_id }}"
+            }
+          ]
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -710,6 +719,19 @@
       "id": "d7e8f901-2345-4abc-9def-telegrstaf01",
       "name": "Fetch staff",
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst id = String((((event.message || {}).from) || {}).id || '');\nreturn [{ json: { telegram_id: id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "d7e8f901-2345-4abc-9def-telegrstid01",
+      "name": "Staff id"
     }
   ],
   "connections": {
@@ -1052,7 +1074,7 @@
       "main": [
         [
           {
-            "node": "Fetch staff",
+            "node": "Staff id",
             "type": "main",
             "index": 0
           }
@@ -1064,6 +1086,17 @@
         [
           {
             "node": "Prepare task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Staff id": {
+      "main": [
+        [
+          {
+            "node": "Fetch staff",
             "type": "main",
             "index": 0
           }
