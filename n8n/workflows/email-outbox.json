@@ -104,7 +104,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nconst hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', hour: 'numeric', hour12: false }).format(new Date()));\nconst waitMinutes = (hour >= 8 && hour < 20) ? 15 : 60;\nconst token = String(Date.now());\nconst pending = {\n  to: String(j.to || '').trim(),\n  subject: String(j.subject || 'Re: (no subject)').trim(),\n  text: String(j.text || '').trim(),\n  from_original: String(j.from_original || j.to || '').trim(),\n  subject_original: String(j.subject_original || '').trim(),\n  token\n};\ns.pending = pending;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nconst chat_id = String(s.ops_chat_id || '');\nlet body = [\n  'Draft reply for info@',\n  'From: ' + pending.from_original,\n  'Subject: ' + pending.subject_original,\n  '',\n  pending.text,\n  '',\n  'Sends in ' + waitMinutes + ' min unless /stop.',\n  '/approve sends now. /kill drops. One pending draft at a time.'\n].join('\\n');\nif (body.length > 4000) body = body.slice(0, 3990) + '\u2026';\nreturn [{ json: { chat_id, text: body, has_chat: Boolean(chat_id), waitMinutes, token } }];\n"
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nconst hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', hour: 'numeric', hour12: false }).format(new Date()));\nconst waitMinutes = (hour >= 8 && hour < 20) ? 15 : 60;\nconst token = String(Date.now());\nconst pending = {\n  to: String(j.to || '').trim(),\n  subject: String(j.subject || 'Re: (no subject)').trim(),\n  text: String(j.text || '').trim(),\n  from_original: String(j.from_original || j.to || '').trim(),\n  subject_original: String(j.subject_original || '').trim(),\n  token\n};\ns.pending = pending;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nconst chat_id = String(s.ops_chat_id || '');\nlet body = [\n  'Draft reply for info@',\n  'From: ' + pending.from_original,\n  'Subject: ' + pending.subject_original,\n  '',\n  pending.text,\n  '',\n  'Sends in ' + waitMinutes + ' min unless /stop.',\n  '/approve sends now. /kill drops. One pending draft at a time.'\n].join('\\n');\nif (body.length > 4000) body = body.slice(0, 3990) + '…';\nreturn [{ json: { chat_id, text: body, has_chat: Boolean(chat_id), waitMinutes, token } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -277,7 +277,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nreturn [{ json: j }];\n"
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nif (j.chat_id && String(j.action || '') === 'set_chat') s.ops_chat_id = String(j.chat_id);\nreturn [{ json: j }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

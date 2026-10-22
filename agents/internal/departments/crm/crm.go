@@ -28,7 +28,7 @@ When this is a real person or company (not a hypothetical), set structured_data.
 - next_action (short)
 - next_action_by (YYYY-MM-DD if you set a date)
 - notes (one line for the contact record)
-Never invent emails, phones, or company names. If you cannot identify a person, record_lead must be false.`
+On WhatsApp DMs, always record_lead when context_data.from looks like a phone: use that phone, and context_data.profile_name if you have no better name. Never invent emails, phones, or company names. If you cannot identify a person, record_lead must be false.`
 
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	return departments.Run(ctx, c, systemPrompt, departments.UserPrompt(req.TaskDescription, contract.ContextObject(req.ContextData)))

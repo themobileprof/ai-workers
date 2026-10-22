@@ -5,9 +5,9 @@
     <p class="do">People · add</p>
     <h2>Three tabs, then Add</h2>
     <ol class="recipe">
-      <li><strong>Person:</strong> name, phone starting 234, password, hours (6 is fine).</li>
-      <li><strong>Desks:</strong> tick only the workers they will click. That tick is their login.</li>
-      <li><strong>Rights:</strong> tick <code>whatsapp_accounts</code> only if they send receipts from that phone. Then click <strong>Add</strong>.</li>
+      <li><strong>Person:</strong> name, phone starting 234, Telegram id, password, hours (6 is fine).</li>
+      <li><strong>Desks:</strong> tick only the workers they will click. That tick is their login and what the ops bot will do for them.</li>
+      <li>They message the ops Telegram bot. WhatsApp is for customers, not books.</li>
     </ol>
     <p><a class="quiet" href="/admin/users">Back to People</a>. After this, seat them on a project Face tab.</p>
   </div>
@@ -24,6 +24,10 @@
         <div class="fields">
           <label>Name<input name="name" required></label>
           <label>Phone<input name="phone" placeholder="234…"></label>
+          <label>Telegram id
+            <span class="hint">They send /start to the ops bot and paste the number it replies.</span>
+            <input name="telegram_id" inputmode="numeric">
+          </label>
           <label>Email<input name="email" type="email"></label>
           <label>Role
             <span class="hint">owner or bdm = office. cofounder or assistant = they sit on a project Face tab next.</span>
@@ -52,7 +56,7 @@
       <section role="tabpanel" id="tab-rights" data-tab="rights">
         <fieldset>
           <legend>Capabilities</legend>
-          <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" checked> whatsapp_accounts</label>
+          <p class="hint">Desk ticks already grant login. Leave these unless you know you need them.</p>
           <label class="chk"><input type="checkbox" name="cap" value="web_admin"> web_admin</label>
           <label class="chk"><input type="checkbox" name="cap" value="zoho_write"> zoho_write</label>
         </fieldset>
@@ -89,6 +93,10 @@
         <div class="fields">
           <label>Name<input name="name" value="{{.Editing.Name}}" required></label>
           <label>Phone<input name="phone" value="{{.Editing.Phone}}" placeholder="234…"></label>
+          <label>Telegram id
+            <span class="hint">Ops bot /start replies with this number. Morning Delivery pings go here, not WhatsApp.</span>
+            <input name="telegram_id" value="{{.Editing.TelegramID}}" inputmode="numeric">
+          </label>
           <label>Email<input name="email" type="email" value="{{.Editing.Email}}"></label>
           <label>Role
             <span class="hint">owner or bdm = office. cofounder or assistant still need a Face seat on the project card.</span>
@@ -118,7 +126,6 @@
         <fieldset>
           <legend>Capabilities</legend>
           <label class="chk"><input type="checkbox" name="cap" value="web_admin" {{if has .Editing "web_admin"}}checked{{end}}> web_admin</label>
-          <label class="chk"><input type="checkbox" name="cap" value="whatsapp_accounts" {{if has .Editing "whatsapp_accounts"}}checked{{end}}> whatsapp_accounts</label>
           <label class="chk"><input type="checkbox" name="cap" value="zoho_write" {{if has .Editing "zoho_write"}}checked{{end}}> zoho_write</label>
           <label class="chk"><input type="checkbox" name="active" value="1" {{if .Editing.Active}}checked{{end}}> active</label>
         </fieldset>
@@ -142,7 +149,7 @@
     <h2>Add the next person</h2>
     <ol class="recipe">
       <li>Click <strong>Add person</strong>.</li>
-      <li>Fill name, phone (234…), password. Tick only the desks they will run.</li>
+      <li>Fill name, phone (234…), Telegram id from ops bot <code>/start</code>, password. Tick only the desks they will run.</li>
       <li>Then open a project → <strong>Face</strong> and seat them. That is not a hire.</li>
     </ol>
   </div>
@@ -160,7 +167,7 @@
       {{if not .Active}}<span class="stamp">off</span>{{end}}
     </div>
     <h3><a href="/admin/users/{{.ID}}">{{.Name}}</a></h3>
-    <p class="meta">{{if .Phone}}<code>{{.Phone}}</code>{{end}}{{if .Email}} · {{.Email}}{{end}}{{if .HoursPerWeek}} · {{.HoursPerWeek}}h/wk{{end}}</p>
+    <p class="meta">{{if .Phone}}<code>{{.Phone}}</code>{{end}}{{if .TelegramID}} · tg <code>{{.TelegramID}}</code>{{end}}{{if .Email}} · {{.Email}}{{end}}{{if .HoursPerWeek}} · {{.HoursPerWeek}}h/wk{{end}}</p>
     <p class="prefixes">{{range .Desks}}<span class="pill">{{.}}</span>{{end}}{{if not .Desks}}<span class="hint">no desk — they cannot sign in until you tick one</span>{{end}}</p>
     <p><a class="ghost" href="/admin/users/{{.ID}}">Amend</a></p>
   </li>

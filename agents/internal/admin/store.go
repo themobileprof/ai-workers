@@ -24,6 +24,7 @@ type User struct {
 	Name         string
 	Phone        string
 	Email        string
+	TelegramID   string
 	Role         string
 	Active       bool
 	HasPassword  bool
@@ -129,7 +130,18 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateGrants(ctx); err != nil {
 		return err
 	}
-	return s.migrateGuide(ctx)
+	if err := s.migrateGuide(ctx); err != nil {
+		return err
+	}
+	return s.migrateTelegram(ctx)
+}
+
+func (s *Store) migrateTelegram(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx, `
+ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id TEXT NOT NULL DEFAULT '';
+CREATE UNIQUE INDEX IF NOT EXISTS users_telegram_uq ON users (telegram_id) WHERE telegram_id <> '';
+`)
+	return err
 }
 
 func (s *Store) Seed(ctx context.Context, name, phone, email, password string) error {
@@ -292,8 +304,8 @@ func (s *Store) GetUser(ctx context.Context, id int64) (User, error) {
 	u := User{}
 	var hash string
 	err := s.pool.QueryRow(ctx, `
-SELECT id, name, phone, email, password_hash, role, active, created_at FROM users WHERE id = $1
-`, id).Scan(&u.ID, &u.Name, &u.Phone, &u.Email, &hash, &u.Role, &u.Active, &u.CreatedAt)
+SELECT id, name, phone, email, password_hash, role, active, created_at, COALESCE(telegram_id, '') FROM users WHERE id = $1
+`, id).Scan(&u.ID, &u.Name, &u.Phone, &u.Email, &hash, &u.Role, &u.Active, &u.CreatedAt, &u.TelegramID)
 	if err != nil {
 		return User{}, err
 	}
@@ -308,7 +320,7 @@ SELECT id, name, phone, email, password_hash, role, active, created_at FROM user
 
 func (s *Store) ListUsers(ctx context.Context) ([]User, error) {
 	rows, err := s.pool.Query(ctx, `
-SELECT id, name, phone, email, password_hash, role, active, created_at
+SELECT id, name, phone, email, password_hash, role, active, created_at, COALESCE(telegram_id, '')
 FROM users ORDER BY id
 `)
 	if err != nil {
@@ -319,7 +331,7 @@ FROM users ORDER BY id
 	for rows.Next() {
 		var u User
 		var hash string
-		if err := rows.Scan(&u.ID, &u.Name, &u.Phone, &u.Email, &hash, &u.Role, &u.Active, &u.CreatedAt); err != nil {
+		if err := rows.Scan(&u.ID, &u.Name, &u.Phone, &u.Email, &hash, &u.Role, &u.Active, &u.CreatedAt, &u.TelegramID); err != nil {
 			return nil, err
 		}
 		u.HasPassword = hash != ""
@@ -431,6 +443,40 @@ ORDER BY phone
 	return out, rows.Err()
 }
 
+func normalizeTelegramID(s string) string {
+	var b strings.Builder
+	for _, r := range strings.TrimSpace(s) {
+		if r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func (s *Store) SetUserTelegram(ctx context.Context, id int64, raw string) error {
+	tid := normalizeTelegramID(raw)
+	_, err := s.pool.Exec(ctx, `UPDATE users SET telegram_id = $2 WHERE id = $1`, id, tid)
+	return friendlyDBErr(err)
+}
+
+func (s *Store) LookupUserByTelegram(ctx context.Context, raw string) (User, bool, error) {
+	tid := normalizeTelegramID(raw)
+	if tid == "" {
+		return User{}, false, nil
+	}
+	users, err := s.ListUsers(ctx)
+	if err != nil {
+		return User{}, false, err
+	}
+	for _, u := range users {
+		if u.Active && normalizeTelegramID(u.TelegramID) == tid {
+			u.HoursPerWeek = s.UserPace(ctx, u.ID)
+			return u, true, nil
+		}
+	}
+	return User{}, false, nil
+}
+
 func (s *Store) Settings(ctx context.Context) (map[string]string, error) {
 	rows, err := s.pool.Query(ctx, `SELECT key, value FROM settings ORDER BY key`)
 	if err != nil {
@@ -536,6 +582,9 @@ func friendlyDBErr(err error) error {
 	msg := err.Error()
 	if strings.Contains(msg, "users_phone_uq") {
 		return errors.New("that phone is already on the roster")
+	}
+	if strings.Contains(msg, "users_telegram_uq") {
+		return errors.New("that Telegram id is already on the roster")
 	}
 	if strings.Contains(msg, "projects_slug") {
 		return errors.New("that project slug is already in use")

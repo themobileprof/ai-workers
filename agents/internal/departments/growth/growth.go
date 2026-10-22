@@ -19,7 +19,7 @@ Classify the request into exactly one task_type, then do the work:
 
 Use concise, founder-grade writing. Put platform, intent_score, booking fields, and campaign names in structured_data.
 
-When sales_support is talking to a real person (not a copywriting hypothetical) and you have a name, email, or phone (including context_data.from on WhatsApp), set structured_data.record_lead true and include contact_name, email, phone, company_name, pipeline_stage (new|qualified|nurture), intent_score, and a one-line notes field. Never invent contact details.`
+When sales_support is talking to a real person (not a copywriting hypothetical) and you have a name, email, or phone (including context_data.from on WhatsApp), set structured_data.record_lead true and include contact_name, email, phone, company_name, pipeline_stage (new|qualified|nurture), intent_score, and a one-line notes field. Never invent contact details. On WhatsApp DMs always record_lead with phone from context_data.from; use context_data.profile_name when you have no better name. Never invent an email.`
 
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	return departments.Run(ctx, c, systemPrompt, departments.UserPrompt(req.TaskDescription, contract.ContextObject(req.ContextData)))

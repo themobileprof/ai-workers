@@ -1,7 +1,7 @@
-<p class="lede">Classifier only. It names the Zoho document. Zoho Books owns VAT, WHT, and the ledger. WhatsApp <code>/accounts</code> is allowlisted on People.</p>
+<p class="lede">Classifier only. It names the Zoho document. Zoho Books owns VAT, WHT, and the ledger. Prefix <code>/accounts</code> is ops Telegram only.</p>
 
 <ol class="steps">
-  <li>Allowlisted WhatsApp or any Telegram ops chat: <code>/accounts I paid Jumia 18500 for office paper today</code>.</li>
+  <li>Ops Telegram: <code>/accounts I paid Jumia 18500 for office paper today</code>. Customer WhatsApp cannot book this.</li>
   <li>n8n reads <code>structured_data.zoho_action</code> and runs <strong>Books write</strong> (<code>booksWriteDoc0001</code>).</li>
   <li>You get the audit trail on the same chat (expense / bill / invoice id + Paystack link, or a lookup summary).</li>
   <li>Hypotheticals must say “do not record”. Smoke: <strong>Smoke: accounts HTTP</strong> — that sample is preview, must not post.</li>
@@ -57,6 +57,6 @@
 
 <section class="specimen">
   <p class="spec-no">Specimen 07 · snap a receipt</p>
-  <p class="you-say">Telegram: photo of a receipt (caption optional; unprefixed 1:1 snaps go to accounts). Allowlisted WhatsApp: <code>/accounts</code> plus the photo.</p>
+  <p class="you-say">Ops Telegram: photo of a receipt (caption optional; unprefixed snaps go to accounts if that person may Accounts). Customer WhatsApp photos stay sales, not receipts.</p>
   <p class="expect">Gemini reads vendor, amount, date, and paid vs unpaid from the pixels. Caption is extra context. Same Books path as specimen 01. If the image is unreadable, <code>zoho_action</code> none — the bot asks, and must not invent figures.</p>
 </section>

@@ -1,7 +1,7 @@
 <p class="lede">Operations room. Same Go package as accounts, wider prompt: accounts, legal, grant hunting. Prefix <code>/ops</code> is live. Only the accounts branch writes Zoho.</p>
 
 <ol class="steps">
-  <li>Telegram or allowlisted WhatsApp: <code>/ops</code> plus the task.</li>
+  <li>Ops Telegram: <code>/ops</code> plus the task. Customer WhatsApp cannot run <code>/ops</code>.</li>
   <li>If the worker classifies <code>task_type: accounts</code>, n8n uses the same Books write path as <code>/accounts</code>.</li>
   <li>Legal via <code>/ops</code> is still chat text only. File NDAs on <a href="/admin/docs/legal">Legal</a> (<code>/legal</code> or desk Ask draft). Work is <a href="/admin/docs/delivery">Delivery</a> (<code>/today</code>): People + hours/week + Face seat, not a JD.</li>
   <li>Grant answers write a row on <a href="/admin/grants">Grants</a> when the worker can name the fund, deadline, and next action. They do not submit the application.</li>
@@ -17,7 +17,7 @@
     "department": "internal-ops"
   }
 }</pre>
-  <p class="expect">Same as accounts: <code>zoho_action</code> expense → Books write → audit line on Telegram. WhatsApp still needs the allowlist.</p>
+  <p class="expect">Same as accounts: <code>zoho_action</code> expense → Books write → audit line on Telegram. WhatsApp never writes Books.</p>
 </section>
 
 <section class="specimen">

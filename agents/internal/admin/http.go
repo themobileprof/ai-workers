@@ -236,6 +236,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/community/mandate", s.internalCommunityMandate)
 	mux.HandleFunc("GET /internal/v1/community/mandates", s.internalCommunityMandates)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
+	mux.HandleFunc("GET /internal/v1/staff", s.internalStaffGET)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
 	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)
 	mux.HandleFunc("GET /internal/v1/journeys", s.internalJourneys)
@@ -431,6 +432,10 @@ func (s *Server) usersPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
+	if err := s.store.SetUserTelegram(r.Context(), created.ID, r.FormValue("telegram_id")); err != nil {
+		s.render(w, "users", pageData{Title: "Add person", Nav: "users", User: u, Adding: true, Roles: deskRoles(), Error: err.Error()})
+		return
+	}
 	_ = s.store.SetUserPace(r.Context(), created.ID, parsePace(r.FormValue("hours_per_week")))
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
@@ -465,6 +470,10 @@ func (s *Server) userSave(w http.ResponseWriter, r *http.Request) {
 	}
 	caps := withLoginCap(r.Form["cap"], r.Form["desk"])
 	if err := s.store.UpdateUser(r.Context(), id, r.FormValue("name"), r.FormValue("phone"), r.FormValue("email"), r.FormValue("password"), r.FormValue("role"), active, caps, r.Form["desk"]); err != nil {
+		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
+		return
+	}
+	if err := s.store.SetUserTelegram(r.Context(), id, r.FormValue("telegram_id")); err != nil {
 		s.render(w, "users", pageData{Title: "Amend person", Nav: "users", User: u, Editing: &person, OwnerCount: owners, Roles: deskRoles(), Error: err.Error()})
 		return
 	}
@@ -572,6 +581,7 @@ func (s *Server) settingsPOST(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, loc, http.StatusSeeOther)
 }
 
+// Leftover: customer WhatsApp is not gated. Staff use GET /internal/v1/staff.
 func (s *Server) internalAllowlist(w http.ResponseWriter, r *http.Request) {
 	if !s.internalOK(r) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

@@ -375,7 +375,10 @@ func (s *Server) internalDeliveryCheckin(w http.ResponseWriter, r *http.Request)
 	}
 	u, ok, err := s.store.LookupUserByPhone(r.Context(), body.From)
 	if err != nil || !ok {
-		http.Error(w, "unknown number", http.StatusForbidden)
+		u, ok, err = s.store.LookupUserByTelegram(r.Context(), body.From)
+	}
+	if err != nil || !ok {
+		http.Error(w, "unknown staff", http.StatusForbidden)
 		return
 	}
 	n, _ := s.store.ApplyCheckins(r.Context(), u, intIDs(body.Done), "done")
@@ -391,6 +394,9 @@ func (s *Server) applyDeliveryResponse(ctx context.Context, req contract.Request
 	data := contract.ContextObject(req.ContextData)
 	from := strVal(data["from"])
 	u, ok, _ := s.store.LookupUserByPhone(ctx, from)
+	if !ok {
+		u, ok, _ = s.store.LookupUserByTelegram(ctx, from)
+	}
 	if !ok {
 		if id := int64Val(data["actor_id"]); id > 0 {
 			if got, err := s.store.GetUser(ctx, id); err == nil {

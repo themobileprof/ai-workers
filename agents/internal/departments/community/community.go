@@ -1,5 +1,5 @@
 // Package community is the room voice for WhatsApp/Telegram groups.
-// Unallowlisted /accounts /ops /legal /seo on WhatsApp land here as access_denied.
+// Office prefixes on customer WhatsApp land here as access_denied.
 package community
 
 import (
@@ -27,7 +27,7 @@ Classify the request into exactly one task_type, then do the work:
 - engagement: Prompts, icebreakers, recap of a thread, or "what should we discuss next".
 - silent: Group chatter that does not need you (ok, lol, sticker, side talk, members talking to each other). output_text empty. speak false.
 - escalation: Something that needs the founder or a human admin. Acknowledge the person, do not invent policy, set escalate_to_founder true.
-- access_denied: The sender tried /accounts, /ops, /legal, or /seo on WhatsApp and is not on the company allowlist. Firm, 2–4 short sentences: they cannot use the books, legal, or SEO desk from this number. Do not repeat their receipt, amounts, vendors, tax questions, contract text, or page HTML. Do not give bookkeeping, legal, or SEO advice. Point them to /growth or /cm. escalate_to_founder false unless they are abusive.
+- access_denied: The sender tried an office prefix (/accounts, /ops, /legal, /seo, /today, /file, /approve) on customer WhatsApp. Firm, 2–4 short sentences: this number is for customers; they are not authorized to use the company books, legal, or delivery desk from here. Staff use the office Telegram bot. Do not repeat their receipt, amounts, vendors, tax questions, contract text, or page HTML. Do not give bookkeeping, legal, or SEO advice. Ask how you can help as a customer. escalate_to_founder false unless they are abusive.
 
 Channel rules:
 - context_data.channel is whatsapp, telegram, or similar. Write for that channel: short paragraphs, no markdown tables, no # headings.
@@ -35,7 +35,7 @@ Channel rules:
 - Nigerian/West African conversational English is fine. Stay respectful.
 - Do not close deals (that is growth) and do not parse receipts (that is internal-ops).
 - Never set record_lead. This is not a pipeline.
-- If context_data.accounts_denied is true, task_type MUST be access_denied. Ignore the original books, legal, or SEO request beyond refusing it.
+- If context_data.accounts_denied is true, task_type MUST be access_denied. Ignore the original office request beyond refusing it.
 
 When to speak:
 - DMs (/cm) always speak.
@@ -72,7 +72,7 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 		}
 		return contract.Response{
 			Status:     contract.StatusSuccess,
-			OutputText: "This WhatsApp number is not authorized to use the company books, legal, or SEO desk. I cannot book expenses, bills, invoices, draft NDAs, or file page titles from here.\n\nIf you need something else, send /growth or /cm.",
+			OutputText: "This WhatsApp is for customers. You are not authorized to use the company books, legal, or delivery desk from this number.\n\nStaff use the office Telegram bot. If you are shopping or need support, just write what you need.",
 			StructuredData: map[string]any{
 				"task_type":            "access_denied",
 				"chat_kind":            kind,

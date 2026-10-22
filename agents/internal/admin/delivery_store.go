@@ -463,7 +463,7 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 	today := time.Now()
 	var out []map[string]any
 	for _, u := range users {
-		if !u.Active || u.Phone == "" {
+		if !u.Active || strings.TrimSpace(u.TelegramID) == "" {
 			continue
 		}
 		items, err := s.ListWorkItems(ctx, 0, u.ID)
@@ -497,7 +497,7 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 		}
 		text += "\n\nReply /today done 1, still on 2 — or open Delivery. Dates live on the bet."
 		out = append(out, map[string]any{
-			"user_id": u.ID, "name": u.Name, "phone": u.Phone, "text": text, "speak": true,
+			"user_id": u.ID, "name": u.Name, "phone": u.Phone, "telegram_id": u.TelegramID, "text": text, "speak": true,
 		})
 	}
 	return out

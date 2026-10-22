@@ -32,18 +32,19 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 
 | Starts with | Worker |
 | --- | --- |
-| `/accounts` | accounts (WhatsApp allowlisted) |
-| `/ops` | internal-ops (WhatsApp allowlisted) |
-| `/legal` | legal (WhatsApp allowlisted) |
-| `/seo` | seo (WhatsApp allowlisted) |
+| `/accounts` | accounts (ops Telegram, if that desk is on the People card) |
+| `/ops` | internal-ops (ops Telegram) |
+| `/legal` | legal (ops Telegram) |
+| `/seo` | seo (ops Telegram) |
 | `/file` | files (ops Telegram; catalog match files itself) |
-| `/today` `/pm` `/idea` | delivery |
+| `/today` `/pm` `/idea` | delivery (ops Telegram) |
 | `/growth` | growth |
 | `/crm` | crm |
 | `/cm` `/community` | community |
-| `/validate` | product-dev |
-| none, 1:1 | growth |
-| none, group | community (Academy Telegram student rooms; ops Telegram groups still default community — do not add ops to class) |
+| `/validate` | product-dev (ops Telegram) |
+| none, 1:1 ops Telegram | that person’s default desk (ops for owner/BDM; delivery for a project face) |
+| none, 1:1 WhatsApp | growth (customers; CRM upsert) |
+| none, group | community (Academy Telegram student rooms — do not add ops to class) |
 
 `/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft, project stage, or SEO brief. Info@ otherwise sends after 15 minutes (60 after 20:00 Africa/Lagos).
 

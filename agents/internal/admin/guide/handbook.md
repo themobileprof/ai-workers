@@ -11,10 +11,10 @@ This is the how-to for the signed-in company desk at TheMobileProf Technologies 
 ## People (owner only)
 
 - Path: `/admin/users`. BDM cannot add people — ask the owner.
-- Add: name, phone in `234…` form, email, office seat (`owner`, `bdm`, `assistant`, …), hours/week, then tick **Desks**.
+- Add: name, phone in `234…` form, Telegram id from ops bot `/start`, email, office seat (`owner`, `bdm`, `assistant`, …), hours/week, then tick **Desks**.
 - Hours/week is Delivery pace. Seat the person on a project **Face** tab (cofounder or assistant) to onboard them onto that bet.
-- Tick only the workers they will run. Ticking Legal is what stops `/admin/legal` from 403. Same for SEO.
-- Rights: `whatsapp_accounts` allowlists that phone for customer WhatsApp `/accounts`, `/ops`, `/legal`, `/seo`. `/today` is Delivery if that number is on People.
+- Tick only the workers they will run. Ticking Legal is what stops `/admin/legal` from 403. Same for SEO. Those ticks also gate the ops Telegram bot.
+- Customer WhatsApp is not allowlisted. Anyone can message it. Books, legal, SEO, and `/today` stay on ops Telegram.
 - Recruiting is closed. There is no hire Accept. Inbound CVs go to Growth. Do not use HR as a department. Do not treat `/approve` as a hire.
 
 ## Board, Projects, Delivery
@@ -66,17 +66,18 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 
 | Starts with | Worker |
 | --- | --- |
-| `/accounts` | accounts (WhatsApp allowlisted) |
-| `/ops` | internal-ops (WhatsApp allowlisted) |
-| `/legal` | legal (WhatsApp allowlisted) |
-| `/seo` | seo (WhatsApp allowlisted) |
+| `/accounts` | accounts (ops Telegram, if that desk is ticked) |
+| `/ops` | internal-ops (ops Telegram) |
+| `/legal` | legal (ops Telegram) |
+| `/seo` | seo (ops Telegram) |
 | `/file` | files (ops Telegram; Accept on Files) |
-| `/today` `/pm` `/idea` | delivery |
+| `/today` `/pm` `/idea` | delivery (ops Telegram) |
 | `/growth` | growth |
 | `/crm` | crm |
 | `/cm` `/community` | community |
-| `/validate` | product-dev |
-| none, 1:1 | growth |
+| `/validate` | product-dev (ops Telegram) |
+| none, 1:1 ops Telegram | that person’s default desk |
+| none, 1:1 WhatsApp | growth (customers; CRM upsert) |
 | none, group | community (Academy Telegram student rooms) |
 
 `/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops that draft and stops a delayed Delivery plan. They do not Accept Legal, Decide, or SEO.

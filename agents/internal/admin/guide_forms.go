@@ -103,6 +103,7 @@ func formCatalog() []formRecipe {
 			Fields: []formField{
 				{Name: "name", Label: "Name", Prompt: "Their name.", Kind: "text", Required: true},
 				{Name: "phone", Label: "Phone", Prompt: "Phone in 234… form, or skip.", Kind: "text"},
+				{Name: "telegram_id", Label: "Telegram id", Prompt: "Their Telegram id from ops bot /start, or skip.", Kind: "text"},
 				{Name: "email", Label: "Email", Prompt: "Email, or skip.", Kind: "text"},
 				{Name: "role", Label: "Role", Prompt: "Office seat: cofounder, assistant, bdm, or owner. Skip for cofounder.", Kind: "select", Default: "cofounder", Options: roles},
 				{Name: "hours_per_week", Label: "Hours / week", Prompt: "Hours per week Delivery may give them. Skip for 6.", Kind: "number", Default: "6"},

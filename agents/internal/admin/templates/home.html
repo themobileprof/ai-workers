@@ -64,11 +64,6 @@
 <p class="pulse">
   <span><strong>{{len .Projects}}</strong> bets</span>
   <span><strong>{{.UserCount}}</strong> people</span>
-  <span><strong>{{len .Allowlist}}</strong> WhatsApp numbers</span>
 </p>
-{{if .Allowlist}}
-<p class="hint">These phones may send receipts on WhatsApp: {{range $i, $p := .Allowlist}}{{if $i}}, {{end}}<code>{{$p}}</code>{{end}}. To add one: People → that person → Rights → tick <code>whatsapp_accounts</code>.</p>
-{{else}}
-<p class="hint">No phone may send receipts on WhatsApp yet. People → the bookkeeper → Rights → tick <code>whatsapp_accounts</code>.</p>
-{{end}}
+<p class="hint">Ops Telegram is the office. Paste each person’s Telegram id from <code>/start</code> on People. WhatsApp is for customers, not receipts.{{range .Users}}{{if .TelegramID}} {{.Name}} <code>{{.TelegramID}}</code>{{end}}{{end}}</p>
 {{end}}

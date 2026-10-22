@@ -62,7 +62,7 @@ These are the website, not extra agents:
 
 - **Board** — owner/BDM. Cards, Coming up dates, proposal waiting, rollup (tasks, files, grants, spend).
 - **Projects** — bets. Tab **Run** is the wizard: same base kit for every bet. Card holds hypothesis, this week’s mission, and a monthly NGN figure you paste.
-- **People** — roster, hours/week, desk ticks, WhatsApp allowlist.
+- **People** — roster, hours/week, desk ticks, Telegram id (ops bot).
 - **Delivery** — week board across bets (this is PM, not DevOps). Extra work sits on Backlog. Plans write after a delay unless you Turn away.
 - **Defaults** — one form per vendor tab (Company, Zoho, Paystack, Drive). Secrets stay in `.env` / n8n.
 - **Files** — data room. Catalog match files itself; unsure stays proposed.
@@ -91,8 +91,8 @@ Do not give each worker its own WhatsApp.
 | Channel | Use |
 | --- | --- |
 | Desk website | Accept, Run, Dates, People, long work |
-| Ops Telegram | Private office bot. Prefixes. `/file` for the data room. |
-| Customer WhatsApp | One 1:1 number. Bare message is sales (Growth). Books/legal/SEO only if the phone is allowlisted. Cannot join ordinary groups. |
+| Ops Telegram | Private office bot. Staff identified by People Telegram id. Prefixes only within that seat. `/file` for the data room. |
+| Customer WhatsApp | One 1:1 number. Bare message is sales (Growth). Every customer DM with a phone upserts CRM. Books/legal/delivery stay on Telegram. Cannot join ordinary groups. |
 | Academy Telegram | Student class rooms only. Not the ops bot. |
 | info@ | Formal mail. Growth drafts. Sends after a delay unless `/stop`. `/approve` sends now. |
 | Fathom | Meeting notetaker. Webhook files a **proposed** Delivery plan. Accept on Job chat. Calendar title should name the bet slug. |
@@ -115,7 +115,7 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp, info@ drafts, social copy. High intent may upsert a Zoho Books contact.
+Inbound front office: customer WhatsApp, info@ drafts, social copy. Every customer WhatsApp DM with a phone upserts a Zoho Books contact.
 
 It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth.
 
@@ -213,17 +213,18 @@ Do not tell the owner to:
 
 | Starts with | Worker |
 | --- | --- |
-| `/accounts` | accounts (WhatsApp allowlisted) |
-| `/ops` | ops (WhatsApp allowlisted) |
-| `/legal` | legal (WhatsApp allowlisted) |
-| `/seo` | seo (WhatsApp allowlisted) |
+| `/accounts` | accounts (ops Telegram, role-gated) |
+| `/ops` | ops (ops Telegram) |
+| `/legal` | legal (ops Telegram) |
+| `/seo` | seo (ops Telegram) |
 | `/file` | files (ops Telegram) |
-| `/today` `/pm` `/idea` | delivery |
+| `/today` `/pm` `/idea` | delivery (ops Telegram) |
 | `/growth` | growth |
 | `/crm` | crm |
 | `/cm` `/community` | community |
-| `/validate` | product-dev |
-| none, 1:1 | growth |
+| `/validate` | product-dev (ops Telegram) |
+| none, 1:1 ops Telegram | that person’s default desk |
+| none, 1:1 WhatsApp | growth (customers; CRM) |
 | none, group | community (Academy student rooms) |
 
 ---

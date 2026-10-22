@@ -89,7 +89,7 @@ Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wai
 
 ## How do I ask for SEO copy?
 
-Tick SEO. Workers → SEO → Ask, or `/seo` from an allowlisted WhatsApp number. Accept on `/admin/seo`. Copy from the desk. Publishing the live page is not wired. The worker cannot crawl or read Search Console.
+Tick SEO. Workers → SEO → Ask, or `/seo` on ops Telegram. Accept on `/admin/seo`. Copy from the desk. Publishing the live page is not wired. The worker cannot crawl or read Search Console. Customer WhatsApp cannot run `/seo`.
 
 ## Why can’t I see the Board?
 

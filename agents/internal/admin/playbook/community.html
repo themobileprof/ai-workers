@@ -5,7 +5,7 @@
   <li>Create the Academy Telegram bot (BotFather). <code>/setprivacy</code> Disable. Add it to the student group. Send a message. Copy <code>context_data.telegram_chat_id</code> from the <strong>Academy Telegram</strong> n8n execution onto the mandate.</li>
   <li>Unprefixed group chat uses that mandate. <code>/cm</code> or <code>/community</code> also works. Ops prefixes (<code>/accounts</code>, <code>/approve</code>, …) are refused on this bot.</li>
   <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room whose linked bet stage allows pings (testing / selling / fundable). Parked, killed, and idea stay quiet.</li>
-  <li>Do not add the ops Telegram bot to the student group. Unauthorized WhatsApp <code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, or <code>/seo</code> is still rewritten to community with <code>accounts_denied: true</code>.</li>
+  <li>Do not add the ops Telegram bot to the student group. Office prefixes on customer WhatsApp (<code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, <code>/seo</code>, <code>/today</code>) are rewritten to community with <code>accounts_denied: true</code>.</li>
   <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
 </ol>
 
@@ -24,7 +24,7 @@
 
 <section class="specimen">
   <p class="spec-no">Specimen 02 · access denied</p>
-  <p class="you-say">A WhatsApp number that is <em>not</em> on People → <code>whatsapp_accounts</code> sends <code>/accounts I paid MTN 15000</code>.</p>
+  <p class="you-say">A customer WhatsApp sends <code>/accounts I paid MTN 15000</code>.</p>
   <pre class="json">{
   "task_description": "Write a WhatsApp DM to this person in second person. They are not authorized for the company books or legal desk.",
   "context_data": {
@@ -34,7 +34,7 @@
     "department": "community"
   }
 }</pre>
-  <p class="expect">Fixed Go reply (no LLM): they cannot book expenses or draft NDAs from that number. Suggest <code>/growth</code> or <code>/cm</code>. Amounts, vendors, and contract text are not repeated. n8n does not call Books write or Legal.</p>
+  <p class="expect">Fixed Go reply (no LLM): this WhatsApp is for customers; they are not authorized for books. Staff use Telegram. Amounts, vendors, and contract text are not repeated. n8n does not call Books write or Legal.</p>
 </section>
 
 <section class="specimen">

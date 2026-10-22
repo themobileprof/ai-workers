@@ -48,8 +48,8 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
-- **Role:** Two bots. Ops (`Telegram account`): prefixes, receipts, `/approve` `/kill`. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** n8n Ops Telegram and Academy Telegram workflows.
+- **Role:** Two bots. Ops (`Telegram account`): office staff identified by People `telegram_id`; prefixes only within that seat; receipts; `/approve` `/kill` for owner/BDM. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
+- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping.
 - **Secrets:** Bot token in n8n credential Telegram account.
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
 
@@ -57,8 +57,8 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `whatsapp`
 - **URL:** https://developers.facebook.com/docs/whatsapp/cloud-api
-- **Role:** Customer 1:1 chat. `/accounts`, `/ops`, `/legal`, and `/seo` are desk-allowlisted. `/today` is Delivery for People phones. Receipt OCR on allowlisted `/accounts` photos. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
-- **Where:** n8n Customer WhatsApp. Allowlist from desk People (`whatsapp_accounts`).
+- **Role:** Customer 1:1 chat and CRM. Bare DMs are Growth; every successful DM with a phone upserts a Zoho Books contact. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) are refused — staff use ops Telegram. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
+- **Where:** n8n Customer WhatsApp. No admin-phone allowlist.
 - **Secrets:** Tokens in n8n WhatsApp credentials.
 - **n8n credentials:** `WhatsApp OAuth account`, `WhatsApp account`
 
