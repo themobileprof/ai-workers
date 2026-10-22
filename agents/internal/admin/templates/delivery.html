@@ -6,7 +6,7 @@
     <ol class="recipe">
       <li>For each open task, click <strong>Done</strong> (or <strong>Skip</strong>).</li>
       <li>If Coming up shows a date with no task, open Dates on that project and add one.</li>
-      <li>To plan a week: <strong>Ask plan</strong> → wait → <strong>Accept</strong> on Job chat. Do not use <code>/approve</code>.</li>
+      <li>To plan a week: <strong>Ask plan</strong> → wait 15 minutes (or <strong>Accept</strong> now on Job chat). Extra work sits on <strong>Backlog</strong>. Fathom notes land the same way.</li>
     </ol>
     {{template "page-reads" (guideReads "delivery")}}
   </div>
@@ -42,6 +42,7 @@
       {{if .WorkItems}}
       <ol class="tasks">
         {{range .WorkItems}}
+        {{if ne .Status "queued"}}
         <li>
           <div>
             <p class="kicker">{{.Project}} · {{.Stage}}</p>
@@ -56,7 +57,26 @@
           {{end}}
         </li>
         {{end}}
+        {{end}}
       </ol>
+      {{if statusCount .WorkItems "queued"}}
+      <h3>Backlog</h3>
+      <p class="hint">Held until a slot opens. Promote when the stage allows another open task.</p>
+      <ol class="tasks">
+        {{range .WorkItems}}
+        {{if eq .Status "queued"}}
+        <li>
+          <div>
+            <p class="kicker">{{.Project}} · held</p>
+            <h3>{{.Title}}</h3>
+            <p class="who">{{if .Assignee}}{{.Assignee}}{{else}}unassigned{{end}} · {{.Hours}}h</p>
+          </div>
+          <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/open"><button class="ghost" type="submit">Promote</button></form>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{end}}
       {{else}}
       <p class="hint">No tasks yet. Open Add a task by hand below, or Ask plan.</p>
       {{end}}
@@ -120,7 +140,7 @@
           <button type="submit">Ask worker</button>
         </div>
       </form>
-      <p class="hint">Type what the week should look like, click Ask worker. Then open Job chat and click Accept to write the tasks.</p>
+      <p class="hint">Type what the week should look like, click Ask worker. The plan writes after a delay unless you Turn away. Accept on Job chat writes it now.</p>
       {{else}}
       <p class="hint">Worker is off until the LLM env is set. You can still add tasks by hand.</p>
       {{end}}

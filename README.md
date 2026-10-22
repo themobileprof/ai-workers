@@ -16,7 +16,9 @@ The brass **Help?** button (bottom right on every signed-in page except n8n) is 
 - **People** — add a human, pick an office seat, tick the **handler desks** they actually run. Those workers appear when **that person** signs in, not on the Board. Ticking a desk grants `web_admin`.
 - **Projects** — incubated bets (MomLaunchpad, Mechazone, HomeGauge, …). The coloured label is the **stage**. Ask placement writes a proposal; **Accept** on **Decide** writes the stage. **Dates** holds a campus training or field week until you click Delivered; Board shows Coming up.
 - **Defaults** — Zoho org and chart-of-accounts ids. Shared Drive id for Files. Paystack deposit account may stay blank until you create a **Bank** row in Books. Secrets stay in the VM `.env` / n8n Credentials.
-- **Files** — data room. Ops Telegram `/file` or a dropped PDF proposes a project folder; **Accept** writes Google Drive. The worker cannot upload.
+- **Files** — data room. Ops Telegram `/file` or a dropped PDF. A catalog match files itself; odd paths stay for **Accept**. The worker cannot upload.
+- **Delivery** — tasks across bets. Extra work sits on Backlog. Plans write after a delay unless you Turn away. Fathom notes use the same path. Customer WhatsApp is not a chase channel.
+- **Grants** — deadline and next action. `/ops` can file a row. It does not submit an application.
 
 If you also handle Legal or SEO, tick those desks on your own People card or the books 403. Delivery is on the Board rail for owner/BDM.
 
@@ -34,7 +36,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/ops` | internal-ops (WhatsApp allowlisted) |
 | `/legal` | legal (WhatsApp allowlisted) |
 | `/seo` | seo (WhatsApp allowlisted) |
-| `/file` | files (ops Telegram; Accept on Files) |
+| `/file` | files (ops Telegram; catalog match files itself) |
 | `/today` `/pm` `/idea` | delivery |
 | `/growth` | growth |
 | `/crm` | crm |
@@ -43,7 +45,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 | growth |
 | none, group | community (Academy Telegram student rooms; ops Telegram groups still default community — do not add ops to class) |
 
-`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal draft, project stage, delivery plan, or SEO brief.
+`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft, project stage, or SEO brief. Info@ otherwise sends after 15 minutes (60 after 20:00 Africa/Lagos).
 
 Customer-development field work (rates at a mortgage desk, mechanics, a PHC) is a human on a project, not a chat prefix. Bring the names back; `/validate` `analyse_evidence` can score them. You still decide GO/PIVOT/KILL on the project.
 
@@ -88,9 +90,11 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | GET, POST | `/internal/v1/seo-briefs` |
 | GET, POST | `/internal/v1/file-filings` |
 | POST | `/internal/v1/file-filings/{id}/placed` |
-| GET | `/internal/v1/delivery/context` · `/internal/v1/delivery/digest` |
+| GET | `/internal/v1/delivery/context` · `/internal/v1/delivery/digest` (`channel=notes` uses the owner overlay) |
 | POST | `/internal/v1/delivery/checkin` |
 | POST | `/internal/v1/jobs` |
+| GET | `/internal/v1/jobs/due` |
+| POST | `/internal/v1/jobs/{id}/apply` · `/internal/v1/jobs/stop-auto` |
 
 See Desk → Docs → How to call a worker.
 

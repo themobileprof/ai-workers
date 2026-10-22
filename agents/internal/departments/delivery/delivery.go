@@ -17,6 +17,7 @@ Stamp caps (already in context_data.engagement and each bet's slots): parked/kil
 Do not put work on a parked or killed bet. Do not assign someone who is not on that bet unless they are owner or bdm (office: true).
 If context_data.access_denied is true, refuse in 1–2 sentences. Do not name other bets, one-liners, or tasks.
 If context_data.upcoming_events is set, those are dated trainings, field weeks, or launches on bets (Dates tab). Mention them on /today. Do not invent dates. Do not treat them as Community mandates (those are Academy Telegram rooms).
+If context_data.channel is notes, fathom, or meeting, this is a finished meeting (notetaker). Turn the summary, action items, and transcript into a week plan. save_plan true. Map speaker/assignee names to people in context_data.people — do not invent a person. Pin the bet if the calendar title names a slug or project name. Stay inside each bet's slots and hours_left; extra commitments still go in items — the desk holds them on the backlog. Do not claim WhatsApp, Telegram, or email was sent. Do not chase customers. cannot_send and cannot_hire stay true.
 If the suggest_slots plus open items would exceed a person's hours_left, say so and propose slips or parking — never a 12-hour day.
 task_type: plan | idea | today | checkin | silent | access_denied | weekly_digest
 structured_data:

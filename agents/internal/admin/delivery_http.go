@@ -19,12 +19,35 @@ func deliveryFlash(ok string) string {
 	case "skipped":
 		return "Skipped."
 	case "plan":
-		return "Plan proposed. Accept on the Delivery desk to write the tasks."
+		return "Plan proposed. It writes itself after the delay unless you Turn away. Accept still works now."
+	case "queued":
+		return "Held on the backlog. Promote when this stage has a free slot."
 	case "pace":
 		return "Pace saved. Delivery will not assign more hours than this."
 	default:
 		return ""
 	}
+}
+
+func (s *Server) deliveryActor(ctx context.Context, from, channel string) (User, bool) {
+	if s == nil || s.store == nil {
+		return User{}, false
+	}
+	from = strings.TrimSpace(from)
+	if from != "" {
+		if u, ok, _ := s.store.LookupUserByPhone(ctx, from); ok {
+			return u, true
+		}
+	}
+	if officeDeliveryChannel(channel) {
+		users, _ := s.store.ListUsers(ctx)
+		for _, cand := range users {
+			if cand.Active && cand.Role == "owner" {
+				return cand, true
+			}
+		}
+	}
+	return User{}, false
 }
 
 func (s *Server) EnrichDelivery(ctx context.Context, req contract.Request) contract.Request {
@@ -34,22 +57,30 @@ func (s *Server) EnrichDelivery(ctx context.Context, req contract.Request) contr
 	data := contract.ContextObject(req.ContextData)
 	from := strVal(data["from"])
 	slug := firstNonEmpty(strVal(data["project_slug"]), strVal(data["project"]))
-	u, ok, _ := s.store.LookupUserByPhone(ctx, from)
-	if !ok && strings.EqualFold(strVal(data["channel"]), "telegram") {
-		users, _ := s.store.ListUsers(ctx)
-		for _, cand := range users {
-			if cand.Active && cand.Role == "owner" {
-				u, ok = cand, true
-				break
-			}
-		}
-	}
+	u, ok := s.deliveryActor(ctx, from, strVal(data["channel"]))
 	if !ok {
 		data["found"] = false
 		data["access_denied"] = true
 		raw, _ := json.Marshal(data)
 		req.ContextData = raw
 		return req
+	}
+	if slug == "" {
+		title := strVal(data["meeting_title"])
+		if title == "" {
+			title = strVal(data["calendar_title"])
+		}
+		if title == "" {
+			title = strVal(data["title"])
+		}
+		projects, _ := s.store.ListProjects(ctx)
+		var visible []Project
+		for _, p := range projects {
+			if canSeeBet(u, p.Members) {
+				visible = append(visible, p)
+			}
+		}
+		slug = slugFromMeetingTitle(title, visible)
 	}
 	overlay := s.store.deliveryOverlay(ctx, &u, slug)
 	for k, v := range data {
@@ -148,9 +179,9 @@ func (s *Server) deliveryItemPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" is "+p.Stage+" — no tasks until you Accept a new stage on Decide", ""))
 		return
 	}
+	status := "open"
 	if open >= eng.MaxOpenTasks {
-		s.render(w, "delivery", s.deliveryView(r, u, p.Name+" already holds "+strconv.Itoa(eng.MaxOpenTasks)+" open tasks at this stage", ""))
-		return
+		status = "queued"
 	}
 	if aid > 0 {
 		who, err := s.store.GetUser(r.Context(), aid)
@@ -166,12 +197,17 @@ func (s *Server) deliveryItemPOST(w http.ResponseWriter, r *http.Request) {
 		Hours:      parsePace(r.FormValue("hours")),
 		Due:        strings.TrimSpace(r.FormValue("due")),
 		Kind:       "task",
+		Status:     status,
 	})
 	if err != nil {
 		s.render(w, "delivery", s.deliveryView(r, u, err.Error(), ""))
 		return
 	}
-	http.Redirect(w, r, "/admin/delivery?ok=saved", http.StatusSeeOther)
+	ok := "saved"
+	if status == "queued" {
+		ok = "queued"
+	}
+	http.Redirect(w, r, "/admin/delivery?ok="+ok, http.StatusSeeOther)
 }
 
 func (s *Server) deliveryItemStamp(status string) http.HandlerFunc {
@@ -197,15 +233,24 @@ func (s *Server) deliveryItemStamp(status string) http.HandlerFunc {
 			http.Error(w, "not your task", http.StatusForbidden)
 			return
 		}
-		if err := s.store.SetWorkItemStatus(r.Context(), id, status); err != nil {
-			s.render(w, "delivery", s.deliveryView(r, u, err.Error(), ""))
+		var err2 error
+		if status == "open" {
+			err2 = s.store.PromoteWorkItem(r.Context(), id)
+		} else {
+			err2 = s.store.SetWorkItemStatus(r.Context(), id, status)
+		}
+		if err2 != nil {
+			s.render(w, "delivery", s.deliveryView(r, u, err2.Error(), ""))
 			return
 		}
 		ok := "done"
 		if status == "skipped" {
 			ok = "skipped"
 		}
-		http.Redirect(w, r, "/admin/delivery?ok="+ok, http.StatusSeeOther)
+		if status == "open" {
+			ok = "saved"
+		}
+		http.Redirect(w, r, adminNext(r, "/admin/delivery?ok="+ok), http.StatusSeeOther)
 	}
 }
 
@@ -283,20 +328,7 @@ func (s *Server) internalDeliveryContext(w http.ResponseWriter, r *http.Request)
 	}
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
 	slug := strings.TrimSpace(r.URL.Query().Get("project"))
-	u, ok, err := s.store.LookupUserByPhone(r.Context(), from)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-	if !ok && strings.EqualFold(r.URL.Query().Get("channel"), "telegram") {
-		users, _ := s.store.ListUsers(r.Context())
-		for _, cand := range users {
-			if cand.Active && cand.Role == "owner" {
-				u, ok = cand, true
-				break
-			}
-		}
-	}
+	u, ok := s.deliveryActor(r.Context(), from, r.URL.Query().Get("channel"))
 	if !ok {
 		writeJSON(w, map[string]any{"found": false})
 		return
@@ -394,9 +426,9 @@ func (s *Server) projectWorkPOST(w http.ResponseWriter, r *http.Request) {
 	aid, _ := strconv.ParseInt(r.FormValue("assignee_id"), 10, 64)
 	eng := EngagementFor(p.Stage)
 	open, _ := s.store.CountOpenWork(r.Context(), p.ID)
+	status := "open"
 	if eng.MaxOpenTasks <= 0 || open >= eng.MaxOpenTasks {
-		http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?tab=work", http.StatusSeeOther)
-		return
+		status = "queued"
 	}
 	_, _ = s.store.InsertWorkItem(r.Context(), WorkItem{
 		ProjectID:  p.ID,
@@ -404,6 +436,7 @@ func (s *Server) projectWorkPOST(w http.ResponseWriter, r *http.Request) {
 		Title:      r.FormValue("title"),
 		Hours:      parsePace(r.FormValue("hours")),
 		Due:        strings.TrimSpace(r.FormValue("due")),
+		Status:     status,
 	})
 	http.Redirect(w, r, "/admin/projects/"+strconv.FormatInt(p.ID, 10)+"?tab=work", http.StatusSeeOther)
 }

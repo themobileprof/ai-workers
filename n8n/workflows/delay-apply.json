@@ -1,0 +1,85 @@
+{
+  "id": "delayApply0000001",
+  "name": "Delay apply",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "delayApply0000trig",
+      "name": "Every 2 minutes"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/jobs/due",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Internal-Token", "value": "={{ $env.INTERNAL_API_TOKEN }}" }
+          ]
+        },
+        "options": { "timeout": 8000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [240, 0],
+      "id": "delayApply0000get",
+      "name": "Fetch due jobs",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst list = Array.isArray(raw.jobs) ? raw.jobs : [];\nreturn list.filter((j) => j && j.id).map((j) => ({ json: { id: j.id } }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0],
+      "id": "delayApply0000split",
+      "name": "Each due job"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agents:8000/internal/v1/jobs/{{ $json.id }}/apply",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Internal-Token", "value": "={{ $env.INTERNAL_API_TOKEN }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [720, 0],
+      "id": "delayApply0000post",
+      "name": "Apply job",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Every 2 minutes": { "main": [[{ "node": "Fetch due jobs", "type": "main", "index": 0 }]] },
+    "Fetch due jobs": { "main": [[{ "node": "Each due job", "type": "main", "index": 0 }]] },
+    "Each due job": { "main": [[{ "node": "Apply job", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

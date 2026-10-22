@@ -86,6 +86,9 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(body, `href="/admin/files"`) {
 		t.Fatal("office Files link")
 	}
+	if !strings.Contains(body, `href="/admin/grants"`) {
+		t.Fatal("office Grants link")
+	}
 	login := httptest.NewRecorder()
 	s.render(login, "login", pageData{Title: "Sign in"})
 	if strings.Contains(login.Body.String(), `class="guide-fab"`) {
@@ -148,7 +151,7 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("legal must stay a partial with a later-box for send")
 	}
 	deliv, ok := lookupDoc("delivery")
-	if !ok || !deliv.Live() || !strings.Contains(string(deliv.Body), "hours/week") {
+	if !ok || !deliv.Live() || !strings.Contains(string(deliv.Body), "hours/week") || !strings.Contains(string(deliv.Body), "Fathom") {
 		t.Fatal("delivery playbook")
 	}
 	seoDoc, ok := lookupDoc("seo")

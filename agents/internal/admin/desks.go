@@ -21,13 +21,13 @@ type DeskLink struct {
 func AllDesks() []Desk {
 	return []Desk{
 		{Slug: "accounts", Title: "Accounts", Department: "accounts", Prefix: "/accounts", Help: "This worker names the Zoho document. It does not compute VAT or withhold tax. Confirm what Books already posted, then Accept.", BookPath: "/admin/settings?tab=zoho", BookLabel: "Zoho ids"},
-		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Drafts replies and front-office copy. It cannot send WhatsApp or email itself. You copy or send."},
+		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Drafts replies and front-office copy. It cannot send WhatsApp itself. info@ sends after a delay unless /stop. /approve sends that draft now."},
 		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Voice for one Academy Telegram room at a time. Campus trainings are project Dates, not rooms. Step in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
 		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Pipeline notes only. It cannot create a sale. Confirm a contact the worker asked a human to review."},
 		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "Proposes NDAs and contracts. Accept still lives on the Legal book. Copy the text yourself — it does not email anyone.", BookPath: "/admin/legal", BookLabel: "Legal book"},
 		{Slug: "seo", Title: "SEO", Department: "seo", Prefix: "/seo", Help: "Proposes titles, meta, and outlines. Accept on the SEO book. You paste onto the live page. It cannot publish or read Search Console.", BookPath: "/admin/seo", BookLabel: "SEO book"},
-		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. The project’s stage caps how many. Pace is hours/week on People. Seat them on Face before they get work.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
-		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books. Grants stay chat until you Accept a job here."},
+		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. Stage caps how many; extras sit on Backlog. Plans write after a delay unless you Turn away. Fathom notes use the same path. Chat never Accepts.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
+		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books. Grant answers write a deadline row. They do not submit an application."},
 		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. Accept on the project Decide tab writes the stage. Chat never stamps.", BookPath: "/admin/projects", BookLabel: "Projects"},
 	}
 }
@@ -113,7 +113,7 @@ func deskNavOn(nav string, desks []Desk) bool {
 }
 
 func officeMenuOn(nav string) bool {
-	return nav == "settings" || nav == "docs" || nav == "flows" || nav == "guide" || nav == "files"
+	return nav == "settings" || nav == "docs" || nav == "flows" || nav == "guide" || nav == "files" || nav == "grants"
 }
 
 func afterLoginPath(u User) string {

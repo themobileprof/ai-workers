@@ -1,5 +1,5 @@
 // Package files classifies an uploaded document onto a project folder.
-// Filing is proposed only; humans Accept. The worker cannot write Drive.
+// A catalog match is accepted for n8n to place. Unsure rows stay proposed. The worker cannot write Drive.
 package files
 
 import (
@@ -18,7 +18,7 @@ const overlay = `You are the data-room clerk for TheMobileProf Technologies (Lag
 Bets (Academy, HomeGauge, …) each have a folder. Office papers (CAC, TIN, bank letters) go under slug "themobileprof", not a bet.
 You read the attached file (and the caption) and pick ONE slug from context_data.projects plus "themobileprof", and ONE folder id from the catalog for that scope.
 Never invent a slug or a folder id. If two bets could fit, or the file is unreadable, set unsure true and save_filing false.
-cannot_file and cannot_send are always true. Humans Accept on the desk. Until then nothing is written to Drive.
+cannot_file and cannot_send are always true. A catalog match files itself (n8n writes Drive). If you are unsure, the row stays proposed for Accept.
 Nigerian/West African commercial English. Phone-short.
 task_type must be "files".`
 
@@ -71,7 +71,7 @@ structured_data MUST include:
 - cannot_file: true
 - cannot_send: true
 - rationale: one short sentence for the human
-output_text: the proposed path as "slug / folder / filename" and whether to Accept. Do not dump the file.`
+output_text: the path as "slug / folder / filename". Say if it matched the catalog (files itself) or stays proposed. Do not dump the file.`
 
 	user := departments.UserPrompt(req.TaskDescription, data)
 	if len(images) > 0 {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 )
@@ -342,8 +343,8 @@ func (d Desk) Path() string { return "/admin/desks/" + d.Slug }
 
 func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task string, job *DeskJob, thread []JobMessage) contract.Request {
 	data := map[string]any{
-		"channel":     "desk",
-		"department":  desk.Department,
+		"channel":        "desk",
+		"department":     desk.Department,
 		"cannot_send":    true,
 		"cannot_hire":    true,
 		"cannot_publish": desk.Slug == "seo",
@@ -432,12 +433,18 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	}
 	if dept == "delivery" {
 		s.applyDeliveryResponse(ctx, req, resp)
+		if boolVal(sd["save_plan"]) {
+			stampAutoAt(sd, time.Now())
+		}
 	}
 	if dept == "seo" {
 		s.applySeoResponse(ctx, req, resp)
 	}
 	if dept == "files" {
 		s.applyFilesResponse(ctx, req, resp)
+	}
+	if dept == "internal-ops" {
+		s.applyGrantResponse(ctx, req, resp)
 	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return
@@ -484,6 +491,9 @@ func (s *Server) internalJobsPOST(w http.ResponseWriter, r *http.Request) {
 	source := firstNonEmpty(strVal(body["source"]), "n8n")
 	task := firstNonEmpty(strVal(body["task_description"]), strVal(body["title"]))
 	output := firstNonEmpty(strVal(body["output_text"]), strVal(sd["summary"]))
+	if boolVal(sd["save_plan"]) && strVal(sd["auto_at"]) == "" {
+		stampAutoAt(sd, time.Now())
+	}
 	job, err := s.store.InsertDeskJob(r.Context(), jobFromWorker(desk.Slug, source, task, sd, output))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -493,4 +503,96 @@ func (s *Server) internalJobsPOST(w http.ResponseWriter, r *http.Request) {
 		_, _ = s.store.InsertJobMessage(r.Context(), JobMessage{JobID: job.ID, AuthorKind: "worker", Body: output})
 	}
 	writeJSON(w, map[string]any{"ok": true, "committed": false, "status": job.Status, "job_id": job.ID})
+}
+
+func (s *Server) officeActor(ctx context.Context) (User, bool) {
+	users, err := s.store.ListUsers(ctx)
+	if err != nil {
+		return User{}, false
+	}
+	for _, cand := range users {
+		if cand.Active && cand.Role == "owner" {
+			return cand, true
+		}
+	}
+	return User{}, false
+}
+
+func (s *Server) internalJobsDue(w http.ResponseWriter, r *http.Request) {
+	if !s.internalOK(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	jobs, err := s.store.ListDeskJobs(r.Context(), "", 80)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	now := time.Now()
+	var due []map[string]any
+	for _, j := range jobs {
+		if !j.Proposed() || j.RefKind != "delivery_plan" {
+			continue
+		}
+		at := jobAutoAt(j)
+		if at.IsZero() || at.After(now) {
+			continue
+		}
+		due = append(due, map[string]any{"id": j.ID, "desk": j.Desk, "title": j.Title})
+	}
+	writeJSON(w, map[string]any{"jobs": due})
+}
+
+func (s *Server) internalJobApply(w http.ResponseWriter, r *http.Request) {
+	if !s.internalOK(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "bad id", http.StatusBadRequest)
+		return
+	}
+	job, err := s.store.GetDeskJob(r.Context(), id)
+	if err != nil || !job.Proposed() {
+		writeJSON(w, map[string]any{"ok": false, "reason": "not proposed"})
+		return
+	}
+	actor, ok := s.officeActor(r.Context())
+	if !ok {
+		http.Error(w, "no owner", http.StatusBadGateway)
+		return
+	}
+	if err := s.applyJobStamp(r.Context(), actor, job, "accepted"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true, "job_id": job.ID, "committed": true})
+}
+
+func (s *Server) internalJobsStopAuto(w http.ResponseWriter, r *http.Request) {
+	if !s.internalOK(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	jobs, err := s.store.ListDeskJobs(r.Context(), "delivery", 40)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	n := 0
+	for _, j := range jobs {
+		if !j.Proposed() || j.RefKind != "delivery_plan" {
+			continue
+		}
+		if jobAutoAt(j).IsZero() {
+			continue
+		}
+		delete(j.Payload, "auto_at")
+		raw, _ := json.Marshal(j.Payload)
+		if _, err := s.store.pool.Exec(r.Context(), `UPDATE desk_jobs SET payload = $2::jsonb, updated_at = now() WHERE id = $1`, j.ID, raw); err == nil {
+			n++
+		}
+	}
+	writeJSON(w, map[string]any{"ok": true, "stopped": n})
 }

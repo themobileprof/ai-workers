@@ -80,6 +80,15 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Secrets:** `GEMINI_API_KEY` on the VM `.env` → agents container.
 - **Env:** `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL`
 
+### Fathom
+
+- **Id:** `fathom`
+- **URL:** https://fathom.video/
+- **Role:** Meeting notetaker. Webhook when a recording is ready → Delivery proposes a week plan. Accept on the Delivery desk writes tasks. Chat never Accepts. Customer WhatsApp is not a chase channel.
+- **Where:** n8n workflow Fathom notes. Production URL `https://workers.themobileprof.com/webhook/pm-notes`. Include summary, action items, and transcript on the Fathom webhook. Calendar titles should name the bet slug.
+- **Secrets:** `FATHOM_API_KEY` and `FATHOM_WEBHOOK_SECRET` on the VM `.env` → n8n container. Never git. Never the Go worker.
+- **Env:** `FATHOM_API_KEY`, `FATHOM_WEBHOOK_SECRET`
+
 ## Host
 
 ### PostgreSQL

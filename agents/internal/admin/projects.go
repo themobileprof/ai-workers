@@ -14,20 +14,24 @@ import (
 // Project is one incubated bet under TheMobileProf Technologies.
 // It is not a second CAC company. Books, Legal, and parent workers stay on TMP.
 type Project struct {
-	ID        int64
-	Name      string
-	Slug      string
-	OneLiner  string
-	Stage     string
-	URL       string
-	Notes     string
-	Journey   string
-	Gate      string
-	Proposal  *Proposal
-	Members   []ProjectMember
-	NextEvent *ProjectEvent
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         int64
+	Name       string
+	Slug       string
+	OneLiner   string
+	Stage      string
+	URL        string
+	Notes      string
+	Hypothesis string
+	Mission    string
+	MissionDue string
+	BurnNGN    string
+	Journey    string
+	Gate       string
+	Proposal   *Proposal
+	Members    []ProjectMember
+	NextEvent  *ProjectEvent
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 // Proposal is an uncommitted placement. Only a human Accept/Amend writes the stamp.
@@ -158,6 +162,10 @@ CREATE TABLE IF NOT EXISTS project_events (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS project_events_soon_idx ON project_events (starts_on) WHERE status = 'planned';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS hypothesis TEXT NOT NULL DEFAULT '';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission_due DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS burn_ngn TEXT NOT NULL DEFAULT '';
 `)
 	return err
 }
@@ -211,7 +219,8 @@ func defaultProjects() []Project {
 
 func (s *Store) ListProjects(ctx context.Context) ([]Project, error) {
 	rows, err := s.pool.Query(ctx, `
-SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at
+SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
 FROM projects ORDER BY
   CASE stage
     WHEN 'selling' THEN 0
@@ -251,7 +260,8 @@ FROM projects ORDER BY
 
 func (s *Store) GetProject(ctx context.Context, id int64) (Project, error) {
 	row := s.pool.QueryRow(ctx, `
-SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at
+SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
 FROM projects WHERE id = $1
 `, id)
 	p, err := scanProject(row)
@@ -272,7 +282,8 @@ func (s *Store) GetProjectBySlug(ctx context.Context, slug string) (Project, err
 		return Project{}, errors.New("slug is required")
 	}
 	row := s.pool.QueryRow(ctx, `
-SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at
+SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
 FROM projects WHERE slug = $1
 `, slug)
 	p, err := scanProject(row)
@@ -294,7 +305,8 @@ type projectScanner interface {
 func scanProject(row projectScanner) (Project, error) {
 	var p Project
 	var raw []byte
-	err := row.Scan(&p.ID, &p.Name, &p.Slug, &p.OneLiner, &p.Stage, &p.URL, &p.Notes, &p.Journey, &p.Gate, &raw, &p.CreatedAt, &p.UpdatedAt)
+	err := row.Scan(&p.ID, &p.Name, &p.Slug, &p.OneLiner, &p.Stage, &p.URL, &p.Notes, &p.Journey, &p.Gate, &raw, &p.CreatedAt, &p.UpdatedAt,
+		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN)
 	if err != nil {
 		return Project{}, err
 	}
@@ -546,6 +558,25 @@ SET journey=$1, gate=$2, stage=$3, notes=$4, proposal=NULL, updated_at=now()
 WHERE id=$5
 `, clean.Journey, clean.Gate, clean.Stage, clean.Notes, id)
 	return err
+}
+
+func (s *Store) SetProjectMemory(ctx context.Context, id int64, hypothesis, mission, missionDue, burn string) error {
+	var due any
+	if strings.TrimSpace(missionDue) != "" {
+		due = strings.TrimSpace(missionDue)
+	}
+	tag, err := s.pool.Exec(ctx, `
+UPDATE projects
+SET hypothesis=$2, mission=$3, mission_due=$4, burn_ngn=$5, updated_at=now()
+WHERE id=$1
+`, id, strings.TrimSpace(hypothesis), strings.TrimSpace(mission), due, strings.TrimSpace(burn))
+	if err != nil {
+		return friendlyDBErr(err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("project not found")
+	}
+	return nil
 }
 
 func firstNonEmpty(a, b string) string {

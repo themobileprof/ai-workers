@@ -75,7 +75,7 @@ func projectRun(in runInput) []RunStep {
 		{
 			ID: "card", Kind: "Must", Title: "Write the card",
 			Why:  "Name, who pays, and this week’s line. Customers still buy from TheMobileProf.",
-			How:  []string{"Open Card.", "Fill the one-liner if empty. Write this week’s line.", "Click Save card."},
+			How:  []string{"Open Card.", "Fill the one-liner if empty. Write this week’s line.", "Hypothesis: what must be true. Mission: named place, named people. Spend this month from Books if you have it.", "Click Save card."},
 			Href: base + "?tab=card", Button: "Open Card",
 			Help: "Write this week’s line on " + name,
 			Done: strings.TrimSpace(p.OneLiner) != "" && strings.TrimSpace(p.Notes) != "",
@@ -107,7 +107,7 @@ func projectRun(in runInput) []RunStep {
 		{
 			ID: "work", Kind: "Must", Title: "Give someone work",
 			Why:  "One Delivery task. Stage caps how many. Pace is hours/week on People.",
-			How:  []string{"Open Work.", "Type the task, pick who (they should be on Face).", "Click Add task."},
+			How:  []string{"Open Work.", "Type the task, pick who (they should be on Face).", "Click Add task. Extra work sits on Backlog when the stage is full — Promote when a slot opens."},
 			Href: base + "?tab=work", Button: "Open Work",
 			Help: "Add a task on " + name,
 			Done: hasWork,
@@ -120,7 +120,7 @@ func projectRun(in runInput) []RunStep {
 				ID: "gate", Kind: "This gate", Title: g.Label,
 				Why:    g.DoneWhen,
 				Detail: g.Mission,
-				How:    []string{"That mission is this week’s job.", "Send a human if it needs the street. Bring names back.", "When the proof is real, Ask placement again — then Accept on Decide."},
+				How:    []string{"Write this week’s mission on Card if it is empty.", "Send a human if it needs the street. Bring names back.", "When the proof is real, Ask placement again — then Accept on Decide."},
 				Href:   base + "?tab=card", Button: "This week’s line",
 				Done: strings.TrimSpace(p.Notes) != "" && hasWork && len(p.Members) > 0,
 			})
@@ -143,7 +143,7 @@ func projectRun(in runInput) []RunStep {
 	steps = append(steps, RunStep{
 		ID: "files", Kind: "As needed", Title: "File the evidence",
 		Why:  "Ops Telegram /file or a PDF. Accept on Files writes Drive. Chat never files.",
-		How:  []string{"Send the file on ops Telegram with /file.", "Open Files on this project.", "Accept if the path is right."},
+		How:  []string{"Send the file on ops Telegram with /file.", "A catalog match files itself. Odd paths stay here for Accept.", "Open Files on this project if you need to check."},
 		Href: base + "?tab=files", Button: "Open Files",
 		Done: len(in.Filings) > 0,
 	})

@@ -1,9 +1,9 @@
-<p class="lede">Data-room clerk. Ops Telegram <code>/file</code> or a dropped PDF proposes a project directory and subdirectory from the catalog. Humans Accept on <a href="/admin/files">Files</a>. n8n writes Google Drive after that. The worker cannot upload, share, or invent a folder.</p>
+<p class="lede">Data-room clerk. Ops Telegram <code>/file</code> or a dropped PDF. A catalog match files itself; n8n writes Google Drive. Unsure rows stay on <a href="/admin/files">Files</a> for Accept. The worker cannot upload, share, or invent a folder.</p>
 
 <ol class="steps">
   <li>Create a Google Shared Drive. Paste its id on <a href="/admin/settings?tab=drive">Defaults → Drive</a>. Bind n8n credential <code>Google Drive</code>.</li>
   <li>On ops Telegram, send the file (PDF or photo) with <code>/file</code>, or drop a document in that chat. Caption may name the bet.</li>
-  <li>Read the proposed path. Accept on Files or the project Files tab. Chat never writes Drive.</li>
+  <li>If the path is a catalog match, it files. If it is odd, Accept or Turn away on Files. Chat never writes Drive.</li>
 </ol>
 
 <p class="hint">Office papers (CAC, TIN, bank letters) use slug <code>themobileprof</code>, not a bet. Academy Telegram and customer WhatsApp do not file. Receipt photos without <code>/file</code> still go to Accounts.</p>
@@ -20,7 +20,7 @@
     "cannot_file": true
   }
 }</pre>
-  <p class="expect"><code>task_type</code> files, <code>cannot_file</code> true, <code>save_filing</code> true only when slug and folder are in the catalog. Desk row status <code>proposed</code>. Accept is a human click.</p>
+  <p class="expect"><code>task_type</code> files, <code>cannot_file</code> true, <code>save_filing</code> true only when slug and folder are in the catalog. Catalog match status <code>accepted</code> (n8n places). Unsure stays <code>proposed</code>.</p>
 </section>
 
 <section class="specimen">
@@ -30,7 +30,7 @@
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 03 · n8n places after Accept</p>
+  <p class="spec-no">Specimen 03 · n8n places accepted rows</p>
   <p class="you-say"><code>GET /internal/v1/file-filings?status=accepted</code> then Telegram download and Drive upload. <code>POST /internal/v1/file-filings/{id}/placed</code>.</p>
   <p class="expect">Status <code>filed</code> with a Drive link, or <code>failed</code> with the error. Worker JSON never wrote Drive.</p>
 </section>

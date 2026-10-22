@@ -1,0 +1,279 @@
+{
+  "id": "pmNotesFathom00001",
+  "name": "Fathom notes",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pm-notes",
+        "responseMode": "onReceived",
+        "options": {
+          "responseCode": 200,
+          "responseData": "noData",
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "pmNotes000000trig",
+      "name": "Fathom webhook",
+      "webhookId": "pm-notes"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nfunction header(headers, name) {\n  if (!headers) return '';\n  const want = String(name).toLowerCase();\n  for (const [k, v] of Object.entries(headers)) {\n    if (String(k).toLowerCase() === want) return Array.isArray(v) ? String(v[0] || '') : String(v || '');\n  }\n  return '';\n}\n\nfunction rawBodyOf(item) {\n  try {\n    const bin = item.binary || {};\n    const data = bin.data || bin.payload || {};\n    if (data.data) return Buffer.from(data.data, 'base64').toString('utf8');\n  } catch (e) {}\n  const j = item.json || {};\n  if (typeof j.body === 'string') return j.body;\n  return '';\n}\n\nfunction verify(secret, id, ts, sigHeader, rawBody) {\n  if (!secret || !id || !ts || !sigHeader || !rawBody) return false;\n  const n = parseInt(ts, 10);\n  if (!Number.isFinite(n)) return false;\n  if (Math.abs(Math.floor(Date.now() / 1000) - n) > 300) return false;\n  let b64 = String(secret);\n  if (b64.startsWith('whsec_')) b64 = b64.slice(6);\n  let key;\n  try { key = Buffer.from(b64, 'base64'); } catch (e) { return false; }\n  const expected = crypto.createHmac('sha256', key).update(id + '.' + ts + '.' + rawBody).digest('base64');\n  const parts = String(sigHeader).split(/\\s+/);\n  for (const part of parts) {\n    const sig = part.includes(',') ? part.split(',').slice(1).join(',') : part;\n    const a = Buffer.from(expected);\n    const b = Buffer.from(String(sig || ''));\n    if (a.length === b.length && crypto.timingSafeEqual(a, b)) return true;\n  }\n  return false;\n}\n\nfunction asMeeting(raw) {\n  if (!raw || typeof raw !== 'object') return {};\n  if (raw.body && typeof raw.body === 'object' && (raw.body.recording_id || raw.body.title || raw.body.meeting_title)) return raw.body;\n  if (raw.recording_id || raw.title || raw.meeting_title || raw.default_summary || raw.transcript) return raw;\n  return raw.body && typeof raw.body === 'object' ? raw.body : raw;\n}\n\nfunction transcriptText(list) {\n  if (typeof list === 'string') return list.trim();\n  if (!Array.isArray(list)) return '';\n  return list.map((row) => {\n    if (!row) return '';\n    if (typeof row === 'string') return row;\n    const who = (row.speaker && (row.speaker.display_name || row.speaker.name)) || row.speaker || '';\n    const text = String(row.text || row.content || '').trim();\n    if (!text) return '';\n    return who ? (who + ': ' + text) : text;\n  }).filter(Boolean).join('\\n');\n}\n\nfunction summaryText(m) {\n  const d = m.default_summary || m.summary || {};\n  return String(d.markdown_formatted || d.markdown || d.text || (typeof m.summary === 'string' ? m.summary : '') || '').trim();\n}\n\nfunction actionLines(list) {\n  if (!Array.isArray(list)) return [];\n  return list.map((it) => {\n    if (!it) return '';\n    if (typeof it === 'string') return it;\n    const who = (it.assignee && (it.assignee.name || it.assignee.email)) || '';\n    const desc = String(it.description || it.text || it.title || '').trim();\n    if (!desc) return '';\n    return who ? (who + ' \u2014 ' + desc) : desc;\n  }).filter(Boolean);\n}\n\nfunction inviteeLines(list) {\n  if (!Array.isArray(list)) return [];\n  return list.map((p) => {\n    if (!p) return '';\n    if (typeof p === 'string') return p;\n    const name = String(p.name || '').trim();\n    const email = String(p.email || '').trim();\n    return [name, email].filter(Boolean).join(' ');\n  }).filter(Boolean);\n}\n\nconst item = $input.first();\nconst raw = item.json || {};\nconst headers = raw.headers || {};\nconst meeting = asMeeting(raw);\nconst recording_id = String(meeting.recording_id || (meeting.recording && meeting.recording.id) || '').trim();\nconst title = String(meeting.meeting_title || meeting.title || '').trim();\nconst when = String(meeting.scheduled_start_time || meeting.recording_start_time || meeting.created_at || '').trim();\nconst url = String(meeting.share_url || meeting.url || '').trim();\nconst transcript = transcriptText(meeting.transcript);\nconst summary = summaryText(meeting);\nconst actions = actionLines(meeting.action_items);\nconst invitees = inviteeLines(meeting.calendar_invitees);\nconst webhookId = header(headers, 'webhook-id');\nconst ts = header(headers, 'webhook-timestamp');\nconst sig = header(headers, 'webhook-signature');\nlet body = rawBodyOf(item);\nconst secret = String(($env && $env.FATHOM_WEBHOOK_SECRET) || process.env.FATHOM_WEBHOOK_SECRET || '');\nlet ok = verify(secret, webhookId, ts, sig, body);\nif (!ok && meeting && typeof meeting === 'object') {\n  try { ok = verify(secret, webhookId, ts, sig, JSON.stringify(meeting)); } catch (e) {}\n}\nif (!ok && raw.body && typeof raw.body === 'object') {\n  try { ok = verify(secret, webhookId, ts, sig, JSON.stringify(raw.body)); } catch (e) {}\n}\nif (!ok) {\n  return [];\n}\ntry {\n  const store = $getWorkflowStaticData('global');\n  store.seen = Array.isArray(store.seen) ? store.seen : [];\n  if (webhookId && store.seen.includes(webhookId)) return [];\n  if (webhookId) {\n    store.seen.push(webhookId);\n    if (store.seen.length > 80) store.seen = store.seen.slice(-80);\n  }\n} catch (e) {}\nconst has_transcript = Boolean(transcript);\nconst has_summary = Boolean(summary) || actions.length > 0;\nreturn [{ json: {\n  recording_id,\n  title,\n  when,\n  url,\n  transcript,\n  summary,\n  actions,\n  invitees,\n  need_fetch: Boolean(recording_id) && (!has_transcript || !has_summary)\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "pmNotes000000veri",
+      "name": "Verify signature"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "pmNotes000000if01",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.need_fetch }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "pmNotes000000iffc",
+      "name": "Need Fathom fetch"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.fathom.ai/external/v1/recordings/' + encodeURIComponent($json.recording_id) + '/transcript' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.FATHOM_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        -120
+      ],
+      "id": "pmNotes000000trsc",
+      "name": "Fetch transcript",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.fathom.ai/external/v1/recordings/' + encodeURIComponent($('Verify signature').item.json.recording_id) + '/summary' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $env.FATHOM_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        -120
+      ],
+      "id": "pmNotes000000summ",
+      "name": "Fetch summary",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Verify signature').item.json;\nconst out = Object.assign({}, prep);\ntry {\n  const tr = $('Fetch transcript').first().json;\n  const list = Array.isArray(tr) ? tr : (tr && (tr.transcript || tr.items)) || [];\n  if (Array.isArray(list) && list.length && !out.transcript) {\n    out.transcript = list.map((row) => {\n      const who = (row.speaker && (row.speaker.display_name || row.speaker.name)) || row.speaker || '';\n      const text = String(row.text || '').trim();\n      return who ? (who + ': ' + text) : text;\n    }).filter(Boolean).join('\\n');\n  } else if (typeof tr === 'string' && !out.transcript) {\n    out.transcript = tr;\n  }\n} catch (e) {}\ntry {\n  const sm = $('Fetch summary').first().json || {};\n  const text = String(sm.markdown_formatted || sm.markdown || sm.summary || sm.text || '').trim();\n  if (text && !out.summary) out.summary = text;\n} catch (e) {}\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -120
+      ],
+      "id": "pmNotes000000merg",
+      "name": "Merge Fathom"
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $input.first().json || {};\nconst title = String(m.title || '').trim() || '(untitled meeting)';\nconst actions = Array.isArray(m.actions) ? m.actions : [];\nconst invitees = Array.isArray(m.invitees) ? m.invitees : [];\nconst summary = String(m.summary || '').trim();\nlet transcript = String(m.transcript || '').trim();\nif (transcript.length > 12000) transcript = transcript.slice(0, 11990) + '\u2026';\nconst lines = [\n  'Turn this finished meeting into a Delivery week plan. save_plan true.',\n  'Map names to people in context. Stay inside stage slots and hours_left.',\n  'Extra commitments stay held in the reply, not in items.',\n  'Do not send WhatsApp, Telegram, or email. Do not hire. Do not Accept.',\n  '',\n  'Calendar title: ' + title\n];\nif (m.when) lines.push('When: ' + m.when);\nif (m.url) lines.push('Fathom: ' + m.url);\nif (invitees.length) {\n  lines.push('Invitees:');\n  invitees.slice(0, 20).forEach((x) => lines.push('- ' + x));\n}\nif (actions.length) {\n  lines.push('Action items:');\n  actions.slice(0, 30).forEach((x) => lines.push('- ' + x));\n}\nif (summary) {\n  lines.push('Summary:');\n  lines.push(summary.slice(0, 6000));\n}\nif (transcript) {\n  lines.push('Transcript:');\n  lines.push(transcript);\n}\nconst task = lines.join('\\n');\nreturn [{ json: {\n  task_description: task,\n  context_data: {\n    channel: 'notes',\n    department: 'delivery',\n    action: 'plan',\n    cannot_send: true,\n    cannot_hire: true,\n    meeting_title: title,\n    recording_id: String(m.recording_id || ''),\n    fathom_url: String(m.url || '')\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        120
+      ],
+      "id": "pmNotes000000prep",
+      "name": "Prepare plan"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/departments/delivery",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        120
+      ],
+      "id": "pmNotes000000http",
+      "name": "Call delivery"
+    }
+  ],
+  "connections": {
+    "Fathom webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Need Fathom fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need Fathom fetch": {
+      "main": [
+        [
+          {
+            "node": "Fetch transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch transcript": {
+      "main": [
+        [
+          {
+            "node": "Fetch summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Fathom",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Fathom": {
+      "main": [
+        [
+          {
+            "node": "Prepare plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare plan": {
+      "main": [
+        [
+          {
+            "node": "Call delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

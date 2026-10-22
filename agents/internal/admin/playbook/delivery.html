@@ -6,12 +6,13 @@
   <li>Open <a href="/admin/delivery">Delivery</a>. Add a task or Ask plan. The worker proposes; Accept on the Delivery desk writes the rows.</li>
   <li>Parked and killed bets get zero tasks and no morning ping. Idea = 1 open task. Testing = 3. Selling = 5. Fundable = 4.</li>
   <li>WhatsApp <code>/today</code> or a reply to the morning ping. <code>/idea homegauge</code> pins that bet. Unprefixed 1:1 stays growth. <code>/approve</code> is still only the info@ draft.</li>
+  <li>Put the bet slug in the calendar title. After Fathom finishes, a proposed plan lands on Job chat. Accept writes the tasks. Ops Telegram <code>/pm</code> still pastes notes by hand.</li>
 </ol>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · ask a week</p>
   <p class="you-say">Delivery → Ask plan: “Turn this-week notes into tasks for me and the BDM.”</p>
-  <p class="expect">Worker names tasks per bet, inside stage limits and hours_left. <code>save_plan</code> true. You Accept on the job. Chat does not write the board.</p>
+  <p class="expect">Worker names tasks per bet. Extra items sit on the backlog. <code>save_plan</code> true. The plan writes after a delay unless you Turn away. Accept still works now. Chat does not write the board.</p>
 </section>
 
 <section class="specimen">
@@ -27,12 +28,18 @@
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 04 · campus training</p>
+  <p class="spec-no">Specimen 04 · Fathom notes</p>
+  <p class="you-say">Calendar title names the bet (for example <code>academy weekly</code>). Fathom records, then the webhook fires.</p>
+  <p class="expect">Delivery proposes tasks inside stage slots. <code>save_plan</code> true. You Accept on Job chat. Nothing is sent on customer WhatsApp. Extra commitments stay held in the reply.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · campus training</p>
   <p class="you-say">The bet’s Dates tab already names the week. On that date, Add task on Delivery for the work, or add it here. Click Done when it is real.</p>
   <p class="expect">The date lives on the bet. This book holds the work. The stage still limits how many tasks can be open.</p>
 </section>
 
 <div class="dont">
   <p class="who">Do not</p>
-  <p>Do not brief an Academy-only person about Finchest on WhatsApp. Name the bet (<code>/idea academy</code>) or sit on one card. Office may see every bet.</p>
+  <p>Do not brief an Academy-only person about Finchest on WhatsApp. Name the bet (<code>/idea academy</code>) or sit on one card. Office may see every bet. Do not use customer WhatsApp to chase a meeting plan. Do not treat Fathom as Accept.</p>
 </div>

@@ -6,7 +6,7 @@ This is the how-to for the signed-in company desk at TheMobileProf Technologies 
 
 - Open `/admin/`. Owner and BDM land on Board. Everyone else lands on the worker desks ticked on their People card (or a picker if several).
 - Login is a People card with a password and at least one desk tick (that tick grants `web_admin`). A Face seat on a project is not a login.
-- Project faces and field assistants often have no login. They work from the this-week note on the project card.
+- Project faces and field assistants often have no login. They work from this week’s mission on the project Card.
 
 ## People (owner only)
 
@@ -23,8 +23,8 @@ Do this, in order:
 
 1. Board `/admin/` — look at each card. Open **Proposal waiting** → **Decide** → Accept or Reject. Open **Coming up** dates.
 2. Projects `/admin/projects` — click a card. **Run** is the wizard: same base kit for every bet (Card, Face, Decide, Dates, Work), then this gate’s mission, then Legal / Files / SEO as needed. Help? can fill a step. Ask placement writes a proposal; Accept on Decide changes the stage. Chat never Accepts. Academy LMS is a bet, not a second company.
-3. Delivery `/admin/delivery` — click Done on today’s tasks. To plan a week: Ask plan, then Accept on Job chat. How many tasks: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace. Seat on Face so they can receive tasks.
-4. Own `/today` check-ins may apply immediately. Accept still belongs to a human for plans the worker proposed.
+3. Delivery `/admin/delivery` — click Done on today’s tasks. Ask plan writes after a delay unless you Turn away. Extra tasks sit on Backlog. Fathom notes use the same path. How many open: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace.
+4. Own `/today` check-ins may apply immediately. `/stop` on ops Telegram drops a delayed info@ draft and a delayed Delivery plan. Calendar titles should name the bet slug so notes pin the right card.
 
 ## Help? vs worker Ask
 
@@ -41,7 +41,7 @@ Do this, in order:
 - CRM `/crm` — pipeline notes. n8n writes Zoho Books contacts, not Zoho CRM.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN without a prefix; it does not save a desk row.
 - SEO `/seo` — titles, meta, outlines, audit punch lists. Accept on `/admin/seo`. The worker cannot publish, crawl, or read Search Console.
-- Files `/file` — data room. Drop a PDF on ops Telegram. Accept on `/admin/files`. n8n writes Google Drive. The worker cannot upload or invent a folder.
+- Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.
 - Ops `/ops` — operations room. Accounts via `/ops` still writes Books. `/ops legal` is chat-only; filing is `/legal`.
 - Product `/validate` — placement and validation. Accept on the project **Decide** tab writes the stage.
@@ -54,7 +54,8 @@ Do this, in order:
 ## Office menu (owner / BDM)
 
 - Defaults `/admin/settings` — one Save per vendor tab (Company, Zoho, Paystack, Drive). Saving one tab does not wipe the others. Secrets stay in the VM `.env` / n8n Credentials.
-- Files `/admin/files` — proposed data-room paths. Accept writes Drive via n8n.
+- Files `/admin/files` — odd data-room paths. A catalog match files itself. Accept writes Drive via n8n.
+- Grants `/admin/grants` — deadline and next action. `/ops` can file a row. It does not submit an application.
 - Docs `/admin/docs`.
 - n8n `/admin/workflows` — iframe of the editor. Do not treat it as the desk.
 - Guide `/admin/guide` — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
@@ -78,7 +79,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 | growth |
 | none, group | community (Academy Telegram student rooms) |
 
-`/approve` / `/kill` on Telegram only send or drop the pending **info@** draft. They do not Accept a legal, project, delivery, or SEO decision.
+`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops that draft and stops a delayed Delivery plan. They do not Accept Legal, Decide, or SEO.
 
 Academy bot refuses ops prefixes. Do not add the ops bot to a class group.
 

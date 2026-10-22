@@ -1,0 +1,68 @@
+{{define "content"}}
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Grants · {{statusCount .Grants "open"}} open</p>
+    <h2>Deadline and next action</h2>
+    <ol class="recipe">
+      <li>Add a row when you hear of a fund: name, deadline, fit, next action.</li>
+      <li><code>/ops</code> can file the same row from a PDF or a question. It does not submit the application.</li>
+      <li>Click <strong>Done</strong> after the action, or <strong>Drop</strong> if you will not apply.</li>
+    </ol>
+    {{template "page-reads" (guideReads "internal-ops")}}
+  </div>
+  <a class="ghost fill now-go" href="/admin/docs/internal-ops">Ops sheet</a>
+</aside>
+
+<div class="tabset" data-tabs data-default="open">
+  <nav class="tabs" role="tablist" aria-label="Grants">
+    <button type="button" role="tab" data-tab="open" aria-controls="tab-open">Open <span class="count">{{statusCount .Grants "open"}}</span></button>
+    <button type="button" role="tab" data-tab="add" aria-controls="tab-add">Add</button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-open" data-tab="open">
+      {{if .Grants}}
+      <ol class="tasks">
+        {{range .Grants}}
+        {{if .Open}}
+        <li>
+          <div>
+            <p class="kicker">{{if .Funder}}{{.Funder}}{{else}}Grant{{end}}{{if .ProjectName}} · {{.ProjectName}}{{end}}{{if .Deadline}} · {{.Deadline}}{{end}}</p>
+            <h3>{{.Title}}</h3>
+            {{if .Fit}}<p class="who">Fit: {{.Fit}}</p>{{end}}
+            {{if .NextAction}}<p class="week">Next: {{.NextAction}}</p>{{end}}
+          </div>
+          <div class="row-actions">
+            <form class="inline" method="post" action="/admin/grants/{{.ID}}/done"><button type="submit">Done</button></form>
+            <form class="inline" method="post" action="/admin/grants/{{.ID}}/drop"><button class="ghost" type="submit">Drop</button></form>
+          </div>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{else}}
+      <p class="hint">No grant rows yet. Add one, or ask <code>/ops</code> after a call or a PDF.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-add" data-tab="add">
+      <form method="post" action="/admin/grants" class="person add">
+        <div class="fields">
+          <label>Name<input name="title" required></label>
+          <label>Funder<input name="funder"></label>
+          <label>Deadline<input name="deadline" type="date"></label>
+          <label>Bet
+            <select name="project_id">
+              <option value="">Company (not one bet)</option>
+              {{range .Projects}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>Fit<textarea name="fit" rows="2"></textarea></label>
+          <label>Next action<input name="next_action" required></label>
+        </div>
+        <button type="submit">Save grant</button>
+      </form>
+    </section>
+  </div>
+</div>
+{{end}}

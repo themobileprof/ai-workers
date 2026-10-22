@@ -96,6 +96,8 @@ type pageData struct {
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
 	Filings        []FileFiling
+	Grants         []Grant
+	Rollup         BoardRollup
 	Tab            string
 	RunSteps       []RunStep
 	RunLeft        int
@@ -125,7 +127,7 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"guideReads":   guideReads,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files", "grants"} {
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -167,6 +169,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/projects/{id}", s.projectEditGET)
 	mux.HandleFunc("POST /admin/projects", s.projectsPOST)
 	mux.HandleFunc("POST /admin/projects/{id}", s.projectSave)
+	mux.HandleFunc("POST /admin/projects/{id}/memory", s.projectMemoryPOST)
 	mux.HandleFunc("POST /admin/projects/{id}/delete", s.projectDelete)
 	mux.HandleFunc("POST /admin/projects/{id}/members", s.projectMemberAdd)
 	mux.HandleFunc("POST /admin/projects/{id}/members/{uid}/delete", s.projectMemberRemove)
@@ -181,6 +184,10 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/files", s.filesGET)
 	mux.HandleFunc("POST /admin/files/{id}/accept", s.filesStamp("accepted"))
 	mux.HandleFunc("POST /admin/files/{id}/reject", s.filesStamp("rejected"))
+	mux.HandleFunc("GET /admin/grants", s.grantsGET)
+	mux.HandleFunc("POST /admin/grants", s.grantsPOST)
+	mux.HandleFunc("POST /admin/grants/{id}/done", s.grantStamp("done"))
+	mux.HandleFunc("POST /admin/grants/{id}/drop", s.grantStamp("dropped"))
 	mux.HandleFunc("GET /admin/seo", s.seoGET)
 	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
 	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
@@ -193,6 +200,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/delivery/items", s.deliveryItemPOST)
 	mux.HandleFunc("POST /admin/delivery/items/{id}/done", s.deliveryItemStamp("done"))
 	mux.HandleFunc("POST /admin/delivery/items/{id}/skip", s.deliveryItemStamp("skipped"))
+	mux.HandleFunc("POST /admin/delivery/items/{id}/open", s.deliveryItemStamp("open"))
 	mux.HandleFunc("POST /admin/delivery/ask", s.deliveryAskPOST)
 	mux.HandleFunc("POST /admin/delivery/pace", s.deliveryPacePOST)
 	mux.HandleFunc("POST /admin/projects/{id}/work", s.projectWorkPOST)
@@ -242,6 +250,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/delivery/digest", s.internalDeliveryDigest)
 	mux.HandleFunc("POST /internal/v1/delivery/checkin", s.internalDeliveryCheckin)
 	mux.HandleFunc("POST /internal/v1/jobs", s.internalJobsPOST)
+	mux.HandleFunc("GET /internal/v1/jobs/due", s.internalJobsDue)
+	mux.HandleFunc("POST /internal/v1/jobs/{id}/apply", s.internalJobApply)
+	mux.HandleFunc("POST /internal/v1/jobs/stop-auto", s.internalJobsStopAuto)
 	mux.HandleFunc("GET /internal/v1/file-filings", s.internalFileFilingsGET)
 	mux.HandleFunc("POST /internal/v1/file-filings", s.internalFileFilingsPOST)
 	mux.HandleFunc("POST /internal/v1/file-filings/{id}/placed", s.internalFilePlacedPOST)
@@ -690,6 +701,12 @@ func statusCount(items any, status string) int {
 					n++
 				}
 			} else if it.Status == status {
+				n++
+			}
+		}
+	case []Grant:
+		for _, g := range xs {
+			if g.Status == status || (status == "open" && g.Open()) {
 				n++
 			}
 		}

@@ -162,7 +162,7 @@ func formCatalog() []formRecipe {
 			ID: "ask_delivery", Title: "Ask a week plan", Button: "Ask worker",
 			Action: "/admin/delivery/ask", Href: "/admin/delivery?tab=ask",
 			Delivery: true,
-			Use:      "Ask Delivery to propose a week plan. Does not write tasks until you Accept on the job.",
+			Use:      "Ask Delivery to propose a week plan. Writes after a delay unless you Turn away. Accept still works now.",
 			Fields: []formField{
 				{Name: "project", Label: "Project slug", Prompt: "Pin one project slug, or skip for every bet you may see.", Kind: "text"},
 				{Name: "task", Label: "What should the week look like?", Prompt: "What should the week look like? One paragraph.", Kind: "textarea", Required: true},
@@ -175,6 +175,32 @@ func formCatalog() []formRecipe {
 			Fields: []formField{
 				{Name: "desk", Label: "Worker", Prompt: "Which worker? accounts, growth, community, crm, legal, seo, delivery, internal-ops, product-dev.", Kind: "desk", Required: true, PathOnly: true, Options: deskOpts},
 				{Name: "task", Label: "Task", Prompt: "What should this worker draft or flag? One or two sentences.", Kind: "textarea", Required: true},
+			},
+		},
+		{
+			ID: "add_grant", Title: "Add a grant row", Button: "Save grant",
+			Action: "/admin/grants", Href: "/admin/grants",
+			Use: "Save a grant deadline and next action. Does not submit an application. Same as Office → Grants.",
+			Fields: []formField{
+				{Name: "title", Label: "Name", Prompt: "What is the grant or programme called?", Kind: "text", Required: true},
+				{Name: "funder", Label: "Funder", Prompt: "Who funds it? Skip if the name is enough.", Kind: "text"},
+				{Name: "deadline", Label: "Deadline", Prompt: "Deadline as YYYY-MM-DD Africa/Lagos, or skip.", Kind: "date"},
+				{Name: "project_id", Label: "Project", Prompt: "Which bet, or skip for the company.", Kind: "project"},
+				{Name: "fit", Label: "Fit", Prompt: "Why we fit, or what is missing.", Kind: "textarea"},
+				{Name: "next_action", Label: "Next action", Prompt: "The next human step. One line.", Kind: "text", Required: true},
+			},
+		},
+		{
+			ID: "save_mission", Title: "Save hypothesis and mission", Button: "Save mission",
+			Action: "/admin/projects/{project_id}/memory", Href: "/admin/projects/{project_id}?tab=card",
+			NeedProject: true,
+			Use:         "Save this week’s hypothesis and field mission on a project Card. Not a hire. Same as Projects → Card.",
+			Fields: []formField{
+				{Name: "project_id", Label: "Project", Prompt: "Which project?", Kind: "project", Required: true, PathOnly: true},
+				{Name: "hypothesis", Label: "Hypothesis", Prompt: "What must be true this gate?", Kind: "text"},
+				{Name: "mission", Label: "Mission", Prompt: "One field job. Named place, named people.", Kind: "text"},
+				{Name: "mission_due", Label: "Due", Prompt: "Due date as YYYY-MM-DD, or skip.", Kind: "date"},
+				{Name: "burn_ngn", Label: "Spend this month", Prompt: "Spend this month in NGN from Books. Skip if unknown. Do not compute VAT.", Kind: "text"},
 			},
 		},
 		{

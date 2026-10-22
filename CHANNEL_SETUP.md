@@ -13,7 +13,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 
 Webhook origin is already `https://workers.themobileprof.com/` (`N8N_WEBHOOK_URL`). Production URLs look like `https://workers.themobileprof.com/webhook/<id>` — Caddy still sends **`/webhook*`** to n8n, even though `/` is now the public homepage and the editor lives at `/home`. Do **not** set `N8N_PATH` (that would prefix webhooks and break Meta/Telegram). Test URLs contain `webhook-test` and only work while Listen is on. Meta and Telegram must get the **production** URL, and the workflow must be **published/active**.
 
-Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, license, the company desk DB, and `INTERNAL_API_TOKEN`.
+Store tokens in n8n **Credentials**, not in git. `.env` on the VM is for Postgres, encryption, LLM, license, the company desk DB, `INTERNAL_API_TOKEN`, Paystack, and Fathom (`FATHOM_API_KEY`, `FATHOM_WEBHOOK_SECRET`).
 
 ---
 
@@ -54,15 +54,18 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | yes (sub-workflow) | Upsert a Books customer from `record_lead`. Must be published — Execute Workflow cannot call an inactive child. |
 | `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. Must be published. |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
+| `n8n/workflows/pm-notes.json` | `pmNotesFathom00001` | yes | Fathom webhook → HMAC → Delivery proposed plan (Accept on desk) |
+| `n8n/workflows/smoke-delivery.json` | `smkDlvrHttp00001` | no | Manual POST delivery worker (meeting notes; must not write tasks) |
 | `n8n/workflows/smoke-files.json` | `smkFilesHttp00001` | no | Manual POST files worker (classify; must not write Drive) |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/file` data room; `/today` `/pm` `/idea` Delivery; Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` email drafts |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Ops room; prefixes; `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/file` data room; `/today` `/pm` `/idea` Delivery; Legal **watch** on every real task (silent unless a gotcha); `/crm` leads; `/approve` `/kill` `/stop` email drafts |
 | `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
 | `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or Delivery. |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1; prefixes; Books writes, `/legal`, and `/seo` only for desk-allowlisted numbers; `/today` is Delivery for People phones; CRM upsert on high intent |
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
 | `n8n/workflows/delivery-daily.json` | `deliveryDaily00001` | yes | 08:00 Lagos: WhatsApp today’s tasks to People with open work on pinging bets |
-| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; SMTP send on `/approve`. Must be published. |
+| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; delay-to-send (15 min office hours / 60 after hours); `/approve` sends now; `/stop` `/kill` drop. Must be published. |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → growth draft (customer mail and CVs — recruiting is off); upserts Books contact from customer senders |
+| `n8n/workflows/delay-apply.json` | `delayApply0000001` | yes | Every 2 minutes: apply Delivery plans whose delay has elapsed |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
@@ -143,11 +146,21 @@ Paystack is the collector because Payment Requests are real AR objects (customer
 - Specimen: `/accounts Invoice Apex 250000 NGN for a 30-day pilot` (email optional if Apex is already in Books).
 - Smoke: **Smoke: Paystack** is a balance GET. It must not create a charge.
 
+### Fathom (meeting notes)
+
+Fathom is the cheap notetaker. n8n is the door. Delivery proposes; you Accept. Customer WhatsApp is not a chase channel. Ops Telegram `/pm` remains the manual hatch.
+
+- API key and webhook secret live in the VM `.env` as `FATHOM_API_KEY` and `FATHOM_WEBHOOK_SECRET` (n8n container only). Never git. Never the Go worker. Recreate the n8n container after adding them so `$env` sees the keys.
+- Dashboard webhook (production, not test Listen): `https://workers.themobileprof.com/webhook/pm-notes`. Include **summary**, **action items**, and **transcript**. Trigger on your recordings. Caddy already sends `/webhook*` to n8n. Publish **Fathom notes** (`pmNotesFathom00001`).
+- n8n verifies `webhook-id` / `webhook-timestamp` / `webhook-signature` (HMAC). If the payload is missing a transcript, it GETs Fathom with the API key. Then `POST /departments/delivery` with `channel: notes`. Go files a **proposed** job when `save_plan` is true. Accept on Delivery writes the rows.
+- Put the bet slug in the calendar title so the plan pins that card. Disclose the notetaker on the call.
+- Smoke: **Smoke: delivery HTTP** posts a notes plan. It must not write tasks until you Accept.
+
 ### Email (Zoho Mail)
 
 - Company address: **`info@themobileprof.com`**. From display name: `TheMobileProf`.
 - Outbound: n8n **Send Email** + credential `Zoho Mail info@`. Paid Zoho Mail SMTP is `smtppro.zoho.com` / `465` SSL (fallback `smtp.zoho.com` if a send fails).
-- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → growth worker drafts a reply (a CV / “I am applying” mail is recruiting-closed copy — nothing is filed as an applicant) → **Email outbox** holds **one** pending draft → Telegram notify. Nothing is sent until `/approve` in Ops Telegram. `/kill` drops it. A new inbound customer mail overwrites the pending draft. Customer senders are upserted as a Zoho Books contact.
+- Inbound: **Inbound info@** IMAP (`imappro.zoho.com:993`, credential `Zoho Mail info@ IMAP`) → growth worker drafts a reply (a CV / “I am applying” mail is recruiting-closed copy — nothing is filed as an applicant) → **Email outbox** holds **one** pending draft → Telegram notify. It sends after **15 minutes** in Lagos office hours (08:00–20:00) or **60 minutes** after hours, unless `/stop` or `/kill`. `/approve` still sends now. A new inbound customer mail overwrites the pending draft. Customer senders are upserted as a Zoho Books contact.
 - Skips mail From `info@themobileprof.com` (loop) and subjects matching `n8n smoke`.
 - Message the ops bot once (`/help`) after deploy so outbox learns `ops_chat_id`; otherwise the draft is still stored and `/approve` still works, but you will not get the Telegram card.
 - Replies are a new message with `Re:` subject (n8n SMTP does not set `In-Reply-To`).
@@ -233,7 +246,7 @@ https://api.telegram.org/bot<TOKEN>/getWebhookInfo
 
 `url` must contain `/webhook/` not `/webhook-test/`. `last_error_message` must be empty.
 
-`/approve` and `/kill` send or drop the pending **info@** draft. Validation GO/PIVOT/KILL can reuse the same commands later.
+`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it and stops a delayed Delivery plan. Validation GO/PIVOT/KILL can reuse the same commands later.
 
 ### Academy bot (student rooms)
 
@@ -272,7 +285,7 @@ Approved customer replies use the same SMTP node inside **Email outbox**. Depart
 
 1. Enable IMAP on the mailbox (Zoho Mail → Settings → Mail Accounts → IMAP).
 2. Credential **Zoho Mail info@ IMAP** (`w6VyL4iDdwX5XgIM`): `imappro.zoho.com`, `993`, SSL, user `info@themobileprof.com`, same app password as SMTP.
-3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Customer mail: Telegram should get a draft; `/approve` sends; `/kill` drops. A CV / “I am applying” mail files on **Desk → HR** instead and does not draft a reply.
+3. **Inbound info@** is published. Send a mail **to** `info@` from a non-`info@` address (your Gmail). Customer mail: Telegram should get a draft; it sends after the delay unless `/stop`; `/approve` sends now; `/kill` drops. A CV / “I am applying” mail also goes to Growth: recruiting is off; the draft thanks them and does not file an applicant.
 4. First, `/help` the ops bot so it records your chat id.
 
 ---
@@ -337,7 +350,7 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 2. Telegram bot + Ops workflow + getWebhookInfo clean.
 3. **Smoke: send email** — Execute; confirm mail in `info@`.
 4. WhatsApp is already live; keep using prefixes.
-5. Email inbound is live: customer mail `info@` → Telegram draft → `/approve`. CVs file on Desk → HR.
+5. Email inbound is live: customer mail `info@` → Telegram draft → delay-to-send (`/stop` drops; `/approve` sends now). CVs go to Growth; recruiting is off.
 6. Only then: intern mission on WhatsApp.
 
 If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker.

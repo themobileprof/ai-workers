@@ -31,6 +31,7 @@ func guideReads(kind string) []DeskLink {
 		out = append(out,
 			DeskLink{Href: "/admin/delivery", Label: "Delivery", Why: "Today’s list. Done or Skip. Ask plan, then Accept on Job chat."},
 			DeskLink{Href: "/admin/docs/project-face", Label: "Project face sheet", Why: "Seat on Face before someone gets work on this bet."},
+			DeskLink{Href: "/admin/guide", Label: "FAQ · meeting notes", Why: "Fathom files a proposed plan. Accept here. Chat never writes the board."},
 		)
 	case "product-dev":
 		out = append(out,
@@ -81,7 +82,7 @@ func shortDocWhy(kind, summary string) string {
 	case "seo":
 		return "Titles, meta, outlines. The worker cannot publish."
 	case "delivery":
-		return "Stage caps how many tasks. Pace is hours/week on People."
+		return "Stage caps how many tasks. Fathom notes still need Accept."
 	case "internal-ops":
 		return "/ops reaches the worker. /ops legal stays chat-only; filing is /legal."
 	case "product-dev":

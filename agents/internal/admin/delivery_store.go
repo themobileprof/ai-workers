@@ -27,7 +27,8 @@ type WorkItem struct {
 	UpdatedAt  time.Time
 }
 
-func (w WorkItem) Open() bool { return w.Status == "open" || w.Status == "" }
+func (w WorkItem) Open() bool   { return w.Status == "open" || w.Status == "" }
+func (w WorkItem) Queued() bool { return w.Status == "queued" }
 
 func (s *Store) migrateDelivery(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
@@ -145,22 +146,26 @@ func (s *Store) InsertWorkItem(ctx context.Context, it WorkItem) (WorkItem, erro
 	if it.AssigneeID > 0 {
 		assignee = it.AssigneeID
 	}
+	status := "open"
+	if it.Status == "queued" {
+		status = "queued"
+	}
 	err := s.pool.QueryRow(ctx, `
 INSERT INTO work_items (project_id, assignee_id, kind, title, status, due_date, hours)
-VALUES ($1, $2, $3, $4, 'open', $5, $6)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, created_at, updated_at
-`, it.ProjectID, assignee, it.Kind, it.Title, due, it.Hours).Scan(&it.ID, &it.CreatedAt, &it.UpdatedAt)
+`, it.ProjectID, assignee, it.Kind, it.Title, status, due, it.Hours).Scan(&it.ID, &it.CreatedAt, &it.UpdatedAt)
 	if err != nil {
 		return WorkItem{}, friendlyDBErr(err)
 	}
-	it.Status = "open"
+	it.Status = status
 	return it, nil
 }
 
 func (s *Store) SetWorkItemStatus(ctx context.Context, id int64, status string) error {
 	status = strings.ToLower(strings.TrimSpace(status))
 	switch status {
-	case "open", "done", "skipped":
+	case "open", "done", "skipped", "queued":
 	default:
 		return errors.New("unknown status")
 	}
@@ -185,6 +190,26 @@ func (s *Store) GetWorkItem(ctx context.Context, id int64) (WorkItem, error) {
 		}
 	}
 	return WorkItem{}, errors.New("task not found")
+}
+
+func (s *Store) PromoteWorkItem(ctx context.Context, id int64) error {
+	it, err := s.GetWorkItem(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !it.Queued() {
+		return errors.New("only a held task can be promoted")
+	}
+	p, err := s.GetProject(ctx, it.ProjectID)
+	if err != nil {
+		return err
+	}
+	eng := EngagementFor(p.Stage)
+	open, _ := s.CountOpenWork(ctx, p.ID)
+	if eng.MaxOpenTasks <= 0 || open >= eng.MaxOpenTasks {
+		return errors.New("no open slot at this stage")
+	}
+	return s.SetWorkItemStatus(ctx, id, "open")
 }
 
 func (s *Store) PinProject(ctx context.Context, userID, projectID int64) error {
@@ -231,21 +256,32 @@ func (s *Store) ApplyCheckins(ctx context.Context, actor User, ids []int64, stat
 
 func (s *Store) AcceptPlanItems(ctx context.Context, actor User, items []WorkItem) (int, error) {
 	n := 0
+	openBy := map[int64]int{}
 	for _, it := range items {
 		p, err := s.GetProject(ctx, it.ProjectID)
 		if err != nil {
 			continue
 		}
-		eng := EngagementFor(p.Stage)
-		open, _ := s.CountOpenWork(ctx, p.ID)
-		if eng.MaxOpenTasks <= 0 || open >= eng.MaxOpenTasks {
+		if p.Stage == "killed" {
 			continue
+		}
+		eng := EngagementFor(p.Stage)
+		open, ok := openBy[p.ID]
+		if !ok {
+			open, _ = s.CountOpenWork(ctx, p.ID)
+			openBy[p.ID] = open
 		}
 		if it.AssigneeID > 0 {
 			u, err := s.GetUser(ctx, it.AssigneeID)
 			if err != nil || !canAssign(u, p.ID, p.Members) {
 				it.AssigneeID = 0
 			}
+		}
+		if eng.MaxOpenTasks <= 0 || open >= eng.MaxOpenTasks {
+			it.Status = "queued"
+		} else {
+			it.Status = "open"
+			openBy[p.ID] = open + 1
 		}
 		if _, err := s.InsertWorkItem(ctx, it); err != nil {
 			return n, err
@@ -339,6 +375,7 @@ func (s *Store) deliveryOverlay(ctx context.Context, actor *User, projectSlug st
 		bets = append(bets, map[string]any{
 			"id": p.ID, "slug": p.Slug, "name": p.Name, "stage": p.Stage,
 			"one_liner": p.OneLiner, "notes": p.Notes,
+			"hypothesis": p.Hypothesis, "mission": p.Mission, "mission_due": p.MissionDue, "burn_ngn": p.BurnNGN,
 			"max_open_tasks": eng.MaxOpenTasks, "weight": eng.Weight,
 			"pings": eng.Pings, "idea_talk": eng.IdeaTalk,
 			"open_count": open, "slots": slots, "items": itemJSON,

@@ -72,6 +72,9 @@
       {{else}}
       <li>Base kit is filled. Open <strong>Run</strong> for this gate’s mission, or Legal / Files / SEO as needed.</li>
       {{end}}
+      {{if .Project.Mission}}
+      <li>This week’s mission: {{.Project.Mission}}{{if .Project.MissionDue}} · due {{.Project.MissionDue}}{{end}}.</li>
+      {{end}}
       {{if .Project.NextEvent}}
       <li>Open <strong>Dates</strong>. Add tasks for {{.Project.NextEvent.Title}}. Click <strong>Delivered</strong> after {{.Project.NextEvent.WhenLabel}}.</li>
       {{end}}
@@ -262,8 +265,8 @@
       <h3>Files on this project</h3>
       <ol class="recipe">
         <li>Send the file on ops Telegram with <code>/file</code>, or drop a PDF in that chat.</li>
-        <li>The clerk picks a subdirectory from the catalog. Click <strong>Accept</strong> if the path is right.</li>
-        <li>Drive write is after Accept. This tab does not upload by itself.</li>
+        <li>A catalog match files itself. Odd paths stay here — click <strong>Accept</strong> or <strong>Turn away</strong>.</li>
+        <li>This tab does not upload by itself. Chat never writes Drive.</li>
       </ol>
       {{if .Filings}}
       {{range .Filings}}
@@ -394,12 +397,66 @@
         <label>This week
           <input name="notes" value="{{.Project.Notes}}">
         </label>
+        <label>Hypothesis
+          <input name="hypothesis" value="{{.Project.Hypothesis}}" placeholder="Who pays, what must be true this gate.">
+        </label>
+        <label>This week’s mission
+          <input name="mission" value="{{.Project.Mission}}" placeholder="One field job. Named place, named people.">
+        </label>
+        <label>Mission due
+          <input name="mission_due" type="date" value="{{.Project.MissionDue}}">
+        </label>
+        <label>Spend this month (NGN)
+          <input name="burn_ngn" value="{{.Project.BurnNGN}}" placeholder="From Books. Do not compute VAT here.">
+        </label>
         <div class="actions">
           <button type="submit">Save project</button>
           <a class="ghost" href="/admin/projects">Back</a>
         </div>
       </form>
-      <form class="person-delete" method="post" action="/admin/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Strike this project from the book? Hypotheses are not stored yet, but the name and seats go.');">
+      <h3>Grants on this bet</h3>
+      <p class="hint">Deadline and next action. This does not submit an application. Company-wide list: <a class="quiet" href="/admin/grants">Office → Grants</a>.</p>
+      {{if .Grants}}
+      <ol class="tasks">
+        {{range .Grants}}
+        {{if .Open}}
+        <li>
+          <div>
+            <p class="kicker">{{if .Funder}}{{.Funder}}{{else}}Grant{{end}}{{if .Deadline}} · {{.Deadline}}{{end}}</p>
+            <h3>{{.Title}}</h3>
+            {{if .Fit}}<p class="who">Fit: {{.Fit}}</p>{{end}}
+            {{if .NextAction}}<p class="week">Next: {{.NextAction}}</p>{{end}}
+          </div>
+          <div class="row-actions">
+            <form class="inline" method="post" action="/admin/grants/{{.ID}}/done">
+              <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=card">
+              <button type="submit">Done</button>
+            </form>
+            <form class="inline" method="post" action="/admin/grants/{{.ID}}/drop">
+              <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=card">
+              <button class="ghost" type="submit">Drop</button>
+            </form>
+          </div>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{else}}
+      <p class="hint">No open grant rows on this bet.</p>
+      {{end}}
+      <form method="post" action="/admin/grants" class="person add">
+        <input type="hidden" name="project_id" value="{{.Project.ID}}">
+        <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=card">
+        <div class="fields">
+          <label>Name<input name="title" required></label>
+          <label>Funder<input name="funder"></label>
+          <label>Deadline<input name="deadline" type="date"></label>
+          <label>Next action<input name="next_action" required></label>
+        </div>
+        <label>Fit<textarea name="fit" rows="2"></textarea></label>
+        <div class="actions"><button type="submit">Save grant</button></div>
+      </form>
+      <form class="person-delete" method="post" action="/admin/projects/{{.Project.ID}}/delete" onsubmit="return confirm('Strike this project from the book? The card and seats go. Grant rows stay on Office → Grants without a bet.');">
         <button class="danger" type="submit">Remove project</button>
       </form>
     </section>
@@ -482,8 +539,8 @@
       {{range .DeliveryBets}}
       <ol class="recipe">
         <li>This stage allows <strong>{{.Engagement.MaxOpenTasks}}</strong> open tasks ({{.Open}} used). Parked and killed allow none.</li>
-        <li>Type the task, pick who (they must be on Face, unless they are owner or BDM), click <strong>Add task</strong>.</li>
-        <li>Click <strong>Done</strong> when it is finished.</li>
+        <li>Type the task, pick who (they must be on Face, unless they are owner or BDM), click <strong>Add task</strong>. Extra work sits on Backlog.</li>
+        <li>Click <strong>Done</strong> when it is finished. <strong>Promote</strong> a held task when a slot opens.</li>
       </ol>
       {{end}}
       {{if .WorkItems}}
@@ -492,20 +549,46 @@
         <thead><tr><th>Task</th><th>Who</th><th>Hours</th><th></th></tr></thead>
         <tbody>
           {{range .WorkItems}}
+          {{if ne .Status "queued"}}
           <tr>
             <td><strong>{{.Title}}</strong> <span class="stamp {{if eq .Status "open"}}brass{{else}}ok{{end}}">{{.Status}}</span></td>
             <td>{{if .Assignee}}{{.Assignee}}{{else}}—{{end}}</td>
             <td>{{.Hours}}</td>
             <td class="row-actions">
               {{if eq .Status "open"}}
-              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done"><button type="submit">Done</button></form>
+              <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/done">
+                <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=work">
+                <button type="submit">Done</button>
+              </form>
               {{end}}
             </td>
           </tr>
           {{end}}
+          {{end}}
         </tbody>
       </table>
       </div>
+      {{if statusCount .WorkItems "queued"}}
+      <h3>Backlog</h3>
+      <p class="hint">Held until a slot opens. Promote when the stage allows another open task.</p>
+      <ol class="tasks">
+        {{range .WorkItems}}
+        {{if eq .Status "queued"}}
+        <li>
+          <div>
+            <p class="kicker">held</p>
+            <h3>{{.Title}}</h3>
+            <p class="who">{{if .Assignee}}{{.Assignee}}{{else}}unassigned{{end}} · {{.Hours}}h</p>
+          </div>
+          <form class="inline" method="post" action="/admin/delivery/items/{{.ID}}/open">
+            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=work">
+            <button class="ghost" type="submit">Promote</button>
+          </form>
+        </li>
+        {{end}}
+        {{end}}
+      </ol>
+      {{end}}
       {{else}}
       <p class="hint">No tasks on this bet yet.</p>
       {{end}}

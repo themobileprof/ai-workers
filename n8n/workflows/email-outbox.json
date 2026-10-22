@@ -104,7 +104,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nconst pending = {\n  to: String(j.to || '').trim(),\n  subject: String(j.subject || 'Re: (no subject)').trim(),\n  text: String(j.text || '').trim(),\n  from_original: String(j.from_original || j.to || '').trim(),\n  subject_original: String(j.subject_original || '').trim()\n};\ns.pending = pending;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nconst chat_id = String(s.ops_chat_id || '');\nlet body = [\n  'Draft reply for info@',\n  'From: ' + pending.from_original,\n  'Subject: ' + pending.subject_original,\n  '',\n  pending.text,\n  '',\n  '/approve to send. /kill to drop. One pending draft at a time.'\n].join('\\n');\nif (body.length > 4000) body = body.slice(0, 3990) + '\u2026';\nreturn [{ json: { chat_id, text: body, has_chat: Boolean(chat_id) } }];\n"
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst j = $input.first().json;\nconst hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', hour: 'numeric', hour12: false }).format(new Date()));\nconst waitMinutes = (hour >= 8 && hour < 20) ? 15 : 60;\nconst token = String(Date.now());\nconst pending = {\n  to: String(j.to || '').trim(),\n  subject: String(j.subject || 'Re: (no subject)').trim(),\n  text: String(j.text || '').trim(),\n  from_original: String(j.from_original || j.to || '').trim(),\n  subject_original: String(j.subject_original || '').trim(),\n  token\n};\ns.pending = pending;\nif (j.chat_id) s.ops_chat_id = String(j.chat_id);\nconst chat_id = String(s.ops_chat_id || '');\nlet body = [\n  'Draft reply for info@',\n  'From: ' + pending.from_original,\n  'Subject: ' + pending.subject_original,\n  '',\n  pending.text,\n  '',\n  'Sends in ' + waitMinutes + ' min unless /stop.',\n  '/approve sends now. /kill drops. One pending draft at a time.'\n].join('\\n');\nif (body.length > 4000) body = body.slice(0, 3990) + '\u2026';\nreturn [{ json: { chat_id, text: body, has_chat: Boolean(chat_id), waitMinutes, token } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -300,6 +300,75 @@
       ],
       "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxpass0001",
       "name": "Pass through"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $json.waitMinutes }}",
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1240,
+        -80
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxwait0001",
+      "name": "Delay send",
+      "webhookId": "emailDelayWait0001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $getWorkflowStaticData('global');\nconst token = String($json.token || '');\nconst pending = s.pending;\nif (!pending || !pending.to || String(pending.token || '') !== token) {\n  return [];\n}\nreturn [{ json: { empty: false, to: pending.to, subject: pending.subject, text: pending.text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        -80
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxstill001",
+      "name": "Still this draft"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/internal/v1/jobs/stop-auto",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        760,
+        240
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxstopauto",
+      "name": "Stop auto plans",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const drop = $('Drop pending').first().json || {};\nconst stop = $input.first().json || {};\nconst n = Number(stop.stopped || 0);\nlet text = String(drop.text || '').trim();\nif (n > 0) {\n  const extra = 'Stopped ' + n + ' delayed plan(s).';\n  text = text ? (text + ' ' + extra) : extra;\n}\nreturn [{ json: { ...drop, stopped: n, text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        240
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxkillres",
+      "name": "Kill result"
     }
   ],
   "connections": {
@@ -353,6 +422,11 @@
             "node": "Has ops chat",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Delay send",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -403,6 +477,50 @@
         [
           {
             "node": "Clear pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delay send": {
+      "main": [
+        [
+          {
+            "node": "Still this draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still this draft": {
+      "main": [
+        [
+          {
+            "node": "Send approved email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drop pending": {
+      "main": [
+        [
+          {
+            "node": "Stop auto plans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop auto plans": {
+      "main": [
+        [
+          {
+            "node": "Kill result",
             "type": "main",
             "index": 0
           }

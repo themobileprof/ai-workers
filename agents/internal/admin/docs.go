@@ -184,7 +184,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Data room",
 		Path:     "POST /departments/files",
 		Wire:     "partial",
-		Summary:  "Ops Telegram /file or a dropped PDF proposes a project folder from the catalog. Humans Accept. n8n writes Google Drive after that. The worker cannot upload or invent a folder.",
+		Summary:  "Ops Telegram /file or a dropped PDF. A catalog match files itself; n8n writes Drive. Unsure rows stay proposed for Accept. The worker cannot invent a folder.",
 		Prefixes: []string{"/file", "dropped PDF", "desk Files"},
 	},
 	{
@@ -202,8 +202,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Project PM",
 		Path:     "POST /departments/delivery",
 		Wire:     "live",
-		Summary:  "Tasks across bets. Stage sets how many. Pace is hours/week on People. Seat on Face to onboard. /today sees upcoming Dates. Academy is one bet.",
-		Prefixes: []string{"/today", "/pm", "/idea"},
+		Summary:  "Tasks across bets. Stage sets how many; extras sit on the backlog. Pace is hours/week on People. Plans write after a delay unless you Turn away. Fathom notes use the same path. Academy is one bet.",
+		Prefixes: []string{"/today", "/pm", "/idea", "Fathom webhook"},
 	},
 	{
 		Slug:     "internal-ops",
@@ -211,7 +211,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Operations room",
 		Path:     "POST /departments/internal-ops",
 		Wire:     "partial",
-		Summary:  "/ops reaches the worker. Accounts via /ops writes Books. /ops legal stays chat-only; filing is /legal. Grant hunting still has no follow-up.",
+		Summary:  "/ops reaches the worker. Accounts via /ops writes Books. /ops legal stays chat-only; filing is /legal. Grant hunting writes a deadline row on Grants. It does not submit an application.",
 		Prefixes: []string{"/ops"},
 	},
 	{
@@ -220,7 +220,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Engineering lab",
 		Path:     "POST /departments/product-dev",
 		Wire:     "partial",
-		Summary:  "/validate reaches the worker. Journey placement proposes; the desk Accepts. Hypotheses and intern missions are still one-shot.",
+		Summary:  "/validate reaches the worker. Journey placement proposes; the desk Accepts. The Card holds hypothesis and this week’s mission. WhatsApp intern nag is later.",
 		Prefixes: []string{"/validate"},
 	},
 }

@@ -51,6 +51,10 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	projects, _ := s.store.ListProjects(r.Context())
 	events, _ := s.store.ListProjectEvents(r.Context(), 0, true)
 	attachNextEvents(projects, events)
+	items, _ := s.store.ListWorkItems(r.Context(), 0, 0)
+	filings, _ := s.store.ListFileFilings(r.Context(), 0, "")
+	jobs, _ := s.store.ListDeskJobs(r.Context(), "", 40)
+	grants, _ := s.store.ListGrants(r.Context())
 	s.render(w, "home", pageData{
 		Title:        "Board",
 		Nav:          "home",
@@ -61,6 +65,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		SettingCount: len(settings),
 		Projects:     projects,
 		Events:       events,
+		Rollup:       buildRollup(projects, items, filings, jobs, grants),
 	})
 }
 
@@ -113,6 +118,12 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 	if flash == "" {
 		flash = eventFlash(okq)
 	}
+	if flash == "" {
+		flash = grantFlash(okq)
+	}
+	if flash == "" {
+		flash = filesFlash(okq)
+	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
 
@@ -164,6 +175,28 @@ func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
 	j, g := splitPlacement(r.FormValue("placement"))
 	err := s.store.UpdateProject(r.Context(), p.ID, r.FormValue("name"), r.FormValue("slug"), r.FormValue("one_liner"), r.FormValue("stage"), r.FormValue("notes"), r.FormValue("url"), j, g)
 	if err != nil {
+		roster, _ := s.store.ListUsers(r.Context())
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
+		return
+	}
+	_ = s.store.SetProjectMemory(r.Context(), p.ID, r.FormValue("hypothesis"), r.FormValue("mission"), r.FormValue("mission_due"), r.FormValue("burn_ngn"))
+	http.Redirect(w, r, projectURL(p.ID, "card", ""), http.StatusSeeOther)
+}
+
+func (s *Server) projectMemoryPOST(w http.ResponseWriter, r *http.Request) {
+	if !sameOrigin(w, r) {
+		return
+	}
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	p, ok := s.loadProject(w, r)
+	if !ok {
+		return
+	}
+	_ = r.ParseForm()
+	if err := s.store.SetProjectMemory(r.Context(), p.ID, r.FormValue("hypothesis"), r.FormValue("mission"), r.FormValue("mission_due"), r.FormValue("burn_ngn")); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
@@ -281,18 +314,22 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 		row := map[string]any{
-			"id":         p.ID,
-			"name":       p.Name,
-			"slug":       p.Slug,
-			"one_liner":  p.OneLiner,
-			"stage":      p.Stage,
-			"url":        p.URL,
-			"notes":      p.Notes,
-			"journey":    p.Journey,
-			"gate":       p.Gate,
-			"proposal":   p.Proposal,
-			"members":    members,
-			"updated_at": p.UpdatedAt,
+			"id":          p.ID,
+			"name":        p.Name,
+			"slug":        p.Slug,
+			"one_liner":   p.OneLiner,
+			"stage":       p.Stage,
+			"url":         p.URL,
+			"notes":       p.Notes,
+			"hypothesis":  p.Hypothesis,
+			"mission":     p.Mission,
+			"mission_due": p.MissionDue,
+			"burn_ngn":    p.BurnNGN,
+			"journey":     p.Journey,
+			"gate":        p.Gate,
+			"proposal":    p.Proposal,
+			"members":     members,
+			"updated_at":  p.UpdatedAt,
 		}
 		if p.NextEvent != nil {
 			row["next_event"] = eventJSON(*p.NextEvent)
@@ -307,6 +344,14 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
 	filings, _ := s.store.ListFileFilings(ctx, p.ID, "")
 	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
+	var grants []Grant
+	if all, err := s.store.ListGrants(ctx); err == nil {
+		for _, g := range all {
+			if g.ProjectID == p.ID {
+				grants = append(grants, g)
+			}
+		}
+	}
 	events, _ := s.store.ListProjectEvents(ctx, p.ID, false)
 	for _, e := range events {
 		if e.Planned() {
@@ -357,6 +402,7 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		Events:         events,
 		EventKinds:     eventKinds(),
 		Filings:        filings,
+		Grants:         grants,
 		RunSteps:       steps,
 		RunLeft:        runMustLeft(steps),
 		Error:          errMsg,
@@ -508,6 +554,10 @@ func placementRequest(p Project, feedback string) (contract.Request, error) {
 			"one_liner":         p.OneLiner,
 			"url":               p.URL,
 			"notes":             p.Notes,
+			"hypothesis":        p.Hypothesis,
+			"mission":           p.Mission,
+			"mission_due":       p.MissionDue,
+			"burn_ngn":          p.BurnNGN,
 			"stage":             p.Stage,
 			"committed_journey": p.Journey,
 			"committed_gate":    p.Gate,

@@ -53,10 +53,20 @@ Yes. You can type on the page, or talk to **Help?** (bottom right — it used to
 
 **Help?** (bottom right) explains a button **or** walks the same form as the page. Submit in Help? posts that form. Ask on a worker desk is one of those forms — it files a **proposed** job. Chat a fix if needed. **Accept** or **Turn away** is still your yes or no. Help? never Accepts.
 
+## How do I stop a delayed email or week plan?
+
+info@ drafts and Delivery plans wait 15 minutes (60 after 20:00 Africa/Lagos), then they go unless you stop them.
+
+1. Ops Telegram: **`/stop`** or **`/kill`** drops the pending info@ draft and stops a delayed Delivery plan.
+2. **`/approve`** still sends the info@ draft now.
+3. Job chat **Turn away** stops a plan. **Accept** writes it now.
+
+Stage, Legal send, and money above a cap stay a human click. Catalog-matched Files place themselves.
+
 ## How do I assign work this week?
 
 1. Seat the person on the project Face tab (unless they are owner or BDM).
-2. Open Delivery (`/admin/delivery`) → Add a task by hand, or Ask plan then Accept on Job chat.
+2. Open Delivery (`/admin/delivery`) → Add a task by hand, or Ask plan. Extra tasks sit on **Backlog** when the stage is full — Promote when a slot opens.
 3. Or WhatsApp `/today` from a People phone. How many tasks you may hold depends on the project’s stage: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling.
 
 ## How do I onboard someone onto a bet?
@@ -97,6 +107,16 @@ Each vendor has its own form. Saving one tab does not wipe the others.
 
 No. Recruiting is closed. Onboard people you already know via People + Face. Inbound CVs go to Growth as a conversation, not a hire.
 
+## How do meeting notes become tasks?
+
+Fathom records the call. The webhook files a **proposed** Delivery plan. It does not write the board.
+
+1. Put the bet slug in the calendar title (for example `academy weekly`).
+2. Join with the notetaker on. After the recording is ready, open Delivery → **Job chat**.
+3. Read the plan. Click **Accept** if the tasks and people are right. Extra items stay held — the stage still caps how many can be open.
+
+Ops Telegram `/pm` still pastes notes by hand if Fathom missed a call. Do not chase this on customer WhatsApp. `/approve` is still only the info@ draft.
+
 ## How do I mark a delivery task done?
 
 1. Open Delivery (`/admin/delivery`).
@@ -105,15 +125,21 @@ No. Recruiting is closed. Onboard people you already know via People + Face. Inb
 
 ## What should a field person do?
 
-1. Read this week’s line on the project card. That is the mission.
+1. Read this week’s mission on the project Card (named place, named people). The this-week line is the short version.
 2. Go to the place. Bring named people back.
 3. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
+
+## How do I track a grant deadline?
+
+1. Office → **Grants** → Add: name, deadline, fit, next action.
+2. Or `/ops` with the fund name. That writes the same row. It does not submit the application.
+3. Click **Done** after the action, or **Drop**.
 
 ## How do I file a PDF into the data room?
 
 1. On ops Telegram, send the file with **`/file`**, or drop a PDF in that chat. A caption may name the bet.
-2. Open Office → **Files**. Read the proposed path (`project / folder / filename`).
-3. Click **Accept** if it is right. n8n writes Google Drive after that. Chat never files. Paste the Shared Drive id on Defaults first.
+2. A catalog match files itself. Odd paths stay on Office → **Files** for Accept or Turn away.
+3. Chat never writes Drive. Paste the Shared Drive id on Defaults first.
 
 Office papers (CAC, TIN, bank letters) go under TheMobileProf, not a bet. Do not send class files to the Academy bot. Do not use `/approve`.
 
@@ -124,3 +150,15 @@ Office papers (CAC, TIN, bank letters) go under TheMobileProf, not a bet. Do not
 3. Click **Add task on Delivery** for the work. After it happened, click **Delivered**.
 
 Seat campus helpers on Face as assistant. Do not put this in Community (those are Telegram student rooms). Do not use `/approve`.
+
+## How do I save this week’s mission?
+
+1. Open the project → **Card**.
+2. Hypothesis: what must be true this gate. Mission: named place, named people. Due if you have one.
+3. Save. Field humans still go to the place. GO / PIVOT / KILL is Accept on Decide. Do not nag this on customer WhatsApp.
+
+## How do I record spend on a bet?
+
+1. Open the project → **Card**.
+2. Paste this month’s figure in NGN from Books. Do not compute VAT here.
+3. Board shows that figure on the card. Tracking categories in Books come later.

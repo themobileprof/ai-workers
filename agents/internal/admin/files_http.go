@@ -145,6 +145,11 @@ func (s *Server) applyFilesResponse(ctx context.Context, req contract.Request, r
 	if err != nil {
 		return
 	}
+	if !boolVal(sd["unsure"]) {
+		if err := s.store.SetFileFilingStatus(ctx, saved.ID, "accepted"); err == nil {
+			saved, _ = s.store.GetFileFiling(ctx, saved.ID)
+		}
+	}
 	sd["filing_id"] = saved.ID
 	sd["path"] = saved.Path
 	sd["status"] = saved.Status
