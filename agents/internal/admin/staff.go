@@ -82,6 +82,76 @@ func staffDefaultDept(u User) string {
 	return ""
 }
 
+func mailWatchers(users []User, projects []Project, hint string) []map[string]any {
+	hint = strings.ToLower(strings.TrimSpace(hint))
+	byID := map[int64]User{}
+	for _, u := range users {
+		byID[u.ID] = u
+	}
+	seen := map[string]bool{}
+	var out []map[string]any
+	add := func(u User, role, project string) {
+		if !u.Active {
+			return
+		}
+		tid := normalizeTelegramID(u.TelegramID)
+		if tid == "" || seen[tid] {
+			return
+		}
+		seen[tid] = true
+		row := map[string]any{"telegram_id": tid, "name": u.Name, "role": role}
+		if project != "" {
+			row["project"] = project
+		}
+		out = append(out, row)
+	}
+	for _, u := range users {
+		if u.Role == "owner" || u.Role == "bdm" {
+			add(u, u.Role, "")
+		}
+	}
+	if hint == "" {
+		return out
+	}
+	for _, p := range projects {
+		if strings.ToLower(p.Slug) != hint && strings.ToLower(p.Name) != hint {
+			continue
+		}
+		for _, m := range p.Members {
+			if m.Seat != "cofounder" {
+				continue
+			}
+			u, ok := byID[m.UserID]
+			if !ok {
+				continue
+			}
+			add(u, "cofounder", p.Slug)
+		}
+	}
+	return out
+}
+
+func (s *Server) internalMailWatchersGET(w http.ResponseWriter, r *http.Request) {
+	if !s.internalOK(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	users, err := s.store.ListUsers(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	projects, err := s.store.ListProjects(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	writeJSON(w, map[string]any{
+		"ok":     true,
+		"people": mailWatchers(users, projects, r.URL.Query().Get("project")),
+	})
+}
+
 func (s *Server) internalStaffGET(w http.ResponseWriter, r *http.Request) {
 	if !s.internalOK(r) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

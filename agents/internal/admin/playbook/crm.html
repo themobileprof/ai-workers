@@ -1,9 +1,9 @@
-<p class="lede">Pipeline notes for a person or company. n8n upserts a <strong>Zoho Books contact</strong> on the existing Books OAuth. There is no Zoho CRM app. Inbound info@ is correspondence, not a subject line.</p>
+<p class="lede">Pipeline notes for a person or company. n8n upserts a <strong>Zoho Books contact</strong> on the existing Books OAuth. There is no Zoho CRM app. Inbound info@ is a thread summary, not an auto-reply.</p>
 
 <ol class="steps">
   <li>WhatsApp or Telegram: <code>/crm Ada from Acme in Yaba asked for a demo. Phone 0803…</code></li>
-  <li>A customer mail to info@ calls CRM with the letter and the unsent draft. Notes on the Books contact hold the rolling story. <code>/crm</code> looks those notes up before it answers.</li>
-  <li>Never invent email or phone. If WhatsApp <code>context_data.from</code> is digits, that is the phone.</li>
+  <li>A customer mail to info@ is filed as a rolling story on the Books contact. Noise and CVs are dropped. Important mail pings owner and BDM, and a cofounder only if the thread names their bet.</li>
+  <li>Never invent email or phone. If WhatsApp <code>context_data.from</code> is digits, that is the phone. CRM does not send mail.</li>
 </ol>
 
 <section class="specimen">
@@ -33,8 +33,8 @@
 
 <section class="specimen">
   <p class="spec-no">Specimen 04 · inbound email story</p>
-  <p class="you-say">A client mails info@ about a 30-day pilot. Later: <code>/crm follow up Apex</code>.</p>
-  <p class="expect"><code>task_type</code> follow_up. <code>context_data.correspondence</code> is their letter; <code>draft_reply</code> is the unsent info@ draft; <code>existing_contact.notes</code> is the prior Books story. Notes stay a short rolling story, not <code>Inbound email: subject</code>. CRM does not send the mail.</p>
+  <p class="you-say">A client mails info@ about a 30-day pilot and needs a yes this week.</p>
+  <p class="expect"><code>task_type</code> important (or file_thread if it can wait). <code>context_data.correspondence</code> is their letter; <code>existing_contact.notes</code> is the prior Books story. Notes stay a short rolling story. Nothing is drafted or sent. Owner and BDM get a Telegram briefing; a cofounder only if <code>project_slug</code> matches their Face seat. Later: <code>/crm follow up Apex</code>.</p>
 </section>
 
 <section class="later">

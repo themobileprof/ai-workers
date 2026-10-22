@@ -29,7 +29,7 @@ A generic six-worker “comptroller / outbound engine / GEO / ticket mill / gran
 Workers never:
 
 - hire anyone (recruiting is closed)
-- send WhatsApp, Telegram, or email themselves (Growth drafts; info@ sends after a delay unless `/stop`; `/approve` sends that draft now)
+- send WhatsApp, Telegram, or email themselves (Growth drafts only when a human asks; inbound info@ files a story and does not send; `/approve` sends a pending draft if one exists)
 - publish a web page
 - write Google Drive (a catalog match files itself; unsure rows stay proposed until Accept)
 - stamp a project **stage** (that is Accept on **Decide**)
@@ -94,7 +94,7 @@ Do not give each worker its own WhatsApp.
 | Ops Telegram | Private office bot. Staff identified by People Telegram id. Prefixes only within that seat. `/file` for the data room. |
 | Customer WhatsApp | One 1:1 number. Bare message is sales (Growth). Every customer DM with a phone upserts CRM. Books/legal/delivery stay on Telegram. Cannot join ordinary groups. |
 | Academy Telegram | Student class rooms only. Not the ops bot. |
-| info@ | Formal mail. Growth drafts. Sends after a delay unless `/stop`. `/approve` sends now. |
+| info@ | Formal mail. CRM files a thread summary. Important pings owner/BDM (and the matching cofounder). Nothing is auto-sent. `/approve` only if a human asked for a draft. |
 | Fathom | Meeting notetaker. Webhook files a **proposed** Delivery plan. Accept on Job chat. Calendar title should name the bet slug. |
 
 ---
@@ -115,13 +115,13 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp, info@ drafts, social copy. Every customer WhatsApp DM with a phone upserts a Zoho Books contact.
+Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone upserts a Zoho Books contact.
 
-It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth.
+It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply.
 
 ### CRM (`/crm`) — live
 
-Qualify or update a person. n8n writes **Zoho Books contacts**. There is no Zoho CRM app. Inbound info@ passes the letter (and the draft reply) to CRM so the contact notes hold the story; `/crm` looks up those notes before it answers.
+Qualify or update a person. n8n writes **Zoho Books contacts**. There is no Zoho CRM app. Inbound info@ files a rolling thread summary on the contact. Noise is dropped. Important mail pings owner and BDM, and a cofounder only if the thread is clearly their bet. `/crm` looks up those notes before it answers.
 
 It is **not** a cold-outreach sequencer. It does not send mail.
 
@@ -169,7 +169,7 @@ Journeys in git (examples): consumer subscription, Academy catalog, invited AUM,
 
 ## 7. What is later (real gaps)
 
-These are on the desk now: grant rows, Delivery backlog, delay-to-send info@, delay-to-write week plans, catalog-matched Files, hypothesis/mission/spend on the Card, Board rollup.
+These are on the desk now: grant rows, Delivery backlog, delay-to-write week plans, catalog-matched Files, hypothesis/mission/spend on the Card, Board rollup. Inbound info@ files a story; it does not auto-send. `/approve` still sends a pending draft a human asked for.
 
 Still later:
 

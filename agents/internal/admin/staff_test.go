@@ -1,6 +1,9 @@
 package admin
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestNormalizeTelegramID(t *testing.T) {
 	if got := normalizeTelegramID("  @123 45 "); got != "12345" {
@@ -61,5 +64,42 @@ func TestStaffPrefixes(t *testing.T) {
 	}
 	if staffCanApprove(User{Role: "cofounder", Active: true}) {
 		t.Fatal("face must not approve")
+	}
+}
+
+func TestMailWatchers(t *testing.T) {
+	users := []User{
+		{ID: 1, Name: "Sam", Role: "owner", Active: true, TelegramID: "111"},
+		{ID: 2, Name: "Biz", Role: "bdm", Active: true, TelegramID: "222"},
+		{ID: 3, Name: "Ada", Role: "cofounder", Active: true, TelegramID: "333"},
+		{ID: 4, Name: "Quiet", Role: "cofounder", Active: true},
+		{ID: 5, Name: "Field", Role: "assistant", Active: true, TelegramID: "555"},
+		{ID: 6, Name: "Old", Role: "owner", Active: false, TelegramID: "666"},
+	}
+	projects := []Project{{
+		ID: 9, Slug: "academy", Name: "Academy",
+		Members: []ProjectMember{
+			{UserID: 3, Seat: "cofounder"},
+			{UserID: 5, Seat: "assistant"},
+			{UserID: 4, Seat: "cofounder"},
+		},
+	}}
+	none := mailWatchers(users, projects, "")
+	if len(none) != 2 {
+		t.Fatalf("office only %+v", none)
+	}
+	got := mailWatchers(users, projects, "Academy")
+	if len(got) != 3 {
+		t.Fatalf("plus face %+v", got)
+	}
+	var roles []string
+	for _, row := range got {
+		roles = append(roles, row["role"].(string))
+	}
+	if strings.Join(roles, ",") != "owner,bdm,cofounder" {
+		t.Fatalf("roles %v", roles)
+	}
+	if got[2]["project"] != "academy" || got[2]["telegram_id"] != "333" {
+		t.Fatalf("face %+v", got[2])
 	}
 }

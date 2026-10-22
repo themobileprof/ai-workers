@@ -139,8 +139,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat, inbound email drafts, and marketing copy. High intent upserts a Books contact.",
-		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "info@ inbound"},
+		Summary:  "Sales chat and marketing copy. High intent upserts a Books contact. Inbound info@ is CRM, not an auto-reply.",
+		Prefixes: []string{"/growth", "1:1 WhatsApp (default)"},
 	},
 	{
 		Slug:     "community",
@@ -157,7 +157,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Pipeline",
 		Path:     "POST /departments/crm",
 		Wire:     "live",
-		Summary:  "Qualify or update a person. Inbound info@ and /crm both read the correspondence. n8n writes Zoho Books contacts, not Zoho CRM.",
+		Summary:  "Qualify or update a person. Inbound info@ files a thread summary; important mail pings owner/BDM and the matching cofounder. n8n writes Zoho Books contacts, not Zoho CRM.",
 		Prefixes: []string{"/crm", "info@ inbound"},
 	},
 	{

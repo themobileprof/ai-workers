@@ -29,7 +29,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `zoho-mail`
 - **URL:** https://www.zoho.com/mail/
-- **Role:** Company mailbox info@themobileprof.com. SMTP out (approved drafts), IMAP in (growth drafts; CRM reads the letter for follow-up notes).
+- **Role:** Company mailbox info@themobileprof.com. SMTP out (a pending draft a human asked for). IMAP in (CRM thread summary; important mail pings owner/BDM).
 - **Where:** n8n credentials. SMTP smtppro.zoho.com:465. IMAP imappro.zoho.com:993.
 - **Secrets:** App password in n8n only.
 - **n8n credentials:** `Zoho Mail info@`, `Zoho Mail info@ IMAP`
@@ -49,7 +49,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
 - **Role:** Two bots. Ops (`Telegram account`): office staff identified by People `telegram_id`; prefixes only within that seat; receipts; `/approve` `/kill` for owner/BDM. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping.
+- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping, inbound info@ important-mail pings.
 - **Secrets:** Bot token in n8n credential Telegram account.
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
 

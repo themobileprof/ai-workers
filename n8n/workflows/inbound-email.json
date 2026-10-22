@@ -32,12 +32,12 @@
     },
     {
       "parameters": {
-        "jsCode": "function addr(x) {\n  if (!x) return '';\n  if (typeof x === 'string') {\n    const m = x.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    return (m ? m[0] : x).trim();\n  }\n  if (x.text) return addr(x.text);\n  if (Array.isArray(x.value) && x.value[0]) return addr(x.value[0].address || x.value[0]);\n  if (x.address) return String(x.address).trim();\n  return String(x).trim();\n}\nfunction looksLikeApplication(hay) {\n  const lower = String(hay || '').toLowerCase();\n  const needles = [\n    'i am applying', \"i'm applying\", 'please find my', 'attached cv', 'attached resume',\n    'curriculum vitae', ' resume', ' cv ', 'application for',\n    'i would like to join', 'i want to intern', 'cover letter'\n  ];\n  if (needles.some((n) => lower.includes(n))) return true;\n  return lower.includes('apply') && (lower.includes('role') || lower.includes('intern') || lower.includes('job'));\n}\nconst m = $input.first().json || {};\nconst meta = m.metadata || {};\nconst from = addr(m.from || meta.from || m.fromAddress || '').toLowerCase();\nconst subject = String(m.subject || meta.subject || '').trim();\nlet body = String(m.textPlain || m.text || m.textAsHtml || '').trim();\nif (!body && (m.html || m.textHtml)) {\n  body = String(m.html || m.textHtml).replace(/<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nif (!from) return [];\nif (from === 'info@themobileprof.com') return [];\nif (/mailer-daemon|no-?reply|postmaster/i.test(from)) return [];\nif (/n8n smoke/i.test(subject)) return [];\nif (!body) body = '(empty body)';\nconst hay = subject + ' ' + body;\nif (looksLikeApplication(hay)) {\n  const task_description = [\n    'This person sent a CV or job application to info@. Recruiting is off. Draft a short polite plain-text reply: we are not hiring; thank them; do not invite them to apply again; do not claim a JD will be reviewed. Do not say the email was sent. No markdown. Keep it under 150 words.',\n    '',\n    'From: ' + from,\n    'Subject: ' + (subject || '(no subject)'),\n    '',\n    body.slice(0, 8000)\n  ].join('\\n');\n  return [{\n    json: {\n      department: 'growth',\n      from,\n      subject,\n      body: body.slice(0, 8000),\n      task_description,\n      context_data: {\n        channel: 'email',\n        department: 'growth',\n        from,\n        subject,\n        correspondence: body.slice(0, 8000),\n        recruiting_closed: true\n      }\n    }\n  }];\n}\nconst task_description = [\n  'Draft a short plain-text reply as TheMobileProf from info@themobileprof.com.',\n  'Do not claim the email was sent. No markdown. Keep it under 250 words.',\n  '',\n  'From: ' + from,\n  'Subject: ' + (subject || '(no subject)'),\n  '',\n  body.slice(0, 8000)\n].join('\\n');\nreturn [{\n  json: {\n    department: 'growth',\n    from,\n    subject,\n    body: body.slice(0, 8000),\n    task_description,\n    context_data: {\n      channel: 'email',\n      department: 'growth',\n      from,\n      subject,\n      correspondence: body.slice(0, 8000)\n    }\n  }\n}];\n"
+        "jsCode": "function addr(x) {\n  if (!x) return '';\n  if (typeof x === 'string') {\n    const m = x.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    return (m ? m[0] : x).trim();\n  }\n  if (x.text) return addr(x.text);\n  if (Array.isArray(x.value) && x.value[0]) return addr(x.value[0].address || x.value[0]);\n  if (x.address) return String(x.address).trim();\n  return String(x).trim();\n}\nfunction looksLikeApplication(hay) {\n  const lower = String(hay || '').toLowerCase();\n  const needles = [\n    'i am applying', \"i'm applying\", 'please find my', 'attached cv', 'attached resume',\n    'curriculum vitae', ' resume', ' cv ', 'application for',\n    'i would like to join', 'i want to intern', 'cover letter'\n  ];\n  if (needles.some((n) => lower.includes(n))) return true;\n  return lower.includes('apply') && (lower.includes('role') || lower.includes('intern') || lower.includes('job'));\n}\nconst m = $input.first().json || {};\nconst meta = m.metadata || {};\nconst from = addr(m.from || meta.from || m.fromAddress || '').toLowerCase();\nconst subject = String(m.subject || meta.subject || '').trim();\nlet body = String(m.textPlain || m.text || m.textAsHtml || '').trim();\nif (!body && (m.html || m.textHtml)) {\n  body = String(m.html || m.textHtml).replace(/<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nif (!from) return [];\nif (from === 'info@themobileprof.com') return [];\nif (/mailer-daemon|no-?reply|postmaster|notifications@|newsletter@|bounce@/i.test(from)) return [];\nif (/n8n smoke/i.test(subject)) return [];\nif (!body) body = '(empty body)';\nif (looksLikeApplication(subject + ' ' + body)) return [];\nbody = body.slice(0, 8000);\nreturn [{ json: { from, subject, body } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        280,
+        240,
         0
       ],
       "id": "a9b8c7d6-e5f4-4321-imapprep00001",
@@ -45,8 +45,8 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://agents:8000/departments/growth",
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/projects",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -56,63 +56,211 @@
             }
           ]
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
         "options": {
-          "timeout": 120000
+          "timeout": 8000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        640,
-        80
+        460,
+        0
       ],
-      "id": "a9b8c7d6-e5f4-4321-imaphttp00001",
-      "name": "Call growth"
+      "id": "a9b8c7d6-e5f4-4321-imapproj00001",
+      "name": "Fetch projects",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const worker = $input.first().json;\nconst prep = $('Prepare inbound').item.json;\nlet text = String(worker.output_text || 'Could not draft a reply.');\ntext = text.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').replace(/\\*/g, '').trim();\nlet subject = prep.subject || '(no subject)';\nif (!/^re:\\s/i.test(subject)) subject = 'Re: ' + subject;\nreturn [{\n  json: {\n    action: 'store',\n    to: prep.from,\n    subject,\n    text,\n    from_original: prep.from,\n    subject_original: prep.subject\n  }\n}];\n"
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        680,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapset00001",
+      "name": "Fetch desk settings",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.zohoapis.com/books/v3/contacts",
+        "options": {
+          "timeout": 60000
+        },
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ organization_id: ($('Fetch desk settings').item.json || {})['zoho.organization_id'] || '939049468', per_page: 5, email: $('Prepare inbound').item.json.from }) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        900,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapbook0001",
+      "name": "Search Books",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "ByEtw1MmiDqYxQWI",
+          "name": "Zoho Books"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function deskSetting(key, fallback) {\n  try {\n    const s = $('Fetch desk settings').first().json || {};\n    const v = s[key];\n    if (v != null && String(v).trim() !== '') return String(v).trim();\n  } catch (e) {}\n  return fallback;\n}\nconst prep = $('Prepare inbound').first().json || {};\nconst from = String(prep.from || '').trim();\nconst subject = String(prep.subject || '').trim();\nconst body = String(prep.body || '').slice(0, 8000);\nlet projects = [];\ntry {\n  const raw = $('Fetch projects').first().json || {};\n  const list = Array.isArray(raw.projects) ? raw.projects : [];\n  projects = list.map((p) => ({ slug: String(p.slug || '').trim(), name: String(p.name || '').trim() })).filter((p) => p.slug || p.name);\n} catch (e) {}\nlet existing_contact = null;\ntry {\n  const res = $('Search Books').first().json || {};\n  const list = Array.isArray(res.contacts) ? res.contacts : [];\n  const want = from.toLowerCase();\n  let hit = list.find((c) => String(c.email || '').toLowerCase() === want) || list[0];\n  if (hit && hit.contact_id) {\n    existing_contact = {\n      contact_id: String(hit.contact_id),\n      contact_name: String(hit.contact_name || '').trim(),\n      company_name: String(hit.company_name || '').trim(),\n      email: String(hit.email || '').trim(),\n      phone: String(hit.phone || hit.mobile || '').trim(),\n      notes: String(hit.notes || '').trim().slice(0, 2000)\n    };\n  }\n} catch (e) {}\nconst task = [\n  'Inbound email to info@. File a short thread summary. Do not draft a reply. Do not send.',\n  'Use task_type noise, file_thread, or important.',\n  'notify true only if a human must look now. project_slug only from the projects list in context.',\n  '',\n  'From: ' + from,\n  'Subject: ' + (subject || '(no subject)'),\n  '',\n  'Their message:',\n  body || '(empty body)'\n].join('\\n');\nreturn [{ json: {\n  from,\n  subject,\n  body,\n  organization_id: deskSetting('zoho.organization_id', '939049468'),\n  task_description: task,\n  context_data: {\n    channel: 'email',\n    department: 'crm',\n    from,\n    subject,\n    correspondence: body,\n    projects,\n    existing_contact\n  }\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
-        80
+        1120,
+        0
       ],
-      "id": "a9b8c7d6-e5f4-4321-imapfmt000001",
-      "name": "Format draft"
+      "id": "a9b8c7d6-e5f4-4321-imapatt00001",
+      "name": "Attach context"
     },
     {
       "parameters": {
-        "source": "database",
-        "workflowId": {
-          "__rl": true,
-          "value": "emailOutbox000001",
-          "mode": "id"
+        "method": "POST",
+        "url": "http://agents:8000/departments/crm",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
         },
+        "options": {
+          "timeout": 120000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1340,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapcrmhttp01",
+      "name": "Call CRM",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const worker = $input.first().json || {};\nconst prep = $('Prepare inbound').item.json || {};\nconst sd = worker.structured_data || {};\nconst task = String(sd.task_type || '').toLowerCase();\nconst notify = sd.notify === true || sd.notify === 'true' || task === 'important';\nconst noise = task === 'noise';\nconst record = !noise && (sd.record_lead === true || sd.record_lead === 'true' || task === 'file_thread' || task === 'important');\nlet email = String(sd.email || prep.from || '').trim();\nlet name = String(sd.contact_name || sd.name || '').trim();\nif (!name && email.includes('@')) name = email.split('@')[0];\nconst notes = String(sd.notes || '').trim();\nconst project_slug = String(sd.project_slug || '').trim();\nlet ping = String(worker.output_text || sd.notify_reason || '').trim();\nping = ping.replace(/^#{1,6}\\s+/gm, '').replace(/\\*\\*/g, '').trim();\nif (ping.length > 3500) ping = ping.slice(0, 3490) + '…';\nconst lines = ['info@ looks important.', 'From: ' + (prep.from || ''), 'Subject: ' + (prep.subject || '(no subject)')];\nif (project_slug) lines.push('Bet: ' + project_slug);\nlines.push('', ping || String(sd.notify_reason || 'A human should look at this thread.'), '', 'This bot did not send mail. Reply yourself or /crm follow up.');\nreturn [{ json: {\n  record,\n  notify,\n  project_slug,\n  ping_text: lines.join('\\n'),\n  crm_contact: record ? {\n    contact_name: name,\n    email,\n    phone: String(sd.phone || '').trim(),\n    company_name: String(sd.company_name || '').trim(),\n    pipeline_stage: String(sd.pipeline_stage || 'new'),\n    next_action: String(sd.next_action || '').trim(),\n    notes: (notes || ('Inbound: ' + (prep.subject || ''))).slice(0, 800),\n    source: 'email'\n  } : null\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        0
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapdec00001",
+      "name": "Decide"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "a9b8c7d6-e5f4-4321-imapfile0001c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.record }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
         "options": {}
       },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
       "position": [
-        1080,
-        80
+        1780,
+        -80
       ],
-      "id": "a9b8c7d6-e5f4-4321-imapexec00001",
-      "name": "Store in outbox"
+      "id": "a9b8c7d6-e5f4-4321-imapfile0001",
+      "name": "Should file"
     },
     {
       "parameters": {
-        "jsCode": "const worker = $('Call CRM').item.json || {};\nconst prep = $('Prepare inbound').item.json;\nconst sd = worker.structured_data || {};\nlet email = String(sd.email || prep.from || '').trim();\nlet name = String(sd.contact_name || sd.name || '').trim();\nif (!name && email.includes('@')) name = email.split('@')[0];\nconst notes = String(sd.notes || sd.next_action || '').trim() || ('Inbound: ' + (prep.subject || '')).slice(0, 200);\nreturn [{ json: {\n  contact_name: name,\n  email,\n  phone: String(sd.phone || '').trim(),\n  company_name: String(sd.company_name || '').trim(),\n  pipeline_stage: String(sd.pipeline_stage || 'new'),\n  next_action: String(sd.next_action || '').trim(),\n  notes: notes.slice(0, 800),\n  source: 'email'\n} }];\n"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "a9b8c7d6-e5f4-4321-imapping0001c",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.notify }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1780,
+        120
+      ],
+      "id": "a9b8c7d6-e5f4-4321-imapping0001",
+      "name": "Should ping"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $input.first().json.crm_contact || {} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1480,
-        320
+        2000,
+        -80
       ],
       "id": "a9b8c7d6-e5f4-4321-imapcrm00001",
       "name": "Stamp CRM"
@@ -130,8 +278,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        1080,
-        240
+        2220,
+        -80
       ],
       "id": "a9b8c7d6-e5f4-4321-imapcrm00002",
       "name": "Run CRM upsert",
@@ -139,42 +287,8 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "a9b8c7d6-e5f4-4321-imapifhr0001",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              },
-              "leftValue": "={{ $json.department }}",
-              "rightValue": "hr"
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        420,
-        0
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imapifhr0002",
-      "name": "Is HR application"
-    },
-    {
-      "parameters": {
         "method": "GET",
-        "url": "http://agents:8000/internal/v1/hr/roles",
+        "url": "http://agents:8000/internal/v1/mail/watchers",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -186,179 +300,65 @@
         },
         "options": {
           "timeout": 8000
+        },
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "project",
+              "value": "={{ $('Decide').item.json.project_slug }}"
+            }
+          ]
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        640,
-        -180
+        2000,
+        120
       ],
-      "id": "a9b8c7d6-e5f4-4321-imaphrget0001",
-      "name": "Fetch HR roles",
+      "id": "a9b8c7d6-e5f4-4321-imapwatch001",
+      "name": "Fetch watchers",
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const prep = $('Prepare inbound').item.json;\nlet roles = [];\ntry {\n  const fetched = $('Fetch HR roles').first().json || {};\n  const all = fetched.roles || [];\n  roles = all.filter((r) => String(r.status) === 'open').map((r) => ({\n    id: r.id, slug: r.slug, title: r.title, kind: r.kind, jd: r.jd, project: r.project_name\n  }));\n} catch (e) {}\nconst context_data = Object.assign({}, prep.context_data || {}, { open_roles: roles });\nreturn [{ json: Object.assign({}, prep, { context_data }) }];\n"
+        "jsCode": "const d = $('Decide').first().json || {};\nconst raw = $input.first().json || {};\nconst list = Array.isArray(raw.people) ? raw.people : [];\nconst text = String(d.ping_text || '').trim();\nif (!text) return [];\nconst seen = {};\nconst items = [];\nfor (const p of list) {\n  const chat_id = String((p && p.telegram_id) || '').replace(/\\D/g, '');\n  if (!chat_id || seen[chat_id]) continue;\n  seen[chat_id] = true;\n  items.push({ json: { chat_id, text } });\n}\nreturn items;\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
-        -180
+        2220,
+        120
       ],
-      "id": "a9b8c7d6-e5f4-4321-imaphratt0001",
-      "name": "Attach open roles"
+      "id": "a9b8c7d6-e5f4-4321-imappingprep1",
+      "name": "Prepare pings"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://agents:8000/departments/hr",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Internal-Token",
-              "value": "={{ $env.INTERNAL_API_TOKEN }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
-        "options": {
-          "timeout": 120000
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
         }
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
-        1080,
-        -180
+        2440,
+        120
       ],
-      "id": "a9b8c7d6-e5f4-4321-imaphrhttp001",
-      "name": "Call HR"
-    },
-    {
-      "parameters": {
-        "jsCode": "const worker = $('Call HR').item.json;\nconst prep = $('Attach open roles').item.json;\nconst sd = worker.structured_data || {};\nif (String(worker.status || '') !== 'success') return [];\nconst save = sd.save_application === true || sd.save_application === 'true';\nconst name = String(sd.applicant_name || sd.name || '').trim();\nconst email = String(sd.applicant_email || sd.email || prep.from || '').trim();\nconst cv = String(sd.cv_text || '').trim();\nif (!save && !name && !cv) return [];\nreturn [{ json: {\n  structured_data: sd,\n  source: 'email',\n  role_slug: sd.role_slug || '',\n  role_id: sd.role_id || 0,\n  applicant_email: email\n} }];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1300,
-        -180
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imaphrprep001",
-      "name": "Prepare HR file"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://agents:8000/internal/v1/hr/applications",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Internal-Token",
-              "value": "={{ $env.INTERNAL_API_TOKEN }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
-        "options": {
-          "timeout": 8000
+      "id": "a9b8c7d6-e5f4-4321-imapsend0001",
+      "name": "Send Telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "GD7WqGif3v6QlSbc",
+          "name": "Telegram account"
         }
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        1520,
-        -180
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imaphrpost001",
-      "name": "File HR application",
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const prep = $('Prepare inbound').item.json || {};\nconst ctx = prep.context_data || {};\nif (ctx.recruiting_closed === true || ctx.recruiting_closed === 'true') {\n  return [{ json: { skip_crm: true } }];\n}\nlet growth = {};\ntry { growth = $('Call growth').first().json || {}; } catch (e) {}\nconst sd = growth.structured_data || {};\nconst draft = String(growth.output_text || '').trim();\nconst body = String(prep.body || '').slice(0, 8000);\nconst from = String(prep.from || '').trim();\nconst subject = String(prep.subject || '').trim();\nconst task = [\n  'Inbound email to info@. Read the correspondence. Qualify or follow_up.',\n  'Write notes as a short rolling story: what they asked, what we drafted, what a human should do next.',\n  'record_lead true if you have a name or email. Never invent an email or phone.',\n  'Do not claim the email was sent.',\n  '',\n  'From: ' + from,\n  'Subject: ' + (subject || '(no subject)'),\n  '',\n  'Their message:',\n  body || '(empty body)',\n  '',\n  'Our draft reply (not sent yet; delay unless /stop):',\n  draft.slice(0, 4000) || '(no draft)'\n].join('\\n');\nreturn [{ json: {\n  skip_crm: false,\n  department: 'crm',\n  from,\n  subject,\n  body,\n  task_description: task,\n  context_data: {\n    channel: 'email',\n    department: 'crm',\n    from,\n    subject,\n    correspondence: body,\n    draft_reply: draft.slice(0, 4000),\n    contact_name: String(sd.contact_name || sd.name || '').trim(),\n    email: from\n  }\n} }];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        860,
-        240
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imapcrmprep01",
-      "name": "Prepare CRM"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "a9b8c7d6-e5f4-4321-imapcrmskip0c",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              },
-              "leftValue": "={{ $json.skip_crm }}",
-              "rightValue": ""
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1080,
-        240
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imapcrmskip01",
-      "name": "Skip CRM"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://agents:8000/departments/crm",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Internal-Token",
-              "value": "={{ $env.INTERNAL_API_TOKEN }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ task_description: $json.task_description, context_data: $json.context_data }) }}",
-        "options": {
-          "timeout": 120000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        1280,
-        320
-      ],
-      "id": "a9b8c7d6-e5f4-4321-imapcrmhttp01",
-      "name": "Call CRM",
       "onError": "continueRegularOutput"
     }
   ],
@@ -378,127 +378,48 @@
       "main": [
         [
           {
-            "node": "Is HR application",
+            "node": "Fetch projects",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Call growth": {
+    "Fetch projects": {
       "main": [
         [
           {
-            "node": "Format draft",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Prepare CRM",
+            "node": "Fetch desk settings",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format draft": {
+    "Fetch desk settings": {
       "main": [
         [
           {
-            "node": "Store in outbox",
+            "node": "Search Books",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Stamp CRM": {
+    "Search Books": {
       "main": [
         [
           {
-            "node": "Run CRM upsert",
+            "node": "Attach context",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Is HR application": {
+    "Attach context": {
       "main": [
-        [
-          {
-            "node": "Fetch HR roles",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Call growth",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch HR roles": {
-      "main": [
-        [
-          {
-            "node": "Attach open roles",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Attach open roles": {
-      "main": [
-        [
-          {
-            "node": "Call HR",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call HR": {
-      "main": [
-        [
-          {
-            "node": "Prepare HR file",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare HR file": {
-      "main": [
-        [
-          {
-            "node": "File HR application",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare CRM": {
-      "main": [
-        [
-          {
-            "node": "Skip CRM",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Skip CRM": {
-      "main": [
-        [],
         [
           {
             "node": "Call CRM",
@@ -512,7 +433,80 @@
       "main": [
         [
           {
+            "node": "Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide": {
+      "main": [
+        [
+          {
+            "node": "Should file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Should ping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should file": {
+      "main": [
+        [
+          {
             "node": "Stamp CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Should ping": {
+      "main": [
+        [
+          {
+            "node": "Fetch watchers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Stamp CRM": {
+      "main": [
+        [
+          {
+            "node": "Run CRM upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch watchers": {
+      "main": [
+        [
+          {
+            "node": "Prepare pings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare pings": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram",
             "type": "main",
             "index": 0
           }

@@ -46,7 +46,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 WhatsApp | growth (customers; CRM upsert) |
 | none, group | community (Academy Telegram student rooms — do not add ops to class) |
 
-`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft, project stage, or SEO brief. Info@ otherwise sends after 15 minutes (60 after 20:00 Africa/Lagos).
+`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft, project stage, or SEO brief. Inbound info@ files a CRM story and does not auto-send.
 
 Customer-development field work (rates at a mortgage desk, mechanics, a PHC) is a human on a project, not a chat prefix. Bring the names back; `/validate` `analyse_evidence` can score them. You still decide GO/PIVOT/KILL on the project.
 
@@ -85,6 +85,7 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | GET | `/internal/v1/community/mandate` · `/internal/v1/community/mandates` |
 | GET | `/internal/v1/whatsapp-accounts` |
 | GET | `/internal/v1/settings` |
+| GET | `/internal/v1/staff` · `/internal/v1/mail/watchers` |
 | GET | `/internal/v1/projects` · `/internal/v1/journeys` |
 | POST | `/internal/v1/projects/{id}/proposal` |
 | GET, POST | `/internal/v1/legal-drafts` |

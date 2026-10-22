@@ -72,11 +72,11 @@ func shortDocWhy(kind, summary string) string {
 	case "accounts":
 		return "What the classifier may name. It never computes VAT."
 	case "growth":
-		return "Replies and copy. It cannot send WhatsApp or email itself."
+		return "Replies and copy when you ask. It cannot send WhatsApp or email itself."
 	case "community":
 		return "Academy Telegram rooms. WhatsApp Cloud API cannot join ordinary groups."
 	case "crm":
-		return "Qualify or update a person. Email correspondence feeds the story. n8n writes Books contacts, not Zoho CRM."
+		return "Qualify or update a person. info@ files a thread summary. n8n writes Books contacts, not Zoho CRM."
 	case "legal":
 		return "Specimens for NDAs. The worker cannot send the document."
 	case "seo":

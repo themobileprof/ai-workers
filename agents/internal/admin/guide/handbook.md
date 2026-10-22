@@ -36,9 +36,9 @@ Do this, in order:
 
 - Path: `/admin/desks/{slug}` after the owner ticked that slug on your card.
 - Accounts `/accounts` — Books classifier. n8n posts to Zoho Books and Paystack. Go never computes VAT.
-- Growth `/growth` — sales copy and replies. Bare 1:1 chat is Growth.
+- Growth `/growth` — sales copy and replies when you ask. Bare 1:1 chat is Growth. Inbound info@ is CRM.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
-- CRM `/crm` — pipeline notes from chat and info@ correspondence. n8n writes Zoho Books contacts, not Zoho CRM.
+- CRM `/crm` — pipeline notes from chat and info@ threads. Important mail pings owner/BDM and the matching cofounder. n8n writes Zoho Books contacts, not Zoho CRM.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN without a prefix; it does not save a desk row.
 - SEO `/seo` — titles, meta, outlines, audit punch lists. Accept on `/admin/seo`. The worker cannot publish, crawl, or read Search Console.
 - Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.

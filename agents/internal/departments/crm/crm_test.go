@@ -55,6 +55,12 @@ func TestHandleReadsEmailCorrespondence(t *testing.T) {
 	if !strings.Contains(stub.got.System, "client story") {
 		t.Fatal("crm prompt must tell the model to read email correspondence")
 	}
+	if !strings.Contains(stub.got.System, "Do not draft a reply") {
+		t.Fatal("inbound email must not draft a reply")
+	}
+	if !strings.Contains(stub.got.System, "file_thread") {
+		t.Fatal("inbound email must file a thread summary")
+	}
 	if !strings.Contains(stub.got.Messages[0].Content, "We want a 30-day books pilot") {
 		t.Fatal("crm user prompt must include the letter")
 	}

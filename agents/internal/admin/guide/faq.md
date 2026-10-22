@@ -55,7 +55,7 @@ Yes. You can type on the page, or talk to **Help?** (bottom right — it used to
 
 ## How do I stop a delayed email or week plan?
 
-info@ drafts and Delivery plans wait 15 minutes (60 after 20:00 Africa/Lagos), then they go unless you stop them.
+Inbound info@ does not queue a send. Delivery plans wait 15 minutes (60 after 20:00 Africa/Lagos), then they write unless you stop them. A pending info@ draft (only if a human asked for one) still waits, then sends unless you stop it.
 
 1. Ops Telegram: **`/stop`** or **`/kill`** drops the pending info@ draft and stops a delayed Delivery plan.
 2. **`/approve`** still sends the info@ draft now.
@@ -105,7 +105,7 @@ Each vendor has its own form. Saving one tab does not wipe the others.
 
 ## Someone sent a CV. Do we hire them in HR?
 
-No. Recruiting is closed. Onboard people you already know via People + Face. Inbound CVs go to Growth as a conversation, not a hire.
+No. Recruiting is closed. Onboard people you already know via People + Face. Inbound CVs to info@ are dropped. Nothing is filed and nobody is pinged.
 
 ## How do meeting notes become tasks?
 
