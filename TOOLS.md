@@ -132,8 +132,10 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-search-console`
 - **URL:** https://search.google.com/search-console
-- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. Not competitor keywords. OAuth later; property id is on Defaults now so the clerk knows which site you mean.
-- **Where:** Desk Defaults (`seo.gsc_site_url`). OAuth tokens will live in `.env` when wired — never git, never the Go worker as a hardcoded secret.
+- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. Not competitor keywords. n8n pulls ~28 days as `ga4-read`; the SEO clerk only quotes that snapshot.
+- **Where:** n8n workflow SEO GSC pull (same `googleApi` credential as GA4, plus `webmasters.readonly`). Property URL on desk Defaults (`seo.gsc_site_url`). Snapshot on `POST /internal/v1/seo/gsc`. The Go worker never holds the JSON key.
+- **Secrets:** Same n8n credential Google Analytics (add Search Console scope). Never git, never `.env`, never the Go worker.
+- **n8n credentials:** `Google Analytics`
 - **Desk keys:** `seo.gsc_site_url`
 
 ### Google Analytics (GA4)

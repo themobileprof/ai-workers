@@ -33,7 +33,7 @@ Keep this section in sync with every channel change. IDs are not secrets. The ve
 | Zoho Mail info@ | `smtp` | `cvlEAE8BvvQ87wew` | Smoke: send email; Email outbox approved sends |
 | Zoho Mail info@ IMAP | `imap` | `w6VyL4iDdwX5XgIM` | Inbound info@ |
 | Google Drive | `googleDriveOAuth2Api` | `googleDriveCred001` | Files place (Shared Drive upload). Create in n8n; bind the nodes if import id differs. Paste the Shared Drive id on Defaults. |
-| Google Analytics | `googleApi` | `googleAnalyticsSA001` | SEO GA4 daily pull. Create **Google Service Account API** (not Google Analytics OAuth2). Enable “use in HTTP Request node”; scope `https://www.googleapis.com/auth/analytics.readonly`. Email `ga4-read@themobileprof.iam.gserviceaccount.com`. Bind if import id differs. Property id on Defaults. Add that email as Viewer on the GA4 property. |
+| Google Analytics | `googleApi` | `googleAnalyticsSA001` | SEO GA4 + GSC daily pulls. Create **Google Service Account API** (not Google Analytics OAuth2). Enable “use in HTTP Request node”; scopes `https://www.googleapis.com/auth/analytics.readonly` and `https://www.googleapis.com/auth/webmasters.readonly` (space-separated). Email `ga4-read@themobileprof.iam.gserviceaccount.com`. Bind if import id differs. GA4 property id and Search Console property on Defaults. Add that email as Viewer on the GA4 property **and** as a user on the Search Console property. |
 
 SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL, user `info@themobileprof.com`. App password stays in n8n only.
 
@@ -68,6 +68,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → CRM thread summary on Office → CRM (Books contact if there is an email). No draft, no send. Important mail pings owner/BDM and the matching cofounder. CVs and noise are dropped. |
 | `n8n/workflows/delay-apply.json` | `delayApply0000001` | yes | Every 2 minutes: apply Delivery plans whose delay has elapsed |
 | `n8n/workflows/seo-ga4.json` | `seoGa4Daily00001` | yes | 06:00 Lagos: Analytics Data API as `ga4-read` → `POST /internal/v1/seo/ga4`. Needs Defaults property id and n8n credential Google Analytics. |
+| `n8n/workflows/seo-gsc.json` | `seoGscDaily00001` | yes | 06:10 Lagos: Search Console searchAnalytics as `ga4-read` → `POST /internal/v1/seo/gsc`. Needs Defaults `sc-domain:…`, Search Console API, and `webmasters.readonly` on the same n8n credential. |
 
 UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 

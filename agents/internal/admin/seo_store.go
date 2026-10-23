@@ -72,6 +72,12 @@ CREATE TABLE IF NOT EXISTS seo_ga4 (
   snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
   fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS seo_gsc (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  site_url TEXT NOT NULL DEFAULT '',
+  snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `)
 	return err
 }

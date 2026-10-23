@@ -26,7 +26,7 @@ func guideReads(kind string) []DeskLink {
 	case "seo":
 		out = append(out,
 			DeskLink{Href: "/admin/seo", Label: "SEO book", Why: "Accept lives here. Download the pack or give Cursor the URL."},
-			DeskLink{Href: "/admin/settings?tab=seo", Label: "GA4 property id", Why: "Digits n8n uses for the daily Analytics pull. The ga4-read service account must be a Viewer."},
+			DeskLink{Href: "/admin/settings?tab=seo", Label: "GA4 / Search Console", Why: "Property ids n8n uses for the daily pulls. ga4-read must be a Viewer on GA4 and a user on Search Console."},
 		)
 	case "delivery":
 		out = append(out,

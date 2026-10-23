@@ -384,6 +384,9 @@ func (s *Server) withSEOSettings(ctx context.Context, req contract.Request) cont
 	if snap, err := s.store.GetSeoGA4(ctx); err == nil && snap != nil {
 		data["ga4"] = snap
 	}
+	if snap, err := s.store.GetSeoGSC(ctx); err == nil && snap != nil {
+		data["gsc"] = snap
+	}
 	raw, err := json.Marshal(data)
 	if err != nil {
 		return req
