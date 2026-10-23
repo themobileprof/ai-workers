@@ -29,6 +29,10 @@
     <span class="hint">The site people already type. Leave blank if there is none yet.</span>
     <input name="url" placeholder="https://">
   </label>
+  <label>GitHub repo
+    <span class="hint">Optional. Named in the SEO pack so Cursor knows which repo to open. This office does not push PRs.</span>
+    <input name="git_repo" placeholder="themobileprof/academy">
+  </label>
   <label>Stage
     <span class="hint">Leave as Idea unless you already know it is testing, selling, parked, or killed.</span>
     <select name="stage">
@@ -300,9 +304,9 @@
     <section role="tabpanel" id="tab-seo" data-tab="seo">
       <h3>SEO briefs</h3>
       <ol class="recipe">
-        <li>Ask below: pick the kind and paste the page URL if you have it.</li>
-        <li>When the brief is proposed, click <strong>Accept</strong> or <strong>Reject</strong>.</li>
-        <li>Copy the accepted title and meta onto the live page yourself. This clerk cannot publish.</li>
+        <li>Ask below with the live URL. The clerk fetches that origin, isolates keywords, and issues a pack URL.</li>
+        <li>Download the markdown or give Cursor the pack URL. You implement. This clerk cannot publish the live site.</li>
+        <li><strong>Turn away</strong> if the pack is wrong. Offsite items write on Delivery after the delay unless you stop them.</li>
       </ol>
       {{if .SeoBriefs}}
       {{range .SeoBriefs}}
@@ -317,6 +321,7 @@
         {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
         {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
         {{if .Proposed}}
+        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
         <div class="actions">
           <form class="inline" method="post" action="/admin/seo/{{.ID}}/approve">
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
@@ -324,11 +329,11 @@
           </form>
           <form class="inline" method="post" action="/admin/seo/{{.ID}}/reject">
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
-            <button class="ghost" type="submit">Reject</button>
+            <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>
         {{else if eq .Status "approved"}}
-        <p class="hint">Accepted. Copy the text. Publishing is not wired — do not use info@ <code>/approve</code>.</p>
+        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
         {{end}}
       </section>
       {{end}}
@@ -337,7 +342,7 @@
       {{end}}
       {{if .CanSEO}}
       <form method="post" action="/admin/projects/{{.Project.ID}}/seo" class="person add">
-        <p class="hint">Paste the page URL if you have it, then click Ask SEO. The worker does not visit the site.</p>
+        <p class="hint">Give the live URL. The clerk fetches that origin and issues a pack URL for Cursor. Turn away if it is wrong.</p>
         <div class="fields">
           <label>Kind
             <select name="action">
@@ -349,8 +354,8 @@
           <label>URL<input name="url" value="{{.Project.URL}}" placeholder="https://…"></label>
           <label>Keyword<input name="keyword"></label>
         </div>
-        <label>Notes or pasted HTML
-          <textarea name="human_feedback" rows="5" placeholder="Paste title, H1, and a slice of the page."></textarea>
+        <label>Notes
+          <textarea name="human_feedback" rows="3" placeholder="Optional. The clerk fetches the URL."></textarea>
         </label>
         <div class="actions">
           <button type="submit">Ask SEO</button>
@@ -375,6 +380,10 @@
         </label>
         <label>Public URL
           <input name="url" value="{{.Project.URL}}" placeholder="https://">
+        </label>
+        <label>GitHub repo
+          <span class="hint">Optional. Named in the SEO pack so Cursor knows which repo to open.</span>
+          <input name="git_repo" value="{{.Project.GitRepo}}" placeholder="themobileprof/academy">
         </label>
         <label>Stage
           <select name="stage">

@@ -88,6 +88,22 @@ func settingCatalog() []settingGroupSpec {
 				{Key: "drive.shared_drive_id", Label: "Shared Drive id", Help: "From Drive URL /drive/u/0/folders/… on a Shared Drive. Leave blank until the n8n Google Drive credential exists."},
 			},
 		},
+		{
+			ID:       "seo",
+			Title:    "SEO · Google properties",
+			Help:     "Property ids only — free Google APIs for THIS company. OAuth tokens and API keys stay in the VM .env. These boxes do not unlock competitor keyword spy data; that is paid (Ahrefs / Semrush) and not wired.",
+			DocHref:  "/admin/docs/seo",
+			DocLabel: "SEO sheet",
+			Recipe: []string{
+				"Search Console property is the verified site (https://lms.themobileprof.com/ or sc-domain:themobileprof.com).",
+				"GA4 property id is the digits from Admin → Property settings. Traffic only, not rankings.",
+				"Click Save on this tab. PAGESPEED_API_KEY stays in .env if you want Core Web Vitals from Google.",
+			},
+			Fields: []SettingField{
+				{Key: "seo.gsc_site_url", Label: "Search Console property", Help: "Your verified site URL or sc-domain:…. Query numbers stay off until OAuth is in .env. Free API, your property only."},
+				{Key: "seo.ga4_property_id", Label: "GA4 property id", Help: "Digits only. Organic traffic for this property. Not competitor analysis."},
+			},
+		},
 	}
 }
 
@@ -105,6 +121,8 @@ func defaultSettings() map[string]any {
 		"zoho.deposit_to_account_id":      "",
 		"paystack.currency":               "NGN",
 		"drive.shared_drive_id":           "",
+		"seo.gsc_site_url":                "",
+		"seo.ga4_property_id":             "",
 	}
 }
 

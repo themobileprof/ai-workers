@@ -150,8 +150,8 @@ func projectRun(in runInput) []RunStep {
 
 	seo := RunStep{
 		ID: "seo", Kind: "As needed", Title: "Name the public page",
-		Why:  "Titles and meta. You paste onto the live page. The clerk cannot publish.",
-		How:  []string{"Open SEO.", "Ask SEO for a page brief.", "Accept, then paste it yourself."},
+		Why:  "Keywords from the designed page. Ask issues a pack that customizes visible copy and chrome. Offsite is a Delivery plan unless you Turn away.",
+		How:  []string{"Put the public URL on Card.", "Ask SEO for an onsite pack or keyword inventory.", "Download the pack or give Cursor the URL. Turn away if it is wrong."},
 		Href: base + "?tab=seo", Button: "Open SEO",
 		Help: "Ask SEO for " + name,
 		Done: len(in.Briefs) > 0,

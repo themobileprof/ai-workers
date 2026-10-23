@@ -24,6 +24,18 @@ func TestSpecsUnique(t *testing.T) {
 	if _, ok := Lookup("page"); !ok {
 		t.Fatal("page")
 	}
+	if _, ok := Lookup("map"); !ok {
+		t.Fatal("map")
+	}
+	if _, ok := Lookup("onsite"); !ok {
+		t.Fatal("onsite")
+	}
+	if _, ok := Lookup("inventory"); !ok {
+		t.Fatal("inventory")
+	}
+	if _, ok := Lookup("offsite"); !ok {
+		t.Fatal("offsite")
+	}
 	if _, ok := Lookup("missing"); ok {
 		t.Fatal("unknown")
 	}
@@ -44,6 +56,18 @@ func TestInfer(t *testing.T) {
 	}
 	if infer(map[string]any{"action": "brief"}, "") != "page" {
 		t.Fatal("brief")
+	}
+	if infer(map[string]any{}, "Keyword map for Academy pages") != "map" {
+		t.Fatal("map")
+	}
+	if infer(map[string]any{}, "Isolate keywords from Academy pages") != "inventory" {
+		t.Fatal("inventory")
+	}
+	if infer(map[string]any{}, "Onsite pack Cursor can implement") != "onsite" {
+		t.Fatal("onsite")
+	}
+	if infer(map[string]any{}, "Offsite listings we already have") != "offsite" {
+		t.Fatal("offsite")
 	}
 }
 

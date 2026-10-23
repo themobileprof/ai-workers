@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -172,6 +173,31 @@ SELECT id, desk, title, status, source, summary, payload, ref_kind, ref_id, crea
 FROM desk_jobs WHERE id = $1
 `, id)
 	return scanDeskJob(row)
+}
+
+func (s *Store) ListDeliveryPlansForSeo(ctx context.Context, briefID int64) ([]DeskJob, error) {
+	if briefID <= 0 {
+		return nil, nil
+	}
+	rows, err := s.pool.Query(ctx, `
+SELECT id, desk, title, status, source, summary, payload, ref_kind, ref_id, created_at, updated_at
+FROM desk_jobs
+WHERE desk = 'delivery' AND ref_kind = 'delivery_plan' AND payload->>'seo_brief_id' = $1
+ORDER BY created_at DESC
+`, strconv.FormatInt(briefID, 10))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []DeskJob
+	for rows.Next() {
+		j, err := scanDeskJob(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, j)
+	}
+	return out, rows.Err()
 }
 
 func scanDeskJob(row projectScanner) (DeskJob, error) {

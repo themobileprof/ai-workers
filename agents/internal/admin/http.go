@@ -201,8 +201,10 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/crm/{id}/nurture", s.crmStamp("nurture"))
 	mux.HandleFunc("GET /admin/seo", s.seoGET)
 	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
+	mux.HandleFunc("GET /admin/seo/{id}/pack.md", s.seoPackDownload)
 	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
 	mux.HandleFunc("POST /admin/seo/{id}/reject", s.seoStamp("rejected"))
+	mux.HandleFunc("GET /site/seo/{token}", s.seoPackPublic)
 	mux.HandleFunc("POST /admin/projects/{id}/seo", s.projectSEO)
 	mux.HandleFunc("GET /admin/hr", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/delivery", http.StatusSeeOther)

@@ -25,7 +25,7 @@ func guideReads(kind string) []DeskLink {
 		)
 	case "seo":
 		out = append(out,
-			DeskLink{Href: "/admin/seo", Label: "SEO book", Why: "Accept lives here. You paste onto the live page."},
+			DeskLink{Href: "/admin/seo", Label: "SEO book", Why: "Accept lives here. Download the pack or give Cursor the URL."},
 		)
 	case "delivery":
 		out = append(out,
@@ -80,7 +80,7 @@ func shortDocWhy(kind, summary string) string {
 	case "legal":
 		return "Specimens for NDAs. The worker cannot send the document."
 	case "seo":
-		return "Titles, meta, outlines. The worker cannot publish."
+		return "Fetches the live URL. Visible page is the source of truth. Pack customizes body and chrome."
 	case "delivery":
 		return "Stage caps how many tasks. Fathom notes still need Accept."
 	case "internal-ops":

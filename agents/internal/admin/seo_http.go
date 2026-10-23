@@ -22,11 +22,13 @@ func (s *Server) WithSEO(fn PlaceFunc) {
 func seoFlash(ok string) string {
 	switch ok {
 	case "drafted":
-		return "Brief saved as proposed. Accept still belongs to a human. The worker cannot publish."
+		return "Pack URL is live. Download it or give Cursor the URL. Offsite items are a Delivery plan that writes after the delay unless you Turn away."
 	case "seo_ok":
-		return "Brief accepted. Copy from the desk — publishing the live page is not wired."
+		return "Accepted. The pack was already live. The clerk does not publish the site or open a GitHub PR."
+	case "seo_plan":
+		return "Accepted. Offsite work writes now. Turn away on Job chat if you still need to stop a later week."
 	case "seo_no":
-		return "Brief rejected. Nothing was published."
+		return "Turned away. The pack URL is unpublished. Related Delivery plans will not write."
 	default:
 		return ""
 	}
@@ -92,6 +94,11 @@ func (s *Server) seoStamp(status string) http.HandlerFunc {
 		ok := "seo_ok"
 		if status == "rejected" {
 			ok = "seo_no"
+			s.stopSeoAutomation(r.Context(), id)
+		} else {
+			if s.afterSeoApproved(r.Context(), *u, id) {
+				ok = "seo_plan"
+			}
 		}
 		http.Redirect(w, r, seoNext(r, "/admin/seo?ok="+ok), http.StatusSeeOther)
 	}
@@ -104,8 +111,13 @@ func seoNext(r *http.Request, fallback string) string {
 		out = next
 		if strings.Contains(fallback, "ok=seo_no") {
 			out = withQuery(out, "ok", "seo_no")
-		} else if strings.Contains(fallback, "ok=seo_ok") {
-			out = withQuery(out, "ok", "seo_ok")
+		} else if strings.Contains(fallback, "ok=seo_ok") || strings.Contains(fallback, "ok=seo_plan") {
+			out = withQuery(out, "ok", r.FormValue("ok"))
+			if strings.Contains(fallback, "ok=seo_plan") {
+				out = withQuery(out, "ok", "seo_plan")
+			} else {
+				out = withQuery(out, "ok", "seo_ok")
+			}
 		}
 	}
 	if strings.Contains(out, "/admin/projects/") {
@@ -114,7 +126,7 @@ func seoNext(r *http.Request, fallback string) string {
 	if strings.Contains(fallback, "ok=seo_no") {
 		return withQuery(out, "tab", "rejected")
 	}
-	if strings.Contains(fallback, "ok=seo_ok") {
+	if strings.Contains(fallback, "ok=seo_ok") || strings.Contains(fallback, "ok=seo_plan") {
 		return withQuery(out, "tab", "accepted")
 	}
 	return out
@@ -187,6 +199,8 @@ func (s *Server) runSeoAsk(ctx context.Context, p Project, action, pageURL, keyw
 	if err != nil {
 		return SeoBrief{}, err
 	}
+	req = s.withSEOSettings(ctx, req)
+	req = s.withSEODeliveryContext(ctx, req, p)
 	resp, err := s.seo(ctx, req)
 	if err != nil || resp.Status != contract.StatusSuccess {
 		msg := resp.OutputText
@@ -208,13 +222,29 @@ func (s *Server) runSeoAsk(ctx context.Context, p Project, action, pageURL, keyw
 	if d.Keyword == "" {
 		d.Keyword = strings.TrimSpace(keyword)
 	}
-	return s.store.InsertSeoBrief(ctx, d)
+	saved, err := s.store.InsertSeoBrief(ctx, d)
+	if err != nil {
+		return SeoBrief{}, err
+	}
+	if inv := inventoryFromContext(contract.ContextObject(req.ContextData)); len(inv) > 0 {
+		_ = s.store.SetSeoInventory(ctx, saved.ID, inv)
+		saved.Inventory = inv
+	}
+	if len(d.PlanItems) > 0 {
+		_ = s.store.SetSeoPlanItems(ctx, saved.ID, d.PlanItems)
+		saved.PlanItems = d.PlanItems
+	}
+	s.startSeoAutomation(ctx, saved.ID)
+	if reloaded, err := s.store.GetSeoBrief(ctx, saved.ID); err == nil {
+		saved = reloaded
+	}
+	return saved, nil
 }
 
 func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.Request, error) {
 	action = strings.ToLower(strings.TrimSpace(action))
 	if _, ok := seo.Lookup(action); !ok {
-		action = "page"
+		action = "onsite"
 	}
 	pageURL = strings.TrimSpace(pageURL)
 	if pageURL == "" {
@@ -234,8 +264,10 @@ func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.
 			"slug":      p.Slug,
 			"one_liner": p.OneLiner,
 			"url":       p.URL,
+			"git_repo":  p.GitRepo,
 		},
 	}
+	attachFetchedSEO(ctx, pageURL)
 	raw, err := json.Marshal(ctx)
 	if err != nil {
 		return contract.Request{}, err
@@ -244,7 +276,18 @@ func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.
 	if pageURL != "" {
 		task += " at " + pageURL
 	}
-	task += ". Do not publish. Do not invent rankings."
+	switch action {
+	case "inventory":
+		task += ". The visible page is the source of truth (a designer may never have seen title/meta). Isolate keywords from keyword_inventory and keyword_map. Rewrite visible copy into searcher queries using only attested entities. Prefer gap phrases. Do not invent search volume."
+	case "map":
+		task += ". One primary phrase per URL from the visible copy. Cluster synonyms. Title tags must match the designed page. No volume."
+	case "offsite":
+		task += ". Propose Delivery tasks (items) spread over coming weeks, not all this week. Use people and slots from context_data.delivery. Listings and partners already on the pages. No cold outreach. cannot_send."
+	case "onsite":
+		task += ". Write an onsite pack Cursor can implement. Customize the visible page (body, H1, subheads, CTAs) from what the user already saw, then title/meta so snippets match that design. Same offers and places. Do not invent volume. Do not publish."
+	default:
+		task += ". Fetch, keyword_inventory, and keyword_map are already attached. Visible copy is the source of truth. Customize body and chrome together. Do not invent rankings or Core Web Vitals. Do not publish."
+	}
 	if feedback != "" {
 		task += " Human notes:\n" + feedback
 	}
@@ -261,21 +304,72 @@ func (s *Server) EnrichSEO(ctx context.Context, req contract.Request) contract.R
 		slug = strVal(nested["slug"])
 	}
 	if slug == "" {
-		return req
+		attachFetchedSEO(data, strVal(data["url"]))
+		raw, _ := json.Marshal(data)
+		req.ContextData = raw
+		return s.withSEOSettings(ctx, req)
 	}
 	p, err := s.store.GetProjectBySlug(ctx, slug)
 	if err != nil {
 		return req
 	}
 	data["project"] = map[string]any{
-		"id": p.ID, "name": p.Name, "slug": p.Slug, "one_liner": p.OneLiner, "url": p.URL,
+		"id": p.ID, "name": p.Name, "slug": p.Slug, "one_liner": p.OneLiner, "url": p.URL, "git_repo": p.GitRepo,
 	}
 	if strVal(data["url"]) == "" && p.URL != "" {
 		data["url"] = p.URL
 	}
+	attachFetchedSEO(data, strVal(data["url"]))
 	raw, _ := json.Marshal(data)
 	req.ContextData = raw
+	req = s.withSEOSettings(ctx, req)
+	return s.withSEODeliveryContext(ctx, req, p)
+}
+
+func (s *Server) withSEOSettings(ctx context.Context, req contract.Request) contract.Request {
+	if s == nil || s.store == nil {
+		return req
+	}
+	st, err := s.store.Settings(ctx)
+	if err != nil {
+		return req
+	}
+	data := contract.ContextObject(req.ContextData)
+	if v := strings.TrimSpace(st["seo.gsc_site_url"]); v != "" {
+		data["gsc_site_url"] = v
+	}
+	if v := strings.TrimSpace(st["seo.ga4_property_id"]); v != "" {
+		data["ga4_property_id"] = v
+	}
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return req
+	}
+	req.ContextData = raw
 	return req
+}
+
+func attachFetchedSEO(data map[string]any, pageURL string) {
+	if data == nil || pageURL == "" {
+		return
+	}
+	if _, ok := data["fetched_pages"]; ok {
+		return
+	}
+	pages := fetchSitePages(pageURL)
+	if len(pages) == 0 {
+		return
+	}
+	data["fetched_pages"] = pages
+	inv := keywordInventory(pages)
+	if len(inv) > 0 {
+		data["keyword_inventory"] = inv
+		data["keyword_map"] = keywordMap(pages, inv)
+	}
+	data["keyword_method"] = "The visible page (H1, headings, body, CTAs) is the source of truth — that is what the designer and the user already saw. Title and meta are often unread by the designer. Isolate phrases from the visible copy. Then customize everything: visible body, headings, CTAs, AND title/meta, in the same voice and offers already on the page. Do not invent a hidden SEO layer. No volume."
+	if psi := pagespeedSnapshot(pageURL); psi != nil {
+		data["pagespeed"] = psi
+	}
 }
 
 func (s *Server) applySeoResponse(ctx context.Context, req contract.Request, resp contract.Response) {
@@ -298,6 +392,13 @@ func (s *Server) applySeoResponse(ctx context.Context, req contract.Request, res
 	if err != nil {
 		return
 	}
+	if inv := inventoryFromContext(data); len(inv) > 0 {
+		_ = s.store.SetSeoInventory(ctx, saved.ID, inv)
+	}
+	if len(d.PlanItems) > 0 {
+		_ = s.store.SetSeoPlanItems(ctx, saved.ID, d.PlanItems)
+	}
+	s.startSeoAutomation(ctx, saved.ID)
 	resp.StructuredData["seo_brief_id"] = saved.ID
 }
 
@@ -377,6 +478,10 @@ func (s *Server) internalSeoBriefsPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.linkJob(r.Context(), "seo", saved.Title, saved.Rationale, "seo_brief", saved.ID, map[string]any{"kind": saved.Kind})
+	s.startSeoAutomation(r.Context(), saved.ID)
+	if reloaded, err := s.store.GetSeoBrief(r.Context(), saved.ID); err == nil {
+		saved = reloaded
+	}
 	writeJSON(w, map[string]any{"ok": true, "committed": false, "status": saved.Status, "brief": seoBriefJSON(saved)})
 }
 
@@ -395,6 +500,7 @@ func seoBriefJSON(d SeoBrief) map[string]any {
 		"flags":        d.Flags,
 		"status":       d.Status,
 		"rationale":    d.Rationale,
+		"pack_path":    d.PackPath(),
 		"created_at":   d.CreatedAt,
 		"updated_at":   d.UpdatedAt,
 	}

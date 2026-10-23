@@ -53,7 +53,7 @@ func claimedCreds(t *testing.T) map[string]bool {
 }
 
 func isVendorEnv(name string) bool {
-	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_"} {
+	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_", "PAGESPEED_"} {
 		if strings.HasPrefix(name, p) || name == strings.TrimSuffix(p, "_") {
 			return true
 		}

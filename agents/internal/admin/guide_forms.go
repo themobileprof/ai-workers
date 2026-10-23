@@ -150,13 +150,13 @@ func formCatalog() []formRecipe {
 			ID: "ask_seo", Title: "Ask SEO", Button: "Ask SEO",
 			Action: "/admin/projects/{project_id}/seo", Href: "/admin/projects/{project_id}?tab=seo",
 			Desk: "seo", NeedProject: true,
-			Use: "Ask SEO for a proposed page brief, audit, or outline. Does not publish.",
+			Use: "Ask SEO to fetch a live URL. The visible page is the source of truth. Isolate keywords, rewrite to searcher language, customize body and chrome together, write an onsite pack or offsite human roadmap. Ask issues a markdown pack for Cursor. Offsite items file a Delivery plan that writes after the delay unless you Turn away. Does not publish the live site.",
 			Fields: []formField{
 				{Name: "project_id", Label: "Project", Prompt: "Which project’s page?", Kind: "project", Required: true, PathOnly: true},
-				{Name: "action", Label: "Kind", Prompt: "Kind: page, audit, or outline. Skip for page.", Kind: "select", Default: "page", Options: seoActs},
-				{Name: "url", Label: "URL", Prompt: "Page URL if you have it. Skip if none.", Kind: "text"},
-				{Name: "keyword", Label: "Keyword", Prompt: "Keyword. Skip if none.", Kind: "text"},
-				{Name: "human_feedback", Label: "Notes", Prompt: "Notes or a slice of the page HTML. Skip if none.", Kind: "textarea"},
+				{Name: "action", Label: "Kind", Prompt: "Kind: onsite pack, inventory, offsite, page, audit, outline, or map. Skip for onsite.", Kind: "select", Default: "onsite", Options: seoActs},
+				{Name: "url", Label: "URL", Prompt: "Live page URL. Skip to use the Card URL. The clerk fetches it.", Kind: "text"},
+				{Name: "keyword", Label: "Keyword", Prompt: "Keyword if you already know it. Skip if none. Do not invent volume.", Kind: "text"},
+				{Name: "human_feedback", Label: "Notes", Prompt: "Optional notes. Do not paste the whole page — the clerk fetches.", Kind: "textarea"},
 			},
 		},
 		{

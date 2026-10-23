@@ -316,6 +316,12 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		if status == "accepted" || status == "rejected" {
 			_ = s.store.SetSeoStatus(ctx, job.RefID, mapped)
 		}
+		if status == "accepted" {
+			_ = s.afterSeoApproved(ctx, actor, job.RefID)
+		}
+		if status == "rejected" {
+			s.stopSeoAutomation(ctx, job.RefID)
+		}
 	}
 	kind := "system"
 	text := "Handler accepted this job. The worker did not Accept it."

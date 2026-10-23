@@ -128,6 +128,31 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Secrets:** `ANTHROPIC_API_KEY` on the VM `.env`.
 - **Env:** `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_BASE_URL`
 
+### Google Search Console
+
+- **Id:** `google-search-console`
+- **URL:** https://search.google.com/search-console
+- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. Not competitor keywords. OAuth later; property id is on Defaults now so the clerk knows which site you mean.
+- **Where:** Desk Defaults (`seo.gsc_site_url`). OAuth tokens will live in `.env` when wired — never git, never the Go worker as a hardcoded secret.
+- **Desk keys:** `seo.gsc_site_url`
+
+### Google Analytics (GA4)
+
+- **Id:** `google-analytics`
+- **URL:** https://analytics.google.com/
+- **Role:** Organic traffic for your GA4 property. Free API. Not rankings, not competitor analysis.
+- **Where:** Desk Defaults (`seo.ga4_property_id`). OAuth later in `.env`.
+- **Desk keys:** `seo.ga4_property_id`
+
+### PageSpeed Insights
+
+- **Id:** `pagespeed`
+- **URL:** https://developers.google.com/speed/docs/insights/v5/get-started
+- **Role:** Core Web Vitals / Lighthouse for a URL you name. Free quota with an API key from Google Cloud. Numbers come from Google — the clerk must not invent them.
+- **Where:** Go agents when `PAGESPEED_API_KEY` is set. Key in the VM `.env`.
+- **Secrets:** `PAGESPEED_API_KEY` on the VM `.env` → agents container. Never git.
+- **Env:** `PAGESPEED_API_KEY`
+
 ### Google Drive
 
 - **Id:** `google-drive`

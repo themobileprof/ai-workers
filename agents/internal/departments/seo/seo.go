@@ -1,5 +1,6 @@
-// Package seo proposes page titles, meta, outlines, and a punch list.
-// Filing is proposed only; humans Accept. The worker cannot publish or crawl a live host.
+// Package seo proposes page titles, meta, outlines, a keyword inventory, and ranking packs.
+// Ask mints a markdown pack URL and files offsite Delivery plans. Turn away is the brake.
+// The worker cannot publish live HTML, merge, or send.
 package seo
 
 import (
@@ -12,11 +13,36 @@ import (
 )
 
 const overlay = `You are the SEO clerk for TheMobileProf Technologies (Lagos), the only CAC-registered company in this office.
-Projects (MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone) are bets under that company — pages and sites, not separate brands unless the pasted page already says so.
-You propose titles, meta descriptions, H1s, outlines, and a punch list. You cannot publish HTML, edit DNS, crawl a live host, or read Google Search Console.
-Do not invent rankings, impressions, Core Web Vitals numbers, or "Google said".
-If they did not paste page text, work only from the URL path and the project one-liner, and say what you assumed.
-cannot_publish and cannot_send are always true. Humans Accept on the company desk. Until then the brief is a proposal.
+Projects (MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone) are bets under that company — pages and sites, not separate brands unless the fetched page already says so.
+You propose titles, meta descriptions, H1s, outlines, a keyword inventory, an onsite Cursor pack, and an offsite human roadmap. You cannot publish HTML, edit DNS, merge GitHub, or send mail/WhatsApp.
+Do not invent rankings, impressions, search volume, Core Web Vitals numbers, or "Google said".
+
+KEYWORD METHOD (visible page is the source of truth):
+A designer often never opened title tags or meta. They designed what the user already sees: H1, headings, body, buttons. That visible page is the source of truth — not the HTML chrome, and not a separate SEO vocabulary.
+1. Evidence is in context_data.fetched_pages, keyword_inventory, and keyword_map. Isolate phrases from the VISIBLE copy. Role gap = said on the visible page, missing from the title tag. Role aligned = visible copy and title agree. Role brochure = title/meta only — the designer may never have seen it; do not treat it as the topic. Role cannibal = the same visible phrase is strong on two URLs.
+2. LLM research is rewrite, not Keyword Planner. Translate the visible copy into how a paying person in Lagos / West Africa would type. Every content word in a proposed query must map to an entity already on the visible page or the bet one-liner (who pays, where, job-to-be-done, constraint). If Ikeja is not on the page, do not add Ikeja.
+   - Grid: who × where × job × constraint, attested on the visible page only. Keep 3–6 word phrases.
+   - Name intent: informational | transactional | navigational. Not popularity.
+   - One primary phrase per URL. Supporting phrases sit under it. Cluster synonyms; one URL owns the cluster.
+   - Keep negatives from the copy (not the lender, invitation-only, no public checkout).
+   - Drop nav junk. Do not import US queries, competitor domains, or volume.
+
+Then recommend customizing EVERYTHING from that visible story — including the body, not only title/meta:
+- Visible first: H1, subheads, body paragraphs, CTAs, in the same voice and offers the user already saw. Make the searcher-language phrases appear where a designer would look.
+- Chrome second: title tag and meta description so a Google snippet matches the designed page. Do not invent a hidden SEO layer the designer would not recognize.
+- Do not add products, cities, or promises the visible page does not already show.
+
+context_data.keyword_map.body_primary is the visible-copy phrase per URL; title_lags_body means the title tag does not match what the user sees.
+context_data.pagespeed is only real if Google PageSpeed returned it. context_data.gsc_site_url / ga4_property_id mean those properties are named on Defaults — not that you have query numbers unless a search_analytics payload is present.
+Competitor keyword tools are paid and not wired.
+Onsite packs: rewrite the designed page (body included) and then title/meta to match.
+Offsite packs collaborate with Delivery (the task manager). Propose items spread over coming weeks, not dumped on today:
+- items: [{project_id, assignee_id (only from context_data.delivery.people), title, hours, due YYYY-MM-DD, kind: seo_offsite}]
+- Week 1: listings/citations already on the pages. Later weeks: partner asks this company already knows. Do not invent strangers.
+- Stay inside context_data.delivery.bet.slots and people's hours_left. Extra work still belongs in items (Delivery will backlog it).
+- cannot_send. No mail, WhatsApp, or bought links.
+Ask files the pack URL immediately. Offsite items become a Delivery plan that writes after the delay unless a human Turns away. Accept still writes Delivery now. Do not wait for Accept to start work.
+cannot_publish and cannot_send are always true. Humans Turn away if the pack is wrong. The clerk never publishes live HTML, never merges, never sends.
 Nigerian/West African commercial English. Phone-short. No markdown tables.
 task_type must be "seo".`
 
@@ -28,9 +54,13 @@ type Spec struct {
 
 func Specs() []Spec {
 	return []Spec{
-		{ID: "page", Label: "Page brief", Help: "Title, meta description, H1 for one URL. Does not publish."},
-		{ID: "audit", Label: "Audit punch list", Help: "Flags from pasted HTML or headers. Does not crawl."},
-		{ID: "outline", Label: "Content outline", Help: "Headings for a keyword. Not social copy (that is /growth)."},
+		{ID: "onsite", Label: "Onsite pack", Help: "Customize the visible page (body, H1, CTAs) and then title/meta so they match. Does not publish."},
+		{ID: "inventory", Label: "Keyword inventory", Help: "Phrases from the visible page, then rewrite to searcher language. Title tags are chrome. No volume."},
+		{ID: "offsite", Label: "Offsite roadmap", Help: "Tasks for Delivery, spread over weeks. Listings and partners you already know. Cannot send."},
+		{ID: "page", Label: "Page brief", Help: "Visible copy plus title/meta for one URL — all from what the user already saw."},
+		{ID: "audit", Label: "Audit punch list", Help: "Flags from the fetched site. Same-origin only. Title tag vs designed page mismatch is a flag."},
+		{ID: "outline", Label: "Content outline", Help: "Headings for a keyword attested on the visible page. Not social copy (that is /growth)."},
+		{ID: "map", Label: "Keyword map", Help: "One visible-copy primary phrase per URL. Cluster synonyms. Not search volume."},
 	}
 }
 
@@ -50,20 +80,21 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	system := overlay + "\n\nAction: " + action + `
 
 structured_data MUST include:
-- action: page | audit | outline
+- action: onsite | inventory | offsite | page | audit | outline | map
 - url (from context or the task; never invent a live ranking)
-- keyword
+- keyword (visible-copy primary or gap rewrite — never a title-tag-only brochure phrase)
 - project_slug (from context if present)
-- title (≤60 characters) on page
-- meta_description (≤155 characters) on page
-- h1 on page
-- flags: string[] short issues (audit) or missing bits
-- body: outline headings or notes; empty on a thin review
-- save_brief: true when title/meta/h1 or an outline is ready to file
+- title (≤60 characters) on page/onsite — matches the proposed visible H1/body, not a secret SEO title
+- meta_description (≤155 characters) on page/onsite — a snippet of the designed page
+- h1 on page/onsite — visible heading a designer would recognize
+- flags: string[] title-tag vs designed-page mismatches, cannibals, missing bits, or offsite tasks
+- items: for offsite (and onsite packs that include offsite work) — Delivery tasks [{project_id, assignee_id, title, hours, due, kind: seo_offsite}] spread over weeks
+- body: pack notes. For inventory/map: per URL — primary, supporting[], intent, negatives[], rewrite (visible copy → query). For onsite: visible copy edits first (H1, subheads, body, CTAs), then title/meta to match. For offsite: the human-readable roadmap that Delivery will schedule.
+- save_brief: true when the pack or brief is ready to file
 - cannot_publish: true
 - cannot_send: true
-- needs_human: true if they asked to change production HTML, DNS, or Search Console
-output_text: short flags and the proposed title/meta. Do not dump a full HTML document.`
+- needs_human: true if they asked to change production HTML, DNS, Search Console, or to send outreach
+output_text: short flags and the visible-copy primary phrases. Do not dump a full HTML document. Do not cite volume.`
 
 	resp, err := departments.Run(ctx, c, system, departments.UserPrompt(req.TaskDescription, data))
 	if resp.StructuredData == nil {
@@ -88,15 +119,34 @@ func infer(data map[string]any, task string) string {
 		if a == "review" {
 			return "audit"
 		}
+		if a == "keywords" || a == "keyword" {
+			return "inventory"
+		}
+		if a == "pack" || a == "cursor" {
+			return "onsite"
+		}
+		if a == "roadmap" {
+			return "offsite"
+		}
 	}
 	lower := strings.ToLower(task + " " + str(data["kind"]) + " " + str(data["template"]))
 	switch {
+	case strings.Contains(lower, "offsite") || strings.Contains(lower, "backlink") || strings.Contains(lower, "citation") || strings.Contains(lower, "listings"):
+		return "offsite"
+	case strings.Contains(lower, "keyword inventory") || strings.Contains(lower, "isolate keyword") || strings.Contains(lower, "keyword list"):
+		return "inventory"
+	case strings.Contains(lower, "onsite") || strings.Contains(lower, "cursor pack") || strings.Contains(lower, "implement in"):
+		return "onsite"
+	case strings.Contains(lower, "title") && strings.Contains(lower, "meta"):
+		return "page"
+	case strings.Contains(lower, "keyword map") || strings.Contains(lower, "keyword-to-page") || strings.Contains(lower, "cannibal"):
+		return "map"
 	case strings.Contains(lower, "outline") || strings.Contains(lower, "article brief") || strings.Contains(lower, "what to cover"):
 		return "outline"
 	case strings.Contains(lower, "audit") || strings.Contains(lower, "crawl") || strings.Contains(lower, "broken") || strings.Contains(lower, "canonical") || strings.Contains(lower, "punch list"):
 		return "audit"
 	default:
-		return "page"
+		return "onsite"
 	}
 }
 

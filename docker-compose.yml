@@ -84,6 +84,7 @@ services:
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
       ADMIN_COOKIE_SECURE: ${ADMIN_COOKIE_SECURE:-true}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
+      PAGESPEED_API_KEY: ${PAGESPEED_API_KEY:-}
     mem_limit: 256m
     memswap_limit: 256m
     expose:

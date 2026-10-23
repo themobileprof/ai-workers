@@ -24,4 +24,13 @@ func TestSeoBriefFromStructured(t *testing.T) {
 	if err != nil || audit.Kind != "audit" || len(audit.Flags) != 2 {
 		t.Fatalf("%v %+v", err, audit)
 	}
+	off, err := seoBriefFromStructured(map[string]any{
+		"action": "offsite",
+		"items": []any{
+			map[string]any{"title": "Ask the existing partner for a citation", "hours": 1},
+		},
+	}, 7)
+	if err != nil || off.Kind != "offsite" || len(off.PlanItems) != 1 || off.PlanItems[0].Kind != "seo_offsite" {
+		t.Fatalf("%v %+v", err, off)
+	}
 }

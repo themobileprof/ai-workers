@@ -20,6 +20,7 @@ type Project struct {
 	OneLiner   string
 	Stage      string
 	URL        string
+	GitRepo    string
 	Notes      string
 	Hypothesis string
 	Mission    string
@@ -166,6 +167,7 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS hypothesis TEXT NOT NULL DEFAULT '
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission_due DATE;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS burn_ngn TEXT NOT NULL DEFAULT '';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_repo TEXT NOT NULL DEFAULT '';
 `)
 	return err
 }
@@ -220,7 +222,8 @@ func defaultProjects() []Project {
 func (s *Store) ListProjects(ctx context.Context) ([]Project, error) {
 	rows, err := s.pool.Query(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
-       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
+       COALESCE(git_repo, '')
 FROM projects ORDER BY
   CASE stage
     WHEN 'selling' THEN 0
@@ -261,7 +264,8 @@ FROM projects ORDER BY
 func (s *Store) GetProject(ctx context.Context, id int64) (Project, error) {
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
-       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
+       COALESCE(git_repo, '')
 FROM projects WHERE id = $1
 `, id)
 	p, err := scanProject(row)
@@ -283,7 +287,8 @@ func (s *Store) GetProjectBySlug(ctx context.Context, slug string) (Project, err
 	}
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
-       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, '')
+       COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
+       COALESCE(git_repo, '')
 FROM projects WHERE slug = $1
 `, slug)
 	p, err := scanProject(row)
@@ -306,7 +311,7 @@ func scanProject(row projectScanner) (Project, error) {
 	var p Project
 	var raw []byte
 	err := row.Scan(&p.ID, &p.Name, &p.Slug, &p.OneLiner, &p.Stage, &p.URL, &p.Notes, &p.Journey, &p.Gate, &raw, &p.CreatedAt, &p.UpdatedAt,
-		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN)
+		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN, &p.GitRepo)
 	if err != nil {
 		return Project{}, err
 	}
@@ -364,6 +369,14 @@ SET name=$1, slug=$2, one_liner=$3, stage=$4, notes=$5, url=$6, journey=$7, gate
 WHERE id=$9
 `, p.Name, p.Slug, p.OneLiner, p.Stage, p.Notes, p.URL, p.Journey, p.Gate, id)
 	}
+	if err != nil {
+		return friendlyDBErr(err)
+	}
+	return nil
+}
+
+func (s *Store) SetProjectGitRepo(ctx context.Context, id int64, repo string) error {
+	_, err := s.pool.Exec(ctx, `UPDATE projects SET git_repo = $2, updated_at = now() WHERE id = $1`, id, strings.TrimSpace(repo))
 	if err != nil {
 		return friendlyDBErr(err)
 	}

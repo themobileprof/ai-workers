@@ -1,49 +1,55 @@
-<p class="lede">Parent clerk for page titles, meta, and outlines at TheMobileProf Technologies. Prefix <code>/seo</code> reaches the worker. Desk <strong>Ask</strong> files a proposed brief on a bet. Humans Accept. The worker cannot publish, crawl a live host, or read Search Console.</p>
+<p class="lede">Parent clerk for page titles, meta, a keyword inventory from your own pages, an onsite pack Cursor implements, and an offsite human roadmap. Prefix <code>/seo</code> reaches the worker. Give a live URL. The clerk fetches that origin. Ask issues a markdown pack. You (or Cursor) implement onsite. Offsite files a Delivery plan that writes after the delay unless you Turn away. The worker cannot publish, merge, send, or spy on competitors.</p>
 
 <ol class="steps">
   <li>Tick SEO on a People card or <a href="/admin/seo">SEO</a> 403s.</li>
-  <li>Open a <a href="/admin/projects">project</a> → SEO tab, or Ask on the SEO book. Paste the page if you have it.</li>
-  <li>Desk stores <code>proposed</code>. Accept on <a href="/admin/seo">SEO</a>. Copy the accepted title/meta. Do not use info@ <code>/approve</code>.</li>
+  <li>On the bet Card: public URL. Optional GitHub repo is only named in the pack so Cursor knows which workspace to open.</li>
+  <li>Ask with the live URL. The clerk fetches same-host pages, isolates keywords, and issues <code>/site/seo/{token}</code>. Do not paste HTML.</li>
+  <li>Download the file or paste that URL into Cursor. <strong>Turn away</strong> unpublishes the pack. Do not use info@ <code>/approve</code>.</li>
   <li>Ops Telegram <code>/seo</code> if SEO is ticked. Customer WhatsApp and the Academy bot refuse it.</li>
 </ol>
 
-<p class="hint">This is not Growth social copy. <code>/growth</code> still writes X/LinkedIn. Rank tracking, GSC dumps, and crawlers are later.</p>
+<p class="hint">This is not Growth social copy. <code>/growth</code> still writes X/LinkedIn. Competitor keyword tools (Ahrefs, Semrush) are paid and not wired. Search Console / GA4 ids on Defaults are <em>your</em> properties only. The visible page is the source of truth (a designer may never have seen title/meta). Isolate phrases from that copy, rewrite to searcher language, then customize body, headings, CTAs, and chrome together. No invented volume.</p>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 01 · desk Ask page brief</p>
-  <p class="you-say">HomeGauge → SEO → Page brief, URL the rates page, “Ikeja mortgage rates”.</p>
+  <p class="spec-no">Specimen 01 · desk Ask onsite pack</p>
+  <p class="you-say">HomeGauge → SEO → Onsite pack, URL the rates page.</p>
   <pre class="json">{
-  "task_description": "Propose SEO for HomeGauge at https://homegauge.themobileprof.com/rates. Do not publish. Do not invent rankings.",
+  "task_description": "Propose SEO for HomeGauge at https://homegauge.themobileprof.com/rates. Write an onsite pack Cursor can implement. Do not invent volume. Do not publish.",
   "context_data": {
     "channel": "desk",
-    "action": "page",
+    "action": "onsite",
     "cannot_publish": true,
     "url": "https://homegauge.themobileprof.com/rates",
-    "keyword": "Ikeja mortgage rates",
     "project": { "slug": "homegauge" }
   }
 }</pre>
-  <p class="expect"><code>task_type</code> seo, <code>cannot_publish</code> true, title ≤60, meta ≤155. Desk row status <code>proposed</code>. Accept is a human click. Worker never writes <code>approved</code>.</p>
+  <p class="expect"><code>task_type</code> seo, <code>cannot_publish</code> true. <code>fetched_pages</code>, <code>keyword_inventory</code>, and <code>keyword_map</code> are attached before the model runs. The pack customizes visible copy first, then title/meta to match. Desk row status <code>proposed</code>. Ask mints a pack token. Public GET <code>/site/seo/{token}</code> is markdown unless Turn away.</p>
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 02 · /seo audit (chat)</p>
-  <p class="you-say"><code>/seo Flag this Academy lesson page: …paste title and HTML…</code></p>
-  <p class="expect"><code>action</code> audit. <code>output_text</code> is a punch list. Filing still happens on the desk if they named a bet. Nothing is published.</p>
+  <p class="spec-no">Specimen 02 · /seo keyword inventory</p>
+  <p class="you-say"><code>/seo Isolate keywords from public Academy pages. Do not invent search volume.</code></p>
+  <p class="expect"><code>action</code> inventory. Phrases from the visible page. Roles: gap (on the designed page, not in the title tag), aligned, cannibal, brochure (title-only — designer may never have seen it). LLM rewrites to searcher language from attested entities only. No competitor domains. No invented impressions.</p>
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 03 · n8n may file, still not Accept</p>
+  <p class="spec-no">Specimen 03 · offsite human roadmap</p>
+  <p class="you-say"><code>/seo Offsite listings we already have for Academy. Do not cold-email strangers.</code></p>
+  <p class="expect"><code>action</code> offsite, <code>cannot_send</code> true, <code>items</code> dated over coming weeks (<code>kind</code> seo_offsite). Ask files a Delivery plan. Delivery apportions to people and slots; extras sit on Backlog. Writes after the delay unless Turn away. Accept writes it now. No WhatsApp blast. No bought links.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · n8n may file, still not Accept</p>
   <p class="you-say"><code>POST /internal/v1/seo-briefs</code> with <code>X-Internal-Token</code>, <code>project_id</code> or <code>project_slug</code>, and worker <code>structured_data</code>.</p>
-  <p class="expect">Inserts <code>proposed</code> only. A body that claims <code>status: approved</code> is ignored. Same rule as legal drafts.</p>
+  <p class="expect">Inserts <code>proposed</code> only. A body that claims <code>status: approved</code> is ignored. The pack URL and any offsite Delivery plan still start unless Turn away. Same rule as legal drafts for the Accept stamp.</p>
 </section>
 
 <section class="later">
-  <p class="stamp dark">Not wired · Search Console, ranks, crawlers</p>
-  <p>No GSC credential. No rank tracker. No site crawl from this process. Paste the page or the export. When a vendor is wired, add it to <code>TOOLS.md</code> and a specimen here — the worker still cannot publish.</p>
+  <p class="stamp dark">Partial · Search Console / GA4 numbers</p>
+  <p>Property ids live on Defaults. The APIs are free for <em>your</em> verified site. OAuth is not in <code>.env</code> yet, so the clerk must not invent queries, clicks, or positions. When OAuth is added, the inventory can be annotated with <em>your</em> queries — still not competitor keywords.</p>
 </section>
 
 <section class="later">
-  <p class="stamp dark">Not wired · publish to the live page</p>
-  <p>Copy from the desk today. When a deploy path exists, add the specimen: which host, that the worker still cannot push, and that info@ <code>/approve</code> stays for email drafts.</p>
+  <p class="stamp dark">Not wired · competitor keyword spy</p>
+  <p>Google does not sell other people’s ranking keywords for free. Ahrefs / Semrush / DataForSEO are paid. Do not scrape Google SERPs. PageSpeed of a URL you name is the only free “other site” number, and it is speed, not keywords.</p>
 </section>

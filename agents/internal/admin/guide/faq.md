@@ -61,7 +61,7 @@ Inbound info@ does not queue a send. Delivery plans wait 15 minutes (60 after 20
 2. **`/approve`** still sends the info@ draft now.
 3. Job chat **Turn away** stops a plan. **Accept** writes it now.
 
-Stage, Legal send, and money above a cap stay a human click. Catalog-matched Files place themselves.
+Stage, Legal send, and money above a cap stay a human click. Catalog-matched Files place themselves. An SEO Ask issues the pack URL and files offsite Delivery work the same way.
 
 ## How do I assign work this week?
 
@@ -89,7 +89,7 @@ Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wai
 
 ## How do I ask for SEO copy?
 
-Tick SEO. Workers → SEO → Ask, or `/seo` on ops Telegram. Accept on `/admin/seo`. Copy from the desk. Publishing the live page is not wired. The worker cannot crawl or read Search Console. Customer WhatsApp cannot run `/seo`.
+Tick SEO. Put the public URL on the project Card. Workers → SEO → Ask, or `/seo` on ops Telegram. The clerk fetches the live URL. The visible page is the source of truth (a designer may never have seen title/meta). It isolates keywords and rewrites them into searcher language, then customizes body, headings, CTAs, and chrome together. Ask issues a markdown pack — download it or give Cursor the URL. Offsite work becomes a Delivery week plan (spread over weeks) that writes after the delay unless you Turn away. Accept writes Delivery now. The clerk cannot send or publish the live site. Search Console ids on Defaults are your property only. Customer WhatsApp cannot run `/seo`.
 
 ## Why can’t I see the Board?
 

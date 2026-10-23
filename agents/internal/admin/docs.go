@@ -193,7 +193,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Parent clerk",
 		Path:     "POST /departments/seo",
 		Wire:     "partial",
-		Summary:  "Page titles, meta, outlines, audit punch lists. Humans Accept. The worker cannot publish, crawl, or read Search Console.",
+		Summary:  "Fetches the bet’s own URL. The visible page is the source of truth. Isolates keywords, customizes body and chrome together. Ask issues a markdown pack for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. Search Console ids on Defaults; competitor spy tools are paid and not wired.",
 		Prefixes: []string{"/seo", "desk Ask"},
 	},
 	{

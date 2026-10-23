@@ -139,9 +139,11 @@ It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file
 
 ### SEO (`/seo`) — partial
 
-Titles, meta, outlines, audit punch lists. Accept, then a human pastes onto the live page.
+Titles, meta, outlines, keyword inventory from the bet’s own pages, an onsite pack for Cursor, and an offsite roadmap. Give a live URL. The clerk fetches that origin. The visible page is the source of truth (a designer may never have seen title/meta). Keywords come from that copy; the pack customizes body, headings, CTAs, and chrome together so search snippets match the designed page. Ask issues a markdown pack (`/site/seo/{token}`) — download it or reference the URL in Cursor. A human implements onsite in the site repo. Offsite work is handed to Delivery as a week plan (spread over periods, stage caps, backlog) that writes after the delay unless you Turn away. The clerk cannot send.
 
-It cannot publish, crawl, or read Search Console. It is **not** GEO / “win AI answers.” It is not new.
+Search Console and GA4 **property ids** sit on Defaults (free APIs, *your* site only). OAuth is later — do not invent query numbers until then. Competitor keyword spy tools are paid and not wired.
+
+It cannot publish or merge. It does not talk to GitHub. It is **not** GEO / “win AI answers.” It is not a web-wide crawler.
 
 ### Files (`/file`) — partial
 
@@ -175,7 +177,7 @@ Still later:
 
 1. WhatsApp a mission to a field phone (do not use customer WhatsApp). GO / PIVOT / KILL stays Accept on Decide.
 2. Burn-by-bet **from Books tracking categories** (Card can hold a monthly NGN figure you paste; Go still does not compute VAT).
-3. Search Console later — still no publish.
+3. Search Console / GA4 OAuth so the SEO clerk can read *your* queries (property ids are already on Defaults). Still no publish; onsite still ships through Cursor + a human.
 4. CRM notification sequences (email / WhatsApp) and upsell plays, fired from the person timeline. A human still Accepts or `/approve`. Do not auto-text the customer.
 
 Community stays Telegram rooms, not a campus timetable.
@@ -191,7 +193,7 @@ Do not tell the owner to:
 3. Turn Growth into scrape + cold sequences.
 4. Add a Scout that scrapes Reddit, X, or forums to “see if the problem is growing.” Proof here is a **named person at a named place**.
 5. Add a Demo Day worker that invents waitlist / MAU / burn per “startup.” Those metrics are not stored. Copy can be drafted by Growth; a human sends.
-6. Add GEO, crawlers, or programmatic publishing.
+6. Add GEO, crawl the open web, or auto-merge / auto-publish. Fetching the bet’s own URL and writing a pack a human (or Cursor) implements is the SEO path.
 7. Let any worker Accept, send, publish, hire, or file at CAC.
 8. Give each bet its own WhatsApp, Books org, or CAC.
 

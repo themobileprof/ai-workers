@@ -505,8 +505,15 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 
 func workItemsFromPlan(raw any) []WorkItem {
 	var out []WorkItem
-	arr, ok := raw.([]any)
-	if !ok {
+	var arr []any
+	switch t := raw.(type) {
+	case []any:
+		arr = t
+	case []map[string]any:
+		for _, m := range t {
+			arr = append(arr, m)
+		}
+	default:
 		return out
 	}
 	for _, row := range arr {
