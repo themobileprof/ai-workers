@@ -139,7 +139,7 @@ It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file
 
 ### SEO (`/seo`) — partial
 
-Titles, meta, outlines, keyword inventory from the bet’s own pages, an onsite pack for Cursor, and an offsite roadmap. Give a live URL. The clerk fetches that origin. The visible page is the source of truth (a designer may never have seen title/meta). Keywords come from that copy; the pack customizes body, headings, CTAs, and chrome together so search snippets match the designed page. Ask issues a markdown pack (`/site/seo/{token}`) — download it or reference the URL in Cursor. A human implements onsite in the site repo. Offsite work is handed to Delivery as a week plan (spread over periods, stage caps, backlog) that writes after the delay unless you Turn away. The clerk cannot send.
+Titles, meta, outlines, keyword inventory from the bet’s own pages, and a walk: quotable facts, FAQ, schema, an onsite pack for Cursor, then offsite. Give a live URL. The clerk fetches that origin (JSON-LD is kept). The visible page is the source of truth (a designer may never have seen title/meta). Ask issues a markdown pack (`/site/seo/{token}`) — download it or reference the URL in Cursor. A human implements onsite in the site repo. Offsite work is handed to Delivery as a week plan (spread over periods, stage caps, backlog) that writes after the delay unless you Turn away. The clerk cannot send. It is still not a GEO desk — no invented ChatGPT citations.
 
 Search Console and GA4 **property ids** sit on Defaults (free APIs, *your* site only). OAuth is later — do not invent query numbers until then. Competitor keyword spy tools are paid and not wired.
 

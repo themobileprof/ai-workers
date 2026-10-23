@@ -19,9 +19,15 @@ func (s *Server) WithSEO(fn PlaceFunc) {
 	}
 }
 
-func seoFlash(ok string) string {
+func seoFlash(ok, step string) string {
 	switch ok {
 	case "drafted":
+		if spec, found := seo.Lookup(step); found {
+			if next := nextSeoWalkLabel(step); next != "" {
+				return spec.Label + " pack is live. Next: " + next + ". Turn away if a fact is invented."
+			}
+			return spec.Label + " pack is live. Download it or give Cursor the URL."
+		}
 		return "Pack URL is live. Download it or give Cursor the URL. Offsite items are a Delivery plan that writes after the delay unless you Turn away."
 	case "seo_ok":
 		return "Accepted. The pack was already live. The clerk does not publish the site or open a GitHub PR."
@@ -48,8 +54,16 @@ func (s *Server) seoGET(w http.ResponseWriter, r *http.Request) {
 		SeoBriefs: briefs,
 		Projects:  projects,
 		SeoKinds:  seo.Specs(),
-		CanSEO:    s.seo != nil,
-		Flash:     seoFlash(r.URL.Query().Get("ok")),
+		CanSEO:    true,
+		Flash:     seoFlash(r.URL.Query().Get("ok"), r.URL.Query().Get("step")),
+	}
+	if pid, _ := strconv.ParseInt(r.URL.Query().Get("project_id"), 10, 64); pid > 0 {
+		if p, err := s.store.GetProject(r.Context(), pid); err == nil {
+			data.Project = &p
+			owned, _ := s.store.ListSeoBriefs(r.Context(), p.ID)
+			data.SeoWalk = seoWalk(owned, p.URL)
+			data.SeoSeed = loadSeoSeed(p, owned)
+		}
 	}
 	if err != nil {
 		data.Error = err.Error()
@@ -140,12 +154,6 @@ func (s *Server) seoAskPOST(w http.ResponseWriter, r *http.Request) {
 	if u == nil {
 		return
 	}
-	if s.seo == nil {
-		briefs, _ := s.store.ListSeoBriefs(r.Context(), 0)
-		projects, _ := s.store.ListProjects(r.Context())
-		s.render(w, "seo", pageData{Title: "SEO", Nav: "seo", User: u, SeoBriefs: briefs, Projects: projects, SeoKinds: seo.Specs(), Error: "SEO worker is not wired"})
-		return
-	}
 	_ = r.ParseForm()
 	pid, _ := strconv.ParseInt(r.FormValue("project_id"), 10, 64)
 	p, err := s.store.GetProject(r.Context(), pid)
@@ -155,7 +163,7 @@ func (s *Server) seoAskPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "seo", pageData{Title: "SEO", Nav: "seo", User: u, SeoBriefs: briefs, Projects: projects, SeoKinds: seo.Specs(), CanSEO: true, Error: "pick a project"})
 		return
 	}
-	saved, err := s.runSeoAsk(r.Context(), p, r.FormValue("action"), r.FormValue("url"), r.FormValue("keyword"), r.FormValue("human_feedback"))
+	saved, err := s.runSeoAsk(r.Context(), p, seoAskFromForm(r))
 	if err != nil {
 		briefs, _ := s.store.ListSeoBriefs(r.Context(), 0)
 		projects, _ := s.store.ListProjects(r.Context())
@@ -163,7 +171,7 @@ func (s *Server) seoAskPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.linkJob(r.Context(), "seo", saved.Title, saved.Rationale, "seo_brief", saved.ID, map[string]any{"kind": saved.Kind, "url": saved.URL})
-	http.Redirect(w, r, "/admin/seo?ok=drafted", http.StatusSeeOther)
+	http.Redirect(w, r, withQuery(withQuery("/admin/seo?ok=drafted", "project_id", strconv.FormatInt(p.ID, 10)), "step", saved.Kind), http.StatusSeeOther)
 }
 
 func (s *Server) projectSEO(w http.ResponseWriter, r *http.Request) {
@@ -178,49 +186,55 @@ func (s *Server) projectSEO(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if s.seo == nil {
-		roster, _ := s.store.ListUsers(r.Context())
-		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "LLM is not configured on this process", ""))
-		return
-	}
 	_ = r.ParseForm()
-	saved, err := s.runSeoAsk(r.Context(), p, r.FormValue("action"), r.FormValue("url"), r.FormValue("keyword"), r.FormValue("human_feedback"))
+	saved, err := s.runSeoAsk(r.Context(), p, seoAskFromForm(r))
 	if err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "SEO did not save a brief: "+err.Error(), ""))
 		return
 	}
 	s.linkJob(r.Context(), "seo", saved.Title, saved.Rationale, "seo_brief", saved.ID, map[string]any{"kind": saved.Kind, "url": saved.URL})
-	http.Redirect(w, r, withQuery(withQuery("/admin/projects/"+strconv.FormatInt(p.ID, 10), "ok", "drafted"), "tab", "seo"), http.StatusSeeOther)
+	http.Redirect(w, r, withQuery(withQuery(withQuery("/admin/projects/"+strconv.FormatInt(p.ID, 10), "ok", "drafted"), "tab", "seo"), "step", saved.Kind), http.StatusSeeOther)
 }
 
-func (s *Server) runSeoAsk(ctx context.Context, p Project, action, pageURL, keyword, feedback string) (SeoBrief, error) {
-	req, err := seoRequest(p, action, pageURL, keyword, feedback)
+func (s *Server) runSeoAsk(ctx context.Context, p Project, form seoAskForm) (SeoBrief, error) {
+	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	action := resolveSeoAction(form.Action, briefs)
+	pageURL := firstNonEmpty(strings.TrimSpace(form.URL), strings.TrimSpace(p.URL))
+	pages := fetchSitePages(pageURL)
+	if len(pages) == 0 {
+		pages = fetchHomePage(pageURL)
+	}
+	seed := applyAskForm(buildSeoSeed(pages, p, briefs), form)
+	req, err := seoRequest(p, action, pageURL, seed, form.Feedback, briefs, pages)
 	if err != nil {
 		return SeoBrief{}, err
 	}
 	req = s.withSEOSettings(ctx, req)
 	req = s.withSEODeliveryContext(ctx, req, p)
-	resp, err := s.seo(ctx, req)
-	if err != nil || resp.Status != contract.StatusSuccess {
-		msg := resp.OutputText
-		if msg == "" && err != nil {
-			msg = err.Error()
+	var d SeoBrief
+	if s.seo != nil {
+		resp, err := s.seo(ctx, req)
+		if err == nil && resp.Status == contract.StatusSuccess {
+			d, err = seoBriefFromStructured(resp.StructuredData, p.ID)
+			if err != nil {
+				d = SeoBrief{}
+			}
 		}
-		if msg == "" {
-			msg = "worker failed"
-		}
-		return SeoBrief{}, errors.New(msg)
 	}
-	d, err := seoBriefFromStructured(resp.StructuredData, p.ID)
-	if err != nil {
-		return SeoBrief{}, err
+	if d.Kind == "" {
+		d = briefFromSeed(p, action, seed, form)
+	} else {
+		mergeSeoBrief(&d, seed, form)
 	}
 	if d.URL == "" {
-		d.URL = strings.TrimSpace(pageURL)
+		d.URL = pageURL
 	}
 	if d.Keyword == "" {
-		d.Keyword = strings.TrimSpace(keyword)
+		d.Keyword = seed.Keyword
+	}
+	if d.Title == "" && d.Body == "" && len(d.Flags) == 0 && len(d.PlanItems) == 0 {
+		return SeoBrief{}, errors.New("nothing on the page to file — put a public URL on Card")
 	}
 	saved, err := s.store.InsertSeoBrief(ctx, d)
 	if err != nil {
@@ -241,11 +255,8 @@ func (s *Server) runSeoAsk(ctx context.Context, p Project, action, pageURL, keyw
 	return saved, nil
 }
 
-func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.Request, error) {
-	action = strings.ToLower(strings.TrimSpace(action))
-	if _, ok := seo.Lookup(action); !ok {
-		action = "onsite"
-	}
+func seoRequest(p Project, action, pageURL string, seed seoSeed, feedback string, briefs []SeoBrief, pages []fetchedPage) (contract.Request, error) {
+	action = resolveSeoAction(action, briefs)
 	pageURL = strings.TrimSpace(pageURL)
 	if pageURL == "" {
 		pageURL = strings.TrimSpace(p.URL)
@@ -256,8 +267,11 @@ func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.
 		"cannot_publish": true,
 		"cannot_send":    true,
 		"url":            pageURL,
-		"keyword":        strings.TrimSpace(keyword),
+		"keyword":        seed.Keyword,
 		"human_feedback": strings.TrimSpace(feedback),
+		"cite_seed":      seed.Cites,
+		"faq_seed":       seedFAQs(seed.FAQs),
+		"schema_seed":    seed.JSONLD,
 		"project": map[string]any{
 			"id":        p.ID,
 			"name":      p.Name,
@@ -267,7 +281,11 @@ func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.
 			"git_repo":  p.GitRepo,
 		},
 	}
+	if len(pages) > 0 {
+		ctx["fetched_pages"] = pages
+	}
 	attachFetchedSEO(ctx, pageURL)
+	ctx["walk"] = seoWalkContext(briefs)
 	raw, err := json.Marshal(ctx)
 	if err != nil {
 		return contract.Request{}, err
@@ -277,16 +295,22 @@ func seoRequest(p Project, action, pageURL, keyword, feedback string) (contract.
 		task += " at " + pageURL
 	}
 	switch action {
+	case "cite":
+		task += ". Walk step 1: quotable facts. Start from context_data.cite_seed (already extracted from the page). Keep those sentences; rewrite only for clarity. structured_data.cites. No invented stats. Do not publish."
+	case "faq":
+		task += ". Walk step 2: FAQ. Start from context_data.faq_seed. Visible Q&A first (faqs), then FAQPage JSON-LD that matches. Do not invent places."
+	case "schema":
+		task += ". Walk step 3: schema. Start from context_data.schema_seed. Inventory schema_types and fetched_pages.json_ld. Organization is TheMobileProf Technologies unless the page names someone else. Flag robots.blocked_ai. Do not publish."
 	case "inventory":
 		task += ". The visible page is the source of truth (a designer may never have seen title/meta). Isolate keywords from keyword_inventory and keyword_map. Rewrite visible copy into searcher queries using only attested entities. Prefer gap phrases. Do not invent search volume."
 	case "map":
 		task += ". One primary phrase per URL from the visible copy. Cluster synonyms. Title tags must match the designed page. No volume."
 	case "offsite":
-		task += ". Propose Delivery tasks (items) spread over coming weeks, not all this week. Use people and slots from context_data.delivery. Listings and partners already on the pages. No cold outreach. cannot_send."
+		task += ". Walk step 5: Propose Delivery tasks (items) spread over coming weeks, not all this week. Use people and slots from context_data.delivery. Listings and partners already on the pages. Same legal name as schema. No cold outreach. cannot_send."
 	case "onsite":
-		task += ". Write an onsite pack Cursor can implement. Customize the visible page (body, H1, subheads, CTAs) from what the user already saw, then title/meta so snippets match that design. Same offers and places. Do not invent volume. Do not publish."
+		task += ". Walk step 4: Write an onsite pack Cursor can implement. Weave walk.cite, walk.faq, and walk.schema into the pack. Customize the visible page (body, H1, subheads, CTAs) from what the user already saw, then title/meta so snippets match that design. Same offers and places. Do not invent volume. Do not publish."
 	default:
-		task += ". Fetch, keyword_inventory, and keyword_map are already attached. Visible copy is the source of truth. Customize body and chrome together. Do not invent rankings or Core Web Vitals. Do not publish."
+		task += ". Fetch, keyword_inventory, keyword_map, and schema_types are already attached. Visible copy is the source of truth. Customize body and chrome together. Do not invent rankings or Core Web Vitals. Do not publish."
 	}
 	if feedback != "" {
 		task += " Human notes:\n" + feedback
@@ -319,7 +343,23 @@ func (s *Server) EnrichSEO(ctx context.Context, req contract.Request) contract.R
 	if strVal(data["url"]) == "" && p.URL != "" {
 		data["url"] = p.URL
 	}
+	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	data["walk"] = seoWalkContext(briefs)
+	action := strVal(data["action"])
+	guessed := seo.Infer(data, req.TaskDescription)
+	if action == "walk" || action == "next" || (action == "" && guessed == "onsite" && !strings.Contains(strings.ToLower(req.TaskDescription), "onsite") && !strings.Contains(strings.ToLower(req.TaskDescription), "cursor")) {
+		data["action"] = resolveSeoAction("walk", briefs)
+	} else if action == "" {
+		data["action"] = guessed
+	}
 	attachFetchedSEO(data, strVal(data["url"]))
+	seed := buildSeoSeed(pagesFromContext(data), p, briefs)
+	data["cite_seed"] = seed.Cites
+	data["faq_seed"] = seedFAQs(seed.FAQs)
+	data["schema_seed"] = seed.JSONLD
+	if strVal(data["keyword"]) == "" && seed.Keyword != "" {
+		data["keyword"] = seed.Keyword
+	}
 	raw, _ := json.Marshal(data)
 	req.ContextData = raw
 	req = s.withSEOSettings(ctx, req)
@@ -350,25 +390,41 @@ func (s *Server) withSEOSettings(ctx context.Context, req contract.Request) cont
 }
 
 func attachFetchedSEO(data map[string]any, pageURL string) {
-	if data == nil || pageURL == "" {
+	if data == nil {
 		return
 	}
-	if _, ok := data["fetched_pages"]; ok {
-		return
+	pages := pagesFromContext(data)
+	if len(pages) == 0 && pageURL != "" {
+		pages = fetchSitePages(pageURL)
+		if len(pages) > 0 {
+			data["fetched_pages"] = pages
+		}
 	}
-	pages := fetchSitePages(pageURL)
 	if len(pages) == 0 {
 		return
 	}
-	data["fetched_pages"] = pages
-	inv := keywordInventory(pages)
-	if len(inv) > 0 {
-		data["keyword_inventory"] = inv
-		data["keyword_map"] = keywordMap(pages, inv)
+	if _, ok := data["keyword_inventory"]; !ok {
+		inv := keywordInventory(pages)
+		if len(inv) > 0 {
+			data["keyword_inventory"] = inv
+			data["keyword_map"] = keywordMap(pages, inv)
+		}
 	}
-	data["keyword_method"] = "The visible page (H1, headings, body, CTAs) is the source of truth — that is what the designer and the user already saw. Title and meta are often unread by the designer. Isolate phrases from the visible copy. Then customize everything: visible body, headings, CTAs, AND title/meta, in the same voice and offers already on the page. Do not invent a hidden SEO layer. No volume."
-	if psi := pagespeedSnapshot(pageURL); psi != nil {
-		data["pagespeed"] = psi
+	data["keyword_method"] = "The visible page (H1, headings, body, CTAs) is the source of truth — that is what the designer and the user already saw. Title and meta are often unread by the designer. Isolate phrases from the visible copy. Then customize everything: visible body, headings, CTAs, AND title/meta, in the same voice and offers already on the page. Do not invent a hidden SEO layer. No volume. cite_seed, faq_seed, and schema_seed are already extracted from the page — use them; rewrite only for clarity."
+	if _, ok := data["schema_types"]; !ok {
+		if types := schemaTypesFromPages(pages); len(types) > 0 {
+			data["schema_types"] = types
+		}
+	}
+	if _, ok := data["robots"]; !ok {
+		if robots := fetchRobotsNotes(firstNonEmpty(pageURL, pages[0].URL)); robots != nil {
+			data["robots"] = robots
+		}
+	}
+	if _, ok := data["pagespeed"]; !ok {
+		if psi := pagespeedSnapshot(firstNonEmpty(pageURL, pages[0].URL)); psi != nil {
+			data["pagespeed"] = psi
+		}
 	}
 }
 
@@ -388,6 +444,8 @@ func (s *Server) applySeoResponse(ctx context.Context, req contract.Request, res
 	if err != nil {
 		return
 	}
+	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	mergeSeoBrief(&d, buildSeoSeed(pagesFromContext(data), p, briefs), seoAskForm{})
 	saved, err := s.store.InsertSeoBrief(ctx, d)
 	if err != nil {
 		return

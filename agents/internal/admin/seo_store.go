@@ -287,7 +287,14 @@ func seoBriefFromStructured(sd map[string]any, projectID int64) (SeoBrief, error
 		d.Rationale = strings.Join(d.Flags, "; ")
 	}
 	d.PlanItems = parseSeoPlanItems(sd["items"], projectID)
-	if d.Title == "" && d.Body == "" && len(d.Flags) == 0 && len(d.PlanItems) == 0 {
+	if extra := walkBodyFromStructured(sd, ""); extra != "" {
+		if d.Body == "" {
+			d.Body = extra
+		} else if !strings.Contains(d.Body, extra) {
+			d.Body = strings.TrimSpace(d.Body) + "\n\n" + extra
+		}
+	}
+	if d.Title == "" && d.Body == "" && len(d.Flags) == 0 && len(d.PlanItems) == 0 && !walkHasContent(sd) {
 		return SeoBrief{}, errors.New("worker returned no title, outline, flags, or tasks")
 	}
 	if d.Title == "" {

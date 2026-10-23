@@ -304,10 +304,11 @@
     <section role="tabpanel" id="tab-seo" data-tab="seo">
       <h3>SEO briefs</h3>
       <ol class="recipe">
-        <li>Ask below with the live URL. The clerk fetches that origin, isolates keywords, and issues a pack URL.</li>
+        <li>Do the walk below, one step at a time. The clerk fetches the live URL and issues a pack.</li>
         <li>Download the markdown or give Cursor the pack URL. You implement. This clerk cannot publish the live site.</li>
-        <li><strong>Turn away</strong> if the pack is wrong. Offsite items write on Delivery after the delay unless you stop them.</li>
+        <li><strong>Turn away</strong> if a fact is invented. Offsite items write on Delivery after the delay unless you stop them.</li>
       </ol>
+      {{template "seo-walk" .}}
       {{if .SeoBriefs}}
       {{range .SeoBriefs}}
       <section class="proposal">
@@ -342,17 +343,18 @@
       {{end}}
       {{if .CanSEO}}
       <form method="post" action="/admin/projects/{{.Project.ID}}/seo" class="person add">
-        <p class="hint">Give the live URL. The clerk fetches that origin and issues a pack URL for Cursor. Turn away if it is wrong.</p>
+        <p class="hint">Skip to a step if you are not on the walk. Leave kind on Next walk step to stay in order.</p>
         <div class="fields">
           <label>Kind
             <select name="action">
+              <option value="walk">Next walk step</option>
               {{range .SeoKinds}}
               <option value="{{.ID}}">{{.Label}}</option>
               {{end}}
             </select>
           </label>
-          <label>URL<input name="url" value="{{.Project.URL}}" placeholder="https://…"></label>
-          <label>Keyword<input name="keyword"></label>
+          <label>URL<input name="url" value="{{if .SeoSeed.URL}}{{.SeoSeed.URL}}{{else}}{{.Project.URL}}{{end}}" placeholder="https://…"></label>
+          <label>Keyword<input name="keyword" value="{{.SeoSeed.Keyword}}"></label>
         </div>
         <label>Notes
           <textarea name="human_feedback" rows="3" placeholder="Optional. The clerk fetches the URL."></textarea>

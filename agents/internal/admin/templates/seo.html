@@ -2,12 +2,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">SEO · {{statusCount .SeoBriefs "proposed"}} waiting</p>
-    <h2>Ask, then hand the pack to Cursor</h2>
+    <h2>Walk the page, then hand Cursor the pack</h2>
     <ol class="recipe">
-      <li>Ask with a live URL. The clerk fetches that origin, isolates keywords, and issues a pack URL.</li>
+      <li>Pick a bet. Do the step marked <strong>now</strong>: facts, FAQ, schema, onsite, then offsite.</li>
       <li>Download the markdown, or give Cursor the public pack URL. You implement onsite in the site repo.</li>
-      <li>Offsite items become a Delivery plan that writes after the delay. <strong>Turn away</strong> if the pack is wrong. Accept writes Delivery now.</li>
-      <li>This clerk does not send, publish the live site, or open a GitHub PR.</li>
+      <li>Offsite items become a Delivery plan that writes after the delay. <strong>Turn away</strong> if a fact is invented.</li>
+      <li>This clerk does not send, publish the live site, or invent ChatGPT citations.</li>
     </ol>
     {{template "page-reads" (guideReads "seo")}}
   </div>
@@ -54,9 +54,9 @@
       {{else}}
       <p class="hint">Nothing waiting. Open a <a class="quiet" href="/admin/projects">project</a> → SEO → Ask SEO, or send Telegram <code>/seo</code>.</p>
       {{end}}
-      {{if .CanSEO}}
-      <form method="post" action="/admin/seo/ask" class="person add">
-        <p class="hint">Give the live URL. The clerk fetches that origin and issues a pack URL. Turn away if it is wrong.</p>
+      {{if not .Project}}
+      <form method="get" action="/admin/seo" class="person add">
+        <p class="hint">Pick a bet with a public URL. The walk then shows the next step.</p>
         <div class="fields">
           <label>Bet
             <select name="project_id" required>
@@ -66,15 +66,35 @@
               {{end}}
             </select>
           </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Open walk</button>
+        </div>
+      </form>
+      {{end}}
+      {{template "seo-walk" .}}
+      {{if .CanSEO}}
+      <form method="post" action="/admin/seo/ask" class="person add">
+        <p class="hint">Skip to a step, or inventory / audit. Leave kind on the next walk step if you are following the wizard.</p>
+        <div class="fields">
+          <label>Bet
+            <select name="project_id" required>
+              <option value="">Choose…</option>
+              {{range .Projects}}
+              <option value="{{.ID}}" {{if and $.Project (eq $.Project.ID .ID)}}selected{{end}}>{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
           <label>Kind
             <select name="action">
+              <option value="walk">Next walk step</option>
               {{range .SeoKinds}}
               <option value="{{.ID}}">{{.Label}}</option>
               {{end}}
             </select>
           </label>
-          <label>URL<input name="url" placeholder="https://"></label>
-          <label>Keyword<input name="keyword"></label>
+          <label>URL<input name="url" value="{{if .SeoSeed.URL}}{{.SeoSeed.URL}}{{else if .Project}}{{.Project.URL}}{{end}}" placeholder="https://"></label>
+          <label>Keyword<input name="keyword" value="{{.SeoSeed.Keyword}}"></label>
         </div>
         <label>Notes
           <textarea name="human_feedback" rows="3" placeholder="Optional. The clerk fetches the URL."></textarea>

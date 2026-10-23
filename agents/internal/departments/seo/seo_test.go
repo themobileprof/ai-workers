@@ -36,6 +36,15 @@ func TestSpecsUnique(t *testing.T) {
 	if _, ok := Lookup("offsite"); !ok {
 		t.Fatal("offsite")
 	}
+	if _, ok := Lookup("cite"); !ok {
+		t.Fatal("cite")
+	}
+	if _, ok := Lookup("faq"); !ok {
+		t.Fatal("faq")
+	}
+	if _, ok := Lookup("schema"); !ok {
+		t.Fatal("schema")
+	}
 	if _, ok := Lookup("missing"); ok {
 		t.Fatal("unknown")
 	}
@@ -68,6 +77,15 @@ func TestInfer(t *testing.T) {
 	}
 	if infer(map[string]any{}, "Offsite listings we already have") != "offsite" {
 		t.Fatal("offsite")
+	}
+	if infer(map[string]any{}, "Quotable facts from the rates page") != "cite" {
+		t.Fatal("cite")
+	}
+	if infer(map[string]any{}, "FAQ the Academy page already answers") != "faq" {
+		t.Fatal("faq")
+	}
+	if infer(map[string]any{}, "JSON-LD schema.org for HomeGauge") != "schema" {
+		t.Fatal("schema")
 	}
 }
 

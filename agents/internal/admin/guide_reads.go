@@ -80,7 +80,7 @@ func shortDocWhy(kind, summary string) string {
 	case "legal":
 		return "Specimens for NDAs. The worker cannot send the document."
 	case "seo":
-		return "Fetches the live URL. Visible page is the source of truth. Pack customizes body and chrome."
+		return "Walk is facts, FAQ, schema, then an onsite pack. Visible page is the source of truth."
 	case "delivery":
 		return "Stage caps how many tasks. Fathom notes still need Accept."
 	case "internal-ops":

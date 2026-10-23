@@ -35,7 +35,7 @@ func TestSeoPackListsDeliveryTasks(t *testing.T) {
 	body := seoPackMarkdown(SeoBrief{
 		ID: 4, Kind: "offsite", Title: "Academy listings", Status: "proposed",
 		PlanItems: []seoPlanItem{{Title: "Confirm NAP on Google Business", Due: "2026-11-01", Hours: 1, Kind: "seo_offsite"}},
-	}, Project{Name: "Academy", Slug: "academy"})
+	}, Project{Name: "Academy", Slug: "academy"}, nil)
 	for _, want := range []string{"Delivery", "Confirm NAP on Google Business", "2026-11-01", "unless a human Turns away"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("missing %q in %s", want, body)

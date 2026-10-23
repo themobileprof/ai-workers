@@ -101,7 +101,7 @@ func TestSeoPackMarkdownForCursor(t *testing.T) {
 		ID: 3, Kind: "onsite", Title: "Ikeja rates", URL: "https://homegauge.themobileprof.com/rates",
 		Status: "approved", PackToken: "abc",
 		Inventory: []keywordPhrase{{Phrase: "ikeja mortgage rates", Role: "gap", BodyCount: 4, InBody: true}},
-	}, Project{Name: "HomeGauge", Slug: "homegauge", GitRepo: "themobileprof/homegauge"})
+	}, Project{Name: "HomeGauge", Slug: "homegauge", GitRepo: "themobileprof/homegauge"}, nil)
 	for _, want := range []string{"does not publish", "Ikeja rates", "ikeja mortgage rates", "Cursor", "does not open a GitHub PR", "visible page", "Visible first"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("missing %q in %s", want, body)

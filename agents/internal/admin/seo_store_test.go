@@ -1,6 +1,9 @@
 package admin
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSeoBriefFromStructured(t *testing.T) {
 	if _, err := seoBriefFromStructured(map[string]any{"action": "page"}, 1); err == nil {
@@ -32,5 +35,12 @@ func TestSeoBriefFromStructured(t *testing.T) {
 	}, 7)
 	if err != nil || off.Kind != "offsite" || len(off.PlanItems) != 1 || off.PlanItems[0].Kind != "seo_offsite" {
 		t.Fatalf("%v %+v", err, off)
+	}
+	cite, err := seoBriefFromStructured(map[string]any{
+		"action": "cite",
+		"cites":  []any{"HomeGauge lists Ikeja owner-occupier mortgage rates."},
+	}, 7)
+	if err != nil || cite.Kind != "cite" || !strings.Contains(cite.Body, "Ikeja owner-occupier") {
+		t.Fatalf("%v %+v", err, cite)
 	}
 }

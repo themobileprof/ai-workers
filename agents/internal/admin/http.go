@@ -104,6 +104,8 @@ type pageData struct {
 	Tab            string
 	RunSteps       []RunStep
 	RunLeft        int
+	SeoWalk        []RunStep
+	SeoSeed        seoSeed
 }
 
 type kv struct {
@@ -131,7 +133,11 @@ func New(store *Store, internalToken string) (*Server, error) {
 	}
 	pages := map[string]*template.Template{}
 	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files", "grants", "crm"} {
-		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, "templates/layout.html", "templates/"+name+".html")
+		files := []string{"templates/layout.html", "templates/" + name + ".html"}
+		if name == "seo" || name == "projects" {
+			files = append(files, "templates/seo_walk.html")
+		}
+		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, files...)
 		if err != nil {
 			return nil, err
 		}

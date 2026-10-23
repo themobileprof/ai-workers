@@ -35,6 +35,13 @@ Then recommend customizing EVERYTHING from that visible story — including the 
 context_data.keyword_map.body_primary is the visible-copy phrase per URL; title_lags_body means the title tag does not match what the user sees.
 context_data.pagespeed is only real if Google PageSpeed returned it. context_data.gsc_site_url / ga4_property_id mean those properties are named on Defaults — not that you have query numbers unless a search_analytics payload is present.
 Competitor keyword tools are paid and not wired.
+Walk (desk wizard, one Ask per step — do not skip ahead unless the human named a kind):
+1. cite — 3–6 factual sentences already on the visible page (who, where, offer, constraint, hours, price if shown). Start from context_data.cite_seed. structured_data.cites[]. No invented stats.
+2. faq — questions a Lagos searcher would type that the page already answers. Start from context_data.faq_seed. Visible Q&A first (faqs: [{q,a}]), then FAQPage JSON-LD that matches. Use prior walk.cite if present.
+3. schema — start from context_data.schema_seed. Inventory schema_types / fetched_pages.json_ld. Propose JSON-LD (json_ld string) only for types the visible page supports. Organization name is TheMobileProf Technologies unless the page already names a different legal entity. LocalBusiness / Course / Offer / FAQPage only from attested facts. Flag context_data.robots.blocked_ai if GPTBot or Google-Extended is disallowed.
+4. onsite — weave cite + faq + schema into one Cursor pack. Visible copy first, chrome second.
+5. offsite — Delivery items, same legal name as schema.
+This is not a GEO clerk. Do not invent ChatGPT citations, AI Overview ranks, or competitor mentions.
 Onsite packs: rewrite the designed page (body included) and then title/meta to match.
 Offsite packs collaborate with Delivery (the task manager). Propose items spread over coming weeks, not dumped on today:
 - items: [{project_id, assignee_id (only from context_data.delivery.people), title, hours, due YYYY-MM-DD, kind: seo_offsite}]
@@ -54,9 +61,12 @@ type Spec struct {
 
 func Specs() []Spec {
 	return []Spec{
-		{ID: "onsite", Label: "Onsite pack", Help: "Customize the visible page (body, H1, CTAs) and then title/meta so they match. Does not publish."},
+		{ID: "cite", Label: "Quotable facts", Help: "3–6 factual sentences already on the visible page. What an answer engine could quote. No invented stats."},
+		{ID: "faq", Label: "FAQ", Help: "Questions the page already answers. Visible Q&A first, then FAQPage JSON-LD that matches."},
+		{ID: "schema", Label: "Schema", Help: "JSON-LD from the designed page. Organization is TheMobileProf Technologies unless the page names someone else."},
+		{ID: "onsite", Label: "Onsite pack", Help: "Customize the visible page (body, H1, CTAs) and then title/meta so they match. Weaves facts, FAQ, and schema. Does not publish."},
+		{ID: "offsite", Label: "Offsite roadmap", Help: "Tasks for Delivery, spread over weeks. Listings and partners you already know. Same legal name. Cannot send."},
 		{ID: "inventory", Label: "Keyword inventory", Help: "Phrases from the visible page, then rewrite to searcher language. Title tags are chrome. No volume."},
-		{ID: "offsite", Label: "Offsite roadmap", Help: "Tasks for Delivery, spread over weeks. Listings and partners you already know. Cannot send."},
 		{ID: "page", Label: "Page brief", Help: "Visible copy plus title/meta for one URL — all from what the user already saw."},
 		{ID: "audit", Label: "Audit punch list", Help: "Flags from the fetched site. Same-origin only. Title tag vs designed page mismatch is a flag."},
 		{ID: "outline", Label: "Content outline", Help: "Headings for a keyword attested on the visible page. Not social copy (that is /growth)."},
@@ -80,16 +90,19 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	system := overlay + "\n\nAction: " + action + `
 
 structured_data MUST include:
-- action: onsite | inventory | offsite | page | audit | outline | map
+- action: cite | faq | schema | onsite | inventory | offsite | page | audit | outline | map
 - url (from context or the task; never invent a live ranking)
 - keyword (visible-copy primary or gap rewrite — never a title-tag-only brochure phrase)
 - project_slug (from context if present)
 - title (≤60 characters) on page/onsite — matches the proposed visible H1/body, not a secret SEO title
 - meta_description (≤155 characters) on page/onsite — a snippet of the designed page
 - h1 on page/onsite — visible heading a designer would recognize
-- flags: string[] title-tag vs designed-page mismatches, cannibals, missing bits, or offsite tasks
+- cites: string[] on cite (3–6 facts already on the visible page)
+- faqs: [{q, a}] on faq — answers only from the visible page or walk.cite
+- json_ld: string on schema (and faq FAQPage) — types the designed page already supports
+- flags: string[] title-tag vs designed-page mismatches, cannibals, missing schema, blocked AI crawlers, or offsite tasks
 - items: for offsite (and onsite packs that include offsite work) — Delivery tasks [{project_id, assignee_id, title, hours, due, kind: seo_offsite}] spread over weeks
-- body: pack notes. For inventory/map: per URL — primary, supporting[], intent, negatives[], rewrite (visible copy → query). For onsite: visible copy edits first (H1, subheads, body, CTAs), then title/meta to match. For offsite: the human-readable roadmap that Delivery will schedule.
+- body: pack notes. For cite: the facts in prose. For faq: visible Q&A then matching JSON-LD. For schema: inventory + proposed JSON-LD. For inventory/map: per URL — primary, supporting[], intent, negatives[], rewrite. For onsite: visible copy edits first, then title/meta, then the cite/FAQ/schema blocks. For offsite: the human-readable roadmap.
 - save_brief: true when the pack or brief is ready to file
 - cannot_publish: true
 - cannot_send: true
@@ -105,6 +118,10 @@ output_text: short flags and the visible-copy primary phrases. Do not dump a ful
 	resp.StructuredData["cannot_publish"] = true
 	resp.StructuredData["cannot_send"] = true
 	return resp, err
+}
+
+func Infer(data map[string]any, task string) string {
+	return infer(data, task)
 }
 
 func infer(data map[string]any, task string) string {
@@ -128,9 +145,21 @@ func infer(data map[string]any, task string) string {
 		if a == "roadmap" {
 			return "offsite"
 		}
+		if a == "facts" || a == "quotes" || a == "quotable" {
+			return "cite"
+		}
+		if a == "json-ld" || a == "jsonld" || a == "structured" {
+			return "schema"
+		}
 	}
 	lower := strings.ToLower(task + " " + str(data["kind"]) + " " + str(data["template"]))
 	switch {
+	case strings.Contains(lower, "quotable") || strings.Contains(lower, "what to quote") || (strings.Contains(lower, "cite") && !strings.Contains(lower, "citation")):
+		return "cite"
+	case strings.Contains(lower, "faq") || strings.Contains(lower, "q&a") || strings.Contains(lower, "questions and answers"):
+		return "faq"
+	case strings.Contains(lower, "json-ld") || strings.Contains(lower, "jsonld") || strings.Contains(lower, "schema.org") || strings.Contains(lower, "structured data"):
+		return "schema"
 	case strings.Contains(lower, "offsite") || strings.Contains(lower, "backlink") || strings.Contains(lower, "citation") || strings.Contains(lower, "listings"):
 		return "offsite"
 	case strings.Contains(lower, "keyword inventory") || strings.Contains(lower, "isolate keyword") || strings.Contains(lower, "keyword list"):

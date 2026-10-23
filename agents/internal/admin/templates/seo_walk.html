@@ -1,0 +1,68 @@
+{{define "seo-walk"}}
+{{if .SeoWalk}}
+<h3>Walk · facts, then FAQ, then schema</h3>
+<ol class="recipe">
+  <li>Fields below are filled from the live URL. Edit if a line is wrong, then Ask this step.</li>
+  <li>Later steps reuse earlier packs. The onsite pack is what you hand Cursor.</li>
+  <li>This is not a GEO clerk. It does not invent ChatGPT citations.</li>
+</ol>
+<ol class="run">
+  {{range .SeoWalk}}
+  <li class="{{if .Done}}done{{else if .Now}}waiting{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">{{.Kind}}</p>
+      <span class="stamp {{.StampClass}}">{{.StampLabel}}</span>
+    </div>
+    <h3>{{.Title}}</h3>
+    <p>{{.Why}}</p>
+    {{if .Detail}}<p class="hint">{{.Detail}}</p>{{end}}
+    {{if .Now}}
+    <ol class="recipe">
+      {{range .How}}<li>{{.}}</li>{{end}}
+    </ol>
+    {{if $.CanSEO}}
+    <form method="post" action="{{if eq $.Nav "seo"}}/admin/seo/ask{{else}}/admin/projects/{{$.Project.ID}}/seo{{end}}" class="person add">
+      {{if eq $.Nav "seo"}}<input type="hidden" name="project_id" value="{{$.Project.ID}}">{{end}}
+      <input type="hidden" name="action" value="{{.ID}}">
+      <input type="hidden" name="keyword" value="{{$.SeoSeed.Keyword}}">
+      <label>URL<input name="url" value="{{if $.SeoSeed.URL}}{{$.SeoSeed.URL}}{{else}}{{$.Project.URL}}{{end}}" placeholder="https://"></label>
+      {{if eq .ID "cite"}}
+      <label>Facts from the page
+        <textarea name="cites" rows="8">{{$.SeoSeed.CitesText}}</textarea>
+      </label>
+      {{else if eq .ID "faq"}}
+      <label>FAQ from the page
+        <textarea name="faqs" rows="10">{{$.SeoSeed.FAQsText}}</textarea>
+      </label>
+      {{else if eq .ID "schema"}}
+      <label>JSON-LD from the page
+        <textarea name="json_ld" rows="12">{{$.SeoSeed.JSONLD}}</textarea>
+      </label>
+      {{else if eq .ID "onsite"}}
+      <div class="fields">
+        <label>Title<input name="title" value="{{$.SeoSeed.Title}}"></label>
+        <label>H1<input name="h1" value="{{$.SeoSeed.H1}}"></label>
+      </div>
+      <label>Meta
+        <textarea name="meta" rows="2">{{$.SeoSeed.Meta}}</textarea>
+      </label>
+      {{else if eq .ID "offsite"}}
+      <label>Listings already on the page
+        <textarea name="offsite" rows="4" placeholder="One task per line">{{$.SeoSeed.OffsiteText}}</textarea>
+      </label>
+      {{end}}
+      <label>Notes
+        <textarea name="human_feedback" rows="2" placeholder="Optional. Edit the fields above; the clerk already fetched the URL."></textarea>
+      </label>
+      <div class="actions">
+        <button type="submit">{{.Button}}</button>
+        {{if .Help}}<button type="button" class="ghost" data-help="{{.Help}}">Help? walk this</button>{{end}}
+      </div>
+    </form>
+    {{end}}
+    {{end}}
+  </li>
+  {{end}}
+</ol>
+{{end}}
+{{end}}

@@ -40,7 +40,7 @@ func (d SeoBrief) PackFilename() string {
 	return fmt.Sprintf("%s-seo-%d.md", slug, d.ID)
 }
 
-func seoPackMarkdown(d SeoBrief, p Project) string {
+func seoPackMarkdown(d SeoBrief, p Project, siblings []SeoBrief) string {
 	var b strings.Builder
 	b.WriteString("# SEO pack " + strconv.FormatInt(d.ID, 10) + "\n\n")
 	name := strings.TrimSpace(p.Name)
@@ -91,16 +91,19 @@ func seoPackMarkdown(d SeoBrief, p Project) string {
 		b.WriteString("\n")
 	}
 
+	writeSeoWalkSections(&b, d, siblings)
+
 	if d.Kind == "offsite" {
 		b.WriteString("## Offsite work (via Delivery)\n\n")
-		b.WriteString("The clerk cannot send mail, WhatsApp, or buy links. Offsite work is handed to **Delivery** as soon as this pack files, spread over weeks. Stage caps still apply; extras sit on Backlog. The plan writes after the delay unless a human Turns away on Job chat. Accept writes it now.\n\n")
+		b.WriteString("The clerk cannot send mail, WhatsApp, or buy links. Offsite work is handed to **Delivery** as soon as this pack files, spread over weeks. Stage caps still apply; extras sit on Backlog. The plan writes after the delay unless a human Turns away on Job chat. Accept writes it now. Use the same legal name as the schema step (" + seoCompanyName + " unless the page names someone else).\n\n")
 		writeSeoPackBody(&b, d)
 		writeSeoPlanItems(&b, d)
-	} else {
+	} else if d.Kind != "cite" && d.Kind != "faq" && d.Kind != "schema" {
 		b.WriteString("## Onsite changes (implement in Cursor)\n\n")
 		b.WriteString("Start from the page a designer already shipped. Propose copy they would recognize: same offer, place, and voice — clearer, in searcher language.\n\n")
 		b.WriteString("1. **Visible first:** H1, subheads, body paragraphs, CTAs.\n")
-		b.WriteString("2. **Chrome second:** title tag and meta description so a search snippet matches that designed page.\n")
+		b.WriteString("2. **Chrome second:** title tag and meta description so a Google snippet matches that designed page.\n")
+		b.WriteString("3. **Quotable facts, FAQ, schema:** implement those sections so an answer engine can cite the designed page. Do not invent a hidden GEO layer.\n")
 		b.WriteString("Do not add offers, cities, or products the visible page does not already show. Do not leave SEO only in tags the designer never opens.\n\n")
 		if d.Title != "" {
 			b.WriteString("### Proposed title\n\n" + d.Title + "\n\n")
@@ -121,14 +124,51 @@ func seoPackMarkdown(d SeoBrief, p Project) string {
 			b.WriteString("No cold outreach. No customer WhatsApp. No invented directories.\n\n")
 			writeSeoPlanItems(&b, d)
 		}
+	} else {
+		writeSeoPackBody(&b, d)
 	}
 
 	b.WriteString("## Cursor prompt\n\n")
-	b.WriteString("Implement the **Onsite changes** in this site’s codebase. Match existing templates and components. ")
-	b.WriteString("Change the visible copy the designer already sees (body, H1, CTAs), then title and meta so they match. ")
-	b.WriteString("Do not invent pages, search volume, or Core Web Vitals. Do not commit unless a human asks. ")
-	b.WriteString("Leave offsite tasks for a person — do not send mail or messages.\n")
+	switch d.Kind {
+	case "cite":
+		b.WriteString("Put the **Quotable facts** where a designer would see them (body, not only meta). Do not invent a seventh fact.\n")
+	case "faq":
+		b.WriteString("Add the **Visible FAQ** as on-page Q&A, then FAQPage JSON-LD that matches that block exactly. Do not add questions the page does not already answer.\n")
+	case "schema":
+		b.WriteString("Add the **Proposed JSON-LD** to the matching templates. Organization is " + seoCompanyName + " unless the visible page names a different legal entity. Do not invent NAP, ratings, or offers.\n")
+	default:
+		b.WriteString("Implement the **Onsite changes** in this site’s codebase. Match existing templates and components. ")
+		b.WriteString("Change the visible copy the designer already sees (body, H1, CTAs), then title and meta so they match. ")
+		b.WriteString("Keep the quotable facts, FAQ, and JSON-LD in sync with that copy. ")
+		b.WriteString("Do not invent pages, search volume, or Core Web Vitals. Do not commit unless a human asks. ")
+		b.WriteString("Leave offsite tasks for a person — do not send mail or messages.\n")
+	}
 	return b.String()
+}
+
+func writeSeoWalkSections(b *strings.Builder, d SeoBrief, siblings []SeoBrief) {
+	cite := walkSource(d, siblings, "cite")
+	faq := walkSource(d, siblings, "faq")
+	schema := walkSource(d, siblings, "schema")
+	if cite.Body != "" && d.Kind != "cite" {
+		b.WriteString("## Quotable facts (from the walk)\n\n")
+		b.WriteString(cite.Body + "\n\n")
+	}
+	if faq.Body != "" && d.Kind != "faq" {
+		b.WriteString("## FAQ (from the walk)\n\n")
+		b.WriteString(faq.Body + "\n\n")
+	}
+	if schema.Body != "" && d.Kind != "schema" {
+		b.WriteString("## Schema (from the walk)\n\n")
+		b.WriteString(schema.Body + "\n\n")
+	}
+}
+
+func walkSource(d SeoBrief, siblings []SeoBrief, kind string) SeoBrief {
+	if d.Kind == kind {
+		return d
+	}
+	return latestLiveSeo(siblings, kind)
 }
 
 func writeSeoPlanItems(b *strings.Builder, d SeoBrief) {
@@ -193,7 +233,8 @@ func (s *Server) seoPackDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, _ := s.store.GetProject(r.Context(), d.ProjectID)
-	writeMarkdownFile(w, d.PackFilename(), seoPackMarkdown(d, p), true)
+	sibs, _ := s.store.ListSeoBriefs(r.Context(), d.ProjectID)
+	writeMarkdownFile(w, d.PackFilename(), seoPackMarkdown(d, p, sibs), true)
 }
 
 func (s *Server) seoPackPublic(w http.ResponseWriter, r *http.Request) {
@@ -208,5 +249,6 @@ func (s *Server) seoPackPublic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, _ := s.store.GetProject(r.Context(), d.ProjectID)
-	writeMarkdownFile(w, d.PackFilename(), seoPackMarkdown(d, p), false)
+	sibs, _ := s.store.ListSeoBriefs(r.Context(), d.ProjectID)
+	writeMarkdownFile(w, d.PackFilename(), seoPackMarkdown(d, p, sibs), false)
 }

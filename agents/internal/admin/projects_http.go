@@ -126,6 +126,9 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 	if flash == "" {
 		flash = filesFlash(okq)
 	}
+	if flash == "" {
+		flash = seoFlash(okq, r.URL.Query().Get("step"))
+	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
 
@@ -374,7 +377,7 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		slots = 0
 	}
 	canLegal := s.legal != nil && (Handles(*u, "legal") || canOffice(u))
-	canSEO := s.seo != nil && (Handles(*u, "seo") || canOffice(u))
+	canSEO := Handles(*u, "seo") || canOffice(u)
 	steps := projectRun(runInput{
 		Project:  p,
 		Drafts:   drafts,
@@ -409,6 +412,8 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		Grants:         grants,
 		RunSteps:       steps,
 		RunLeft:        runMustLeft(steps),
+		SeoWalk:        seoWalk(briefs, p.URL),
+		SeoSeed:        loadSeoSeed(p, briefs),
 		Error:          errMsg,
 		Flash:          flash,
 	}
