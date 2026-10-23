@@ -91,17 +91,17 @@ func settingCatalog() []settingGroupSpec {
 		{
 			ID:       "seo",
 			Title:    "SEO · Google properties",
-			Help:     "Property ids only — free Google APIs for THIS company. OAuth tokens and API keys stay in the VM .env. These boxes do not unlock competitor keyword spy data; that is paid (Ahrefs / Semrush) and not wired.",
+			Help:     "Property ids only — free Google APIs for THIS company. The GA4 JSON key stays in n8n. PageSpeed key stays in the VM .env. These boxes do not unlock competitor keyword spy data; that is paid (Ahrefs / Semrush) and not wired.",
 			DocHref:  "/admin/docs/seo",
 			DocLabel: "SEO sheet",
 			Recipe: []string{
 				"Search Console property is the verified site (https://lms.themobileprof.com/ or sc-domain:themobileprof.com).",
-				"GA4 property id is the digits from Admin → Property settings. Traffic only, not rankings.",
-				"Click Save on this tab. PAGESPEED_API_KEY stays in .env if you want Core Web Vitals from Google.",
+				"GA4 property id is the digits from Admin → Property settings. Add ga4-read@themobileprof.iam.gserviceaccount.com as Viewer on that property.",
+				"Click Save on this tab. n8n credential Google Analytics (service account, not person Connect) pulls last-28-days traffic. PAGESPEED_API_KEY stays in .env.",
 			},
 			Fields: []SettingField{
 				{Key: "seo.gsc_site_url", Label: "Search Console property", Help: "Your verified site URL or sc-domain:…. Query numbers stay off until OAuth is in .env. Free API, your property only."},
-				{Key: "seo.ga4_property_id", Label: "GA4 property id", Help: "Digits only. Organic traffic for this property. Not competitor analysis."},
+				{Key: "seo.ga4_property_id", Label: "GA4 property id", Help: "Digits only. n8n reads this. The ga4-read service account must be a Viewer on that property. Traffic only, not rankings."},
 			},
 		},
 	}

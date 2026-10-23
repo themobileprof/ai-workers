@@ -66,6 +66,12 @@ ALTER TABLE seo_briefs ADD COLUMN IF NOT EXISTS pack_token TEXT NOT NULL DEFAULT
 ALTER TABLE seo_briefs ADD COLUMN IF NOT EXISTS inventory JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE seo_briefs ADD COLUMN IF NOT EXISTS plan_items JSONB NOT NULL DEFAULT '[]'::jsonb;
 CREATE UNIQUE INDEX IF NOT EXISTS seo_briefs_pack_token_idx ON seo_briefs (pack_token) WHERE pack_token <> '';
+CREATE TABLE IF NOT EXISTS seo_ga4 (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  property_id TEXT NOT NULL DEFAULT '',
+  snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `)
 	return err
 }

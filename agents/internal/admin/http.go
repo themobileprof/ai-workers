@@ -266,6 +266,8 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
 	mux.HandleFunc("GET /internal/v1/seo-briefs", s.internalSeoBriefsGET)
 	mux.HandleFunc("POST /internal/v1/seo-briefs", s.internalSeoBriefsPOST)
+	mux.HandleFunc("GET /internal/v1/seo/ga4", s.internalSeoGA4GET)
+	mux.HandleFunc("POST /internal/v1/seo/ga4", s.internalSeoGA4POST)
 	mux.HandleFunc("GET /internal/v1/hr/roles", s.internalHrRoles)
 	mux.HandleFunc("POST /internal/v1/hr/applications", s.internalHrApplicationsPOST)
 	mux.HandleFunc("GET /internal/v1/delivery/context", s.internalDeliveryContext)

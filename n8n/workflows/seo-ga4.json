@@ -1,0 +1,223 @@
+{
+  "id": "seoGa4Daily00001",
+  "name": "SEO GA4 pull",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 6,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "seoGa4DailyTrig0001",
+      "name": "06:00 Lagos"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/settings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [220, 0],
+      "id": "seoGa4DailySet0001",
+      "name": "Fetch settings"
+    },
+    {
+      "parameters": {
+        "jsCode": "const settings = $input.first().json || {};\nlet id = String(settings['seo.ga4_property_id'] || '').trim();\nid = id.replace(/^properties\\//i, '').replace(/\\D/g, '');\nif (!id) {\n  return [];\n}\nreturn [{ json: { property_id: id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "id": "seoGa4DailyProp001",
+      "name": "Property id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://analyticsdata.googleapis.com/v1beta/properties/' + $json.property_id + ':runReport' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ dateRanges: [{ startDate: '28daysAgo', endDate: 'yesterday' }], dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }, { name: 'engagedSessions' }, { name: 'bounceRate' }] }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [660, -80],
+      "id": "seoGa4DailyCh00001",
+      "name": "Channel mix",
+      "credentials": {
+        "googleApi": {
+          "id": "googleAnalyticsSA001",
+          "name": "Google Analytics"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://analyticsdata.googleapis.com/v1beta/properties/' + $('Property id').item.json.property_id + ':runReport' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ dateRanges: [{ startDate: '28daysAgo', endDate: 'yesterday' }], dimensions: [{ name: 'landingPagePlusQueryString' }], metrics: [{ name: 'sessions' }, { name: 'engagementRate' }], dimensionFilter: { filter: { fieldName: 'sessionDefaultChannelGroup', stringFilter: { matchType: 'EXACT', value: 'Organic Search' } } }, limit: 15, orderBys: [{ desc: true, metric: { metricName: 'sessions' } }] }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [880, -80],
+      "id": "seoGa4DailyLp00001",
+      "name": "Organic landings",
+      "credentials": {
+        "googleApi": {
+          "id": "googleAnalyticsSA001",
+          "name": "Google Analytics"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function metricMap(row, headers) {\n  const out = {};\n  const metrics = row.metricValues || [];\n  (headers || []).forEach((h, i) => {\n    const name = h.name || h;\n    const n = Number(metrics[i] && metrics[i].value);\n    out[name] = Number.isFinite(n) ? n : 0;\n  });\n  return out;\n}\nfunction dimMap(row, headers) {\n  const out = {};\n  const dims = row.dimensionValues || [];\n  (headers || []).forEach((h, i) => {\n    out[h.name || h] = String((dims[i] && dims[i].value) || '');\n  });\n  return out;\n}\nfunction googleErr(raw) {\n  if (!raw || typeof raw !== 'object') return true;\n  if (raw.error || raw.error_code || raw.message && !raw.metricHeaders && !raw.dimensionHeaders) return true;\n  return false;\n}\nconst prop = $('Property id').first().json || {};\nconst channelsRaw = $('Channel mix').first().json || {};\nconst landingsRaw = $('Organic landings').first().json || {};\nif (googleErr(channelsRaw) || googleErr(landingsRaw)) {\n  return [];\n}\nconst channels = [];\nlet sessions = 0;\nlet organic = 0;\nfor (const row of (channelsRaw.rows || [])) {\n  const d = dimMap(row, channelsRaw.dimensionHeaders || []);\n  const m = metricMap(row, channelsRaw.metricHeaders || []);\n  const name = d.sessionDefaultChannelGroup || '(other)';\n  const s = m.sessions || 0;\n  sessions += s;\n  if (name === 'Organic Search') organic = s;\n  channels.push({ name: name, sessions: s, engaged_sessions: m.engagedSessions || 0, bounce_rate: m.bounceRate || 0 });\n}\nconst landing_pages = [];\nfor (const row of (landingsRaw.rows || []).slice(0, 15)) {\n  const d = dimMap(row, landingsRaw.dimensionHeaders || []);\n  const m = metricMap(row, landingsRaw.metricHeaders || []);\n  landing_pages.push({ path: d.landingPagePlusQueryString || '/', sessions: m.sessions || 0, engagement_rate: m.engagementRate || 0 });\n}\nreturn [{ json: {\n  source: 'ga4_data_api',\n  property_id: String(prop.property_id || ''),\n  range: '28daysAgo:yesterday',\n  fetched_at: new Date().toISOString(),\n  sessions: sessions,\n  organic_sessions: organic,\n  channels: channels,\n  landing_pages: landing_pages\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "id": "seoGa4DailyFmt0001",
+      "name": "Shape snapshot"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/internal/v1/seo/ga4",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [1320, 0],
+      "id": "seoGa4DailyPost001",
+      "name": "Store snapshot"
+    }
+  ],
+  "connections": {
+    "06:00 Lagos": {
+      "main": [
+        [
+          {
+            "node": "Fetch settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch settings": {
+      "main": [
+        [
+          {
+            "node": "Property id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property id": {
+      "main": [
+        [
+          {
+            "node": "Channel mix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channel mix": {
+      "main": [
+        [
+          {
+            "node": "Organic landings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organic landings": {
+      "main": [
+        [
+          {
+            "node": "Shape snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape snapshot": {
+      "main": [
+        [
+          {
+            "node": "Store snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

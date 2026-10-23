@@ -193,7 +193,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Parent clerk",
 		Path:     "POST /departments/seo",
 		Wire:     "partial",
-		Summary:  "Fetches the bet’s own URL. Walk is quotable facts, FAQ, schema, onsite pack, then offsite. Ask issues a markdown pack for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. Not a GEO clerk. Search Console ids on Defaults; competitor spy tools are paid and not wired.",
+		Summary:  "Fetches the bet’s own URL. Walk is quotable facts, FAQ, schema, onsite pack, then offsite. Ask issues a markdown pack for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. Not a GEO clerk. GA4 last-28-days arrives from n8n; Search Console queries are still later. Competitor spy tools are paid and not wired.",
 		Prefixes: []string{"/seo", "desk Ask"},
 	},
 	{

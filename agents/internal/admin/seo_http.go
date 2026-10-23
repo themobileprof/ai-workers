@@ -381,6 +381,9 @@ func (s *Server) withSEOSettings(ctx context.Context, req contract.Request) cont
 	if v := strings.TrimSpace(st["seo.ga4_property_id"]); v != "" {
 		data["ga4_property_id"] = v
 	}
+	if snap, err := s.store.GetSeoGA4(ctx); err == nil && snap != nil {
+		data["ga4"] = snap
+	}
 	raw, err := json.Marshal(data)
 	if err != nil {
 		return req

@@ -90,6 +90,7 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | POST | `/internal/v1/projects/{id}/proposal` |
 | GET, POST | `/internal/v1/legal-drafts` |
 | GET, POST | `/internal/v1/seo-briefs` |
+| GET, POST | `/internal/v1/seo/ga4` |
 | GET, POST | `/internal/v1/file-filings` |
 | POST | `/internal/v1/file-filings/{id}/placed` |
 | GET | `/internal/v1/delivery/context` · `/internal/v1/delivery/digest` (`channel=notes` uses the owner overlay) |

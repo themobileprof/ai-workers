@@ -1,6 +1,8 @@
 .env
 *.pem
 *.key
+client_secret*.json
+*.apps.googleusercontent.com.json
 n8n_data/
 dist/
 agents/agents
