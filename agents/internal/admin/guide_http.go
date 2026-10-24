@@ -24,7 +24,7 @@ func (s *Server) guideGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	asks, err := s.store.ListGuideAsks(r.Context(), 200)
-	data := pageData{Title: "Guide", Nav: "guide", User: u, GuideAsks: asks}
+	data := pageData{Title: "Asked", Nav: "guide", User: u, GuideAsks: asks, Docs: allDocs()}
 	if err != nil {
 		data.Error = err.Error()
 	}

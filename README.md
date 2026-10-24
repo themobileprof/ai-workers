@@ -9,9 +9,9 @@ Hand someone a sheet (signed in): `/admin/docs` — start at **How you fit**, th
 
 ### Company desk (owner / BDM)
 
-Sign in on `/admin/`. You get Board, Projects, People, Defaults, Docs, Guide, n8n.
+Sign in on `/admin/`. You get Board, Projects, Delivery, People, then Office (CRM, Files, Grants, Defaults). Docs is on the rail. n8n is under your name.
 
-The brass **Help?** button (bottom right on every signed-in page except n8n) is a desk guide. It answers what to do, **or** fills the same form as the page (dates, tasks, People, Ask…). The LLM matches intent to the form catalog; Submit posts that form. It never Accepts. Questions are stored; owner/BDM review them at `/admin/guide` (download `/admin/guide/asked.md`) and fold durable answers into `agents/internal/admin/guide/faq.md` in Cursor.
+The brass **Help?** button (bottom right on every signed-in page except n8n) is a desk guide. It answers what to do, **or** fills the same form as the page (dates, tasks, People, Ask…). The LLM matches intent to the form catalog; Submit posts that form. It never Accepts. Questions are stored; owner/BDM review them at Docs → Asked (`/admin/guide`, download `/admin/guide/asked.md`) and fold durable answers into `agents/internal/admin/guide/faq.md` in Cursor.
 
 - **People** — add a human, pick an office seat, tick the **handler desks** they actually run. Those workers appear when **that person** signs in, not on the Board. Ticking a desk grants `web_admin`.
 - **Projects** — incubated bets (MomLaunchpad, Mechazone, HomeGauge, …). The coloured label is the **stage**. Ask placement writes a proposal; **Accept** on **Decide** writes the stage. **Dates** holds a campus training or field week until you click Delivered; Board shows Coming up.

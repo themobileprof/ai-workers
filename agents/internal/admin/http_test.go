@@ -80,8 +80,14 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(deliv.Body.String(), "Close today’s list") || !strings.Contains(deliv.Body.String(), `class="recipe"`) {
 		t.Fatal("delivery must list numbered steps")
 	}
-	if !strings.Contains(body, `href="/admin/guide"`) {
-		t.Fatal("office Guide link")
+	if !strings.Contains(body, `href="/admin/docs"`) {
+		t.Fatal("docs on the rail")
+	}
+	if strings.Contains(body, `href="/admin/guide"`) {
+		t.Fatal("Asked is on the Docs rail, not Board")
+	}
+	if !strings.Contains(body, `href="/admin/workflows"`) {
+		t.Fatal("n8n under the account menu")
 	}
 	if !strings.Contains(body, `href="/admin/files"`) {
 		t.Fatal("office Files link")

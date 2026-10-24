@@ -77,26 +77,17 @@
           <svg class="chev"><use href="#i-chevron"/></svg>
         </summary>
         <div class="menu-pop" role="menu">
-          <a role="menuitem" href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-defaults"/></svg> Defaults
+          <a role="menuitem" href="/admin/crm" {{if eq .Nav "crm"}}class="on"{{end}}>
+            <svg class="ico"><use href="#i-crm"/></svg> CRM
           </a>
           <a role="menuitem" href="/admin/files" {{if eq .Nav "files"}}class="on"{{end}}>
             <svg class="ico"><use href="#i-book"/></svg> Files
           </a>
           <a role="menuitem" href="/admin/grants" {{if eq .Nav "grants"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-book"/></svg> Grants
+            <svg class="ico"><use href="#i-pulse"/></svg> Grants
           </a>
-          <a role="menuitem" href="/admin/crm" {{if eq .Nav "crm"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-crm"/></svg> CRM
-          </a>
-          <a role="menuitem" href="/admin/docs" {{if eq .Nav "docs"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-docs"/></svg> Docs
-          </a>
-          <a role="menuitem" href="/admin/guide" {{if eq .Nav "guide"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-chat"/></svg> Guide
-          </a>
-          <a role="menuitem" href="/admin/workflows" {{if eq .Nav "flows"}}class="on"{{end}}>
-            <svg class="ico"><use href="#i-n8n"/></svg> n8n
+          <a role="menuitem" href="/admin/settings" {{if eq .Nav "settings"}}class="on"{{end}}>
+            <svg class="ico"><use href="#i-defaults"/></svg> Defaults
           </a>
         </div>
       </details>
@@ -117,14 +108,12 @@
         </div>
       </details>
       {{end}}
-      {{if and (not .CanOffice) .NavDesks}}
-      <a class="nav-link{{if eq .Nav "docs"}} on{{end}}" href="/admin/docs">
+      <a class="nav-link{{if or (eq .Nav "docs") (eq .Nav "guide")}} on{{end}}" href="/admin/docs">
         <svg class="ico"><use href="#i-docs"/></svg>
         <span>Docs</span>
       </a>
-      {{end}}
     </nav>
-    <details class="menu account">
+    <details class="menu account{{if eq .Nav "flows"}} on{{end}}">
       <summary>
         <svg class="ico"><use href="#i-user"/></svg>
         <span>{{.User.Name}}</span>
@@ -132,6 +121,11 @@
       </summary>
       <div class="menu-pop" role="menu">
         <p class="menu-meta">{{.User.Role}}</p>
+        {{if .CanOffice}}
+        <a role="menuitem" href="/admin/workflows" {{if eq .Nav "flows"}}class="on"{{end}}>
+          <svg class="ico"><use href="#i-n8n"/></svg> n8n
+        </a>
+        {{end}}
         <form class="out" method="post" action="/admin/logout">
           <button type="submit" role="menuitem">
             <svg class="ico"><use href="#i-signout"/></svg> Sign out
@@ -146,6 +140,22 @@
     {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
     {{template "content" .}}
   </main>
+  {{define "doc-rail"}}
+  <aside class="doc-rail" aria-label="Playbook">
+    <a href="/admin/docs" {{if and (eq .Nav "docs") (not .Doc)}}class="on"{{end}}>Index</a>
+    {{if .CanOffice}}
+    <a href="/admin/guide" {{if eq .Nav "guide"}}class="on"{{end}}>Asked</a>
+    {{end}}
+    <p class="rail-label">Your sheet</p>
+    {{range .Docs}}{{if .Player}}
+    <a href="{{.Href}}" {{if and $.Doc (eq $.Doc.Slug .Slug)}}class="on"{{end}}>{{.Title}}</a>
+    {{end}}{{end}}
+    <p class="rail-label">Workers</p>
+    {{range .Docs}}{{if .Worker}}
+    <a href="{{.Href}}" {{if and $.Doc (eq $.Doc.Slug .Slug)}}class="on"{{end}}>{{.Title}}</a>
+    {{end}}{{end}}
+  </aside>
+  {{end}}
   {{define "page-reads"}}
   {{if .}}
   <p class="do">Read</p>

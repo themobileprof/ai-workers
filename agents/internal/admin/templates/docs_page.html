@@ -1,16 +1,6 @@
 {{define "content"}}
 <div class="doc-split">
-  <aside class="doc-rail" aria-label="Playbook">
-    <a href="/admin/docs">Index</a>
-    <p class="rail-label">Your sheet</p>
-    {{range .Docs}}{{if .Player}}
-    <a href="{{.Href}}" {{if eq $.Doc.Slug .Slug}}class="on"{{end}}>{{.Title}}</a>
-    {{end}}{{end}}
-    <p class="rail-label">Workers</p>
-    {{range .Docs}}{{if .Worker}}
-    <a href="{{.Href}}" {{if eq $.Doc.Slug .Slug}}class="on"{{end}}>{{.Title}}</a>
-    {{end}}{{end}}
-  </aside>
+  {{template "doc-rail" .}}
   <article class="playbook">
     <header class="doc-head">
       <p class="kicker">{{.Doc.Kicker}}</p>

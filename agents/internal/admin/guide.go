@@ -234,7 +234,8 @@ func runtimeDeskMap() string {
 		b.WriteString("\n")
 	}
 	b.WriteString("\nStage caps (open tasks): parked/killed 0, idea 1, testing 3, selling 5, fundable 4.\n")
-	b.WriteString("Docs: /admin/docs then /admin/docs/{slug}. Player sheets first (you, owner, bdm, project-face, field, handler).\n")
+	b.WriteString("Docs: /admin/docs then /admin/docs/{slug}. Player sheets first (you, owner, bdm, project-face, field, handler). Owner/BDM: Help? log is Docs → Asked at /admin/guide.\n")
+	b.WriteString("Office menu (owner/BDM books): CRM, Files, Grants, Defaults. n8n is under the signed-in name, not Office.\n")
 	return b.String()
 }
 

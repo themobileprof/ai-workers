@@ -113,7 +113,7 @@ func deskNavOn(nav string, desks []Desk) bool {
 }
 
 func officeMenuOn(nav string) bool {
-	return nav == "settings" || nav == "docs" || nav == "flows" || nav == "guide" || nav == "files" || nav == "grants" || nav == "crm"
+	return nav == "settings" || nav == "files" || nav == "grants" || nav == "crm"
 }
 
 func afterLoginPath(u User) string {

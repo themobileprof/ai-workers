@@ -48,17 +48,20 @@ Do this, in order:
 
 ## Docs
 
-- `/admin/docs` — start at How you fit, then the sheet that matches the People card. Worker specimens sit below the player sheets.
+- `/admin/docs` — on the rail for everyone signed in. Start at How you fit, then the sheet that matches the People card. Worker specimens sit below the player sheets.
 - Print from the browser. If the card and the sheet disagree, amend People or the Face tab — do not invent a second company.
+- Asked `/admin/guide` (owner / BDM, on the Docs rail) — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
 
 ## Office menu (owner / BDM)
 
-- Defaults `/admin/settings` — one Save per vendor tab (Company, Zoho, Paystack, Drive). Saving one tab does not wipe the others. Secrets stay in the VM `.env` / n8n Credentials.
+Office is the company books, not the library and not n8n.
+
+- CRM `/admin/crm` — conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. Won stays for a later upsell. It does not send.
 - Files `/admin/files` — odd data-room paths. A catalog match files itself. Accept writes Drive via n8n.
 - Grants `/admin/grants` — deadline and next action. `/ops` can file a row. It does not submit an application.
-- Docs `/admin/docs`.
-- n8n `/admin/workflows` — iframe of the editor. Do not treat it as the desk.
-- Guide `/admin/guide` — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
+- Defaults `/admin/settings` — one Save per vendor tab (Company, Zoho, Paystack, Drive). Saving one tab does not wipe the others. Secrets stay in the VM `.env` / n8n Credentials.
+
+n8n `/admin/workflows` is under your name (top right). Iframe of the editor. Do not treat it as the desk.
 
 ## Chat prefixes (not this website)
 

@@ -1,16 +1,6 @@
 {{define "content"}}
 <div class="doc-split">
-  <aside class="doc-rail" aria-label="Playbook">
-    <a href="/admin/docs" class="on">Index</a>
-    <p class="rail-label">Your sheet</p>
-    {{range .Docs}}{{if .Player}}
-    <a href="{{.Href}}">{{.Title}}</a>
-    {{end}}{{end}}
-    <p class="rail-label">Workers</p>
-    {{range .Docs}}{{if .Worker}}
-    <a href="{{.Href}}">{{.Title}}</a>
-    {{end}}{{end}}
-  </aside>
+  {{template "doc-rail" .}}
   <div class="playbook">
     <aside class="now" aria-label="What to do">
       <div>
@@ -20,6 +10,7 @@
           <li>Open <strong>How you fit</strong>. Print it (browser → Print).</li>
           <li>Open the sheet that matches their People card. Print that too.</li>
           <li>Worker pages (below) are for the person who clicks Ask — not for a field assistant.</li>
+          {{if .CanOffice}}<li>Questions from Help? sit under <strong>Asked</strong> on this rail.</li>{{end}}
         </ol>
       </div>
       <a class="ghost fill now-go" href="/admin/docs/you">How you fit</a>

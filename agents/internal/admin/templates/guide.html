@@ -1,31 +1,35 @@
 {{define "content"}}
-<aside class="now" aria-label="What to do">
-  <div>
-    <p class="do">Guide · {{statusCount .GuideAsks "unsure"}} unsure</p>
-    <h2>Fix what Help? got wrong</h2>
-    <ol class="recipe">
-      <li>Read the rows marked <strong>unsure</strong> first.</li>
-      <li>Download <strong>asked.md</strong>.</li>
-      <li>In Cursor, add a lasting answer to <code>faq.md</code>, then come back.</li>
-    </ol>
+<div class="doc-split">
+  {{template "doc-rail" .}}
+  <div class="playbook">
+    <aside class="now" aria-label="What to do">
+      <div>
+        <p class="do">Docs · {{statusCount .GuideAsks "unsure"}} unsure</p>
+        <h2>Fix what Help? got wrong</h2>
+        <ol class="recipe">
+          <li>Read the rows marked <strong>unsure</strong> first.</li>
+          <li>Download <strong>asked.md</strong>.</li>
+          <li>In Cursor, add a lasting answer to <code>faq.md</code>, then come back.</li>
+        </ol>
+      </div>
+      <div class="actions now-go">
+        <a class="ghost fill" href="/admin/guide/asked.md">asked.md</a>
+      </div>
+    </aside>
+    {{if .GuideAsks}}
+    {{range .GuideAsks}}
+    <section class="proposal">
+      <p class="kicker">{{.CreatedAt.Format "2 Jan 15:04"}} · {{if .UserName}}{{.UserName}}{{else}}someone{{end}}{{if .Page}} · {{.Page}}{{end}}</p>
+      <div class="doc-card-head">
+        <h3>{{.Question}}</h3>
+        {{if .Unsure}}<span class="stamp dark">unsure</span>{{else}}<span class="stamp ok">answered</span>{{end}}
+      </div>
+      <p class="hint" style="white-space:pre-wrap">{{.Answer}}</p>
+    </section>
+    {{end}}
+    {{else}}
+    <p class="hint">No questions yet. The Help? button is bottom-right on every signed-in page except n8n.</p>
+    {{end}}
   </div>
-  <div class="actions now-go">
-    <a class="ghost fill" href="/admin/guide/asked.md">asked.md</a>
-    <a class="ghost" href="/admin/docs">Docs</a>
-  </div>
-</aside>
-{{if .GuideAsks}}
-{{range .GuideAsks}}
-<section class="proposal">
-  <p class="kicker">{{.CreatedAt.Format "2 Jan 15:04"}} · {{if .UserName}}{{.UserName}}{{else}}someone{{end}}{{if .Page}} · {{.Page}}{{end}}</p>
-  <div class="doc-card-head">
-    <h3>{{.Question}}</h3>
-    {{if .Unsure}}<span class="stamp dark">unsure</span>{{else}}<span class="stamp ok">answered</span>{{end}}
-  </div>
-  <p class="hint" style="white-space:pre-wrap">{{.Answer}}</p>
-</section>
-{{end}}
-{{else}}
-<p class="hint">No questions yet. The Help? button is bottom-right on every signed-in page except n8n.</p>
-{{end}}
+</div>
 {{end}}

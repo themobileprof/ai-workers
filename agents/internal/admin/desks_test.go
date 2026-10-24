@@ -139,7 +139,10 @@ func TestDeskNavOn(t *testing.T) {
 	if deskNavOn("home", desks) || !deskNavOn("desk-legal", desks) || !deskNavOn("legal", desks) {
 		t.Fatal("desk nav")
 	}
-	if officeMenuOn("home") || !officeMenuOn("settings") || !officeMenuOn("flows") || !officeMenuOn("guide") || !officeMenuOn("files") || !officeMenuOn("crm") {
+	if officeMenuOn("home") || officeMenuOn("flows") || officeMenuOn("guide") || officeMenuOn("docs") {
+		t.Fatal("docs, n8n, and Asked are not Office books")
+	}
+	if !officeMenuOn("settings") || !officeMenuOn("files") || !officeMenuOn("grants") || !officeMenuOn("crm") {
 		t.Fatal("office menu")
 	}
 }
@@ -215,6 +218,18 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 	if !strings.Contains(got, "Office") || !strings.Contains(got, `href="/admin/settings"`) {
 		t.Fatal("office dropdown")
 	}
+	if !strings.Contains(got, `href="/admin/crm"`) || !strings.Contains(got, `href="/admin/files"`) || !strings.Contains(got, `href="/admin/grants"`) {
+		t.Fatal("office books")
+	}
+	if !strings.Contains(got, `href="/admin/docs"`) {
+		t.Fatal("docs on the rail")
+	}
+	if !strings.Contains(got, `href="/admin/workflows"`) {
+		t.Fatal("n8n under the account menu")
+	}
+	if strings.Contains(got, `href="/admin/guide"`) {
+		t.Fatal("Asked belongs on the Docs rail, not Board")
+	}
 	if strings.Contains(got, "/admin/desks/hr") || strings.Contains(got, "/admin/desks/legal") {
 		t.Fatal("unassigned worker on office nav")
 	}
@@ -235,5 +250,28 @@ func TestLayoutOfficeVsHandlerNav(t *testing.T) {
 	}
 	if !strings.Contains(got, "/admin/desks/legal") || !strings.Contains(got, "Workers") {
 		t.Fatal("assigned desk")
+	}
+	if !strings.Contains(got, `href="/admin/docs"`) {
+		t.Fatal("handler docs on the rail")
+	}
+	if strings.Contains(got, `href="/admin/workflows"`) || strings.Contains(got, `href="/admin/settings"`) {
+		t.Fatal("handler must not see n8n or Defaults")
+	}
+	docsOffice := pageData{Title: "Docs", Nav: "docs", User: &User{ID: 1, Name: "Sam", Role: "owner"}, CanOffice: true, Docs: allDocs()}
+	buf.Reset()
+	if err := srv.pages["docs"].ExecuteTemplate(&buf, "layout.html", docsOffice); err != nil {
+		t.Fatal(err)
+	}
+	got = buf.String()
+	if !strings.Contains(got, `href="/admin/guide"`) || !strings.Contains(got, "Asked") {
+		t.Fatal("office Asked on the Docs rail")
+	}
+	docsHandler := pageData{Title: "Docs", Nav: "docs", User: &User{ID: 2, Name: "Ada", Role: "cofounder"}, Docs: allDocs()}
+	buf.Reset()
+	if err := srv.pages["docs"].ExecuteTemplate(&buf, "layout.html", docsHandler); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(buf.String(), `href="/admin/guide"`) {
+		t.Fatal("handler must not see Asked")
 	}
 }

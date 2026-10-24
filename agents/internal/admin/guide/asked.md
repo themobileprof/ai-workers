@@ -4,7 +4,7 @@ Questions people type into **Help?** are stored in Postgres (`guide_asks`) on th
 
 When you come back to Cursor with real questions:
 
-1. Signed in as owner or BDM, open `/admin/guide` or download `/admin/guide/asked.md`.
+1. Signed in as owner or BDM, open Docs → Asked (`/admin/guide`) or download `/admin/guide/asked.md`.
 2. Fold unanswered or weakly answered items into `faq.md` (a `##` question plus a short how-to).
 3. If the playbook was wrong, fix `playbook/*.html` and this handbook too — the bot embeds those files.
 

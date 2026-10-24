@@ -162,8 +162,9 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		{"delivery", "delivery", pageData{Title: "Delivery", Nav: "delivery", User: user, DeliveryBets: []DeliveryBet{{Project: p, Engagement: EngagementFor("testing"), Open: 0, Slots: 3}}}, "Apex Clerk"},
 		{"desk", "desks", pageData{Title: "Legal", Nav: "desk-legal", User: user, Desk: &Desk{Slug: "legal", Title: "Legal", Prefix: "/legal", Help: "NDA"}, CanAsk: true, Jobs: []DeskJob{{ID: 9, Title: "NDA Ada", Status: "proposed", Source: "desk"}}}, "NDA Ada"},
 		{"users-new", "users", pageData{Title: "Add", Nav: "users", User: user, Adding: true, Roles: deskRoles()}, "bdm"},
-		{"docs", "docs", pageData{Title: "Docs", Nav: "docs", User: user, Docs: allDocs()}, "How you fit"},
+		{"docs", "docs", pageData{Title: "Docs", Nav: "docs", User: user, CanOffice: true, Docs: allDocs()}, "How you fit"},
 		{"docs-page", "docs_page", pageData{Title: "Owner", Nav: "docs", User: user, Docs: allDocs(), Doc: &ownerSheet}, "You run TheMobileProf"},
+		{"guide", "guide", pageData{Title: "Asked", Nav: "guide", User: user, CanOffice: true, Docs: allDocs(), GuideAsks: []GuideAsk{{Question: "Where is n8n?", Answer: "Under your name."}}}, "Where is n8n?"},
 	}
 	for _, tc := range cases {
 		var buf strings.Builder
