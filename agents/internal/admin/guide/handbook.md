@@ -38,7 +38,7 @@ Do this, in order:
 - Accounts `/accounts` — Books classifier. n8n posts to Zoho Books and Paystack. Go never computes VAT.
 - Growth `/growth` — sales copy and replies when you ask. Bare 1:1 chat is Growth. Inbound info@ is CRM.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
-- CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. Won stays for a later upsell. It does not send.
+- CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step from that story. 09:00 Telegram lists due dates to owner/BDM. Won stays for a later upsell. It does not send.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN without a prefix; it does not save a desk row.
 - SEO `/seo` — fetches the live URL. Walk is facts, FAQ, schema, onsite pack, then offsite. Ask on `/admin/seo` issues a markdown URL for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. Search Console ids on Defaults are your property only.
 - Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.
@@ -56,7 +56,7 @@ Do this, in order:
 
 Office is the company books, not the library and not n8n.
 
-- CRM `/admin/crm` — conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. Won stays for a later upsell. It does not send.
+- CRM `/admin/crm` — conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step. 09:00 Telegram lists due dates. Won stays for a later upsell. It does not send.
 - Files `/admin/files` — odd data-room paths. A catalog match files itself. Accept writes Drive via n8n.
 - Grants `/admin/grants` — deadline and next action. `/ops` can file a row. It does not submit an application.
 - Defaults `/admin/settings` — one Save per vendor tab (Company, Zoho, Paystack, Drive). Saving one tab does not wipe the others. Secrets stay in the VM `.env` / n8n Credentials.

@@ -68,3 +68,23 @@ func TestHandleReadsEmailCorrespondence(t *testing.T) {
 		t.Fatal("crm user prompt must include prior Books notes")
 	}
 }
+
+func TestHandleFollowUpMustNotSend(t *testing.T) {
+	stub := &stubLLM{text: `{"status":"success","output_text":"Call Chinedu about the pilot.","structured_data":{"task_type":"follow_up","record_lead":true,"cannot_send":true,"next_action":"Call Chinedu","next_action_by":"2026-10-25"}}`}
+	_, err := Handle(context.Background(), stub, contract.Request{
+		TaskDescription: "follow up Apex",
+		ContextData:     []byte(`{"channel":"telegram","existing_contact":{"contact_name":"Chinedu","company_name":"Apex Motors","timeline":[{"summary":"Asked for a 30-day pilot"}]}}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stub.got.System, "cannot_send") {
+		t.Fatal("follow up must not send")
+	}
+	if !strings.Contains(stub.got.System, "not on Office") {
+		t.Fatal("missing person stays off the book")
+	}
+	if !strings.Contains(stub.got.Messages[0].Content, "30-day pilot") {
+		t.Fatal("follow up must see the timeline")
+	}
+}

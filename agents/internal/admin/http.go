@@ -258,6 +258,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/staff", s.internalStaffGET)
 	mux.HandleFunc("GET /internal/v1/mail/watchers", s.internalMailWatchersGET)
 	mux.HandleFunc("GET /internal/v1/crm/contacts", s.internalCRMContactsGET)
+	mux.HandleFunc("GET /internal/v1/crm/due", s.internalCRMDueGET)
 	mux.HandleFunc("GET /internal/v1/settings", s.internalSettings)
 	mux.HandleFunc("GET /internal/v1/projects", s.internalProjects)
 	mux.HandleFunc("GET /internal/v1/journeys", s.internalJourneys)

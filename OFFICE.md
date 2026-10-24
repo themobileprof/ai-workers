@@ -123,7 +123,7 @@ It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. 
 
 A first-party book on the desk (**Office → CRM**). This is where conversion lives: a person, an offer, a stage, and a timeline of email, WhatsApp, and calls. WhatsApp, info@, `/crm`, and a logged call file a touch on that person. Owner and BDM see every row; a cofounder sees contacts on their bet. Important mail still pings owner and BDM. Won stays on the book for a later upsell. n8n still upserts a **Zoho Books contact** when there is an email or phone, so invoices can match. There is no Zoho CRM app.
 
-It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. Notification sequences and upsell plays come later and still need a human.
+It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. `/crm follow up Apex` proposes the next touch from the timeline. 09:00 Lagos Telegram lists due dates to owner/BDM. Notification sequences and upsell plays come later and still need a human.
 
 ### Community (`/cm`) — live — keep
 
@@ -177,8 +177,7 @@ Still later:
 
 1. WhatsApp a mission to a field phone (do not use customer WhatsApp). GO / PIVOT / KILL stays Accept on Decide.
 2. Burn-by-bet **from Books tracking categories** (Card can hold a monthly NGN figure you paste; Go still does not compute VAT).
-3. Search Console / GA4 OAuth so the SEO clerk can read *your* queries (property ids are already on Defaults). Still no publish; onsite still ships through Cursor + a human.
-4. CRM notification sequences (email / WhatsApp) and upsell plays, fired from the person timeline. A human still Accepts or `/approve`. Do not auto-text the customer.
+3. CRM notification sequences (email / WhatsApp) and upsell plays, fired from the person timeline. Due-today Telegram is live. A human still Accepts or `/approve`. Do not auto-text the customer.
 
 Community stays Telegram rooms, not a campus timetable.
 

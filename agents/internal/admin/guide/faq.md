@@ -129,6 +129,12 @@ Ops Telegram `/pm` still pastes notes by hand if Fathom missed a call. Do not ch
 2. Go to the place. Bring named people back.
 3. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
 
+## How do I follow up someone on CRM?
+
+1. Telegram: `/crm follow up Apex` (name or company on the book). It reads the timeline and proposes the next step and a date. It does not send WhatsApp or email.
+2. Open the person on `/admin/crm`, do the step, then **Log**.
+3. Each morning, owner and BDM get a Telegram card for dates that are due or overdue. Empty book: no ping. It does not text the customer.
+
 ## How do I track a grant deadline?
 
 1. Office → **Grants** → Add: name, deadline, fit, next action.

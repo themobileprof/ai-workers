@@ -241,8 +241,51 @@ func (s *Store) LookupCRMContact(ctx context.Context, email, phone, name string)
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return CRMContact{}, false, err
 		}
+		c, err = scanCRMContact(s.pool.QueryRow(ctx, crmSelect+`WHERE lower(c.company) = lower($1) LIMIT 1`, name).Scan)
+		if err == nil {
+			return c, true, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return CRMContact{}, false, err
+		}
+		if len(name) >= 2 {
+			pat := likeContains(name)
+			c, err = scanCRMContact(s.pool.QueryRow(ctx, crmSelect+`
+WHERE (lower(c.name) LIKE lower($1) ESCAPE '\' OR lower(c.company) LIKE lower($1) ESCAPE '\')
+ORDER BY CASE WHEN c.stage IN ('won','lost') THEN 1 ELSE 0 END, c.updated_at DESC, c.id DESC
+LIMIT 1`, pat).Scan)
+			if err == nil {
+				return c, true, nil
+			}
+			if !errors.Is(err, pgx.ErrNoRows) {
+				return CRMContact{}, false, err
+			}
+		}
 	}
 	return CRMContact{}, false, nil
+}
+
+func (s *Store) ListDueCRMContacts(ctx context.Context, today time.Time) ([]CRMContact, error) {
+	day := today.In(lagosLocation()).Format("2006-01-02")
+	rows, err := s.pool.Query(ctx, crmSelect+`
+WHERE c.stage NOT IN ('won','lost')
+  AND c.next_action_by IS NOT NULL
+  AND c.next_action_by <= $1::date
+ORDER BY c.next_action_by ASC, c.id ASC
+`, day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []CRMContact
+	for rows.Next() {
+		c, err := scanCRMContact(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
 }
 
 func (s *Store) GetCRMContact(ctx context.Context, id int64) (CRMContact, error) {

@@ -85,7 +85,7 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | GET | `/internal/v1/community/mandate` · `/internal/v1/community/mandates` |
 | GET | `/internal/v1/whatsapp-accounts` |
 | GET | `/internal/v1/settings` |
-| GET | `/internal/v1/staff` · `/internal/v1/mail/watchers` · `/internal/v1/crm/contacts` |
+| GET | `/internal/v1/staff` · `/internal/v1/mail/watchers` · `/internal/v1/crm/contacts` · `/internal/v1/crm/due` |
 | GET | `/internal/v1/projects` · `/internal/v1/journeys` |
 | POST | `/internal/v1/projects/{id}/proposal` |
 | GET, POST | `/internal/v1/legal-drafts` |

@@ -49,7 +49,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
 - **Role:** Two bots. Ops (`Telegram account`): office staff identified by People `telegram_id`; prefixes only within that seat; receipts; `/approve` `/kill` for owner/BDM. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping, inbound info@ important-mail pings.
+- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping, CRM due-today ping (`GET /internal/v1/crm/due`), inbound info@ important-mail pings.
 - **Secrets:** Bot token in n8n credential Telegram account.
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
 

@@ -34,12 +34,19 @@
 <section class="specimen">
   <p class="spec-no">Specimen 04 · inbound email story</p>
   <p class="you-say">A client mails info@ about a 30-day pilot and needs a yes this week.</p>
-  <p class="expect"><code>task_type</code> important (or file_thread if it can wait). <code>context_data.correspondence</code> is their letter; <code>existing_contact.notes</code> is the prior desk story (Books notes if that is all n8n has). Notes stay a short rolling story. Nothing is drafted or sent. Owner and BDM get a Telegram briefing; a cofounder only if <code>project_slug</code> matches their Face seat. Later: <code>/crm follow up Apex</code>.</p>
+  <p class="expect"><code>task_type</code> important (or file_thread if it can wait). <code>context_data.correspondence</code> is their letter; <code>existing_contact.notes</code> is the prior desk story (Books notes if that is all n8n has). Notes stay a short rolling story. Nothing is drafted or sent. Owner and BDM get a Telegram briefing; a cofounder only if <code>project_slug</code> matches their Face seat.</p>
 </section>
 
-<section class="later">
-  <p class="stamp dark">Not wired · follow-up reminders</p>
-  <p>The worker can fill <code>next_action_by</code>. Nothing cron-pokes you on that date. When you wire a reminder (Telegram at 09:00 Africa/Lagos), add the specimen: where the date is stored, and that it must not double-text the customer.</p>
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · follow up from the timeline</p>
+  <p class="you-say">Telegram: <code>/crm follow up Apex</code></p>
+  <p class="expect"><code>task_type</code> follow_up. Reads <code>existing_contact</code> (notes, offer, stage, <code>next_action</code>, timeline). Proposes the next human step and a Lagos date. <code>cannot_send</code> true. Desk stores that date on the person. It does not message the customer. Log after you act.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 06 · due-today poke</p>
+  <p class="you-say">09:00 Africa/Lagos. n8n <strong>CRM due today</strong> (<code>crmDueDaily00001</code>).</p>
+  <p class="expect">Owner and BDM get one Telegram card listing open contacts whose <code>next_action_by</code> is today or overdue, each with an Office → CRM link. Won and lost are skipped. Empty book: no ping. It does not text the customer.</p>
 </section>
 
 <section class="later">

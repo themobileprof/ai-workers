@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -49,6 +50,60 @@ func TestCRMChannel(t *testing.T) {
 	}
 	if crmDirection("inbound") != "in" || crmDirection("outbound") != "out" {
 		t.Fatal(crmDirection("inbound"))
+	}
+}
+
+func TestCRMLookupQuery(t *testing.T) {
+	if crmLookupQuery("/crm follow up Apex") != "Apex" {
+		t.Fatal(crmLookupQuery("/crm follow up Apex"))
+	}
+	if crmLookupQuery("Follow-up Apex Motors") != "Apex Motors" {
+		t.Fatal(crmLookupQuery("Follow-up Apex Motors"))
+	}
+	if crmLookupQuery("Chinedu") != "Chinedu" {
+		t.Fatal(crmLookupQuery("Chinedu"))
+	}
+}
+
+func TestCRMDueDigest(t *testing.T) {
+	today := time.Date(2026, 10, 24, 10, 0, 0, 0, lagosLocation())
+	if crmDueText(nil, today) != "" {
+		t.Fatal("empty")
+	}
+	empty := crmDueDigest(nil, []User{{Role: "owner", Active: true, TelegramID: "111"}}, today)
+	if empty["count"] != 0 {
+		t.Fatalf("%+v", empty)
+	}
+	people, _ := empty["people"].([]map[string]any)
+	if len(people) != 0 {
+		t.Fatal("no ping when nothing is due")
+	}
+	list := []CRMContact{
+		{ID: 12, Name: "Chinedu", Company: "Apex Motors", NextAction: "send the 30-day pilot note", NextActionBy: "2026-10-22"},
+		{ID: 3, Name: "Ada", NextAction: "call Ikeja workshop", NextActionBy: "2026-10-24"},
+	}
+	text := crmDueText(list, today)
+	if !strings.Contains(text, "overdue 22 Oct") || !strings.Contains(text, "/admin/crm/12") {
+		t.Fatal(text)
+	}
+	if !strings.Contains(text, "(today)") || !strings.Contains(text, "does not message the customer") {
+		t.Fatal(text)
+	}
+	if strings.Contains(strings.ToLower(text), "whatsapp") && strings.Contains(text, "sent") {
+		t.Fatal("must not claim a customer send")
+	}
+	users := []User{
+		{ID: 1, Name: "Sam", Role: "owner", Active: true, TelegramID: "111"},
+		{ID: 2, Name: "Biz", Role: "bdm", Active: true, TelegramID: "222"},
+		{ID: 3, Name: "Ada", Role: "cofounder", Active: true, TelegramID: "333"},
+	}
+	got := crmDueDigest(list, users, today)
+	pings, _ := got["people"].([]map[string]any)
+	if len(pings) != 2 {
+		t.Fatalf("owner and bdm only %+v", pings)
+	}
+	if pings[0]["speak"] != true || pings[0]["telegram_id"] != "111" {
+		t.Fatalf("%+v", pings[0])
 	}
 }
 

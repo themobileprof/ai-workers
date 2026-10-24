@@ -314,7 +314,47 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 		phone = strVal(data["from"])
 	}
 	name := firstNonEmpty(firstNonEmpty(strVal(sd["contact_name"]), strVal(sd["name"])), strVal(data["profile_name"]))
+	company := strVal(sd["company_name"])
 	pid := int64Val(sd["project_id"])
+	exist, _ := data["existing_contact"].(map[string]any)
+	known := false
+	if exist != nil {
+		name = firstNonEmpty(name, firstNonEmpty(strVal(exist["contact_name"]), strVal(exist["name"])))
+		company = firstNonEmpty(company, firstNonEmpty(strVal(exist["company_name"]), strVal(exist["company"])))
+		email = firstNonEmpty(email, strVal(exist["email"]))
+		phone = firstNonEmpty(phone, strVal(exist["phone"]))
+		if pid == 0 {
+			pid = int64Val(exist["project_id"])
+		}
+		if id := int64Val(exist["contact_id"]); id > 0 {
+			if got, err := s.store.GetCRMContact(ctx, id); err == nil {
+				known = true
+				name = firstNonEmpty(name, got.Name)
+				company = firstNonEmpty(company, got.Company)
+				email = firstNonEmpty(email, got.Email)
+				phone = firstNonEmpty(phone, got.Phone)
+				if pid == 0 {
+					pid = got.ProjectID
+				}
+			}
+		}
+	}
+	name = crmLookupQuery(name)
+	if hit, ok, err := s.store.LookupCRMContact(ctx, email, phone, name); err != nil {
+		return
+	} else if ok {
+		known = true
+		name = hit.Name
+		company = firstNonEmpty(company, hit.Company)
+		email = firstNonEmpty(email, hit.Email)
+		phone = firstNonEmpty(phone, hit.Phone)
+		if pid == 0 {
+			pid = hit.ProjectID
+		}
+	}
+	if task == "follow_up" && !known {
+		return
+	}
 	if pid == 0 {
 		if slug := firstNonEmpty(strVal(sd["project_slug"]), strVal(data["project_slug"])); slug != "" {
 			if p, err := s.store.GetProjectBySlug(ctx, slug); err == nil {
@@ -324,13 +364,13 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 	}
 	ch := crmChannel(firstNonEmpty(strVal(data["channel"]), "ops"))
 	dir := "note"
-	if ch == "email" || ch == "whatsapp" {
+	if task != "follow_up" && (ch == "email" || ch == "whatsapp") {
 		dir = "in"
 	}
 	c, err := s.store.UpsertCRMContact(ctx, CRMContact{
 		ProjectID:    pid,
 		Name:         name,
-		Company:      strVal(sd["company_name"]),
+		Company:      company,
 		Email:        email,
 		Phone:        phone,
 		Stage:        strVal(sd["pipeline_stage"]),
@@ -346,6 +386,10 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 	sd["crm_contact_id"] = c.ID
 	body := firstNonEmpty(strVal(data["correspondence"]), strVal(sd["notes"]))
 	summary := firstNonEmpty(firstNonEmpty(strVal(sd["notes"]), clipCRM(strVal(resp.OutputText), 400)), firstNonEmpty(task, ch))
+	if task == "follow_up" {
+		summary = firstNonEmpty(strVal(sd["next_action"]), "Follow-up proposed")
+		body = clipCRM(strVal(resp.OutputText), 2000)
+	}
 	_ = s.store.InsertCRMEvent(ctx, CRMEvent{
 		ContactID: c.ID, Channel: ch, Direction: dir, Summary: summary, Body: body,
 	})
@@ -358,7 +402,7 @@ func (s *Server) internalCRMContactsGET(w http.ResponseWriter, r *http.Request) 
 	}
 	email := r.URL.Query().Get("email")
 	phone := r.URL.Query().Get("phone")
-	q := r.URL.Query().Get("q")
+	q := crmLookupQuery(r.URL.Query().Get("q"))
 	c, ok, err := s.store.LookupCRMContact(r.Context(), email, phone, q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)

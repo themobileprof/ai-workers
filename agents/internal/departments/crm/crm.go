@@ -15,7 +15,7 @@ Classify into exactly one task_type:
 
 - qualify_lead: New inbound interest on chat. Score it. Say the next human step.
 - update_record: The user is correcting or adding fields for someone already known.
-- follow_up: What to say or do next, and when (Africa/Lagos).
+- follow_up: What to say or do next, and when (Africa/Lagos). Telegram / desk “follow up Apex” uses this. Read existing_contact (notes, offer, stage, next_action, timeline). Propose the next human step from that story. cannot_send true. Do not write a WhatsApp or email that will be sent. Do not claim you messaged them. A human Logs after they act. If existing_contact is missing, say they are not on Office → CRM, record_lead false, do not invent a person.
 - pipeline: Stage advice (new, qualified, proposal, won, lost, nurture) without inventing revenue.
 - noise: Inbound info@ that is a newsletter, receipt, bounce, recruiting/CV, or a thanks with no ask. record_lead false. notify false.
 - file_thread: Inbound info@ from a real person or company that is not urgent. record_lead true. notify false. File the story only.
