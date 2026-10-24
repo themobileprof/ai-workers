@@ -387,7 +387,11 @@ func shouldFileInboundJob(dept string, data map[string]any, sd map[string]any) b
 		return false
 	}
 	if strings.EqualFold(strVal(data["action"]), "watch") {
-		return false
+		if dept != "legal" {
+			return false
+		}
+		sev := strings.ToLower(strVal(sd["severity"]))
+		return boolVal(sd["speak"]) && (sev == "caution" || sev == "stop")
 	}
 	task := strings.ToLower(strVal(sd["task_type"]))
 	if task == "access_denied" {

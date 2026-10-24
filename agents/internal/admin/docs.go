@@ -174,8 +174,8 @@ var docCatalog = []DocMeta{
 		Title:    "Legal",
 		Kicker:   "Parent clerk",
 		Path:     "POST /departments/legal",
-		Wire:     "partial",
-		Summary:  "Telegram watch flags labour/CAC/NDPR/CBN gotchas without a prefix. /legal and desk Ask draft file proposed NDAs. Humans Accept. The worker cannot send.",
+		Wire:     "live",
+		Summary:  "Telegram watch flags labour/CAC/NDPR/CBN gotchas without a prefix. Caution and stop also file a Legal job. /legal and desk Ask draft file proposed NDAs. Humans Accept. The worker cannot send.",
 		Prefixes: []string{"/legal", "Telegram watch", "desk Ask draft"},
 	},
 	{

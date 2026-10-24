@@ -174,8 +174,8 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("product-dev must stay a partial with later-boxes")
 	}
 	leg, ok := lookupDoc("legal")
-	if !ok || !leg.Partial() || !strings.Contains(string(leg.Body), "Not wired") {
-		t.Fatal("legal must stay a partial with a later-box for send")
+	if !ok || !leg.Live() || !strings.Contains(string(leg.Body), "Copy from the desk") {
+		t.Fatal("legal is live; send stays a human copy")
 	}
 	deliv, ok := lookupDoc("delivery")
 	if !ok || !deliv.Live() || !strings.Contains(string(deliv.Body), "hours/week") || !strings.Contains(string(deliv.Body), "Fathom") {
@@ -200,7 +200,8 @@ func TestPlaybookCatalog(t *testing.T) {
 	if !allDocs()[0].Live() || allDocs()[0].WireLabel() != "On the wire" {
 		t.Fatal("live label")
 	}
-	if !leg.Partial() || leg.WireLabel() != "Prefix live · follow-up missing" {
+	partial := DocMeta{Wire: "partial"}
+	if !partial.Partial() || partial.WireLabel() != "Prefix live · follow-up missing" {
 		t.Fatal("partial label")
 	}
 }

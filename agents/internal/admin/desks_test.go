@@ -152,7 +152,19 @@ func TestShouldFileInboundJob(t *testing.T) {
 		t.Fatal("desk channel stays on the HTTP insert")
 	}
 	if shouldFileInboundJob("legal", map[string]any{"channel": "telegram", "action": "watch"}, map[string]any{}) {
-		t.Fatal("watch")
+		t.Fatal("silent watch")
+	}
+	if shouldFileInboundJob("legal", map[string]any{"channel": "telegram", "action": "watch"}, map[string]any{"speak": true, "severity": "note"}) {
+		t.Fatal("note stays in the Telegram bubble")
+	}
+	if !shouldFileInboundJob("legal", map[string]any{"channel": "telegram", "action": "watch"}, map[string]any{"speak": true, "severity": "caution"}) {
+		t.Fatal("caution watch files a Legal job")
+	}
+	if !shouldFileInboundJob("legal", map[string]any{"channel": "telegram", "action": "watch"}, map[string]any{"speak": true, "severity": "stop"}) {
+		t.Fatal("stop watch files a Legal job")
+	}
+	if shouldFileInboundJob("growth", map[string]any{"channel": "telegram", "action": "watch"}, map[string]any{"speak": true, "severity": "caution"}) {
+		t.Fatal("only Legal watch files")
 	}
 	if !shouldFileInboundJob("legal", map[string]any{"channel": "telegram"}, map[string]any{}) {
 		t.Fatal("telegram legal")

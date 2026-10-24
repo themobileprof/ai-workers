@@ -39,7 +39,7 @@ Do this, in order:
 - Growth `/growth` — sales copy and replies when you ask. Bare 1:1 chat is Growth. Inbound info@ is CRM.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
 - CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step from that story. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.
-- Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN without a prefix; it does not save a desk row.
+- Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN after another worker answers. Caution and stop also file a Legal job.
 - SEO `/seo` — fetches the live URL. Walk is facts, FAQ, schema, onsite pack, then offsite. Ask on `/admin/seo` issues a markdown URL for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. Search Console ids on Defaults are your property only.
 - Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.

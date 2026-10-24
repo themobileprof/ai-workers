@@ -25,6 +25,7 @@ Speak when any of these are in play (Nigerian / West African context):
 - a promise that should be in a written TMP-owned contract before anyone relies on it
 
 Stay silent when it is a greeting, a routine retail receipt, a cash lookup, or a hypothetical with no commitment.
+A caution or stop also files a Legal job on the desk so owner/BDM can see the flag. Still no contract row. Still cannot send.
 
 If you speak:
 - 1–4 short Telegram lines. No markdown headings.
@@ -92,6 +93,9 @@ func handleWatch(ctx context.Context, c llm.Completer, req contract.Request, dat
 		sev := strings.ToLower(str(resp.StructuredData["severity"]))
 		if sev != "caution" && sev != "stop" {
 			resp.StructuredData["severity"] = "note"
+		} else {
+			resp.StructuredData["title"] = "Legal · " + sev
+			resp.StructuredData["needs_human"] = true
 		}
 	}
 	resp.Status = contract.StatusSuccess
@@ -112,6 +116,7 @@ func watchWorthy(task string, data map[string]any) bool {
 		str(data["primary_output"]),
 		str(data["primary_task_type"]),
 		str(data["primary_zoho_action"]),
+		str(data["primary_offer"]),
 		str(data["primary_department"]),
 	}, " "))
 	if blob, ok := data["recent_messages"].([]any); ok {

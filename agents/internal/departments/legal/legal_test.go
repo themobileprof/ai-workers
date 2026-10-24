@@ -106,6 +106,47 @@ func TestWatchUnworthySkipsLLM(t *testing.T) {
 	}
 }
 
+func TestWatchCautionTitles(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Salary is PAYE, not a handshake. Ask draft a contractor or employment paper.","structured_data":{"speak":true,"severity":"caution","flags":["salary"],"save_draft":true}}`}, contract.Request{
+		TaskDescription: "Ada is joining as cofounder of Mechazone and we will pay her a salary from next month.",
+		ContextData:     []byte(`{"action":"watch","channel":"telegram","primary_department":"growth"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !boolish(resp.StructuredData["speak"]) || resp.StructuredData["severity"] != "caution" {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if resp.StructuredData["title"] != "Legal · caution" {
+		t.Fatalf("title %v", resp.StructuredData["title"])
+	}
+	if resp.StructuredData["save_draft"] != false {
+		t.Fatal("watch must not save a contract")
+	}
+	if resp.StructuredData["cannot_send"] != true {
+		t.Fatal("send")
+	}
+	if resp.StructuredData["needs_human"] != true {
+		t.Fatal("needs_human")
+	}
+}
+
+func TestWatchNoteStaysInChat(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Worth a glance at the NDA later.","structured_data":{"speak":true,"severity":"note"}}`}, contract.Request{
+		TaskDescription: "Review this NDA wording before we send it.",
+		ContextData:     []byte(`{"action":"watch","channel":"telegram"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !boolish(resp.StructuredData["speak"]) || resp.StructuredData["severity"] != "note" {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if resp.StructuredData["title"] != nil {
+		t.Fatalf("note must not title a desk job, got %v", resp.StructuredData["title"])
+	}
+}
+
 func TestHandleDraftCannotSend(t *testing.T) {
 	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Accept on Legal.","structured_data":{"save_draft":true}}`}, contract.Request{
 		TaskDescription: "Draft an NDA for Ada on Mechazone",

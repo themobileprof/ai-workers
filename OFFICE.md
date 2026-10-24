@@ -131,9 +131,9 @@ It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. `/cr
 
 It is **not** an AI interviewing early customers of HomeGauge or Mechazone. Field week already does that with humans. Do not remove Community “until Stage 4.” Class still needs a host.
 
-### Legal (`/legal`) — partial — keep
+### Legal (`/legal`) — live — keep
 
-Parent clerk for TheMobileProf: proposed NDAs and contracts from git templates. Humans Accept on the Legal book. Copy the text yourself. Telegram **watch** flags labour/CAC/NDPR/CBN on ops threads; it does not save a row and does not halt Books.
+Parent clerk for TheMobileProf: proposed NDAs and contracts from git templates. Humans Accept on the Legal book. Copy the text yourself. Telegram **watch** flags labour/CAC/NDPR/CBN on ops threads after another worker answers. A caution or stop also files a Legal job. It does not halt Books. It does not email the other party.
 
 It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file a row). Do not delete Legal because grants exist. Faces still need paper.
 
