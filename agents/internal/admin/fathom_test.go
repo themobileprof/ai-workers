@@ -33,6 +33,39 @@ func TestSlugFromMeetingTitle(t *testing.T) {
 	}
 }
 
+func TestMeetingInviteeIdentity(t *testing.T) {
+	name, email, phone := meetingInviteeIdentity("Chinedu chinedu@apex.ng")
+	if name != "Chinedu" || email != "chinedu@apex.ng" || phone != "" {
+		t.Fatalf("%q %q %q", name, email, phone)
+	}
+	name, email, phone = meetingInviteeIdentity(map[string]any{"name": "Ada", "email": "Ada@Apex.ng", "phone": "08031112222"})
+	if name != "Ada" || email != "ada@apex.ng" || phone != "2348031112222" {
+		t.Fatalf("map %q %q %q", name, email, phone)
+	}
+}
+
+func TestCRMIsOfficePerson(t *testing.T) {
+	staff := []User{
+		{Name: "Samuel", Email: "samuel@themobileprof.com", Phone: "2348033954301", Active: true},
+		{Name: "Biz", Email: "biz@themobileprof.com", Active: true},
+	}
+	if !crmIsOfficePerson(staff, "Samuel", "", "") || !crmIsOfficePerson(staff, "", "samuel@themobileprof.com", "") {
+		t.Fatal("staff by name or email")
+	}
+	if crmIsOfficePerson(staff, "Chinedu", "chinedu@apex.ng", "") {
+		t.Fatal("customer is not staff")
+	}
+}
+
+func TestMeetingProjectSlug(t *testing.T) {
+	if got := meetingProjectSlug(map[string]any{"project": map[string]any{"slug": "academy", "name": "Academy"}}); got != "academy" {
+		t.Fatalf("%q", got)
+	}
+	if got := meetingProjectSlug(map[string]any{"meeting_title": "Catch-up"}); got != "" {
+		t.Fatalf("no bet %q", got)
+	}
+}
+
 func TestVerifyFathomWebhook(t *testing.T) {
 	now := time.Unix(1_712_345_678, 0)
 	body := `{"recording_id":123,"title":"Academy weekly"}`

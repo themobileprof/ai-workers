@@ -449,6 +449,37 @@ func (s *Store) LookupUserByPhone(ctx context.Context, phone string) (User, bool
 	return User{}, false, nil
 }
 
+func morningShouldSpeak(lines, coming []string, crmText string, office bool) bool {
+	if len(lines) > 0 || len(coming) > 0 {
+		return true
+	}
+	return office && strings.TrimSpace(crmText) != ""
+}
+
+func morningPingText(name string, lines, coming []string, crmText string) string {
+	text := "Today on the desk (" + name + "):"
+	if len(lines) > 0 {
+		text += "\n- " + strings.Join(lines, "\n- ")
+	}
+	if len(coming) > 0 {
+		text += "\nComing up:\n- " + strings.Join(coming, "\n- ")
+	}
+	crmText = strings.TrimSpace(crmText)
+	if crmText != "" {
+		if len(lines) > 0 || len(coming) > 0 {
+			text += "\n\n"
+		} else {
+			text += "\n"
+		}
+		text += crmText
+	}
+	text += "\n\nReply /today done 1, still on 2 — or open Delivery. Dates live on the bet."
+	if len(text) > 3900 {
+		text = text[:3890] + "…"
+	}
+	return text
+}
+
 func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 	users, err := s.ListUsers(ctx)
 	if err != nil {
@@ -461,6 +492,8 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 	}
 	upcoming, _ := s.ListProjectEvents(ctx, 0, true)
 	today := time.Now()
+	due, _ := s.ListDueCRMContacts(ctx, today)
+	crmText := crmDueText(due, today)
 	var out []map[string]any
 	for _, u := range users {
 		if !u.Active || strings.TrimSpace(u.TelegramID) == "" {
@@ -485,17 +518,15 @@ func (s *Store) MorningDigest(ctx context.Context) []map[string]any {
 			lines = append(lines, line)
 		}
 		coming := comingEventLines(u, upcoming, byProject, today)
-		if len(lines) == 0 && len(coming) == 0 {
+		office := canOffice(&u)
+		cardCRM := ""
+		if office {
+			cardCRM = crmText
+		}
+		if !morningShouldSpeak(lines, coming, cardCRM, office) {
 			continue
 		}
-		text := "Today on the desk (" + u.Name + "):"
-		if len(lines) > 0 {
-			text += "\n- " + strings.Join(lines, "\n- ")
-		}
-		if len(coming) > 0 {
-			text += "\nComing up:\n- " + strings.Join(coming, "\n- ")
-		}
-		text += "\n\nReply /today done 1, still on 2 — or open Delivery. Dates live on the bet."
+		text := morningPingText(u.Name, lines, coming, cardCRM)
 		out = append(out, map[string]any{
 			"user_id": u.ID, "name": u.Name, "phone": u.Phone, "telegram_id": u.TelegramID, "text": text, "speak": true,
 		})

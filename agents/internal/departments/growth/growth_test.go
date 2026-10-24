@@ -2,11 +2,21 @@ package growth
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/llm"
 )
+
+func TestPromptCuts(t *testing.T) {
+	if strings.Contains(systemPrompt, "grants_growth") || strings.Contains(systemPrompt, "suggested_slot_window") {
+		t.Fatal("growth no longer books calendars or hunts grants")
+	}
+	if !strings.Contains(systemPrompt, "next_action_by") {
+		t.Fatal("high intent needs a Lagos date")
+	}
+}
 
 type stubLLM struct {
 	text string

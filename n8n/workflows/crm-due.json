@@ -1,7 +1,7 @@
 {
   "id": "crmDueDaily00001",
   "name": "CRM due today",
-  "active": true,
+  "active": false,
   "isArchived": false,
   "nodes": [
     {

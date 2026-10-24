@@ -414,6 +414,52 @@ func (s *Server) applyDeliveryResponse(ctx context.Context, req contract.Request
 		_, _ = s.store.ApplyCheckins(ctx, u, intIDs(sd["done_ids"]), "done")
 		_, _ = s.store.ApplyCheckins(ctx, u, intIDs(sd["skipped_ids"]), "skipped")
 	}
+	s.fileMeetingCRM(ctx, req, resp)
+}
+
+func (s *Server) fileMeetingCRM(ctx context.Context, req contract.Request, resp contract.Response) {
+	if s == nil || s.store == nil || resp.StructuredData == nil {
+		return
+	}
+	sd := resp.StructuredData
+	if !boolVal(sd["save_plan"]) {
+		return
+	}
+	data := contract.ContextObject(req.ContextData)
+	ch := strings.ToLower(strVal(data["channel"]))
+	if ch != "notes" && ch != "fathom" && ch != "meeting" {
+		return
+	}
+	slug := meetingProjectSlug(data)
+	if slug == "" {
+		return
+	}
+	title := firstNonEmpty(strVal(data["meeting_title"]), firstNonEmpty(strVal(data["calendar_title"]), strVal(data["title"])))
+	users, _ := s.store.ListUsers(ctx)
+	seen := map[int64]bool{}
+	for _, raw := range meetingInvitees(data["invitees"]) {
+		name, email, phone := meetingInviteeIdentity(raw)
+		if crmIsOfficePerson(users, name, email, phone) {
+			continue
+		}
+		hit, ok, err := s.store.LookupCRMContact(ctx, email, phone, name)
+		if err != nil || !ok || hit.ID == 0 || seen[hit.ID] {
+			continue
+		}
+		seen[hit.ID] = true
+		summary := "Sales call"
+		if title != "" {
+			summary = "Sales call · " + title
+		}
+		body := firstNonEmpty(clipCRM(strVal(resp.OutputText), 2000), summary)
+		_ = s.store.InsertCRMEvent(ctx, CRMEvent{
+			ContactID: hit.ID,
+			Channel:   crmChannel(ch),
+			Direction: "in",
+			Summary:   clipCRM(summary, 400),
+			Body:      body,
+		})
+	}
 }
 
 func (s *Server) projectWorkPOST(w http.ResponseWriter, r *http.Request) {

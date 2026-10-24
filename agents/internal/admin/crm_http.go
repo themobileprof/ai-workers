@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 )
@@ -367,16 +368,25 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 	if task != "follow_up" && (ch == "email" || ch == "whatsapp") {
 		dir = "in"
 	}
+	stage := strVal(sd["pipeline_stage"])
+	nextAction, nextActionBy := crmWhatsAppFollowup(
+		strVal(data["channel"]),
+		stage,
+		strVal(sd["next_action"]),
+		strVal(sd["next_action_by"]),
+		floatVal(sd["intent_score"]),
+		time.Now(),
+	)
 	c, err := s.store.UpsertCRMContact(ctx, CRMContact{
 		ProjectID:    pid,
 		Name:         name,
 		Company:      company,
 		Email:        email,
 		Phone:        phone,
-		Stage:        strVal(sd["pipeline_stage"]),
+		Stage:        stage,
 		Offer:        firstNonEmpty(strVal(sd["offer"]), strVal(sd["product"])),
-		NextAction:   strVal(sd["next_action"]),
-		NextActionBy: strVal(sd["next_action_by"]),
+		NextAction:   nextAction,
+		NextActionBy: nextActionBy,
 		Notes:        strVal(sd["notes"]),
 		Source:       ch,
 	})

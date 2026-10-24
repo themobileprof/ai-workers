@@ -1,6 +1,9 @@
 package admin
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestEngagementFor(t *testing.T) {
 	if g := EngagementFor("parked"); g.MaxOpenTasks != 0 || g.Pings {
@@ -86,5 +89,27 @@ func TestCanAssignOfficeAndSeat(t *testing.T) {
 	}
 	if !canAssign(face, 3, members) {
 		t.Fatal("seated")
+	}
+}
+
+func TestMorningPing(t *testing.T) {
+	if morningShouldSpeak(nil, nil, "", true) {
+		t.Fatal("office with empty CRM stays quiet")
+	}
+	if !morningShouldSpeak(nil, nil, "CRM due today", true) {
+		t.Fatal("owner still gets CRM due")
+	}
+	if morningShouldSpeak(nil, nil, "CRM due today", false) {
+		t.Fatal("handler does not get the CRM card")
+	}
+	if !morningShouldSpeak([]string{"Academy: editor"}, nil, "", false) {
+		t.Fatal("handler with tasks still pings")
+	}
+	text := morningPingText("Sam", []string{"Academy: editor"}, []string{"HomeGauge training 28 Oct"}, "CRM due today (Lagos)\n• Apex — call")
+	if !strings.Contains(text, "Academy: editor") || !strings.Contains(text, "Coming up") || !strings.Contains(text, "CRM due today") {
+		t.Fatal(text)
+	}
+	if !strings.Contains(text, "does not") && !strings.Contains(text, "Reply /today") {
+		t.Fatal("footer")
 	}
 }

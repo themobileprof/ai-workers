@@ -9,6 +9,46 @@ import (
 
 const crmDeskOrigin = "https://workers.themobileprof.com"
 
+func crmBooksEligible(email, stage string) bool {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if strings.Contains(email, "@") {
+		return true
+	}
+	switch strings.ToLower(strings.TrimSpace(stage)) {
+	case "qualified", "proposal", "won":
+		return true
+	}
+	return false
+}
+
+func nextLagosBusinessDay(now time.Time) string {
+	if now.IsZero() {
+		now = time.Now()
+	}
+	t := now.In(lagosLocation()).Add(24 * time.Hour)
+	for t.Weekday() == time.Saturday || t.Weekday() == time.Sunday {
+		t = t.Add(24 * time.Hour)
+	}
+	return t.Format("2006-01-02")
+}
+
+func crmWhatsAppFollowup(channel, stage, nextAction, nextActionBy string, intent float64, now time.Time) (string, string) {
+	if strings.ToLower(strings.TrimSpace(channel)) != "whatsapp" {
+		return nextAction, nextActionBy
+	}
+	stage = strings.ToLower(strings.TrimSpace(stage))
+	if intent < 0.6 && stage != "qualified" && stage != "proposal" {
+		return nextAction, nextActionBy
+	}
+	if strings.TrimSpace(nextActionBy) == "" {
+		nextActionBy = nextLagosBusinessDay(now)
+	}
+	if strings.TrimSpace(nextAction) == "" {
+		nextAction = "Reply on WhatsApp"
+	}
+	return nextAction, nextActionBy
+}
+
 func crmLookupQuery(raw string) string {
 	s := strings.TrimSpace(raw)
 	s = strings.TrimPrefix(s, "/crm")

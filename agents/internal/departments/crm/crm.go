@@ -1,4 +1,4 @@
-// Package crm qualifies or updates a person. The desk book is Office → CRM. n8n still writes Zoho Books contacts for invoices, not Zoho CRM.
+// Package crm qualifies or updates a person. The desk book is Office → CRM. n8n writes Zoho Books contacts for invoices only with an email or once the stage is qualified+, not Zoho CRM.
 package crm
 
 import (
@@ -37,7 +37,7 @@ When this is a real person or company (not a hypothetical, not noise), set struc
 - notify (true only for important inbound mail)
 - notify_reason (short, if notify)
 - project_slug (only a slug from context_data.projects)
-On WhatsApp DMs, always record_lead when context_data.from looks like a phone: use that phone, and context_data.profile_name if you have no better name. Never invent emails, phones, or company names. If you cannot identify a person, record_lead must be false.`
+On WhatsApp DMs, always record_lead when context_data.from looks like a phone: use that phone, and context_data.profile_name if you have no better name. If intent_score is 0.6 or more, or pipeline_stage is qualified or proposal, always set next_action_by to the next Lagos weekday (YYYY-MM-DD) and next_action if missing (Reply on WhatsApp). Never invent emails, phones, or company names. If you cannot identify a person, record_lead must be false.`
 
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	return departments.Run(ctx, c, systemPrompt, departments.UserPrompt(req.TaskDescription, contract.ContextObject(req.ContextData)))

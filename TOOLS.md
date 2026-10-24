@@ -20,7 +20,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `zoho-books`
 - **URL:** https://www.zoho.com/books/
 - **Role:** Ledger. Expenses, bills, invoices, contacts, customer payments, tax_id. Go never computes VAT/WHT.
-- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert for invoices, Ops Telegram `/crm` Books fallback). The CRM story lives on the desk (`GET /internal/v1/crm/contacts`). Org ids and chart-of-accounts ids on the desk Defaults.
+- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert for invoices when there is an email or the stage is qualified+, Ops Telegram `/crm` Books fallback). The CRM story lives on the desk (`GET /internal/v1/crm/contacts`). Org ids and chart-of-accounts ids on the desk Defaults.
 - **Secrets:** OAuth tokens in n8n credential Zoho Books. Never `.env`, never the Go worker.
 - **n8n credentials:** `Zoho Books`
 - **Desk keys:** `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id`, `zoho.account.advertising_id`, `zoho.account.lodging_id`, `zoho.account.uncategorized_id`, `zoho.deposit_to_account_id`
@@ -49,7 +49,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
 - **Role:** Two bots. Ops (`Telegram account`): office staff identified by People `telegram_id`; prefixes only within that seat; receipts; `/approve` `/kill` for owner/BDM. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping, CRM due-today ping (`GET /internal/v1/crm/due`), inbound info@ important-mail pings.
+- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping at 08:30 Lagos (tasks + Coming up + owner/BDM CRM due via `GET /internal/v1/delivery/digest`), inbound info@ important-mail pings.
 - **Secrets:** Bot token in n8n credential Telegram account.
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
 
@@ -57,7 +57,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `whatsapp`
 - **URL:** https://developers.facebook.com/docs/whatsapp/cloud-api
-- **Role:** Customer 1:1 chat and CRM. Bare DMs are Growth; every successful DM with a phone files Office → CRM and upserts a Zoho Books contact for invoices. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) are refused — staff use ops Telegram. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
+- **Role:** Customer 1:1 chat and CRM. Bare DMs are Growth; every successful DM with a phone files Office → CRM. Books upsert only with an email or once the stage is qualified+. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) are refused — staff use ops Telegram. Cloud API numbers cannot join ordinary WhatsApp groups — student rooms are Academy Telegram.
 - **Where:** n8n Customer WhatsApp. No admin-phone allowlist.
 - **Secrets:** Tokens in n8n WhatsApp credentials.
 - **n8n credentials:** `WhatsApp OAuth account`, `WhatsApp account`

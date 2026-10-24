@@ -139,7 +139,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat and marketing copy. High intent upserts a Books contact. Inbound info@ is CRM, not an auto-reply.",
+		Summary:  "Sales chat and marketing copy. Every customer WhatsApp DM files Office → CRM. Books upserts only with an email or once qualified+. Inbound info@ is CRM, not an auto-reply.",
 		Prefixes: []string{"/growth", "1:1 WhatsApp (default)"},
 	},
 	{
@@ -157,7 +157,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Pipeline",
 		Path:     "POST /departments/crm · /admin/crm",
 		Wire:     "live",
-		Summary:  "The conversion book. WhatsApp, info@, calls, and /crm file a timeline on the person. Offer and stage are the pitch. /crm follow up proposes the next step. 09:00 Telegram lists due dates to owner/BDM. Won stays for a later upsell. It does not send.",
+		Summary:  "The conversion book. WhatsApp, info@, calls, and /crm file a timeline on the person. Offer and stage are the pitch. /crm follow up proposes the next step. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.",
 		Prefixes: []string{"/crm", "info@ inbound", "Office → CRM"},
 	},
 	{

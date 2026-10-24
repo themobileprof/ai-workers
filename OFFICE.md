@@ -95,7 +95,7 @@ Do not give each worker its own WhatsApp.
 | Customer WhatsApp | One 1:1 number. Bare message is sales (Growth). Every customer DM with a phone upserts CRM. Books/legal/delivery stay on Telegram. Cannot join ordinary groups. |
 | Academy Telegram | Student class rooms only. Not the ops bot. |
 | info@ | Formal mail. CRM files a thread summary. Important pings owner/BDM (and the matching cofounder). Nothing is auto-sent. `/approve` only if a human asked for a draft. |
-| Fathom | Meeting notetaker. Webhook files a **proposed** Delivery plan. Accept on Job chat. Calendar title should name the bet slug. |
+| Fathom | Meeting notetaker. Webhook files a **proposed** Delivery plan. Accept on Job chat. Calendar title should name the bet slug. A known CRM invitee (not staff) also gets a call event — no send, no new contact. |
 
 ---
 
@@ -115,15 +115,15 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone files **Office → CRM** and upserts a Zoho Books contact for invoices.
+Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone files **Office → CRM**. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+.
 
 It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply.
 
 ### CRM (`/crm`) — live
 
-A first-party book on the desk (**Office → CRM**). This is where conversion lives: a person, an offer, a stage, and a timeline of email, WhatsApp, and calls. WhatsApp, info@, `/crm`, and a logged call file a touch on that person. Owner and BDM see every row; a cofounder sees contacts on their bet. Important mail still pings owner and BDM. Won stays on the book for a later upsell. n8n still upserts a **Zoho Books contact** when there is an email or phone, so invoices can match. There is no Zoho CRM app.
+A first-party book on the desk (**Office → CRM**). This is where conversion lives: a person, an offer, a stage, and a timeline of email, WhatsApp, and calls. WhatsApp, info@, `/crm`, and a logged call file a touch on that person. Owner and BDM see every row; a cofounder sees contacts on their bet. Important mail still pings owner and BDM. Won stays on the book for a later upsell. n8n upserts a **Zoho Books contact** when there is an email, or once the stage is qualified, proposal, or won. There is no Zoho CRM app.
 
-It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. `/crm follow up Apex` proposes the next touch from the timeline. 09:00 Lagos Telegram lists due dates to owner/BDM. Notification sequences and upsell plays come later and still need a human.
+It is **not** a cold-outreach sequencer. It does not send mail or WhatsApp. `/crm follow up Apex` proposes the next touch from the timeline. The 08:30 Lagos Telegram card lists due dates to owner/BDM with Delivery and Coming up. Notification sequences and upsell plays come later and still need a human.
 
 ### Community (`/cm`) — live — keep
 
@@ -155,7 +155,7 @@ The worker cannot upload or invent a folder.
 
 **Project PM across every bet.** Not GitHub Actions, not Vercel, not UptimeRobot.
 
-Ask plan proposes a week. It writes after a delay unless you Turn away. Extra items sit on Backlog. Fathom (webhook `/webhook/pm-notes`) files the same kind of proposed plan from a finished call. Own `/today done` may apply immediately. Stage and hours/week still cap work. Seat on Face to onboard (that is not hiring). Do not nag this on customer WhatsApp.
+Ask plan proposes a week. It writes after a delay unless you Turn away. Extra items sit on Backlog. Fathom (webhook `/webhook/pm-notes`) files the same kind of proposed plan from a finished call. If the title names a bet and an invitee is already on Office → CRM (not staff), a call event is filed — no send, no new contact. Own `/today done` may apply immediately. Stage and hours/week still cap work. Seat on Face to onboard (that is not hiring). Do not nag this on customer WhatsApp. The 08:30 Lagos Telegram card is one ping: tasks, Coming up, and CRM due for owner/BDM.
 
 If you remove Delivery, field people have nowhere to be given work.
 

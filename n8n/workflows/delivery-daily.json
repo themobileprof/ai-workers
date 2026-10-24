@@ -12,7 +12,7 @@
               "field": "days",
               "daysInterval": 1,
               "triggerAtHour": 8,
-              "triggerAtMinute": 0
+              "triggerAtMinute": 30
             }
           ]
         }
@@ -24,7 +24,7 @@
         0
       ],
       "id": "deliveryDailyTrig0001",
-      "name": "08:00 Lagos"
+      "name": "08:30 Lagos"
     },
     {
       "parameters": {
@@ -93,7 +93,7 @@
     }
   ],
   "connections": {
-    "08:00 Lagos": {
+    "08:30 Lagos": {
       "main": [
         [
           {

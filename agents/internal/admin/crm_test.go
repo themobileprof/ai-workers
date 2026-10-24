@@ -48,8 +48,44 @@ func TestCRMChannel(t *testing.T) {
 	if crmChannel("WhatsApp") != "whatsapp" || crmChannel("mail") != "email" || crmChannel("voice") != "call" {
 		t.Fatal(crmChannel("WhatsApp"), crmChannel("mail"), crmChannel("voice"))
 	}
+	if crmChannel("notes") != "call" || crmChannel("fathom") != "call" {
+		t.Fatal(crmChannel("notes"), crmChannel("fathom"))
+	}
 	if crmDirection("inbound") != "in" || crmDirection("outbound") != "out" {
 		t.Fatal(crmDirection("inbound"))
+	}
+}
+
+func TestCRMBooksEligible(t *testing.T) {
+	if !crmBooksEligible("ada@apex.ng", "new") || !crmBooksEligible("", "qualified") || !crmBooksEligible("  ", "proposal") {
+		t.Fatal("email or qualified+")
+	}
+	if crmBooksEligible("2348091112222", "new") || crmBooksEligible("", "nurture") || crmBooksEligible("not-an-email", "lost") {
+		t.Fatal("phone-only new stays desk CRM")
+	}
+}
+
+func TestCRMWhatsAppFollowup(t *testing.T) {
+	now := time.Date(2026, 10, 23, 16, 0, 0, 0, lagosLocation()) // Friday
+	action, by := crmWhatsAppFollowup("whatsapp", "new", "", "", 0.8, now)
+	if action != "Reply on WhatsApp" || by != "2026-10-26" {
+		t.Fatalf("high intent weekend skip %q %q", action, by)
+	}
+	keepA, keepB := crmWhatsAppFollowup("whatsapp", "new", "Call Ikeja", "2026-10-28", 0.9, now)
+	if keepA != "Call Ikeja" || keepB != "2026-10-28" {
+		t.Fatalf("keep model date %q %q", keepA, keepB)
+	}
+	lowA, lowB := crmWhatsAppFollowup("whatsapp", "new", "", "", 0.2, now)
+	if lowA != "" || lowB != "" {
+		t.Fatalf("low intent stays empty %q %q", lowA, lowB)
+	}
+	tgA, tgB := crmWhatsAppFollowup("telegram", "qualified", "", "", 1, now)
+	if tgA != "" || tgB != "" {
+		t.Fatalf("telegram is not auto-dated %q %q", tgA, tgB)
+	}
+	qualA, qualB := crmWhatsAppFollowup("whatsapp", "qualified", "", "", 0.1, now)
+	if qualA != "Reply on WhatsApp" || qualB != "2026-10-26" {
+		t.Fatalf("qualified still dated %q %q", qualA, qualB)
 	}
 }
 

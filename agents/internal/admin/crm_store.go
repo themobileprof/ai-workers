@@ -99,7 +99,7 @@ func crmChannel(raw string) string {
 		return "email"
 	case "whatsapp", "wa":
 		return "whatsapp"
-	case "call", "phone", "voice":
+	case "call", "phone", "voice", "notes", "fathom", "meeting":
 		return "call"
 	case "telegram", "ops":
 		return "telegram"
