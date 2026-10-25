@@ -89,7 +89,7 @@ Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wai
 
 ## How do I ask for SEO copy?
 
-Tick SEO. Put the public URL on the project Card. Open the project → SEO. Do the step marked **now** (facts, then FAQ, then schema, then onsite, then offsite), or `/seo` on ops Telegram to continue the walk. The clerk fetches the live URL. The visible page is the source of truth. Ask issues a markdown pack — download it or give Cursor the URL. Offsite work becomes a Delivery week plan that writes after the delay unless you Turn away. The clerk cannot send, publish the live site, or invent ChatGPT citations. Search Console ids on Defaults are your property only. Customer WhatsApp cannot run `/seo`.
+Tick SEO. Put the public URL on the project Card. Open the project → SEO. Do the step marked **now** (facts, then FAQ, then schema, then onsite, then offsite), or `/seo` on ops Telegram to continue the walk. The clerk fetches the live URL. The visible page is the source of truth. Ask issues a markdown pack — download it or give Cursor the URL. Offsite work becomes a Delivery week plan that writes after the delay unless you Turn away. The clerk cannot send, publish the live site, or invent ChatGPT citations. GA4 and Search Console last-28-days arrive from n8n; quote only those snapshots. Paid spy and named competitor URLs stay later. Customer WhatsApp cannot run `/seo`.
 
 ## Why can’t I see the Board?
 

@@ -84,7 +84,7 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/ops` | internal-ops |
 | `/legal` | legal |
 | `/seo` | seo |
-| `/file` | files (ops Telegram only; Accept on Files) |
+| `/file` | files (ops Telegram only; catalog match files itself; unsure Accept on Files) |
 | `/today` `/pm` `/idea` | delivery |
 | `/validate` | product-dev |
 | none, 1:1 ops Telegram | that person’s default desk (ops for owner/BDM). Academy Telegram 1:1 stays community. |

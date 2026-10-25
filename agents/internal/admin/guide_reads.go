@@ -89,7 +89,7 @@ func shortDocWhy(kind, summary string) string {
 	case "product-dev":
 		return "/validate proposes Card fields and a gate. Accept on Product writes the Card; Decide writes the stage."
 	case "files":
-		return "Ops Telegram /file proposes a path. n8n writes Drive after Accept."
+		return "Catalog match files itself. Unsure waits for Accept. n8n writes Drive."
 	case "handler":
 		return "Ask, wait, then Accept. Chat never Accepts."
 	default:
