@@ -44,7 +44,7 @@ Do this, in order:
 - Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.
 - Ops `/ops` — operations room. Accounts via `/ops` still writes Books. `/ops legal` is chat-only; filing is `/legal`.
-- Product `/validate` — placement and validation. Accept on the project **Decide** tab writes the stage.
+- Product `/validate` — placement and validation. Accept on Product writes Card hypothesis, mission, and evidence. Accept on the project **Decide** tab writes the stage.
 
 ## Docs
 

@@ -184,6 +184,12 @@ func TestShouldFileInboundJob(t *testing.T) {
 	if shouldFileInboundJob("growth", map[string]any{"channel": "whatsapp"}, map[string]any{"task_type": "sales"}) {
 		t.Fatal("growth chatter")
 	}
+	if !shouldFileInboundJob("product-dev", map[string]any{"channel": "telegram"}, map[string]any{"save_memory": true, "card_hypothesis": "shops pay"}) {
+		t.Fatal("product card proposal")
+	}
+	if shouldFileInboundJob("product-dev", map[string]any{"channel": "telegram"}, map[string]any{"task_type": "product_ops_qa"}) {
+		t.Fatal("QA stays later")
+	}
 }
 
 func TestWithLoginCap(t *testing.T) {

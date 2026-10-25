@@ -168,6 +168,9 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 		if dept == "files" && desk != nil {
 			req = desk.EnrichFiles(r.Context(), req)
 		}
+		if dept == "product-dev" && desk != nil {
+			req = desk.EnrichProduct(r.Context(), req)
+		}
 		resp, err := fn(r.Context(), c, req)
 		if err != nil {
 			log.Printf("department error: %v", err)

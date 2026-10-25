@@ -167,7 +167,8 @@ func (s *Server) deskAskPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "desks", s.deskListView(r, u, desk, "This worker is not wired on this process", ""))
 		return
 	}
-	resp, err := fn(r.Context(), s.deskRequestFor(r.Context(), desk, u, task, nil, nil))
+	req := s.deskRequestFor(r.Context(), desk, u, task, nil, nil)
+	resp, err := fn(r.Context(), req)
 	if err != nil || resp.Status != contract.StatusSuccess {
 		msg := resp.OutputText
 		if msg == "" && err != nil {
@@ -175,6 +176,9 @@ func (s *Server) deskAskPOST(w http.ResponseWriter, r *http.Request) {
 		}
 		s.render(w, "desks", s.deskListView(r, u, desk, "Worker did not start a job: "+msg, ""))
 		return
+	}
+	if desk.Slug == "product-dev" {
+		s.applyProductResponse(r.Context(), req, resp)
 	}
 	job, err := s.store.InsertDeskJob(r.Context(), jobFromWorker(desk.Slug, "desk", task, resp.StructuredData, resp.OutputText))
 	if err != nil {
@@ -304,6 +308,10 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		if status == "rejected" {
 			_ = s.store.ClearProposal(ctx, job.RefID)
 		}
+	case "project_memory":
+		if status == "accepted" {
+			_ = s.applyProductMemory(ctx, job)
+		}
 	case "delivery_plan":
 		if status == "accepted" {
 			_, _ = s.store.AcceptPlanItems(ctx, actor, workItemsFromPlan(job.Payload["items"]))
@@ -389,7 +397,11 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 		data["thread"] = lines
 	}
 	raw, _ := json.Marshal(data)
-	return contract.Request{TaskDescription: task, ContextData: raw}
+	req := contract.Request{TaskDescription: task, ContextData: raw}
+	if desk.Slug == "product-dev" && s != nil {
+		req = s.EnrichProduct(rctx, req)
+	}
+	return req
 }
 
 func deskFlash(ok string) string {
@@ -454,6 +466,9 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	}
 	if dept == "crm" || dept == "growth" {
 		s.applyCRMResponse(ctx, req, resp)
+	}
+	if dept == "product-dev" {
+		s.applyProductResponse(ctx, req, resp)
 	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return

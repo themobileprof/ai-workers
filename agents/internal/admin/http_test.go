@@ -110,7 +110,7 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	person := httptest.NewRecorder()
 	s.render(person, "crm", pageData{
 		Title: "Chinedu", Nav: "crm", User: &User{Name: "Ada", Role: "owner"},
-		Contact: &CRMContact{ID: 1, Name: "Chinedu", Company: "Apex", Stage: "qualified", Offer: "WhatsApp books"},
+		Contact:   &CRMContact{ID: 1, Name: "Chinedu", Company: "Apex", Stage: "qualified", Offer: "WhatsApp books"},
 		CRMEvents: []CRMEvent{{Channel: "call", Direction: "in", Summary: "Asked for a demo"}},
 	})
 	if !strings.Contains(person.Body.String(), "Asked for a demo") || !strings.Contains(person.Body.String(), "Log a call") {
@@ -170,8 +170,8 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("projects playbook")
 	}
 	prod, ok := lookupDoc("product-dev")
-	if !ok || !prod.Partial() || !strings.Contains(string(prod.Body), "Not wired") {
-		t.Fatal("product-dev must stay a partial with later-boxes")
+	if !ok || !prod.Live() || !strings.Contains(string(prod.Body), "intern WhatsApp") {
+		t.Fatal("product-dev is live; intern WhatsApp stays later")
 	}
 	leg, ok := lookupDoc("legal")
 	if !ok || !leg.Live() || !strings.Contains(string(leg.Body), "Copy from the desk") {

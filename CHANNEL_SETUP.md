@@ -336,7 +336,7 @@ You Telegram ──► n8n ──► Go department ──► Telegram
 Agents among themselves: n8n HTTP only (never WhatsApp/Telegram as the bus)
 ```
 
-Validation loop: Telegram `/validate` → `POST .../product-dev` with `context_data.action`. n8n stores the returned `structured_data` (hypotheses, mission) in workflow static data or a Data Table, then Telegram/email the intern the mission text.
+Validation loop: Telegram `/validate` → `POST .../product-dev` with `context_data.action`. Go files a Product job. Accept writes hypothesis, mission, or evidence onto the project Card. Telegram/email a mission to a field phone is later.
 
 When a new flow is described in Cursor, add or edit a JSON file under `n8n/workflows/` and run `scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox). Tokens still go in n8n **Credentials**, not in those JSON files.
 

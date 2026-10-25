@@ -1,5 +1,5 @@
 // Package productdev is the engineering lab: validation, QA, and journey placement.
-// place_on_journey proposes; the desk Accepts. Hypotheses are still one-shot.
+// place_on_journey proposes; the desk Accepts. Hypotheses, mission, and evidence propose Card fields.
 package productdev
 
 import (

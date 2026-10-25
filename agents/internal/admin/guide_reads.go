@@ -87,7 +87,7 @@ func shortDocWhy(kind, summary string) string {
 	case "internal-ops":
 		return "/ops reaches the worker. /ops legal stays chat-only; filing is /legal."
 	case "product-dev":
-		return "/validate proposes a gate. You Accept on Decide."
+		return "/validate proposes Card fields and a gate. Accept on Product writes the Card; Decide writes the stage."
 	case "files":
 		return "Ops Telegram /file proposes a path. n8n writes Drive after Accept."
 	case "handler":

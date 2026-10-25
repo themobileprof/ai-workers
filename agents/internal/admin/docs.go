@@ -219,8 +219,8 @@ var docCatalog = []DocMeta{
 		Title:    "Product-dev",
 		Kicker:   "Engineering lab",
 		Path:     "POST /departments/product-dev",
-		Wire:     "partial",
-		Summary:  "/validate reaches the worker. Journey placement proposes; the desk Accepts. The Card holds hypothesis and this week’s mission. WhatsApp intern nag is later.",
+		Wire:     "live",
+		Summary:  "/validate proposes Card hypothesis, mission, and evidence. Accept on Product writes the Card. Placement still Accepts on Decide. Chat never stamps GO / PIVOT / KILL. WhatsApp intern nag is later.",
 		Prefixes: []string{"/validate"},
 	},
 }

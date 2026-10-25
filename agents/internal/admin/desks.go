@@ -28,7 +28,7 @@ func AllDesks() []Desk {
 		{Slug: "seo", Title: "SEO", Department: "seo", Prefix: "/seo", Help: "Fetches the bet’s own URL. Walk is facts, FAQ, schema, onsite pack, then offsite. Ask issues the pack URL. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. It cannot publish, send, or invent ChatGPT citations.", BookPath: "/admin/seo", BookLabel: "SEO book"},
 		{Slug: "delivery", Title: "Delivery", Department: "delivery", Prefix: "/today", Help: "Tasks across bets. Stage caps how many; extras sit on Backlog. Plans write after a delay unless you Turn away. Fathom notes use the same path. The 08:30 ping includes CRM due for owner/BDM. Chat never Accepts.", BookPath: "/admin/delivery", BookLabel: "Delivery"},
 		{Slug: "internal-ops", Title: "Ops", Department: "internal-ops", Prefix: "/ops", Help: "Operations room. Accounts via /ops still writes Books. Grant answers write a deadline row. They do not submit an application."},
-		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. Accept on the project Decide tab writes the stage. Chat never stamps.", BookPath: "/admin/projects", BookLabel: "Projects"},
+		{Slug: "product-dev", Title: "Product", Department: "product-dev", Prefix: "/validate", Help: "Placement and validation. /validate proposes Card hypothesis, mission, and evidence; Accept writes the Card. Accept on Decide writes the stage. Chat never stamps.", BookPath: "/admin/projects", BookLabel: "Projects"},
 	}
 }
 

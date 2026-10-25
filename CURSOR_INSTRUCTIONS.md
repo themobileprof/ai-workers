@@ -178,7 +178,7 @@ agents/
 5. **`productdev` (Engineering Lab)**
     - *Product Ops / QA:* Code diffs or logs from GitHub webhooks; bugs and leaked secrets.
     - *Customer Success:* Cohort telemetry → churn risk and retention copy.
-    - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL) plus **journey placement**. Playbooks live in `internal/journeys`. The worker only proposes `suggested_journey` / `suggested_gate` / `mission`. The desk commits. Hypothesis and this week’s mission live on the project Card. WhatsApp intern nag is later. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`, `place_on_journey`.
+    - *Product validation:* Port of the idea-validation loop (hypotheses → intern mission → evidence → GO/PIVOT/KILL) plus **journey placement**. Playbooks live in `internal/journeys`. The worker only proposes `suggested_journey` / `suggested_gate` / `mission`. The desk commits. `/validate` also proposes Card hypothesis, mission, and evidence; Accept on Product writes those fields. Chat never stamps GO / PIVOT / KILL. WhatsApp intern nag is later. Set `context_data.action` to one of `generate_hypotheses`, `generate_plan`, `generate_mission`, `generate_interview_guide`, `analyse_evidence`, `update_hypothesis`, `recommend_next_experiment`, `generate_decision_report`, `place_on_journey`.
 
 ## 5. RECOMMENDED TECH STACK SPECIFICATIONS
 

@@ -159,9 +159,9 @@ Ask plan proposes a week. It writes after a delay unless you Turn away. Extra it
 
 If you remove Delivery, field people have nowhere to be given work.
 
-### Product-dev (`/validate`) — partial
+### Product-dev (`/validate`) — live — keep
 
-Engineering lab: falsifiable hypotheses, intern **missions**, `analyse_evidence`, **journey placement**. The Card stores hypothesis and this week’s mission. Ask placement on the project; Accept on **Decide** writes the stage. WhatsApp a mission to a field phone is later.
+Engineering lab: falsifiable hypotheses, intern **missions**, `analyse_evidence`, **journey placement**. `/validate` proposes Card hypothesis, mission, and evidence. Accept on Product writes the Card. Ask placement on the project; Accept on **Decide** writes the stage. Chat never stamps GO / PIVOT / KILL. WhatsApp a mission to a field phone is later.
 
 It is **not** a ticket mill and not a code agent. Delivery is the backlog. Do not simplify Product to “only tag transcripts” — that deletes placement, which is the incubator.
 
