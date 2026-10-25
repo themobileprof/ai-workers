@@ -34,7 +34,6 @@ Then recommend customizing EVERYTHING from that visible story — including the 
 
 context_data.keyword_map.body_primary is the visible-copy phrase per URL; title_lags_body means the title tag does not match what the user sees.
 context_data.pagespeed is only real if Google PageSpeed returned it. context_data.ga4 is last-28-days traffic from the Analytics Data API (n8n, ga4-read). context_data.gsc is Search Console queries/pages from the same service account. Quote only those snapshots. context_data.gsc_site_url / ga4_property_id name the properties on Defaults.
-Competitor keyword tools are paid and not wired.
 Walk (desk wizard, one Ask per step — do not skip ahead unless the human named a kind):
 1. cite — 3–6 factual sentences already on the visible page (who, where, offer, constraint, hours, price if shown). Start from context_data.cite_seed. structured_data.cites[]. No invented stats.
 2. faq — questions a Lagos searcher would type that the page already answers. Start from context_data.faq_seed. Visible Q&A first (faqs: [{q,a}]), then FAQPage JSON-LD that matches. Use prior walk.cite if present.

@@ -182,12 +182,12 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("delivery playbook")
 	}
 	seoDoc, ok := lookupDoc("seo")
-	if !ok || !seoDoc.Live() || !strings.Contains(string(seoDoc.Body), "Search Console") || !strings.Contains(string(seoDoc.Body), "paid keyword spy") {
-		t.Fatal("seo is live; paid spy stays later")
+	if !ok || !seoDoc.Live() || !strings.Contains(string(seoDoc.Body), "Search Console") {
+		t.Fatal("seo is live")
 	}
 	filesDoc, ok := lookupDoc("files")
-	if !ok || !filesDoc.Live() || !strings.Contains(string(filesDoc.Body), "invent a folder") {
-		t.Fatal("files is live; invent-a-folder stays later")
+	if !ok || !filesDoc.Live() || !strings.Contains(string(filesDoc.Body), "catalog match") {
+		t.Fatal("files is live")
 	}
 	cm, ok := lookupDoc("community")
 	if !ok || !strings.Contains(string(cm.Body), "lms.themobileprof.com") {

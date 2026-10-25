@@ -141,7 +141,7 @@ It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file
 
 Titles, meta, outlines, keyword inventory from the bet’s own pages, and a walk: quotable facts, FAQ, schema, an onsite pack for Cursor, then offsite. Give a live URL. The clerk fetches that origin (JSON-LD is kept). The visible page is the source of truth (a designer may never have seen title/meta). Ask issues a markdown pack (`/site/seo/{token}`) — download it or reference the URL in Cursor. A human implements onsite in the site repo. Offsite work is handed to Delivery as a week plan (spread over periods, stage caps, backlog) that writes after the delay unless you Turn away. The clerk cannot send. It is still not a GEO desk — no invented ChatGPT citations.
 
-Search Console and GA4 last-28-days arrive from n8n (service account, *your* properties only). Quote those snapshots. Paid keyword spy stays unwired. Named competitor pages are later.
+Search Console and GA4 last-28-days arrive from n8n (service account, *your* properties only). Quote those snapshots.
 
 It cannot publish or merge. It does not talk to GitHub. It is **not** GEO / “win AI answers.” It is not a web-wide crawler.
 

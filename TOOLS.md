@@ -132,7 +132,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-search-console`
 - **URL:** https://search.google.com/search-console
-- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. Not competitor keywords. n8n pulls ~28 days as `ga4-read`; the SEO clerk only quotes that snapshot.
+- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. n8n pulls ~28 days as `ga4-read`; the SEO clerk only quotes that snapshot.
 - **Where:** n8n workflow SEO GSC pull (same `googleApi` credential as GA4, plus `webmasters.readonly`). Property URL on desk Defaults (`seo.gsc_site_url`). Snapshot on `POST /internal/v1/seo/gsc`. The Go worker never holds the JSON key.
 - **Secrets:** Same n8n credential Google Analytics (add Search Console scope). Never git, never `.env`, never the Go worker.
 - **n8n credentials:** `Google Analytics`
@@ -142,7 +142,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-analytics`
 - **URL:** https://analytics.google.com/
-- **Role:** Organic traffic for your GA4 property. Free API. Not rankings, not competitor analysis. n8n pulls last 28 days as the `ga4-read` service account; the SEO clerk only quotes that snapshot.
+- **Role:** Organic traffic for your GA4 property. Free API. n8n pulls last 28 days as the `ga4-read` service account; the SEO clerk only quotes that snapshot.
 - **Where:** n8n workflow SEO GA4 pull (`googleApi` service account, not person OAuth). Property id on desk Defaults (`seo.ga4_property_id`). Snapshot on `POST /internal/v1/seo/ga4`. The Go worker never holds the JSON key.
 - **Secrets:** Service account JSON in n8n credential Google Analytics. Never git, never `.env`, never the Go worker.
 - **n8n credentials:** `Google Analytics`
