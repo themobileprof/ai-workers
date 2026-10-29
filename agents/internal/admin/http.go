@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/seo"
@@ -92,6 +93,13 @@ type pageData struct {
 	SeoBriefs      []SeoBrief
 	SeoKinds       []seo.Spec
 	CanSEO         bool
+	Decks          []GrowthDeck
+	DeckKinds      []growth.Spec
+	CanGrowth      bool
+	DeckWalk       []RunStep
+	DeckSeed       deckSeed
+	LiveDeck       *GrowthDeck
+	DeckJob        *DeskJob
 	GuideAsks      []GuideAsk
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
@@ -132,10 +140,13 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"guideReads":   guideReads,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "guide", "files", "grants", "crm"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "growth", "guide", "files", "grants", "crm"} {
 		files := []string{"templates/layout.html", "templates/" + name + ".html"}
 		if name == "seo" || name == "projects" {
 			files = append(files, "templates/seo_walk.html")
+		}
+		if name == "growth" || name == "projects" {
+			files = append(files, "templates/deck_walk.html")
 		}
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, files...)
 		if err != nil {
@@ -212,6 +223,13 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/seo/{id}/reject", s.seoStamp("rejected"))
 	mux.HandleFunc("GET /site/seo/{token}", s.seoPackPublic)
 	mux.HandleFunc("POST /admin/projects/{id}/seo", s.projectSEO)
+	mux.HandleFunc("GET /admin/growth", s.growthGET)
+	mux.HandleFunc("POST /admin/growth/ask", s.growthAskPOST)
+	mux.HandleFunc("GET /admin/growth/{id}/pack.md", s.growthPackDownload)
+	mux.HandleFunc("POST /admin/growth/{id}/approve", s.growthStamp("approved"))
+	mux.HandleFunc("POST /admin/growth/{id}/reject", s.growthStamp("rejected"))
+	mux.HandleFunc("GET /site/deck/{token}", s.growthPackPublic)
+	mux.HandleFunc("POST /admin/projects/{id}/deck", s.projectDeck)
 	mux.HandleFunc("GET /admin/hr", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/delivery", http.StatusSeeOther)
 	})
@@ -699,6 +717,12 @@ func statusCount(items any, status string) int {
 			}
 		}
 	case []SeoBrief:
+		for _, d := range xs {
+			if d.Status == status {
+				n++
+			}
+		}
+	case []GrowthDeck:
 		for _, d := range xs {
 			if d.Status == status {
 				n++

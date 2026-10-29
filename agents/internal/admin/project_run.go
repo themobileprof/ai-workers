@@ -46,14 +46,16 @@ func (s RunStep) StampLabel() string {
 }
 
 type runInput struct {
-	Project  Project
-	Drafts   []LegalDraft
-	Briefs   []SeoBrief
-	Filings  []FileFiling
-	Items    []WorkItem
-	Events   []ProjectEvent
-	CanLegal bool
-	CanSEO   bool
+	Project   Project
+	Drafts    []LegalDraft
+	Briefs    []SeoBrief
+	Decks     []GrowthDeck
+	Filings   []FileFiling
+	Items     []WorkItem
+	Events    []ProjectEvent
+	CanLegal  bool
+	CanSEO    bool
+	CanGrowth bool
 }
 
 func projectRun(in runInput) []RunStep {
@@ -166,6 +168,25 @@ func projectRun(in runInput) []RunStep {
 		seo.Detail += "SEO clerk is off until the LLM env is set, or you need the SEO desk tick."
 	}
 	steps = append(steps, seo)
+
+	deck := RunStep{
+		ID: "deck", Kind: "As needed", Title: "Pitch deck from the Card",
+		Why:  "Chat Growth one Kawasaki slide at a time from the Card. The pack updates every turn. Growth cannot send or invent traction.",
+		How:  []string{"Write the Card one-liner first.", "Open Deck. Start a session and chat each slide.", "Download the pack or give Cursor the URL. Export a PDF and /file it under product. Turn away if a fact is invented."},
+		Href: base + "?tab=deck", Button: "Open Deck",
+		Help: "Ask a pitch deck for " + name,
+		Done: len(in.Decks) > 0,
+	}
+	if strings.TrimSpace(p.OneLiner) == "" && !deck.Done {
+		deck.Detail = "Skip until the Card has a one-liner."
+	}
+	if !in.CanGrowth {
+		if deck.Detail != "" {
+			deck.Detail += " "
+		}
+		deck.Detail += "Growth clerk is off until the LLM env is set, or you need the Growth desk tick."
+	}
+	steps = append(steps, deck)
 	return finishRun(steps)
 }
 

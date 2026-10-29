@@ -180,6 +180,9 @@ func (s *Server) deskAskPOST(w http.ResponseWriter, r *http.Request) {
 	if desk.Slug == "product-dev" {
 		s.applyProductResponse(r.Context(), req, resp)
 	}
+	if desk.Slug == "growth" {
+		s.applyDeckResponse(r.Context(), req, resp)
+	}
 	job, err := s.store.InsertDeskJob(r.Context(), jobFromWorker(desk.Slug, "desk", task, resp.StructuredData, resp.OutputText))
 	if err != nil {
 		s.render(w, "desks", s.deskListView(r, u, desk, err.Error(), ""))
@@ -229,7 +232,8 @@ func (s *Server) deskChatPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	thread, _ := s.store.ListJobMessages(r.Context(), job.ID)
-	resp, err := fn(r.Context(), s.deskRequestFor(r.Context(), desk, u, body, &job, thread))
+	req := s.deskRequestFor(r.Context(), desk, u, body, &job, thread)
+	resp, err := fn(r.Context(), req)
 	reply := resp.OutputText
 	if reply == "" && err != nil {
 		reply = err.Error()
@@ -237,8 +241,11 @@ func (s *Server) deskChatPOST(w http.ResponseWriter, r *http.Request) {
 	if reply == "" {
 		reply = "No reply from the worker."
 	}
+	if desk.Slug == "growth" {
+		s.applyDeckResponse(r.Context(), req, resp)
+	}
 	_, _ = s.store.InsertJobMessage(r.Context(), JobMessage{JobID: job.ID, AuthorKind: "worker", Body: reply})
-	http.Redirect(w, r, desk.Path()+"?job="+strconv.FormatInt(job.ID, 10)+"&ok=chat", http.StatusSeeOther)
+	http.Redirect(w, r, deskChatNext(r, desk.Path()+"?job="+strconv.FormatInt(job.ID, 10)+"&ok=chat"), http.StatusSeeOther)
 }
 
 func (s *Server) deskStamp(status string) http.HandlerFunc {
@@ -330,6 +337,14 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		if status == "rejected" {
 			s.stopSeoAutomation(ctx, job.RefID)
 		}
+	case "growth_deck":
+		mapped := "approved"
+		if status == "rejected" {
+			mapped = "rejected"
+		}
+		if status == "accepted" || status == "rejected" {
+			_ = s.store.SetGrowthDeckStatus(ctx, job.RefID, mapped)
+		}
 	}
 	kind := "system"
 	text := "Handler accepted this job. The worker did not Accept it."
@@ -377,6 +392,10 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 		data["job_id"] = job.ID
 		data["job_title"] = job.Title
 		data["job_status"] = job.Status
+		if job.RefKind != "" {
+			data["ref_kind"] = job.RefKind
+			data["ref_id"] = job.RefID
+		}
 		if job.Payload != nil {
 			data["job"] = job.Payload
 		}
@@ -401,7 +420,22 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 	if desk.Slug == "product-dev" && s != nil {
 		req = s.EnrichProduct(rctx, req)
 	}
+	if desk.Slug == "growth" && s != nil {
+		req = s.EnrichGrowth(rctx, req)
+	}
 	return req
+}
+
+func deskChatNext(r *http.Request, fallback string) string {
+	next := strings.TrimSpace(r.FormValue("next"))
+	if !strings.HasPrefix(next, "/admin/") {
+		return fallback
+	}
+	out := withQuery(next, "ok", "chat")
+	if strings.Contains(next, "/admin/projects/") {
+		out = withQuery(out, "tab", "deck")
+	}
+	return out
 }
 
 func deskFlash(ok string) string {
@@ -470,12 +504,29 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	if dept == "product-dev" {
 		s.applyProductResponse(ctx, req, resp)
 	}
+	if dept == "growth" {
+		s.applyDeckResponse(ctx, req, resp)
+		if resp.StructuredData != nil {
+			sd = resp.StructuredData
+		}
+	}
 	if !shouldFileInboundJob(dept, data, sd) {
 		return
 	}
 	desk, ok := DeskByDepartment(dept)
 	if !ok {
 		return
+	}
+	if id := int64Val(sd["growth_deck_id"]); id > 0 {
+		if existing, err := s.store.FindJobByRef(ctx, desk.Slug, "growth_deck", id); err == nil && existing.ID > 0 {
+			if resp.OutputText != "" {
+				_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: existing.ID, AuthorKind: "worker", Body: resp.OutputText})
+			}
+			if existing.Status == "proposed" {
+				_ = s.store.SetDeskJobStatus(ctx, existing.ID, "open")
+			}
+			return
+		}
 	}
 	source := firstNonEmpty(strVal(data["channel"]), "inbound")
 	job, err := s.store.InsertDeskJob(ctx, jobFromWorker(desk.Slug, source, req.TaskDescription, sd, resp.OutputText))

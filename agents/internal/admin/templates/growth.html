@@ -1,0 +1,114 @@
+{{define "content"}}
+<aside class="now" aria-label="What to do">
+  <div>
+    <p class="do">Growth · {{statusCount .Decks "proposed"}} waiting</p>
+    <h2>Chat the slides, then hand over the pack</h2>
+    <ol class="recipe">
+      <li>Pick a bet. Start a session. Chat each Kawasaki slide until the copy is right.</li>
+      <li>The pack URL updates every turn. Download it, or give Cursor the URL. You paste into Slides. Export a PDF and <code>/file</code> it under <strong>product</strong>.</li>
+      <li><strong>Turn away</strong> if a fact is invented. The clerk cannot send the deck or invent traction.</li>
+      <li>Paste into <code>/legal</code> if you need a claims review. Legal does not write this document.</li>
+    </ol>
+    {{template "page-reads" (guideReads "growth")}}
+  </div>
+  <div class="actions now-go">
+    <a class="ghost" href="/admin/desks/growth">Ask a copy job</a>
+    <a class="ghost" href="/admin/docs/growth">Growth sheet</a>
+  </div>
+</aside>
+<div class="tabset" data-tabs data-default="proposed">
+  <nav class="tabs" role="tablist" aria-label="Growth decks">
+    <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .Decks "proposed"}}</span></button>
+    <button type="button" role="tab" data-tab="accepted" aria-controls="tab-accepted">Accepted <span class="count">{{statusCount .Decks "approved"}}</span></button>
+    <button type="button" role="tab" data-tab="rejected" aria-controls="tab-rejected">Turned away <span class="count">{{statusCount .Decks "rejected"}}</span></button>
+  </nav>
+  <div class="tab-panels">
+    <section role="tabpanel" id="tab-proposed" data-tab="proposed">
+      {{if statusCount .Decks "proposed"}}
+      {{range .Decks}}
+      {{if .Proposed}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Audience}}<p class="hint">Room: {{.Audience}}</p>{{end}}
+        {{if .Rationale}}<p class="hint">{{.Rationale}}</p>{{end}}
+        <p class="hint">{{.SlideLabel}}</p>
+        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/approve">
+            <input type="hidden" name="next" value="/admin/growth">
+            <button type="submit">Accept</button>
+          </form>
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/reject">
+            <input type="hidden" name="next" value="/admin/growth">
+            <button class="ghost" type="submit">Turn away</button>
+          </form>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing waiting. Open a <a class="quiet" href="/admin/projects">project</a> → Deck → Start session, or send Telegram <code>/growth Pitch deck for HomeGauge</code>.</p>
+      {{end}}
+      {{if not .Project}}
+      <form method="get" action="/admin/growth" class="person add">
+        <p class="hint">Pick a bet whose Card has a one-liner. Then start or continue the session.</p>
+        <div class="fields">
+          <label>Bet
+            <select name="project_id" required>
+              <option value="">Choose…</option>
+              {{range .Projects}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Open session</button>
+        </div>
+      </form>
+      {{end}}
+      {{template "deck-walk" .}}
+    </section>
+    <section role="tabpanel" id="tab-accepted" data-tab="accepted">
+      {{if statusCount .Decks "approved"}}
+      {{range .Decks}}
+      {{if eq .Status "approved"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing accepted yet.</p>
+      {{end}}
+    </section>
+    <section role="tabpanel" id="tab-rejected" data-tab="rejected">
+      {{if statusCount .Decks "rejected"}}
+      {{range .Decks}}
+      {{if eq .Status "rejected"}}
+      <section class="proposal">
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+      </section>
+      {{end}}
+      {{end}}
+      {{else}}
+      <p class="hint">Nothing turned away.</p>
+      {{end}}
+    </section>
+  </div>
+</div>
+{{end}}

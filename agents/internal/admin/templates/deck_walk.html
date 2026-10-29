@@ -1,0 +1,92 @@
+{{define "deck-walk"}}
+{{if .Project}}
+<h3>Session · chat each Kawasaki slide</h3>
+<ol class="recipe">
+  <li>Start a session. Growth proposes copy for the current slide, then asks one question.</li>
+  <li>Reply: tighter, next, skip, or rewrite a line. The pack URL updates every turn. Chat never Accepts.</li>
+  <li>Missing facts stay [TO BE COMPLETED]. Turn away if a fact is invented. Paste into <code>/legal</code> if you need a claims review.</li>
+</ol>
+{{if .LiveDeck}}
+<p class="hint">Now: <strong>{{.LiveDeck.SlideLabel}}</strong>{{if .LiveDeck.PackPath}} · <a href="{{.LiveDeck.PackPath}}">pack URL</a>{{end}} · <a href="{{.LiveDeck.PackDownloadPath}}">download</a></p>
+<ol class="run">
+  {{range .LiveDeck.Slides}}
+  <li class="{{if eq .N $.LiveDeck.CurrentSlide}}waiting{{else if eq .Status "agreed"}}done{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">Slide {{.N}}</p>
+      <span class="stamp {{.StampClass}}">{{.StampLabel}}</span>
+    </div>
+    <h3>{{.Title}}</h3>
+    {{if .Copy}}<pre class="legal-body">{{.Copy}}</pre>{{end}}
+    {{if and .Notes (eq .N $.LiveDeck.CurrentSlide)}}<p class="hint">{{.Notes}}</p>{{end}}
+  </li>
+  {{end}}
+</ol>
+{{if .DeckJob}}
+<div class="thread">
+  {{range .Messages}}
+  <article class="bubble {{if .Handler}}handler{{else if .Worker}}worker{{else}}system{{end}}">
+    <p class="kicker">{{if .AuthorName}}{{.AuthorName}}{{else}}{{.AuthorKind}}{{end}}</p>
+    <pre class="legal-body">{{.Body}}</pre>
+  </article>
+  {{else}}
+  <p class="hint">Session is open. Send a first note below.</p>
+  {{end}}
+</div>
+{{if .DeckJob.Proposed}}
+<form method="post" action="/admin/desks/growth/jobs/{{.DeckJob.ID}}/chat" class="person">
+  {{if eq .Nav "growth"}}
+  <input type="hidden" name="next" value="/admin/growth?project_id={{.Project.ID}}">
+  {{else}}
+  <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=deck">
+  {{end}}
+  <label>Reply to Growth
+    <textarea name="body" rows="3" required placeholder="Tighter, next, skip, or rewrite the line. This does not Accept."></textarea>
+  </label>
+  <div class="actions">
+    <button type="submit">Send to Growth</button>
+  </div>
+</form>
+{{if .LiveDeck.Proposed}}
+<div class="actions">
+  <form class="inline" method="post" action="/admin/growth/{{.LiveDeck.ID}}/approve">
+    {{if eq .Nav "growth"}}
+    <input type="hidden" name="next" value="/admin/growth">
+    {{else}}
+    <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=deck">
+    {{end}}
+    <button type="submit">Accept</button>
+  </form>
+  <form class="inline" method="post" action="/admin/growth/{{.LiveDeck.ID}}/reject">
+    {{if eq .Nav "growth"}}
+    <input type="hidden" name="next" value="/admin/growth">
+    {{else}}
+    <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=deck">
+    {{end}}
+    <button class="ghost" type="submit">Turn away</button>
+  </form>
+</div>
+{{end}}
+{{else}}
+<p class="hint">This session is closed. Start another if you need a new pack.</p>
+{{end}}
+{{end}}
+{{else if .CanGrowth}}
+<form method="post" action="{{if eq .Nav "growth"}}/admin/growth/ask{{else}}/admin/projects/{{.Project.ID}}/deck{{end}}" class="person add">
+  {{if eq .Nav "growth"}}<input type="hidden" name="project_id" value="{{.Project.ID}}">{{end}}
+  <input type="hidden" name="action" value="session">
+  <label>Who sits in the room
+    <textarea name="audience" rows="3" placeholder="Named people only. Ada (cofounder), not a made-up fund.">{{.DeckSeed.Audience}}</textarea>
+  </label>
+  <label>Opening note
+    <textarea name="human_feedback" rows="2" placeholder="Optional. The clerk already has the Card."></textarea>
+  </label>
+  <div class="actions">
+    <button type="submit">Start session</button>
+    <button type="button" class="ghost" data-help="Ask a pitch deck">Help? walk this</button>
+  </div>
+</form>
+{{else}}
+<p class="hint">Growth clerk is off until the LLM env is set, or this person is not ticked for the Growth desk.</p>
+{{end}}
+{{end}}
+{{end}}

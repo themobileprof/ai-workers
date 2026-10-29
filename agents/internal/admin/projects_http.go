@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
@@ -127,7 +128,11 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 		flash = filesFlash(okq)
 	}
 	if flash == "" {
-		flash = seoFlash(okq, r.URL.Query().Get("step"))
+		if r.URL.Query().Get("tab") == "deck" {
+			flash = growthFlash(okq, r.URL.Query().Get("step"))
+		} else {
+			flash = seoFlash(okq, r.URL.Query().Get("step"))
+		}
 	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
@@ -349,6 +354,7 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []User, errMsg, flash string) pageData {
 	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
 	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
+	decks, _ := s.store.ListGrowthDecks(ctx, p.ID)
 	filings, _ := s.store.ListFileFilings(ctx, p.ID, "")
 	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
 	var grants []Grant
@@ -378,17 +384,20 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 	}
 	canLegal := s.legal != nil && (Handles(*u, "legal") || canOffice(u))
 	canSEO := Handles(*u, "seo") || canOffice(u)
+	canGrowth := Handles(*u, "growth") || canOffice(u)
 	steps := projectRun(runInput{
-		Project:  p,
-		Drafts:   drafts,
-		Briefs:   briefs,
-		Filings:  filings,
-		Items:    items,
-		Events:   events,
-		CanLegal: canLegal,
-		CanSEO:   canSEO,
+		Project:   p,
+		Drafts:    drafts,
+		Briefs:    briefs,
+		Decks:     decks,
+		Filings:   filings,
+		Items:     items,
+		Events:    events,
+		CanLegal:  canLegal,
+		CanSEO:    canSEO,
+		CanGrowth: canGrowth,
 	})
-	return pageData{
+	data := pageData{
 		Title:          "Amend " + p.Name,
 		Nav:            "projects",
 		User:           u,
@@ -404,6 +413,9 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		CanSEO:         s.seo != nil,
 		SeoBriefs:      briefs,
 		SeoKinds:       seo.Specs(),
+		CanGrowth:      s.growthReady(),
+		Decks:          decks,
+		DeckKinds:      growth.Specs(),
 		WorkItems:      items,
 		DeliveryBets:   []DeliveryBet{{Project: p, Engagement: eng, Open: open, Slots: slots}},
 		Events:         events,
@@ -414,9 +426,13 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		RunLeft:        runMustLeft(steps),
 		SeoWalk:        seoWalk(briefs, p.URL),
 		SeoSeed:        loadSeoSeed(p, briefs),
+		DeckWalk:       deckWalk(decks, p),
+		DeckSeed:       loadDeckSeed(p, decks),
 		Error:          errMsg,
 		Flash:          flash,
 	}
+	s.attachLiveDeck(ctx, &data, decks)
+	return data
 }
 
 func placementFlash(ok string) string {
@@ -429,6 +445,8 @@ func placementFlash(ok string) string {
 		return "Proposal dropped. The project’s stage is unchanged."
 	case "amended":
 		return "You set the stage yourself. The proposal is closed."
+	case "drafted", "chat", "deck_ok", "deck_no":
+		return growthFlash(ok, "")
 	default:
 		return ""
 	}

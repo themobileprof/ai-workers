@@ -21,7 +21,7 @@ type DeskLink struct {
 func AllDesks() []Desk {
 	return []Desk{
 		{Slug: "accounts", Title: "Accounts", Department: "accounts", Prefix: "/accounts", Help: "This worker names the Zoho document. It does not compute VAT or withhold tax. Confirm what Books already posted, then Accept.", BookPath: "/admin/settings?tab=zoho", BookLabel: "Zoho ids"},
-		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Drafts replies and front-office copy when you ask. It cannot send WhatsApp or email itself. Inbound info@ is filed by CRM, not auto-replied."},
+		{Slug: "growth", Title: "Growth", Department: "growth", Prefix: "/growth", Help: "Drafts replies, social copy, and a pitch-deck session on the bet. Chat each slide; the pack updates every turn. It cannot send WhatsApp or email itself. Inbound info@ is CRM, not an auto-reply.", BookPath: "/admin/growth", BookLabel: "Growth book"},
 		{Slug: "community", Title: "Community", Department: "community", Prefix: "/cm", Help: "Voice for one Academy Telegram room at a time. Campus trainings are project Dates, not rooms. Step in when the worker sets escalate_to_founder.", BookPath: "/admin/community", BookLabel: "Mandates"},
 		{Slug: "crm", Title: "CRM", Department: "crm", Prefix: "/crm", Help: "Conversion book: a person, an offer, and a timeline of email, WhatsApp, and calls. It cannot send.", BookPath: "/admin/crm", BookLabel: "CRM book"},
 		{Slug: "legal", Title: "Legal", Department: "legal", Prefix: "/legal", Help: "Proposes NDAs and contracts. Watch flags labour/CAC/NDPR gotchas on ops Telegram after another worker answers; caution and stop also file a job here. Copy the text yourself — it does not email anyone.", BookPath: "/admin/legal", BookLabel: "Legal book"},

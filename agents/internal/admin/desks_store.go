@@ -167,6 +167,20 @@ FROM desk_jobs
 	return out, rows.Err()
 }
 
+func (s *Store) FindJobByRef(ctx context.Context, desk, kind string, refID int64) (DeskJob, error) {
+	if refID <= 0 {
+		return DeskJob{}, errors.New("job not found")
+	}
+	row := s.pool.QueryRow(ctx, `
+SELECT id, desk, title, status, source, summary, payload, ref_kind, ref_id, created_at, updated_at
+FROM desk_jobs
+WHERE desk = $1 AND ref_kind = $2 AND ref_id = $3 AND status IN ('proposed', 'open')
+ORDER BY id DESC
+LIMIT 1
+`, desk, kind, refID)
+	return scanDeskJob(row)
+}
+
 func (s *Store) GetDeskJob(ctx context.Context, id int64) (DeskJob, error) {
 	row := s.pool.QueryRow(ctx, `
 SELECT id, desk, title, status, source, summary, payload, ref_kind, ref_id, created_at, updated_at
@@ -358,6 +372,9 @@ func jobFromWorker(desk, source, task string, sd map[string]any, output string) 
 	if id := int64Val(sd["seo_brief_id"]); id > 0 {
 		refKind, refID = "seo_brief", id
 	}
+	if id := int64Val(sd["growth_deck_id"]); id > 0 {
+		refKind, refID = "growth_deck", id
+	}
 	if id := int64Val(sd["hr_role_id"]); id > 0 {
 		refKind, refID = "hr_role", id
 	}
@@ -409,6 +426,11 @@ func shouldFileInboundJob(dept string, data map[string]any, sd map[string]any) b
 		return true
 	case "seo":
 		return true
+	case "growth":
+		if strings.EqualFold(strVal(data["channel"]), "whatsapp") {
+			return false
+		}
+		return boolVal(sd["save_deck"])
 	case "hr":
 		if strings.EqualFold(strVal(data["channel"]), "email") {
 			return false

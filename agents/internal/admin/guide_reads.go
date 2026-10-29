@@ -28,6 +28,10 @@ func guideReads(kind string) []DeskLink {
 			DeskLink{Href: "/admin/seo", Label: "SEO book", Why: "Accept lives here. Download the pack or give Cursor the URL."},
 			DeskLink{Href: "/admin/settings?tab=seo", Label: "GA4 / Search Console", Why: "Property ids n8n uses for the daily pulls. ga4-read must be a Viewer on GA4 and a user on Search Console."},
 		)
+	case "growth":
+		out = append(out,
+			DeskLink{Href: "/admin/growth", Label: "Growth book", Why: "Accept lives here. Download the deck pack or give Cursor the URL."},
+		)
 	case "delivery":
 		out = append(out,
 			DeskLink{Href: "/admin/delivery", Label: "Delivery", Why: "Today’s list. Done or Skip. Ask plan, then Accept on Job chat."},
@@ -73,7 +77,7 @@ func shortDocWhy(kind, summary string) string {
 	case "accounts":
 		return "What the classifier may name. It never computes VAT."
 	case "growth":
-		return "Replies and copy when you ask. It cannot send WhatsApp or email itself."
+		return "Replies, copy, and a pitch-deck session when you ask. It cannot send WhatsApp or email itself."
 	case "community":
 		return "Academy Telegram rooms. WhatsApp Cloud API cannot join ordinary groups."
 	case "crm":

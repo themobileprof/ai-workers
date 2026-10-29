@@ -139,8 +139,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat and marketing copy. Every customer WhatsApp DM files Office → CRM. Books upserts only with an email or once qualified+. Inbound info@ is CRM, not an auto-reply.",
-		Prefixes: []string{"/growth", "1:1 WhatsApp (default)"},
+		Summary:  "Sales chat, marketing copy, and a pitch-deck session on the bet. Chat each slide; the markdown pack updates every turn. Every customer WhatsApp DM files Office → CRM. Books upserts only with an email or once qualified+. Inbound info@ is CRM, not an auto-reply. The worker cannot send.",
+		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ask deck"},
 	},
 	{
 		Slug:     "community",

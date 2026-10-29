@@ -37,7 +37,7 @@ func Folders() []Folder {
 		{ID: "legal", Label: "Legal", Help: "Signed contracts, NDAs, terms."},
 		{ID: "finance", Label: "Finance", Help: "Invoices and payment proofs kept as records. Not a Books post."},
 		{ID: "people", Label: "People", Help: "Signed IP assignment or contractor paper."},
-		{ID: "product", Label: "Product", Help: "Decks, specs, screenshots of the product."},
+		{ID: "product", Label: "Product", Help: "Decks, specs, screenshots. Accepted pitch-deck PDFs after you export."},
 		{ID: "evidence", Label: "Evidence", Help: "Field photos, quotes, named desks."},
 		{ID: "other", Label: "Other", Help: "Does not fit. Use sparingly."},
 	}

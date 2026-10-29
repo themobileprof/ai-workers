@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 )
@@ -48,6 +49,10 @@ func formCatalog() []formRecipe {
 	seoActs := []string{}
 	for _, s := range seo.Specs() {
 		seoActs = append(seoActs, s.ID+"|"+s.Label)
+	}
+	deckActs := []string{}
+	for _, s := range growth.Specs() {
+		deckActs = append(deckActs, s.ID+"|"+s.Label)
 	}
 	deskOpts := []string{}
 	for _, d := range AllDesks() {
@@ -157,6 +162,18 @@ func formCatalog() []formRecipe {
 				{Name: "url", Label: "URL", Prompt: "Live page URL. Skip to use the Card URL. The clerk fetches it.", Kind: "text"},
 				{Name: "keyword", Label: "Keyword", Prompt: "Keyword if you already know it. Skip if none. Do not invent volume.", Kind: "text"},
 				{Name: "human_feedback", Label: "Notes", Prompt: "Optional notes. Do not paste the whole page — the clerk fetches.", Kind: "textarea"},
+			},
+		},
+		{
+			ID: "ask_deck", Title: "Ask a pitch deck", Button: "Ask Growth",
+			Action: "/admin/projects/{project_id}/deck", Href: "/admin/projects/{project_id}?tab=deck",
+			Desk: "growth", NeedProject: true,
+			Use: "Start a Kawasaki 10-slide session on a bet. Chat each slide until the copy is right. Issues a pack URL that updates every turn. Does not send, invent traction, or file at CAC.",
+			Fields: []formField{
+				{Name: "project_id", Label: "Project", Prompt: "Which project’s deck?", Kind: "project", Required: true, PathOnly: true},
+				{Name: "action", Label: "Kind", Prompt: "Kind: session, or business plan. Skip for a copy session.", Kind: "select", Default: "session", Options: deckActs},
+				{Name: "audience", Label: "Room", Prompt: "Who sits in the room? Named people only.", Kind: "textarea"},
+				{Name: "human_feedback", Label: "Opening note", Prompt: "Optional. The clerk already has the Card.", Kind: "textarea"},
 			},
 		},
 		{

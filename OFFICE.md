@@ -115,9 +115,11 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp and social copy. Every customer WhatsApp DM with a phone files **Office → CRM**. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+.
+Inbound front office: customer WhatsApp, social copy, and a **pitch-deck session** on the bet (chat each of Guy Kawasaki’s 10 slides from the Card; the markdown pack updates every turn). Ask issues `/site/deck/{token}`. Humans Accept on the Growth book. Chat never Accepts. Export a PDF and `/file` it under `{bet}/product`. Legal reviews claims if you paste the pack; it does not write the plan.
 
-It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply.
+Every customer WhatsApp DM with a phone files **Office → CRM**. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+. Customer WhatsApp is still sales — not the deck session.
+
+It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply. Do not invent waitlist / MAU / burn.
 
 ### CRM (`/crm`) — live
 
@@ -191,7 +193,7 @@ Do not tell the owner to:
 2. Merge Delivery into “Product/Ops” because “DevOps tools already do that.” Delivery is a week board for humans.
 3. Turn Growth into scrape + cold sequences.
 4. Add a Scout that scrapes Reddit, X, or forums to “see if the problem is growing.” Proof here is a **named person at a named place**.
-5. Add a Demo Day worker that invents waitlist / MAU / burn per “startup.” Those metrics are not stored. Copy can be drafted by Growth; a human sends.
+5. Add a Demo Day worker that invents waitlist / MAU / burn per “startup.” Those metrics are not stored. Growth already walks a deck from Card facts; a human sends.
 6. Add GEO, crawl the open web, or auto-merge / auto-publish. Fetching the bet’s own URL and writing a pack a human (or Cursor) implements is the SEO path.
 7. Let any worker Accept, send, publish, hire, or file at CAC.
 8. Give each bet its own WhatsApp, Books org, or CAC.

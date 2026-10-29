@@ -77,7 +77,7 @@ Stage, Legal send, and money above a cap stay a human click. Catalog-matched Fil
 
 ## What does /approve do?
 
-On ops Telegram it only sends the pending info@ email draft. `/kill` drops that draft. It does not Accept a contract, SEO brief, delivery plan, project gate, or hire. Recruiting is closed.
+On ops Telegram it only sends the pending info@ email draft. `/kill` drops that draft. It does not Accept a contract, SEO brief, pitch deck, delivery plan, project gate, or hire. Recruiting is closed.
 
 ## How do I talk to the Academy / community bot?
 
@@ -86,6 +86,10 @@ Student rooms are Academy Telegram, not WhatsApp groups (Cloud API cannot join o
 ## How do I file an NDA?
 
 Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wait for the proposed job. Chat a fix. Accept on the job or on `/admin/legal`. Copy the body from the Legal book if you need the document. The worker cannot send it.
+
+## How do I ask for a pitch deck?
+
+Tick Growth. Write the Card one-liner first. Open the project → Deck → Start session, or `/growth Pitch deck for HomeGauge` on ops Telegram. Chat each Kawasaki slide until the copy is right. The markdown pack updates every turn — download it or give Cursor the URL. You paste into Slides. Export a PDF and `/file` it under **product**. The clerk cannot send or invent traction. Chat never Accepts. Paste into `/legal` if you need a claims review — Legal does not write the plan. Customer WhatsApp cannot run this session.
 
 ## How do I ask for SEO copy?
 

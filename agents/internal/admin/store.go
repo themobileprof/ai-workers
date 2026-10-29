@@ -124,6 +124,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateSEO(ctx); err != nil {
 		return err
 	}
+	if err := s.migrateGrowth(ctx); err != nil {
+		return err
+	}
 	if err := s.migrateFiles(ctx); err != nil {
 		return err
 	}

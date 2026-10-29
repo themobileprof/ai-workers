@@ -1,8 +1,9 @@
-<p class="lede">Front office. Answers customers and writes social copy when you ask. It does not send mail or WhatsApp itself. Inbound <code>info@</code> is CRM.</p>
+<p class="lede">Front office. Answers customers, writes social copy, and walks a pitch deck on the bet when you ask. It does not send mail or WhatsApp itself. Inbound <code>info@</code> is CRM.</p>
 
 <ol class="steps">
-  <li>WhatsApp 1:1 with no prefix → growth. Or start with <code>/growth</code>.</li>
-  <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code></li>
+  <li>WhatsApp 1:1 with no prefix → growth (sales). Customer WhatsApp is not the deck walk.</li>
+  <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code> or <code>/growth Pitch deck for HomeGauge. Ada is in the room.</code></li>
+  <li>Desk: open a project → <strong>Deck</strong> → Start session. Chat each Kawasaki slide. The pack URL updates every turn. Accept on <a href="/admin/growth">Growth</a> when the ten are right. Chat never Accepts.</li>
   <li>A mail to <code>info@themobileprof.com</code> is filed by CRM, not drafted here.</li>
   <li>Manual smoke in n8n: <strong>Smoke: growth HTTP</strong> (<code>smkGrwthHttp0001</code>).</li>
 </ol>
@@ -36,6 +37,33 @@
   <p class="spec-no">Specimen 03 · inbound info@</p>
   <p class="you-say">Mail from a human to <code>info@themobileprof.com</code>.</p>
   <p class="expect">Not this worker. CRM files a thread summary. Nothing is sent. See the CRM sheet.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 04 · pitch deck session</p>
+  <p class="you-say">Projects → HomeGauge → Deck → Start session (Ada in the room).</p>
+  <pre class="json">{
+  "task_description": "Start a Kawasaki 10-slide session for HomeGauge (homegauge). Work slide 1 first. Use only Card facts. Do not invent traction. Do not send.",
+  "context_data": {
+    "channel": "desk",
+    "action": "session",
+    "current_slide": 1,
+    "cannot_send": true,
+    "project": { "slug": "homegauge", "one_liner": "Salaried Nigerian homebuyers get mortgage help." }
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> deck, <code>cannot_send</code> true. Chat is the current slide plus one question. Ask mints a pack token. Public GET <code>/site/deck/{token}</code> updates every turn unless Turn away. Chat never Accepts. Export a PDF yourself and <code>/file</code> it under <strong>product</strong>.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · /growth deck (ops Telegram)</p>
+  <p class="you-say"><code>/growth Pitch deck for HomeGauge. Ada is in the room. Do not invent MAU.</code></p>
+  <p class="expect"><code>action</code> session. Continues the same job if a pack already exists. Accept on the Growth book. Customer WhatsApp cannot run this session.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not this worker · send the deck</p>
+  <p>Copy from the pack today. The clerk never emails a deck or a business plan. Paste into <code>/legal</code> if you need a claims review. Legal does not write this document.</p>
 </section>
 
 <section class="later">

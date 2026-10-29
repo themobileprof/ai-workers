@@ -184,6 +184,12 @@ func TestShouldFileInboundJob(t *testing.T) {
 	if shouldFileInboundJob("growth", map[string]any{"channel": "whatsapp"}, map[string]any{"task_type": "sales"}) {
 		t.Fatal("growth chatter")
 	}
+	if shouldFileInboundJob("growth", map[string]any{"channel": "whatsapp"}, map[string]any{"save_deck": true}) {
+		t.Fatal("customer WhatsApp must not file a deck")
+	}
+	if !shouldFileInboundJob("growth", map[string]any{"channel": "telegram"}, map[string]any{"save_deck": true, "task_type": "deck"}) {
+		t.Fatal("ops Telegram deck")
+	}
 	if !shouldFileInboundJob("product-dev", map[string]any{"channel": "telegram"}, map[string]any{"save_memory": true, "card_hypothesis": "shops pay"}) {
 		t.Fatal("product card proposal")
 	}

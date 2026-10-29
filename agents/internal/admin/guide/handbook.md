@@ -36,7 +36,7 @@ Do this, in order:
 
 - Path: `/admin/desks/{slug}` after the owner ticked that slug on your card.
 - Accounts `/accounts` — Books classifier. n8n posts to Zoho Books and Paystack. Go never computes VAT.
-- Growth `/growth` — sales copy and replies when you ask. Bare 1:1 chat is Growth. Inbound info@ is CRM.
+- Growth `/growth` — sales copy, replies, and a pitch-deck session on the bet when you ask. Chat each slide on the project Deck tab. Ask on `/admin/growth` issues a markdown URL. Bare 1:1 chat is Growth (sales). Inbound info@ is CRM. The worker cannot send.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
 - CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step from that story. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN after another worker answers. Caution and stop also file a Legal job.

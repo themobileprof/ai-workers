@@ -93,6 +93,7 @@
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
     <button type="button" role="tab" data-tab="files" aria-controls="tab-files">Files <span class="count">{{len .Filings}}</span></button>
     <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
+    <button type="button" role="tab" data-tab="deck" aria-controls="tab-deck">Deck <span class="count">{{len .Decks}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
     <button type="button" role="tab" data-tab="dates" aria-controls="tab-dates">Dates <span class="count">{{len .Events}}</span></button>
     <button type="button" role="tab" data-tab="work" aria-controls="tab-work">Work <span class="count">{{len .WorkItems}}</span></button>
@@ -104,7 +105,7 @@
       <ol class="recipe">
         <li>Do the step marked <strong>now</strong>. Each one is a form already on this project.</li>
         <li><strong>Help?</strong> can walk that form. It never Accepts or sends mail.</li>
-        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, and SEO wait until you need them.</li>
+        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, SEO, and Deck wait until you need them.</li>
       </ol>
       {{template "page-reads" (guideReads "projects")}}
       {{if .RunSteps}}
@@ -365,6 +366,31 @@
       </form>
       {{else}}
       <p class="hint">SEO clerk is off until the LLM env is set, or this person is not ticked for the SEO desk.</p>
+      {{end}}
+    </section>
+
+    <section role="tabpanel" id="tab-deck" data-tab="deck">
+      <h3>Pitch deck</h3>
+      <ol class="recipe">
+        <li>Chat Growth one slide at a time. The deck is Guy Kawasaki’s 10 slides from this Card — not invented traction.</li>
+        <li>Download the markdown or give Cursor the pack URL. You paste into Slides. Export a PDF and <code>/file</code> it under <strong>product</strong>.</li>
+        <li><strong>Turn away</strong> if a fact is invented. Paste into <code>/legal</code> if you need a claims review. This clerk cannot send.</li>
+      </ol>
+      {{template "deck-walk" .}}
+      {{if .Decks}}
+      {{range .Decks}}
+      {{if or (not $.LiveDeck) (ne .ID $.LiveDeck.ID)}}
+      <section class="proposal">
+        <p class="kicker">{{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .Audience}}<p class="hint">Room: {{.Audience}}</p>{{end}}
+        {{if .PackPath}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a> · <a href="{{.PackPath}}">URL for Cursor</a></p>{{else}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a></p>{{end}}
+      </section>
+      {{end}}
+      {{end}}
       {{end}}
     </section>
 

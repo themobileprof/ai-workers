@@ -128,7 +128,7 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal(err)
 	}
 	page, ok := lookupDoc("growth")
-	if !ok || page.Path != "POST /departments/growth" || page.Prev == nil || page.Next == nil {
+	if !ok || page.Path != "POST /departments/growth" || page.Prev == nil || page.Next == nil || !strings.Contains(string(page.Body), "pitch deck") {
 		t.Fatalf("growth page %+v ok=%v", page.DocMeta, ok)
 	}
 	if _, ok := lookupDoc("missing"); ok {
