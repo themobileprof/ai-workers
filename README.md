@@ -42,7 +42,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/crm` | crm |
 | `/cm` `/community` | community |
 | `/validate` | product-dev (ops Telegram) |
-| none, 1:1 ops Telegram | that person’s default desk (ops for owner/BDM; delivery for a project face) |
+| none, 1:1 ops Telegram | receptionist names a desk; reply **yes** to send |
 | none, 1:1 WhatsApp | growth (customers; files Office → CRM) |
 | none, group | community (Academy Telegram student rooms — do not add ops to class) |
 

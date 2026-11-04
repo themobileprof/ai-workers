@@ -36,6 +36,9 @@ output_text for accounts: one short line with no tax arithmetic.`
 // Handle is POST /departments/internal-ops. Accounts-shaped tasks still go through HandleAccounts.
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	data := contract.ContextObject(req.ContextData)
+	if looksLikeRoute(data) {
+		return handleRoute(ctx, c, req, data)
+	}
 	if accountsOnly(data) {
 		return HandleAccounts(ctx, c, req)
 	}

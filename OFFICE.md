@@ -22,7 +22,7 @@ A generic six-worker “comptroller / outbound engine / GEO / ticket mill / gran
 
 ## 2. The one rule (never violate)
 
-1. A human Asks, or sends a prefixed chat.
+1. A human Asks, sends a prefixed chat, or (ops Telegram 1:1) sends plain text. Plain text gets a suggested desk; **yes** forwards it. Chat still never Accepts.
 2. The worker proposes (text, a job, a draft, a path, a week plan).
 3. A human **Accepts** or **Turns away** on the desk. Typing in chat does not Accept.
 
@@ -227,7 +227,7 @@ Do not tell the owner to:
 | `/crm` | crm |
 | `/cm` `/community` | community |
 | `/validate` | product-dev (ops Telegram) |
-| none, 1:1 ops Telegram | that person’s default desk |
+| none, 1:1 ops Telegram | receptionist names a desk; reply **yes** to send |
 | none, 1:1 WhatsApp | growth (customers; CRM) |
 | none, group | community (Academy student rooms) |
 

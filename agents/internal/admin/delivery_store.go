@@ -473,7 +473,7 @@ func morningPingText(name string, lines, coming []string, crmText string) string
 		}
 		text += crmText
 	}
-	text += "\n\nReply /today done 1, still on 2 — or open Delivery. Dates live on the bet."
+	text += "\n\nReply what you did. I will name Delivery and wait for yes — or /today done 1. Dates live on the bet."
 	if len(text) > 3900 {
 		text = text[:3890] + "…"
 	}

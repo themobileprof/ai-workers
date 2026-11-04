@@ -109,7 +109,7 @@ func TestMorningPing(t *testing.T) {
 	if !strings.Contains(text, "Academy: editor") || !strings.Contains(text, "Coming up") || !strings.Contains(text, "CRM due today") {
 		t.Fatal(text)
 	}
-	if !strings.Contains(text, "does not") && !strings.Contains(text, "Reply /today") {
+	if !strings.Contains(text, "/today") {
 		t.Fatal("footer")
 	}
 }

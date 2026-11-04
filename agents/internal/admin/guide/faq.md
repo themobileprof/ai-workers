@@ -75,6 +75,10 @@ Stage, Legal send, and money above a cap stay a human click. Catalog-matched Fil
 2. Project → Face: pick them, seat cofounder or assistant, click Seat them.
 3. Seat is not a login. Login is the desk tick on People.
 
+## Why was the ops Telegram bot silent when I replied to “Today on the desk”?
+
+A bare reply used to hit Ops (accounts/grants), not Delivery, and a failed worker call sent nothing back. Plain 1:1 text now names a desk (usually Delivery for that card). Reply **yes** to send it, or start with `/today`. Prefixes still skip the suggestion. Chat never Accepts.
+
 ## What does /approve do?
 
 On ops Telegram it only sends the pending info@ email draft. `/kill` drops that draft. It does not Accept a contract, SEO brief, pitch deck, delivery plan, project gate, or hire. Recruiting is closed.
