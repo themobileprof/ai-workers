@@ -69,7 +69,35 @@ import_on_this_host() {
     done
   fi
 
+  # CLI import/publish writes Postgres but does not bind webhooks in the running
+  # process (n8n#2155). Restart so Telegram/WhatsApp triggers actually listen.
+  restart_n8n_for_webhooks
+
   docker compose exec -T n8n n8n list:workflow
+}
+
+restart_n8n_for_webhooks() {
+  echo "restart n8n so inbound webhooks bind"
+  docker compose restart n8n
+  local i code=""
+  for i in $(seq 1 45); do
+    if docker compose exec -T n8n wget -qO- http://127.0.0.1:5678/healthz >/dev/null 2>&1; then
+      break
+    fi
+    sleep 2
+  done
+  # healthz is up before Start Active Workflows. 403 = Telegram secret check
+  # (hook is live). 404 = still unregistered.
+  for i in $(seq 1 30); do
+    code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:5678/webhook/telegram-ops/webhook \
+      -H 'Content-Type: application/json' -d '{}' --max-time 5 || true)"
+    if [[ "$code" == "403" || "$code" == "200" || "$code" == "201" ]]; then
+      echo "ops Telegram webhook bound (HTTP $code)"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "ops Telegram webhook still HTTP ${code:-none} after restart" >&2
 }
 
 on_vm() {

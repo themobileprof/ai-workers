@@ -117,7 +117,7 @@ cd agents && go test ./... -cover
 | --- | --- |
 | A department worker | Extra Go route on this process, `docs.go` row, `playbook/{slug}.html`, n8n HTTP node. Leave a later-box until the workflow is published. |
 | A vendor | Section in `TOOLS.md` (env, n8n credential names, desk keys). `go test ./internal/admin` fails if compose / `.env.example` / a credential name is missing. Accounts ids on Defaults, not in workflow JSON. |
-| A webhook workflow | JSON under `n8n/workflows/`, then `./scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox). |
+| A webhook workflow | JSON under `n8n/workflows/`, then `./scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox), then restarts n8n so Telegram/WhatsApp bind. |
 
 ## CI / CD
 

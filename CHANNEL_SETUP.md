@@ -338,7 +338,7 @@ Agents among themselves: n8n HTTP only (never WhatsApp/Telegram as the bus)
 
 Validation loop: Telegram `/validate` → `POST .../product-dev` with `context_data.action`. Go files a Product job. Accept writes hypothesis, mission, or evidence onto the project Card. Telegram/email a mission to a field phone is later.
 
-When a new flow is described in Cursor, add or edit a JSON file under `n8n/workflows/` and run `scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox). Tokens still go in n8n **Credentials**, not in those JSON files.
+When a new flow is described in Cursor, add or edit a JSON file under `n8n/workflows/` and run `scripts/sync-n8n-workflows.sh`. Import deactivates; the script republishes webhooks **and** Execute Workflow children (Books write, CRM upsert, Email outbox), then restarts n8n so Telegram/WhatsApp bind. Tokens still go in n8n **Credentials**, not in those JSON files.
 
 ---
 
@@ -351,4 +351,4 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 5. Email inbound is live: customer mail `info@` → CRM story on Office → CRM. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
 6. Only then: intern mission on WhatsApp.
 
-If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker.
+If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. After a CLI import, n8n must be restarted or Telegram/WhatsApp stay 404 even while the workflow looks published (morning ping can still send). `scripts/sync-n8n-workflows.sh` restarts n8n and waits until `POST /webhook/telegram-ops/webhook` is bound.
