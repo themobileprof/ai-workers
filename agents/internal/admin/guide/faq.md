@@ -77,7 +77,7 @@ Stage, Legal send, and money above a cap stay a human click. Catalog-matched Fil
 
 ## Why was the ops Telegram bot silent when I replied to “Today on the desk”?
 
-A bare reply used to hit Ops (accounts/grants), not Delivery, and a failed worker call sent nothing back. Plain 1:1 text now names a desk (usually Delivery for that card). Reply **yes** to send it, or start with `/today`. Prefixes still skip the suggestion. Chat never Accepts.
+A reply to the 08:30 card is Delivery. Other unprefixed text picks one desk and does the work in that chat. Prefixes are optional shortcuts. Chat never Accepts.
 
 ## What does /approve do?
 

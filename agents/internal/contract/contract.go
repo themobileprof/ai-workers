@@ -2,7 +2,10 @@
 // Every department accepts Request and returns Response. context_data is always an object.
 package contract
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type Status string
 
@@ -22,6 +25,25 @@ type Response struct {
 	Status         Status         `json:"status"`
 	OutputText     string         `json:"output_text"`
 	StructuredData map[string]any `json:"structured_data"`
+	ChatID         string         `json:"chat_id,omitempty"`
+}
+
+// AttachChatID copies context_data.chat_id onto the response so n8n can Send
+// after the HTTP node replaces the Prepare item.
+func AttachChatID(resp *Response, req Request) {
+	if resp == nil || resp.ChatID != "" {
+		return
+	}
+	raw, _ := ContextObject(req.ContextData)["chat_id"].(string)
+	resp.ChatID = strings.TrimSpace(raw)
+	if resp.ChatID != "" {
+		if resp.StructuredData == nil {
+			resp.StructuredData = map[string]any{}
+		}
+		if _, ok := resp.StructuredData["chat_id"]; !ok {
+			resp.StructuredData["chat_id"] = resp.ChatID
+		}
+	}
 }
 
 func Fail(msg string) Response {

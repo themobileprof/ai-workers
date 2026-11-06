@@ -227,7 +227,7 @@ Do not tell the owner to:
 | `/crm` | crm |
 | `/cm` `/community` | community |
 | `/validate` | product-dev (ops Telegram) |
-| none, 1:1 ops Telegram | receptionist names a desk; reply **yes** to send |
+| none, 1:1 ops Telegram | office assistant picks one desk and does the work |
 | none, 1:1 WhatsApp | growth (customers; CRM) |
 | none, group | community (Academy student rooms) |
 

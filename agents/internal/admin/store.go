@@ -139,7 +139,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateGuide(ctx); err != nil {
 		return err
 	}
-	return s.migrateTelegram(ctx)
+	if err := s.migrateTelegram(ctx); err != nil {
+		return err
+	}
+	return s.migrateOpsChat(ctx)
 }
 
 func (s *Store) migrateTelegram(ctx context.Context) error {

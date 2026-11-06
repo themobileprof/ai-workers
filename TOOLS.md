@@ -48,9 +48,10 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
-- **Role:** Two bots. Ops (`Telegram account`): office staff identified by People `telegram_id`; prefixes only within that seat; receipts; `/approve` `/kill` for owner/BDM. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** n8n Ops Telegram (Fetch staff `GET /internal/v1/staff?telegram_id=`), Academy Telegram, Delivery morning ping at 08:30 Lagos (tasks + Coming up + owner/BDM CRM due via `GET /internal/v1/delivery/digest`), inbound info@ important-mail pings.
-- **Secrets:** Bot token in n8n credential Telegram account.
+- **Role:** Two bots. Ops (`Telegram account`): office assistant in Go. Staff identified by People `telegram_id`. One desk per turn; prefixes are optional shortcuts. Chat never Accepts. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
+- **Where:** Go `POST /webhook/telegram-ops/webhook` (Caddy). n8n Delivery morning ping at 08:30 Lagos still **sends** on this bot. Academy Telegram and weekly intro stay n8n.
+- **Secrets:** `TELEGRAM_OPS_BOT_TOKEN` and `TELEGRAM_OPS_WEBHOOK_SECRET` on the VM `.env` → agents. Same bot token as n8n credential Telegram account (morning ping). Never git.
+- **Env:** `TELEGRAM_OPS_BOT_TOKEN`, `TELEGRAM_OPS_WEBHOOK_SECRET`, `TELEGRAM_OPS_WEBHOOK_URL`
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
 
 ### WhatsApp (Meta Cloud API)

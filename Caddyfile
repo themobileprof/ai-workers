@@ -19,7 +19,12 @@ workers.themobileprof.com {
 		reverse_proxy 127.0.0.1:8000
 	}
 
-	# WhatsApp, Telegram, form waits. These public paths must not change.
+	# Office Telegram inbound is Go. Other /webhook* stay on n8n.
+	handle /webhook/telegram-ops* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# WhatsApp, form waits, Paystack, Fathom. These public paths must not change.
 	@hooks {
 		path /webhook* /webhook-test* /webhook-waiting* /form* /mcp* /mcp-test*
 	}

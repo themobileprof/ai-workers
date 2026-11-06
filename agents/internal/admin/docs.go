@@ -211,8 +211,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Operations room",
 		Path:     "POST /departments/internal-ops",
 		Wire:     "partial",
-		Summary:  "/ops reaches the worker. Unprefixed ops Telegram text names a desk and waits for yes before forwarding. Accounts via /ops writes Books. /ops legal stays chat-only; filing is /legal. Grant hunting writes a deadline row on Grants. It does not submit an application.",
-		Prefixes: []string{"/ops", "plain 1:1 (suggest, then yes)"},
+		Summary:  "/ops reaches the worker. Unprefixed ops Telegram picks one desk and does the work in that chat. Accounts via /ops classifies Books. /ops legal stays chat-only; filing is /legal. Grant hunting writes a deadline row on Grants. It does not submit an application.",
+		Prefixes: []string{"/ops", "plain 1:1 (one desk)"},
 	},
 	{
 		Slug:     "product-dev",

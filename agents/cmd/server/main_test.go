@@ -113,6 +113,19 @@ func TestDepartmentHandler(t *testing.T) {
 		t.Fatalf("%+v", resp)
 	}
 
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, deptReq(`{"task_description":"hello","context_data":{"channel":"telegram","chat_id":"12345","action":"route"}}`))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("chat id %d %s", rec.Code, rec.Body.String())
+	}
+	resp = contract.Response{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.ChatID != "12345" {
+		t.Fatalf("chat_id %+v", resp)
+	}
+
 	failFn := func(context.Context, llm.Completer, contract.Request) (contract.Response, error) {
 		return contract.Response{}, errors.New("llm down")
 	}

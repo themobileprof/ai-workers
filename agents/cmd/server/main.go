@@ -25,6 +25,7 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/productdev"
 	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/llm"
+	"github.com/samuel/ai-workers/agents/internal/opschat"
 )
 
 func main() {
@@ -46,6 +47,7 @@ func main() {
 	admin.RegisterPublic(mux)
 	var adminReady bool
 	var desk *admin.Server
+	opsBot := opschat.NewBot(os.Getenv("TELEGRAM_OPS_BOT_TOKEN"), os.Getenv("TELEGRAM_OPS_WEBHOOK_SECRET"))
 	if dsn := strings.TrimSpace(os.Getenv("ADMIN_DATABASE_URL")); dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		store, err := admin.Open(ctx, dsn)
@@ -83,7 +85,9 @@ func main() {
 				desk.WithWorker("community", call(community.Handle))
 				desk.WithWorker("crm", call(crm.Handle))
 				desk.WithWorker("delivery", call(delivery.Handle))
+				desk.WithWorker("files", call(files.Handle))
 				desk.WithGuide(completer)
+				desk.WithOpsTelegram(opsBot)
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")
@@ -131,9 +135,23 @@ func main() {
 		MaxHeaderBytes:    1 << 16,
 	}
 	log.Printf("agents listening on %s", addr)
+	go bindOpsTelegram(opsBot)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
+}
+
+func bindOpsTelegram(bot *opschat.Bot) {
+	if bot == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := bot.SetWebhook(ctx, os.Getenv("TELEGRAM_OPS_WEBHOOK_URL")); err != nil {
+		log.Printf("telegram setWebhook: %v", err)
+		return
+	}
+	log.Printf("telegram ops webhook bound")
 }
 
 // departmentHandler is POST /departments/{name}. n8n is the only caller. Body is contract.Request.
@@ -175,6 +193,7 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 			req = desk.EnrichGrowth(r.Context(), req)
 		}
 		resp, err := fn(r.Context(), c, req)
+		contract.AttachChatID(&resp, req)
 		if err != nil {
 			log.Printf("department error: %v", err)
 			if resp.Status == "" {

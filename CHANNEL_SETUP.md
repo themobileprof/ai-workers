@@ -58,7 +58,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/pm-notes.json` | `pmNotesFathom00001` | yes | Fathom webhook → HMAC → Delivery proposed plan (Accept on desk). Known CRM invitee + bet in title → call event, no send |
 | `n8n/workflows/smoke-delivery.json` | `smkDlvrHttp00001` | no | Manual POST delivery worker (meeting notes; must not write tasks) |
 | `n8n/workflows/smoke-files.json` | `smkFilesHttp00001` | no | Manual POST files worker (classify; must not write Drive) |
-| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | yes | Office bot. Fetch staff by Telegram id. Prefixes only within that People seat. Plain 1:1 text: receptionist names a desk, **yes** forwards. `/accounts` `/ops` Books writes; `/legal` drafts; `/seo` page briefs; `/growth` copy and deck; `/file` data room; `/today` `/pm` `/idea` Delivery; Legal **watch** on prefixed/forwarded tasks (not the suggestion); `/crm` leads; `/approve` `/kill` `/stop` email drafts (owner/BDM) |
+| `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | no | Retired. Office inbound is Go `POST /webhook/telegram-ops/webhook`. Do not republish — n8n would steal the Telegram webhook. |
 | `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
 | `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or Delivery. |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. Every DM with a phone files Office → CRM. Books upsert only with an email or once stage is qualified/proposal/won. Office prefixes refused. No admin-phone allowlist. |
@@ -87,7 +87,7 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/file` | files (ops Telegram only; catalog match files itself; unsure Accept on Files) |
 | `/today` `/pm` `/idea` | delivery |
 | `/validate` | product-dev |
-| none, 1:1 ops Telegram | receptionist names a desk; reply **yes** to send. Academy Telegram 1:1 stays community. |
+| none, 1:1 ops Telegram | office assistant picks one desk and does the work. Academy Telegram 1:1 stays community. |
 | none, 1:1 WhatsApp | growth (customers; CRM upsert) |
 | none, group | community |
 
@@ -95,7 +95,7 @@ On the **Academy** bot, `/accounts` `/ops` `/legal` `/seo` `/file` `/hr` `/appro
 
 Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable), then paste `context_data.telegram_chat_id` from the n8n execution onto the mandate. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram (and any leftover WhatsApp) room. Do not add the **ops** bot to student groups.
 
-Ops Telegram is gated by People `telegram_id` (`GET /internal/v1/staff?telegram_id=`). Unknown ids get the number to paste on People. `/approve` `/stop` `/kill` only run for owner and BDM. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** the receptionist names 1–3 desks and waits for **yes** (or a desk name) before forwarding. A reply to the 08:30 “Today on the desk” card is that path — it is not silent, and it is not auto-Delivery until you confirm. After a prefixed or forwarded department, Legal **watches** the task (`POST /departments/legal` with `action: watch`) and may append a Legal note. Caution and stop also file a Legal job. Watch does not halt Books and does not run on customer WhatsApp. The receptionist suggestion is not watched.
+Ops Telegram is gated by People `telegram_id` (Go looks up the People card). Unknown ids get the number to paste on People. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** Go picks **one** desk and does the work in that chat. A reply to the 08:30 “Today on the desk” card is Delivery. Chat never Accepts. `/approve` `/kill` `/stop` for info@ drafts stay on Email on the desk.
 
 Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, SEO, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
 
@@ -351,4 +351,4 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 5. Email inbound is live: customer mail `info@` → CRM story on Office → CRM. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
 6. Only then: intern mission on WhatsApp.
 
-If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. After a CLI import, n8n must be restarted or Telegram/WhatsApp stay 404 even while the workflow looks published (morning ping can still send). `scripts/sync-n8n-workflows.sh` restarts n8n and waits until `POST /webhook/telegram-ops/webhook` is bound.
+If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. Ops Telegram inbound is Go (`/webhook/telegram-ops*`); other `/webhook*` stay on n8n. After a CLI import, n8n must be restarted or WhatsApp stays 404 even while the workflow looks published (morning ping can still send).

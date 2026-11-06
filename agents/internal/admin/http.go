@@ -22,6 +22,7 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 	"github.com/samuel/ai-workers/agents/internal/llm"
+	"github.com/samuel/ai-workers/agents/internal/opschat"
 )
 
 //go:embed templates/*.html static/*
@@ -39,6 +40,7 @@ type Server struct {
 	seo          PlaceFunc
 	workers      map[string]PlaceFunc
 	guide        llm.Completer
+	opsBot       *opschat.Bot
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
@@ -169,6 +171,12 @@ func New(store *Store, internalToken string) (*Server, error) {
 	}, nil
 }
 
+func (s *Server) WithOpsTelegram(bot *opschat.Bot) {
+	if s != nil {
+		s.opsBot = bot
+	}
+}
+
 func (s *Server) WithPlacer(fn PlaceFunc) {
 	if s != nil {
 		s.place = fn
@@ -178,6 +186,8 @@ func (s *Server) WithPlacer(fn PlaceFunc) {
 
 // Register mounts /admin* (cookie session) and /internal/v1* (X-Internal-Token). Caddy must not publish /internal.
 func (s *Server) Register(mux *http.ServeMux) {
+	mux.HandleFunc("POST /webhook/telegram-ops/webhook", s.opsTelegramPOST)
+	mux.HandleFunc("POST /webhook/telegram-ops", s.opsTelegramPOST)
 	mux.HandleFunc("GET /admin/static/", s.serveStatic)
 	mux.HandleFunc("GET /admin/login", s.loginGET)
 	mux.HandleFunc("POST /admin/login", s.loginPOST)

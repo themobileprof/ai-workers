@@ -2,7 +2,6 @@ package internalops
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
@@ -53,22 +52,6 @@ func TestHandleRoutesAccountsDepartment(t *testing.T) {
 	}
 	if resp.StructuredData["tax_engine"] != "zoho_books" {
 		t.Fatalf("tax_engine %+v", resp.StructuredData)
-	}
-}
-
-func TestHandleRouteSuggestsDesks(t *testing.T) {
-	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Delivery should take this check-in. Reply yes to send /today.","structured_data":{"task_type":"route","route_to":["delivery"],"route_task":"done HomeGauge calculator"}}`}, contract.Request{
-		TaskDescription: "done the HomeGauge one, still on Academy",
-		ContextData:     []byte(`{"channel":"telegram","action":"route","reply_to":"Today on the desk (Samuel):\n- HomeGauge: calculator"}`),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.StructuredData["task_type"] != "route" || resp.StructuredData["speak"] != true || resp.StructuredData["cannot_send"] != true {
-		t.Fatalf("%+v", resp.StructuredData)
-	}
-	if !strings.Contains(resp.OutputText, "/today") && !strings.Contains(resp.OutputText, "Delivery") {
-		t.Fatal(resp.OutputText)
 	}
 }
 

@@ -76,7 +76,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const settings = $('Fetch settings').first().json || {};\nconst driveId = String(settings['drive.shared_drive_id'] || '').trim();\nif (!driveId) {\n  return [];\n}\nconst body = $input.first().json || {};\nconst list = Array.isArray(body.filings) ? body.filings : [];\nreturn list.filter((f) => f && f.id && f.telegram_file_id).map((f) => ({ json: {\n  id: f.id,\n  slug: String(f.slug || ''),\n  folder: String(f.folder || ''),\n  filename: String(f.filename || 'document'),\n  path: String(f.path || ''),\n  mime: String(f.mime || 'application/octet-stream'),\n  telegram_file_id: String(f.telegram_file_id || ''),\n  drive_id: driveId\n} }));\n"
+        "jsCode": "const settings = $('Fetch settings').first().json || {};\nconst driveId = String(settings['drive.shared_drive_id'] || '').trim();\nconst body = $input.first().json || {};\nconst list = Array.isArray(body.filings) ? body.filings : [];\nif (!driveId) {\n  return [{ json: { skip: true } }];\n}\nconst rows = list.filter((f) => f && f.id && f.telegram_file_id).map((f) => ({ json: {\n  id: f.id,\n  slug: String(f.slug || ''),\n  folder: String(f.folder || ''),\n  filename: String(f.filename || 'document'),\n  path: String(f.path || ''),\n  mime: String(f.mime || 'application/octet-stream'),\n  telegram_file_id: String(f.telegram_file_id || ''),\n  drive_id: driveId\n} }));\nreturn rows.length ? rows : [{ json: { skip: true } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -86,6 +86,54 @@
       ],
       "id": "filesPlace0000001exp",
       "name": "Each filing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "filesPlace0000001skpc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "id": "filesPlace0000001skp",
+      "name": "Skip place"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        -120
+      ],
+      "id": "filesPlace0000001idle",
+      "name": "Idle"
     },
     {
       "parameters": {
@@ -562,6 +610,24 @@
       "main": [
         [
           {
+            "node": "Skip place",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip place": {
+      "main": [
+        [
+          {
+            "node": "Idle",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Download Telegram file",
             "type": "main",
             "index": 0
@@ -758,7 +824,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "executionTimeout": 45
   },
   "staticData": null,
   "pinData": {},

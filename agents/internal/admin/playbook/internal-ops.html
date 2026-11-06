@@ -40,17 +40,18 @@
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 04 · receptionist (no prefix)</p>
-  <p class="you-say">Ops Telegram, no prefix: <q>done the HomeGauge calculator</q> (often a reply to the 08:30 card).</p>
+  <p class="spec-no">Specimen 04 · morning card (no prefix)</p>
+  <p class="you-say">Ops Telegram, no prefix: <q>done the HomeGauge calculator</q> as a reply to the 08:30 card.</p>
   <pre class="json">{
   "task_description": "done the HomeGauge calculator",
   "context_data": {
     "channel": "telegram",
-    "action": "route",
+    "action": "today",
+    "department": "delivery",
     "reply_to": "Today on the desk (Samuel):\\n- HomeGauge: calculator"
   }
 }</pre>
-  <p class="expect"><code>task_type</code> route. Names Delivery <code>/today</code>. Nothing is forwarded until they reply <strong>yes</strong> (or <code>/today …</code>). Chat never Accepts.</p>
+  <p class="expect">Delivery check-in. No yes-step. Chat never Accepts.</p>
 </section>
 
 <section class="later">

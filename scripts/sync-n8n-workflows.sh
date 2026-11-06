@@ -7,7 +7,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REMOTE_HOST="${N8N_SSH_HOST:-oci-ai-workers}"
 REMOTE_DIR="${N8N_REMOTE_DIR:-/home/cursor/ai-workers}"
 # Execute Workflow refuses inactive children. Webhooks also stay dark after import.
-DEFAULT_PUBLISH="paystackPaid000001,opsTelegram00001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,commWeeklyPing01,acadTelegram00001,deliveryDaily00001,filesPlace0000001,pmNotesFathom00001,delayApply0000001,seoGa4Daily00001,seoGscDaily00001"
+# filesPlace0000001, delayApply0000001, and opsTelegram00001 stay unpublished.
+# Ops Telegram inbound is Go. Do not republish opsTelegram00001 (it would steal the webhook).
+DEFAULT_PUBLISH="paystackPaid000001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,commWeeklyPing01,acadTelegram00001,deliveryDaily00001,pmNotesFathom00001,seoGa4Daily00001,seoGscDaily00001"
 PUBLISH="${N8N_PUBLISH:-$DEFAULT_PUBLISH}"
 
 instance_field() {
@@ -76,9 +78,27 @@ import_on_this_host() {
   docker compose exec -T n8n n8n list:workflow
 }
 
+crash_stale_n8n_executions() {
+  # Restart leaves status=running rows. n8n then resumes them and Telegram
+  # Send waits behind a pile of Files/Delay jobs. Wait-node jobs are
+  # status=waiting and are left alone.
+  if [[ ! -f .env ]] || ! command -v psql >/dev/null; then
+    echo "skip crashing stale n8n executions (no .env or psql)" >&2
+    return 0
+  fi
+  set +u
+  # shellcheck disable=SC1091
+  . ./.env
+  set -u
+  PGPASSWORD="${POSTGRES_PASSWORD:-}" psql -h 127.0.0.1 -U "${POSTGRES_USER:-n8n}" -d "${POSTGRES_DB:-n8n}" -v ON_ERROR_STOP=1 \
+    -c "UPDATE execution_entity SET status = 'crashed', \"stoppedAt\" = NOW() WHERE status = 'running';"
+}
+
 restart_n8n_for_webhooks() {
-  echo "restart n8n so inbound webhooks bind"
-  docker compose restart n8n
+  echo "stop n8n, crash leftover running executions, start so webhooks bind"
+  docker compose stop n8n
+  crash_stale_n8n_executions || true
+  docker compose start n8n
   local i code=""
   for i in $(seq 1 45); do
     if docker compose exec -T n8n wget -qO- http://127.0.0.1:5678/healthz >/dev/null 2>&1; then

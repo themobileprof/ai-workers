@@ -42,13 +42,55 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json || {};\nconst list = Array.isArray(raw.jobs) ? raw.jobs : [];\nreturn list.filter((j) => j && j.id).map((j) => ({ json: { id: j.id } }));\n"
+        "jsCode": "const raw = $input.first().json || {};\nconst list = Array.isArray(raw.jobs) ? raw.jobs : [];\nconst rows = list.filter((j) => j && j.id).map((j) => ({ json: { id: j.id } }));\nreturn rows.length ? rows : [{ json: { skip: true } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [480, 0],
       "id": "delayApply0000split",
       "name": "Each due job"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "delayApply0000skipc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [600, 0],
+      "id": "delayApply0000skip",
+      "name": "Skip apply"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, -80],
+      "id": "delayApply0000idle",
+      "name": "Idle"
     },
     {
       "parameters": {
@@ -73,11 +115,13 @@
   "connections": {
     "Every 2 minutes": { "main": [[{ "node": "Fetch due jobs", "type": "main", "index": 0 }]] },
     "Fetch due jobs": { "main": [[{ "node": "Each due job", "type": "main", "index": 0 }]] },
-    "Each due job": { "main": [[{ "node": "Apply job", "type": "main", "index": 0 }]] }
+    "Each due job": { "main": [[{ "node": "Skip apply", "type": "main", "index": 0 }]] },
+    "Skip apply": { "main": [[{ "node": "Idle", "type": "main", "index": 0 }], [{ "node": "Apply job", "type": "main", "index": 0 }]] }
   },
   "settings": {
     "executionOrder": "v1",
-    "timezone": "Africa/Lagos"
+    "timezone": "Africa/Lagos",
+    "executionTimeout": 45
   },
   "staticData": null,
   "pinData": {},

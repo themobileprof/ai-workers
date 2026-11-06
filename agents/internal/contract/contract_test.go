@@ -31,3 +31,18 @@ func TestContextObject(t *testing.T) {
 		t.Fatalf("array should keep _raw %+v", raw)
 	}
 }
+
+func TestAttachChatID(t *testing.T) {
+	resp := Response{Status: StatusSuccess, OutputText: "hi"}
+	AttachChatID(&resp, Request{ContextData: json.RawMessage(`{"chat_id":" 99 "}`)})
+	if resp.ChatID != "99" {
+		t.Fatalf("%q", resp.ChatID)
+	}
+	if resp.StructuredData["chat_id"] != "99" {
+		t.Fatalf("sd %+v", resp.StructuredData)
+	}
+	AttachChatID(&resp, Request{ContextData: json.RawMessage(`{"chat_id":"other"}`)})
+	if resp.ChatID != "99" {
+		t.Fatalf("kept %q", resp.ChatID)
+	}
+}
