@@ -53,7 +53,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-books-lookup.json` | `smkBooksWrite0001` | no | Execute Books write with `lookup` (live P&L / unpaid) |
 | `n8n/workflows/smoke-paystack.json` | `smkPaystackHttp01` | no | GET Paystack `/balance` (needs `PAYSTACK_SECRET_KEY`; does not charge) |
 | `n8n/workflows/crm-upsert.json` | `crmUpsertCont0001` | yes (sub-workflow) | Upsert a Books customer from `record_lead`. Must be published — Execute Workflow cannot call an inactive child. |
-| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. Must be published. |
+| `n8n/workflows/books-write.json` | `booksWriteDoc0001` | yes (sub-workflow + Go webhook) | Zoho Books client: tax_id, expense, bill, invoice + Paystack request, lookup. WhatsApp Execute Workflow and Go `POST http://n8n:5678/webhook/books-write`. Not public (Caddy 404). Must be published. |
 | `n8n/workflows/paystack-paid.json` | `paystackPaid000001` | yes | Paystack webhook → verify → Zoho `customerpayments` |
 | `n8n/workflows/pm-notes.json` | `pmNotesFathom00001` | yes | Fathom webhook → HMAC → Delivery proposed plan (Accept on desk). Known CRM invitee + bet in title → call event, no send |
 | `n8n/workflows/smoke-delivery.json` | `smkDlvrHttp00001` | no | Manual POST delivery worker (meeting notes; must not write tasks) |
@@ -65,7 +65,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
 | `n8n/workflows/delivery-daily.json` | `deliveryDaily00001` | yes | 08:30 Lagos: Telegram today’s tasks, coming dates, and (owner/BDM) CRM due. People with a Telegram id. Empty card: no ping. |
 | `n8n/workflows/crm-due.json` | `crmDueDaily00001` | no | Retired. Due rows ride the 08:30 Delivery ping. `GET /internal/v1/crm/due` still works. Do not republish. |
-| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow) | Stores one pending draft; delay-to-send (15 min office hours / 60 after hours); `/approve` sends now; `/stop` `/kill` drop. Must be published. |
+| `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow + Go webhook) | Stores one pending draft; delay-to-send (15 min office hours / 60 after hours); Go `/approve` sends now; `/stop` `/kill` drop. `POST http://n8n:5678/webhook/email-outbox`. Not public (Caddy 404). Must be published. |
 | `n8n/workflows/inbound-email.json` | `inbdEmailImap0001` | yes | IMAP INBOX → CRM thread summary on Office → CRM (Books contact if there is an email). No draft, no send. Important mail pings owner/BDM and the matching cofounder. CVs and noise are dropped. |
 | `n8n/workflows/delay-apply.json` | `delayApply0000001` | yes | Every 2 minutes: apply Delivery plans whose delay has elapsed |
 | `n8n/workflows/seo-ga4.json` | `seoGa4Daily00001` | yes | 06:00 Lagos: Analytics Data API as `ga4-read` → `POST /internal/v1/seo/ga4`. Needs Defaults property id and n8n credential Google Analytics. |
@@ -95,7 +95,7 @@ On the **Academy** bot, `/accounts` `/ops` `/legal` `/seo` `/file` `/hr` `/appro
 
 Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable), then paste `context_data.telegram_chat_id` from the n8n execution onto the mandate. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram (and any leftover WhatsApp) room. Do not add the **ops** bot to student groups.
 
-Ops Telegram is gated by People `telegram_id` (Go looks up the People card). Unknown ids get the number to paste on People. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** Go picks **one** desk and does the work in that chat. A reply to the 08:30 “Today on the desk” card is Delivery. Chat never Accepts. `/approve` `/kill` `/stop` for info@ drafts stay on Email on the desk.
+Ops Telegram is gated by People `telegram_id` (Go looks up the People card). Unknown ids get the number to paste on People. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** Go picks **one** desk and does the work in that chat. A reply to the 08:30 “Today on the desk” card is Delivery. Chat never Accepts. `/approve` `/kill` `/stop` (owner/BDM) call n8n Email outbox for a pending info@ draft. Receipt photos and `/accounts` `/ops` that classify as accounts then call n8n Books write.
 
 Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, SEO, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
 
@@ -114,7 +114,7 @@ Source of truth for **projects**, people (including Telegram ids), and Zoho defa
 - n8n Customer WhatsApp does **not** fetch an allowlist. Every 1:1 DM is a customer.
 - n8n **Books write**, **CRM upsert** (and their smokes), and Ops Telegram `/crm` **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
 - **Third-party tools** live in [`TOOLS.md`](TOOLS.md) (GitHub). Add a section there when a vendor is wired — not a desk page.
-- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page; **`/webhook*` is unchanged**. Do **not** set `N8N_PATH`.
+- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page. **`/webhook/telegram-ops*`** is Go. **`/webhook/books-write*`** and **`/webhook/email-outbox*`** 404 publicly. Other **`/webhook*`** stay on n8n. Do **not** set `N8N_PATH`.
 - **Docs** (`/admin/docs`) is the field playbook: **Company desk** and **Projects** first (humans), then each worker specimen. Partial workers keep a later-box until the workflow is wired. GitHub usage + code map: [`README.md`](README.md).
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
 
@@ -125,7 +125,7 @@ The Cloud API number is the customer line. Do not allowlist staff phones on it. 
 ### Zoho Books (not Mail)
 
 - API: `https://www.zohoapis.com` (US DC). Org **TheMobileProf Technologies**, `organization_id` `939049468`, currency NGN.
-- Write path: `/accounts` or `/ops` → worker `structured_data.zoho_action` → sub-workflow **Books write** (`booksWriteDoc0001`).
+- Write path: `/accounts` or `/ops` (or an unprefixed receipt photo) → worker `structured_data.zoho_action` → Go `POST http://n8n:5678/webhook/books-write` (same **Books write** workflow WhatsApp still Execute-Workflows). Zoho tokens stay in n8n.
   - `expense` — already paid: `POST /expenses` with `tax_id` from `GET /settings/taxes` (Zoho computes VAT).
   - `bill` — we owe a vendor: upsert vendor contact + `POST /bills` (unpaid). WHT is **not** a second expense; withhold on the vendor payment in Books.
   - `invoice` — we bill a customer: search Books by **name** (a short name is enough). Unique match uses that contact and the **email already on it** for Paystack. Several matches → ask for the full name, post nothing. No match → create the contact; Paystack only if this message included an email. Never invent an address. Then `POST /invoices`, mark **sent**, Payment Request kobo = **Books `invoice.total` × 100**.
@@ -351,4 +351,4 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 5. Email inbound is live: customer mail `info@` → CRM story on Office → CRM. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
 6. Only then: intern mission on WhatsApp.
 
-If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. Ops Telegram inbound is Go (`/webhook/telegram-ops*`); other `/webhook*` stay on n8n. After a CLI import, n8n must be restarted or WhatsApp stays 404 even while the workflow looks published (morning ping can still send).
+If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. Ops Telegram inbound is Go (`/webhook/telegram-ops*`). Books write and email outbox are Docker-only (`http://n8n:5678/webhook/books-write`, `…/email-outbox`); Caddy 404s those on the public host. Other `/webhook*` stay on n8n. After a CLI import, n8n must be restarted or WhatsApp stays 404 even while the workflow looks published (morning ping can still send).

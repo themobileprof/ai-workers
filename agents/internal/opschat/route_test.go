@@ -67,6 +67,17 @@ func TestDecideGreeting(t *testing.T) {
 	}
 }
 
+func TestDecideApproveIsOutbox(t *testing.T) {
+	d := Decide(Inbound{ChatID: "1", FromID: "1", Text: "/approve"}, "")
+	if d.Kind != KindOutbox || d.Action != "send" {
+		t.Fatalf("%+v", d)
+	}
+	d = Decide(Inbound{ChatID: "1", FromID: "1", Text: "/stop"}, "growth")
+	if d.Kind != KindOutbox || d.Action != "kill" {
+		t.Fatalf("stop %+v", d)
+	}
+}
+
 func TestDecideNeedsClassify(t *testing.T) {
 	d := Decide(Inbound{ChatID: "1", FromID: "1", Text: "NDA for the facilitator"}, "")
 	if d.Kind != KindWork || d.Department != "" {

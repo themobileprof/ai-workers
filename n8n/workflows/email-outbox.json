@@ -19,6 +19,36 @@
     },
     {
       "parameters": {
+        "httpMethod": "POST",
+        "path": "email-outbox",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxhook0001",
+      "name": "Go webhook",
+      "webhookId": "email-outbox"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst headers = raw.headers || {};\nconst token = String(headers['x-internal-token'] || headers['X-Internal-Token'] || '').trim();\nconst want = String($env.INTERNAL_API_TOKEN || '').trim();\nif (!want || token !== want) {\n  throw new Error('forbidden');\n}\nconst body = (raw.body && typeof raw.body === 'object') ? raw.body : raw;\nreturn [{ json: body }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        200
+      ],
+      "id": "e0f1a2b3-c4d5-4e6f-a7b8-outboxgate0001",
+      "name": "Gate token"
+    },
+    {
+      "parameters": {
         "rules": {
           "values": [
             {
@@ -373,6 +403,28 @@
   ],
   "connections": {
     "When executed by another workflow": {
+      "main": [
+        [
+          {
+            "node": "Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Go webhook": {
+      "main": [
+        [
+          {
+            "node": "Gate token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate token": {
       "main": [
         [
           {

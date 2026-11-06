@@ -41,6 +41,7 @@ type Server struct {
 	workers      map[string]PlaceFunc
 	guide        llm.Completer
 	opsBot       *opschat.Bot
+	n8n          *n8nClient
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.

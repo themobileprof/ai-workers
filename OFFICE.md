@@ -22,7 +22,7 @@ A generic six-worker “comptroller / outbound engine / GEO / ticket mill / gran
 
 ## 2. The one rule (never violate)
 
-1. A human Asks, sends a prefixed chat, or (ops Telegram 1:1) sends plain text. Plain text gets a suggested desk; **yes** forwards it. Chat still never Accepts.
+1. A human Asks, sends a prefixed chat, or (ops Telegram 1:1) sends plain text. Plain text picks one desk and does the work. Chat still never Accepts.
 2. The worker proposes (text, a job, a draft, a path, a week plan).
 3. A human **Accepts** or **Turns away** on the desk. Typing in chat does not Accept.
 

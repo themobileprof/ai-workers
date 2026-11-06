@@ -13,14 +13,14 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Role:** Orchestration: webhooks, cron, Zoho/Paystack client, execution logs. Public `/webhook*` and an allowlisted editor at `/home` (plus `/signin*`, `/rest*`, `/assets*`). Not a catch-all on the hostname.
 - **Where:** Docker service n8n. Desk iframes `/home`.
 - **Secrets:** `N8N_ENCRYPTION_KEY` and `N8N_LICENSE_ACTIVATION_KEY` on the VM `.env`. Per-app tokens live in n8n Credentials, not git.
-- **Env:** `N8N_ENCRYPTION_KEY`, `N8N_LICENSE_ACTIVATION_KEY`, `N8N_HOST`, `N8N_PROTOCOL`, `N8N_WEBHOOK_URL`, `N8N_BLOCK_ENV_ACCESS_IN_NODE`
+- **Env:** `N8N_ENCRYPTION_KEY`, `N8N_LICENSE_ACTIVATION_KEY`, `N8N_HOST`, `N8N_PROTOCOL`, `N8N_WEBHOOK_URL`, `N8N_BLOCK_ENV_ACCESS_IN_NODE`, `N8N_BASE_URL`
 
 ### Zoho Books
 
 - **Id:** `zoho-books`
 - **URL:** https://www.zoho.com/books/
 - **Role:** Ledger. Expenses, bills, invoices, contacts, customer payments, tax_id. Go never computes VAT/WHT.
-- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert for invoices when there is an email or the stage is qualified+, Ops Telegram `/crm` Books fallback). The CRM story lives on the desk (`GET /internal/v1/crm/contacts`). Org ids and chart-of-accounts ids on the desk Defaults.
+- **Where:** n8n OAuth (Books write, Paystack paid, CRM upsert for invoices when there is an email or the stage is qualified+). Ops Telegram receipts: Go worker then `POST http://n8n:5678/webhook/books-write` (`X-Internal-Token`). Caddy 404s that path on the public host. The CRM story lives on the desk (`GET /internal/v1/crm/contacts`). Org ids and chart-of-accounts ids on the desk Defaults.
 - **Secrets:** OAuth tokens in n8n credential Zoho Books. Never `.env`, never the Go worker.
 - **n8n credentials:** `Zoho Books`
 - **Desk keys:** `zoho.organization_id`, `zoho.paid_through_account_id`, `zoho.default_expense_account_id`, `zoho.account.office_supplies_id`, `zoho.account.advertising_id`, `zoho.account.lodging_id`, `zoho.account.uncategorized_id`, `zoho.deposit_to_account_id`
@@ -30,7 +30,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `zoho-mail`
 - **URL:** https://www.zoho.com/mail/
 - **Role:** Company mailbox info@themobileprof.com. SMTP out (a pending draft a human asked for). IMAP in (CRM thread summary on Office → CRM; important mail pings owner/BDM).
-- **Where:** n8n credentials. SMTP smtppro.zoho.com:465. IMAP imappro.zoho.com:993.
+- **Where:** n8n credentials. SMTP smtppro.zoho.com:465. IMAP imappro.zoho.com:993. Ops Telegram `/approve` is Go → `POST http://n8n:5678/webhook/email-outbox`. Caddy 404s that path on the public host.
 - **Secrets:** App password in n8n only.
 - **n8n credentials:** `Zoho Mail info@`, `Zoho Mail info@ IMAP`
 
@@ -49,7 +49,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
 - **Role:** Two bots. Ops (`Telegram account`): office assistant in Go. Staff identified by People `telegram_id`. One desk per turn; prefixes are optional shortcuts. Chat never Accepts. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** Go `POST /webhook/telegram-ops/webhook` (Caddy). n8n Delivery morning ping at 08:30 Lagos still **sends** on this bot. Academy Telegram and weekly intro stay n8n.
+- **Where:** Go `POST /webhook/telegram-ops/webhook` (Caddy). After Accounts work, Go calls n8n Books write. `/approve` `/kill` `/stop` call n8n Email outbox (owner/BDM). n8n Delivery morning ping at 08:30 Lagos still **sends** on this bot. Academy Telegram and weekly intro stay n8n.
 - **Secrets:** `TELEGRAM_OPS_BOT_TOKEN` and `TELEGRAM_OPS_WEBHOOK_SECRET` on the VM `.env` → agents. Same bot token as n8n credential Telegram account (morning ping). Never git.
 - **Env:** `TELEGRAM_OPS_BOT_TOKEN`, `TELEGRAM_OPS_WEBHOOK_SECRET`, `TELEGRAM_OPS_WEBHOOK_URL`
 - **n8n credentials:** `Telegram account`, `Telegram Academy`

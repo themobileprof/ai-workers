@@ -88,6 +88,7 @@ func main() {
 				desk.WithWorker("files", call(files.Handle))
 				desk.WithGuide(completer)
 				desk.WithOpsTelegram(opsBot)
+				desk.WithN8n(os.Getenv("N8N_BASE_URL"), os.Getenv("INTERNAL_API_TOKEN"))
 				desk.Register(mux)
 				adminReady = true
 				log.Printf("admin desk enabled")

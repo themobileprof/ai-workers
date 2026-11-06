@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/opschat"
@@ -69,9 +70,19 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	case opschat.KindSkip:
 		return "", nil
 	case opschat.KindHelp, opschat.KindGreet:
+		go func() {
+			c, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+			defer cancel()
+			s.rememberOpsChat(c, in.ChatID)
+		}()
 		return opschat.HelpText(u.Name, staffPrefixes(u)), nil
 	case opschat.KindNote:
 		return d.Reply, nil
+	case opschat.KindOutbox:
+		if !staffCanApprove(u) {
+			return "Only owner and BDM can /approve or /stop a pending info@ draft.", nil
+		}
+		return s.runOutbox(ctx, d.Action, in.ChatID), nil
 	}
 
 	dept := d.Department
@@ -98,6 +109,9 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	text := strings.TrimSpace(resp.OutputText)
 	if text == "" {
 		text = "I heard you. Chat never Accepts — that stays on the desk."
+	}
+	if audit := s.maybeBooksWrite(ctx, dept, resp); audit != "" {
+		text = strings.TrimSpace(text + "\n\n" + audit)
 	}
 	_ = s.store.AppendOpsChat(ctx, in.ChatID, "assistant", text)
 	_ = s.store.SetOpsChatDesk(ctx, in.ChatID, u.ID, dept)

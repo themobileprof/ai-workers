@@ -33,7 +33,7 @@ wait_health() {
 
 ensure_agents_binary() {
   local out="$ROOT/agents/dist/agents"
-  if [[ -f "$out" ]]; then
+  if [[ -f "$out" ]] && ! find "$ROOT/agents" -name '*.go' -newer "$out" | grep -q .; then
     return 0
   fi
   if ! command -v go >/dev/null; then

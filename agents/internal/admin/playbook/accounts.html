@@ -2,7 +2,7 @@
 
 <ol class="steps">
   <li>Ops Telegram: <code>/accounts I paid Jumia 18500 for office paper today</code>. Customer WhatsApp cannot book this.</li>
-  <li>n8n reads <code>structured_data.zoho_action</code> and runs <strong>Books write</strong> (<code>booksWriteDoc0001</code>).</li>
+  <li>Go reads <code>structured_data.zoho_action</code> and POSTs n8n <strong>Books write</strong> (<code>booksWriteDoc0001</code>). Zoho tokens stay in n8n.</li>
   <li>You get the audit trail on the same chat (expense / bill / invoice id + Paystack link, or a lookup summary).</li>
   <li>Hypotheticals must say “do not record”. Smoke: <strong>Smoke: accounts HTTP</strong> — that sample is preview, must not post.</li>
 </ol>

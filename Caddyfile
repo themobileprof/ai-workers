@@ -24,6 +24,14 @@ workers.themobileprof.com {
 		reverse_proxy 127.0.0.1:8000
 	}
 
+	# Go → n8n on the Docker network. Do not publish Books or outbox to the internet.
+	handle /webhook/books-write* {
+		respond 404
+	}
+	handle /webhook/email-outbox* {
+		respond 404
+	}
+
 	# WhatsApp, form waits, Paystack, Fathom. These public paths must not change.
 	@hooks {
 		path /webhook* /webhook-test* /webhook-waiting* /form* /mcp* /mcp-test*

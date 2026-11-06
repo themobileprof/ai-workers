@@ -6,11 +6,12 @@ import (
 )
 
 const (
-	KindSkip  = "skip"
-	KindGreet = "greet"
-	KindHelp  = "help"
-	KindNote  = "note"
-	KindWork  = "work"
+	KindSkip   = "skip"
+	KindGreet  = "greet"
+	KindHelp   = "help"
+	KindNote   = "note"
+	KindWork   = "work"
+	KindOutbox = "outbox"
 )
 
 // Decision is how one inbound message is handled. Department is empty when KindWork needs Classify.
@@ -71,8 +72,8 @@ func Decide(in Inbound, currentDesk string) Decision {
 	if helpCmd(text) {
 		return Decision{Kind: KindHelp}
 	}
-	if approveCmd(text) {
-		return Decision{Kind: KindNote, Reply: "Pending info@ drafts send from Email on the desk, or wait for the delay. This chat does not /approve."}
+	if act := outboxAction(text); act != "" {
+		return Decision{Kind: KindOutbox, Action: act}
 	}
 
 	for _, cmd := range prefixCommands {
@@ -139,8 +140,15 @@ func helpCmd(text string) bool {
 	return regexp.MustCompile(`^/(start|help)(?:@\w+)?\b`).MatchString(text)
 }
 
-func approveCmd(text string) bool {
-	return regexp.MustCompile(`^/(approve|kill|stop)(?:@\w+)?\b`).MatchString(text)
+func outboxAction(text string) string {
+	switch {
+	case regexp.MustCompile(`^/approve(?:@\w+)?\b`).MatchString(text):
+		return "send"
+	case regexp.MustCompile(`^/(kill|stop)(?:@\w+)?\b`).MatchString(text):
+		return "kill"
+	default:
+		return ""
+	}
 }
 
 func morningCard(replyTo string) bool {
