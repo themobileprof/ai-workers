@@ -116,6 +116,17 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	if !strings.Contains(person.Body.String(), "Asked for a demo") || !strings.Contains(person.Body.String(), "Log a call") {
 		t.Fatal("crm person timeline")
 	}
+	if strings.Contains(person.Body.String(), `action="/admin/crm/1/clear-due"`) {
+		t.Fatal("Due done only when a date is set")
+	}
+	duePerson := httptest.NewRecorder()
+	s.render(duePerson, "crm", pageData{
+		Title: "Chinedu", Nav: "crm", User: &User{Name: "Ada", Role: "owner"},
+		Contact: &CRMContact{ID: 1, Name: "Chinedu", Stage: "qualified", NextActionBy: "2026-10-27"},
+	})
+	if !strings.Contains(duePerson.Body.String(), `action="/admin/crm/1/clear-due"`) || !strings.Contains(duePerson.Body.String(), "Due done") {
+		t.Fatal("crm due done")
+	}
 	login := httptest.NewRecorder()
 	s.render(login, "login", pageData{Title: "Sign in"})
 	if strings.Contains(login.Body.String(), `class="guide-fab"`) {
@@ -182,8 +193,8 @@ func TestPlaybookCatalog(t *testing.T) {
 		t.Fatal("delivery playbook")
 	}
 	seoDoc, ok := lookupDoc("seo")
-	if !ok || !seoDoc.Live() || !strings.Contains(string(seoDoc.Body), "Search Console") {
-		t.Fatal("seo is live")
+	if !ok || !seoDoc.Live() || !seoDoc.Player() || !strings.Contains(string(seoDoc.Body), "Search Console") {
+		t.Fatal("seo is a Cursor sheet")
 	}
 	filesDoc, ok := lookupDoc("files")
 	if !ok || !filesDoc.Live() || !strings.Contains(string(filesDoc.Body), "catalog match") {

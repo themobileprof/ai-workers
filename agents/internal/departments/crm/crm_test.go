@@ -81,6 +81,9 @@ func TestHandleFollowUpMustNotSend(t *testing.T) {
 	if !strings.Contains(stub.got.System, "cannot_send") {
 		t.Fatal("follow up must not send")
 	}
+	if !strings.Contains(stub.got.System, "clear_due") || !strings.Contains(stub.got.System, "done Apex") {
+		t.Fatal("clear due must be a task type")
+	}
 	if !strings.Contains(stub.got.System, "not on Office") {
 		t.Fatal("missing person stays off the book")
 	}

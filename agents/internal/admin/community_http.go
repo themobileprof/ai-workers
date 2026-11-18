@@ -9,7 +9,7 @@ import (
 func communityFlash(ok string) string {
 	switch ok {
 	case "saved":
-		return "Mandate saved. Paste the Telegram chat id from an Academy Telegram n8n execution if the room is not matched yet."
+		return "Mandate saved. Add the Academy bot to the group — the chat id binds itself on join if this slug is lms and the field is empty."
 	case "deleted":
 		return "Mandate removed. The worker has no brief for that room."
 	default:
@@ -23,11 +23,13 @@ func (s *Server) communityGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	list, err := s.store.ListCommunityMandates(r.Context())
+	students, _ := s.store.ListCommunityStudents(r.Context(), 200)
 	data := pageData{
 		Title:    "Community",
 		Nav:      "community",
 		User:     u,
 		Mandates: list,
+		Students: students,
 		Flash:    communityFlash(r.URL.Query().Get("ok")),
 	}
 	if err != nil {

@@ -25,8 +25,8 @@ func guideReads(kind string) []DeskLink {
 		)
 	case "seo":
 		out = append(out,
-			DeskLink{Href: "/admin/seo", Label: "SEO book", Why: "Accept lives here. Download the pack or give Cursor the URL."},
-			DeskLink{Href: "/admin/settings?tab=seo", Label: "GA4 / Search Console", Why: "Property ids n8n uses for the daily pulls. ga4-read must be a Viewer on GA4 and a user on Search Console."},
+			DeskLink{Href: "/admin/settings?tab=seo", Label: "Search Console / GA4", Why: "Property ids n8n uses for the daily pulls. ga4-read must be a Viewer on GA4 and a user on Search Console."},
+			DeskLink{Href: "/admin/projects", Label: "Projects", Why: "Public URL and GitHub repo on Card. Cursor opens that repo."},
 		)
 	case "growth":
 		out = append(out,
@@ -85,7 +85,7 @@ func shortDocWhy(kind, summary string) string {
 	case "legal":
 		return "Specimens for NDAs. The worker cannot send the document."
 	case "seo":
-		return "Walk is facts, FAQ, schema, then an onsite pack. Visible page is the source of truth."
+		return "Onsite SEO is Cursor in the bet repo. Visible page is the source of truth."
 	case "delivery":
 		return "Stage caps how many tasks. Fathom notes still need Accept."
 	case "internal-ops":

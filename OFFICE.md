@@ -36,7 +36,7 @@ Workers never:
 - compute VAT or WHT (Zoho Books does)
 - invent emails, phones, grant receipts, or case citations
 
-`/approve`, `/kill`, and `/stop` on ops Telegram only send or drop the pending **info@** draft (and `/stop` also cancels a delayed Delivery plan). They do not Accept legal, SEO, hiring, or a project stage.
+`/approve`, `/kill`, and `/stop` on ops Telegram only send or drop the pending **info@** draft (and `/stop` also cancels a delayed Delivery plan). They do not Accept legal, hiring, or a project stage.
 
 ---
 
@@ -78,7 +78,7 @@ These are the website, not extra agents:
 4. Put a date on it (campus week, field week, launch)
 5. Give someone work (one Delivery task)
 
-Then: this gate’s mission from the journey catalog. Then Legal / Files / SEO as needed.
+Then: this gate’s mission from the journey catalog. Then Legal / Files / onsite SEO in Cursor as needed.
 
 Stages (the coloured label): Idea, Testing, Selling, Fundable, Parked, Killed. Stage caps how many Delivery tasks may be open: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace.
 
@@ -139,13 +139,13 @@ Parent clerk for TheMobileProf: proposed NDAs and contracts from git templates. 
 
 It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file a row). Do not delete Legal because grants exist. Faces still need paper.
 
-### SEO (`/seo`) — live — keep
+### SEO — gone as a worker — Cursor in the bet repo
 
-Titles, meta, outlines, keyword inventory from the bet’s own pages, and a walk: quotable facts, FAQ, schema, an onsite pack for Cursor, then offsite. Give a live URL. The clerk fetches that origin (JSON-LD is kept). The visible page is the source of truth (a designer may never have seen title/meta). Ask issues a markdown pack (`/site/seo/{token}`) — download it or reference the URL in Cursor. A human implements onsite in the site repo. Offsite work is handed to Delivery as a week plan (spread over periods, stage caps, backlog) that writes after the delay unless you Turn away. The clerk cannot send. It is still not a GEO desk — no invented ChatGPT citations.
+Onsite titles, meta, FAQ, and schema live in the public site’s GitHub repo. Copy `.cursor/rules/onsite-seo.mdc` into that repo. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Organization is TheMobileProf Technologies. `/seo` on ops Telegram says the worker is gone.
 
-Search Console and GA4 last-28-days arrive from n8n (service account, *your* properties only). Quote those snapshots.
+Offsite listings you already know are ordinary Delivery tasks. Search Console and GA4 last-28-days still arrive from n8n (service account, *your* properties only). Quote those snapshots.
 
-It cannot publish or merge. It does not talk to GitHub. It is **not** GEO / “win AI answers.” It is not a web-wide crawler.
+It is **not** GEO / “win AI answers.” It is not a web-wide crawler. This office does not push PRs.
 
 ### Files (`/file`) — live — keep
 
@@ -194,7 +194,7 @@ Do not tell the owner to:
 3. Turn Growth into scrape + cold sequences.
 4. Add a Scout that scrapes Reddit, X, or forums to “see if the problem is growing.” Proof here is a **named person at a named place**.
 5. Add a Demo Day worker that invents waitlist / MAU / burn per “startup.” Those metrics are not stored. Growth already walks a deck from Card facts; a human sends.
-6. Add GEO, crawl the open web, or auto-merge / auto-publish. Fetching the bet’s own URL and writing a pack a human (or Cursor) implements is the SEO path.
+6. Add GEO, crawl the open web, or auto-merge / auto-publish. Onsite SEO is Cursor in the bet repo, from the designed page.
 7. Let any worker Accept, send, publish, hire, or file at CAC.
 8. Give each bet its own WhatsApp, Books org, or CAC.
 
@@ -220,7 +220,7 @@ Do not tell the owner to:
 | `/accounts` | accounts (ops Telegram, role-gated) |
 | `/ops` | ops (ops Telegram) |
 | `/legal` | legal (ops Telegram) |
-| `/seo` | seo (ops Telegram) |
+| `/seo` | gone — Cursor in the bet repo |
 | `/file` | files (ops Telegram) |
 | `/today` `/pm` `/idea` | delivery (ops Telegram) |
 | `/growth` | growth |

@@ -10,7 +10,6 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
-	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
@@ -127,12 +126,8 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 	if flash == "" {
 		flash = filesFlash(okq)
 	}
-	if flash == "" {
-		if r.URL.Query().Get("tab") == "deck" {
-			flash = growthFlash(okq, r.URL.Query().Get("step"))
-		} else {
-			flash = seoFlash(okq, r.URL.Query().Get("step"))
-		}
+	if flash == "" && r.URL.Query().Get("tab") == "deck" {
+		flash = growthFlash(okq, r.URL.Query().Get("step"))
 	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
@@ -353,7 +348,6 @@ func (s *Server) internalProjects(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []User, errMsg, flash string) pageData {
 	drafts, _ := s.store.ListLegalDrafts(ctx, p.ID)
-	briefs, _ := s.store.ListSeoBriefs(ctx, p.ID)
 	decks, _ := s.store.ListGrowthDecks(ctx, p.ID)
 	filings, _ := s.store.ListFileFilings(ctx, p.ID, "")
 	items, _ := s.store.ListWorkItems(ctx, p.ID, 0)
@@ -383,18 +377,15 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		slots = 0
 	}
 	canLegal := s.legal != nil && (Handles(*u, "legal") || canOffice(u))
-	canSEO := Handles(*u, "seo") || canOffice(u)
 	canGrowth := Handles(*u, "growth") || canOffice(u)
 	steps := projectRun(runInput{
 		Project:   p,
 		Drafts:    drafts,
-		Briefs:    briefs,
 		Decks:     decks,
 		Filings:   filings,
 		Items:     items,
 		Events:    events,
 		CanLegal:  canLegal,
-		CanSEO:    canSEO,
 		CanGrowth: canGrowth,
 	})
 	data := pageData{
@@ -410,9 +401,6 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		CanLegal:       s.legal != nil,
 		Drafts:         drafts,
 		LegalTemplates: legal.Specs(),
-		CanSEO:         s.seo != nil,
-		SeoBriefs:      briefs,
-		SeoKinds:       seo.Specs(),
 		CanGrowth:      s.growthReady(),
 		Decks:          decks,
 		DeckKinds:      growth.Specs(),
@@ -424,8 +412,6 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		Grants:         grants,
 		RunSteps:       steps,
 		RunLeft:        runMustLeft(steps),
-		SeoWalk:        seoWalk(briefs, p.URL),
-		SeoSeed:        loadSeoSeed(p, briefs),
 		DeckWalk:       deckWalk(decks, p),
 		DeckSeed:       loadDeckSeed(p, decks),
 		Error:          errMsg,

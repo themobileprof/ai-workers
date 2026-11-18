@@ -148,7 +148,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Room voice",
 		Path:     "POST /departments/community",
 		Wire:     "live",
-		Summary:  "Mandated Academy Telegram rooms, Monday intro, /cm, LMS catalog. WhatsApp Cloud API cannot join ordinary groups.",
+		Summary:  "Mandated Academy Telegram rooms, live LMS catalog, join onboard, DM billing email, /invite landing (LMS + Telegram), Monday intro, daily ₦500 airtime post even when nobody qualified, /cm. WhatsApp Cloud API cannot join ordinary groups.",
 		Prefixes: []string{"/cm", "/community", "Academy Telegram group"},
 	},
 	{
@@ -157,7 +157,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Pipeline",
 		Path:     "POST /departments/crm · /admin/crm",
 		Wire:     "live",
-		Summary:  "The conversion book. WhatsApp, info@, calls, and /crm file a timeline on the person. Offer and stage are the pitch. /crm follow up proposes the next step. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.",
+		Summary:  "The conversion book. WhatsApp, info@, calls, and /crm file a timeline on the person. Offer and stage are the pitch. /crm follow up proposes the next step. Due done (or /crm done Apex) clears the 08:30 ping without changing stage. Won stays for a later upsell. It does not send.",
 		Prefixes: []string{"/crm", "info@ inbound", "Office → CRM"},
 	},
 	{
@@ -190,11 +190,12 @@ var docCatalog = []DocMeta{
 	{
 		Slug:     "seo",
 		Title:    "SEO",
-		Kicker:   "Parent clerk",
-		Path:     "POST /departments/seo",
+		Kicker:   "Cursor in the bet repo",
+		Kind:     "player",
+		Path:     "Cursor in the bet repo",
 		Wire:     "live",
-		Summary:  "Fetches the bet’s own URL. Walk is quotable facts, FAQ, schema, onsite pack, then offsite. Ask issues a markdown pack for Cursor. Offsite work is a Delivery week plan that writes after the delay unless you Turn away. GA4 and Search Console last-28-days arrive from n8n. Not a GEO clerk.",
-		Prefixes: []string{"/seo", "desk Ask"},
+		Summary:  "Onsite SEO is Cursor in the public site repo. Walk cite → FAQ → schema → title/meta from the designed page. Copy .cursor/rules/onsite-seo.mdc into that repo. Offsite listings are Delivery tasks. Search Console and GA4 last-28-days still arrive from n8n. There is no SEO worker.",
+		Prefixes: []string{"Cursor", "project SEO tab"},
 	},
 	{
 		Slug:     "delivery",

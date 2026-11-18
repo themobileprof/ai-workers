@@ -36,14 +36,16 @@ var prefixCommands = []struct {
 	{regexp.MustCompile(`^/growth(?:@\w+)?\b\s*`), "growth", ""},
 	{regexp.MustCompile(`^/crm(?:@\w+)?\b\s*`), "crm", ""},
 	{regexp.MustCompile(`^/legal(?:@\w+)?\b\s*`), "legal", ""},
-	{regexp.MustCompile(`^/seo(?:@\w+)?\b\s*`), "seo", ""},
 	{regexp.MustCompile(`^(?:/today|/pm)(?:@\w+)?\b\s*`), "delivery", "today"},
 	{regexp.MustCompile(`^/idea(?:@\w+)?\b\s*`), "delivery", "idea"},
 	{regexp.MustCompile(`^/hr(?:@\w+)?\b\s*`), "hr", ""},
 	{regexp.MustCompile(`^/file(?:@\w+)?\b\s*`), "files", ""},
 }
 
-var greetRe = regexp.MustCompile(`^(hi|hello|hey|yo|hola|good\s+(morning|afternoon|evening)|gm|morning)[\s!.]*$`)
+var (
+	greetRe   = regexp.MustCompile(`^(hi|hello|hey|yo|hola|good\s+(morning|afternoon|evening)|gm|morning)[\s!.]*$`)
+	seoGoneRe = regexp.MustCompile(`^/seo(?:@\w+)?\b`)
+)
 
 // HelpText is /start and /help.
 func HelpText(who string, prefixes []string) string {
@@ -71,6 +73,9 @@ func Decide(in Inbound, currentDesk string) Decision {
 	text := strings.TrimSpace(in.Text)
 	if helpCmd(text) {
 		return Decision{Kind: KindHelp}
+	}
+	if seoGoneRe.MatchString(text) {
+		return Decision{Kind: KindNote, Reply: "Onsite SEO is Cursor in the bet repo. Copy .cursor/rules/onsite-seo.mdc into that repo and walk cite → FAQ → schema → title/meta from the designed page. Offsite listings are Delivery tasks you add. Search Console and GA4 still land on Defaults. There is no SEO worker."}
 	}
 	if act := outboxAction(text); act != "" {
 		return Decision{Kind: KindOutbox, Action: act}
@@ -178,7 +183,7 @@ func defaultTask(dept string, in Inbound) string {
 func AllowedDepartments() []string {
 	return []string{
 		"delivery", "growth", "legal", "files", "accounts", "internal-ops",
-		"crm", "product-dev", "seo", "community", "hr",
+		"crm", "product-dev", "community", "hr",
 	}
 }
 

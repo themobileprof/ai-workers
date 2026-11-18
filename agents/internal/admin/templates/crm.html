@@ -6,8 +6,8 @@
     <h2>{{.Contact.Name}}</h2>
     <ol class="recipe">
       <li>Read the timeline. Email, WhatsApp, and calls land here. Nothing is sent from this page.</li>
-      <li>Log a call or a note. Set the next human step and the date — the 08:30 Telegram card pokes owner/BDM when that date arrives. <code>/crm follow up</code> proposes the next step from this story.</li>
-      <li><strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits.</li>
+      <li>Log a call or a note. Set the next human step and a later By date if there is one. <code>/crm follow up</code> proposes the next step from this story.</li>
+      <li><strong>Due done</strong> takes them off the 08:30 card without changing stage. <strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits and also leaves the ping.</li>
     </ol>
     {{template "page-reads" (guideReads "crm")}}
     <p><a class="quiet" href="/admin/crm">Back to CRM</a></p>
@@ -29,6 +29,7 @@
       </div>
       {{if .Contact.NextAction}}<p class="week">Next: {{.Contact.NextAction}}{{if .Contact.NextActionBy}} · {{.Contact.NextActionBy}}{{end}}</p>{{end}}
       <div class="row-actions">
+        {{if .Contact.HasDue}}<form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/clear-due"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button type="submit">Due done</button></form>{{end}}
         <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/won"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button type="submit">Won</button></form>
         <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/nurture"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button class="ghost" type="submit">Nurture</button></form>
         <form class="inline" method="post" action="/admin/crm/{{.Contact.ID}}/lost"><input type="hidden" name="next" value="/admin/crm/{{.Contact.ID}}"><button class="ghost" type="submit">Lost</button></form>
@@ -65,6 +66,7 @@
             </select>
           </label>
           <label>What happened<textarea name="body" rows="4" required></textarea></label>
+          {{if .Contact.HasDue}}<label class="chk"><input type="checkbox" name="clear_due" value="on" checked> Take off the 08:30 ping</label>{{end}}
         </div>
         <button type="submit">Log touch</button>
       </form>
@@ -97,6 +99,7 @@
           </label>
           <label>Next action<input name="next_action" value="{{.Contact.NextAction}}"></label>
           <label>By<input name="next_action_by" type="date" value="{{.Contact.NextActionBy}}"></label>
+          {{if .Contact.HasDue}}<p class="hint">Empty By and Save, or tap Due done, to leave the 08:30 card. Date fields are hard to clear on a phone.</p>{{end}}
           <label>Briefing<textarea name="notes" rows="3">{{.Contact.Notes}}</textarea></label>
         </div>
         <button type="submit">Save person</button>
@@ -112,7 +115,7 @@
     <ol class="recipe">
       <li>WhatsApp, info@, and <code>/crm</code> file a row. Open the person for the timeline.</li>
       <li>Log calls on the person. Set the next human step and the offer. Nothing is sent.</li>
-      <li><strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits.</li>
+      <li><strong>Due done</strong> takes a dated row off the 08:30 card. <strong>Won</strong> keeps them for a later upsell. <strong>Lost</strong> closes. <strong>Nurture</strong> waits and also leaves the ping.</li>
     </ol>
     {{template "page-reads" (guideReads "crm")}}
   </div>
@@ -140,6 +143,7 @@
           </div>
           <div class="row-actions">
             <a class="ghost" href="/admin/crm/{{.ID}}">Open</a>
+            {{if .HasDue}}<form class="inline" method="post" action="/admin/crm/{{.ID}}/clear-due"><button type="submit">Due done</button></form>{{end}}
             <form class="inline" method="post" action="/admin/crm/{{.ID}}/won"><button type="submit">Won</button></form>
             <form class="inline" method="post" action="/admin/crm/{{.ID}}/nurture"><button class="ghost" type="submit">Nurture</button></form>
             <form class="inline" method="post" action="/admin/crm/{{.ID}}/lost"><button class="ghost" type="submit">Lost</button></form>

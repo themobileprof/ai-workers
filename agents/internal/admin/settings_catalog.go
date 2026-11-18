@@ -89,9 +89,26 @@ func settingCatalog() []settingGroupSpec {
 			},
 		},
 		{
+			ID:       "community",
+			Title:    "Academy · join",
+			Help:     "Student invite links are https://lms.themobileprof.com/join/CODE. ClubKonnect secrets stay in the VM .env. Telegram invite is the group link students receive after they say hi to the host.",
+			DocHref:  "/admin/docs/community",
+			DocLabel: "Community sheet",
+			Recipe: []string{
+				"LMS register is the student signup URL. Default is the LMS /join page.",
+				"Telegram invite is t.me/+… for the class group. Leave blank and the host will try to create one when a student /start’s.",
+				"Bot username is without @. Airtime amount is REWARD_AMOUNT in .env.",
+			},
+			Fields: []SettingField{
+				{Key: "community.lms_register", Label: "LMS register URL", Help: "Where a new student creates an Academy account."},
+				{Key: "community.telegram_invite", Label: "Telegram group invite", Help: "t.me/+… link. Students get this after they open the host in Telegram."},
+				{Key: "community.telegram_bot", Label: "Academy bot username", Help: "Without @. Used for t.me/bot?start=r_CODE."},
+			},
+		},
+		{
 			ID:       "seo",
-			Title:    "SEO · Google properties",
-			Help:     "Property ids only — free Google APIs for THIS company. The GA4 JSON key stays in n8n. PageSpeed key stays in the VM .env.",
+			Title:    "Traffic · Google properties",
+			Help:     "Property ids only — free Google APIs for THIS company. The GA4 JSON key stays in n8n. PageSpeed key stays in the VM .env. Onsite SEO is Cursor in the bet repo.",
 			DocHref:  "/admin/docs/seo",
 			DocLabel: "SEO sheet",
 			Recipe: []string{
@@ -123,6 +140,9 @@ func defaultSettings() map[string]any {
 		"drive.shared_drive_id":           "",
 		"seo.gsc_site_url":                "",
 		"seo.ga4_property_id":             "",
+		"community.lms_register":          "https://lms.themobileprof.com/join",
+		"community.telegram_invite":       "https://t.me/+6lTlfZkJ0TU3ZGE0",
+		"community.telegram_bot":          "themobileprof_academy_bot",
 	}
 }
 

@@ -19,9 +19,9 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/hr"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
-	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 	"github.com/samuel/ai-workers/agents/internal/llm"
+	"github.com/samuel/ai-workers/agents/internal/lms"
 	"github.com/samuel/ai-workers/agents/internal/opschat"
 )
 
@@ -37,11 +37,12 @@ type Server struct {
 	place        PlaceFunc
 	legal        PlaceFunc
 	hr           PlaceFunc
-	seo          PlaceFunc
 	workers      map[string]PlaceFunc
 	guide        llm.Completer
 	opsBot       *opschat.Bot
+	acadBot      *opschat.Bot
 	n8n          *n8nClient
+	lms          *lms.Client
 }
 
 // PlaceFunc runs product-dev placement. It must only return a proposal; the desk commits the stamp.
@@ -91,11 +92,9 @@ type pageData struct {
 	CanAsk         bool
 	Mandates       []CommunityMandate
 	Mandate        *CommunityMandate
+	Students       []CommunityStudent
 	WorkItems      []WorkItem
 	DeliveryBets   []DeliveryBet
-	SeoBriefs      []SeoBrief
-	SeoKinds       []seo.Spec
-	CanSEO         bool
 	Decks          []GrowthDeck
 	DeckKinds      []growth.Spec
 	CanGrowth      bool
@@ -115,8 +114,6 @@ type pageData struct {
 	Tab            string
 	RunSteps       []RunStep
 	RunLeft        int
-	SeoWalk        []RunStep
-	SeoSeed        seoSeed
 }
 
 type kv struct {
@@ -143,11 +140,8 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"guideReads":   guideReads,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "seo", "growth", "guide", "files", "grants", "crm"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "growth", "guide", "files", "grants", "crm"} {
 		files := []string{"templates/layout.html", "templates/" + name + ".html"}
-		if name == "seo" || name == "projects" {
-			files = append(files, "templates/seo_walk.html")
-		}
 		if name == "growth" || name == "projects" {
 			files = append(files, "templates/deck_walk.html")
 		}
@@ -178,6 +172,18 @@ func (s *Server) WithOpsTelegram(bot *opschat.Bot) {
 	}
 }
 
+func (s *Server) WithAcademyTelegram(bot *opschat.Bot) {
+	if s != nil {
+		s.acadBot = bot
+	}
+}
+
+func (s *Server) WithLMS(c *lms.Client) {
+	if s != nil {
+		s.lms = c
+	}
+}
+
 func (s *Server) WithPlacer(fn PlaceFunc) {
 	if s != nil {
 		s.place = fn
@@ -189,6 +195,8 @@ func (s *Server) WithPlacer(fn PlaceFunc) {
 func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /webhook/telegram-ops/webhook", s.opsTelegramPOST)
 	mux.HandleFunc("POST /webhook/telegram-ops", s.opsTelegramPOST)
+	mux.HandleFunc("POST /webhook/telegram-academy/webhook", s.academyTelegramPOST)
+	mux.HandleFunc("POST /webhook/telegram-academy", s.academyTelegramPOST)
 	mux.HandleFunc("GET /admin/static/", s.serveStatic)
 	mux.HandleFunc("GET /admin/login", s.loginGET)
 	mux.HandleFunc("POST /admin/login", s.loginPOST)
@@ -227,13 +235,9 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/crm/{id}/won", s.crmStamp("won"))
 	mux.HandleFunc("POST /admin/crm/{id}/lost", s.crmStamp("lost"))
 	mux.HandleFunc("POST /admin/crm/{id}/nurture", s.crmStamp("nurture"))
-	mux.HandleFunc("GET /admin/seo", s.seoGET)
-	mux.HandleFunc("POST /admin/seo/ask", s.seoAskPOST)
-	mux.HandleFunc("GET /admin/seo/{id}/pack.md", s.seoPackDownload)
-	mux.HandleFunc("POST /admin/seo/{id}/approve", s.seoStamp("approved"))
-	mux.HandleFunc("POST /admin/seo/{id}/reject", s.seoStamp("rejected"))
-	mux.HandleFunc("GET /site/seo/{token}", s.seoPackPublic)
-	mux.HandleFunc("POST /admin/projects/{id}/seo", s.projectSEO)
+	mux.HandleFunc("POST /admin/crm/{id}/clear-due", s.crmClearDuePOST)
+	mux.HandleFunc("GET /admin/seo", s.seoGoneGET)
+	mux.HandleFunc("GET /site/seo/{token}", s.seoPackGone)
 	mux.HandleFunc("GET /admin/growth", s.growthGET)
 	mux.HandleFunc("POST /admin/growth/ask", s.growthAskPOST)
 	mux.HandleFunc("GET /admin/growth/{id}/pack.md", s.growthPackDownload)
@@ -262,6 +266,11 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/chat", s.deskChatPOST)
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/accept", s.deskStamp("accepted"))
 	mux.HandleFunc("POST /admin/desks/{slug}/jobs/{id}/reject", s.deskStamp("rejected"))
+	mux.HandleFunc("GET /join", s.joinGET)
+	mux.HandleFunc("GET /join/{code}", s.joinGET)
+	mux.HandleFunc("POST /join/hit", s.joinHitPOST)
+	mux.HandleFunc("POST /join/referred", s.joinReferredPOST)
+	mux.HandleFunc("POST /join/alias", s.joinAliasPOST)
 	mux.HandleFunc("GET /admin/community", s.communityGET)
 	mux.HandleFunc("POST /admin/community", s.communityPOST)
 	mux.HandleFunc("POST /admin/community/{id}/delete", s.communityDelete)
@@ -283,6 +292,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/guide/ask", s.guideAskPOST)
 	mux.HandleFunc("GET /internal/v1/community/mandate", s.internalCommunityMandate)
 	mux.HandleFunc("GET /internal/v1/community/mandates", s.internalCommunityMandates)
+	mux.HandleFunc("POST /internal/v1/community/daily-engage", s.internalDailyEngagePOST)
 	mux.HandleFunc("GET /internal/v1/whatsapp-accounts", s.internalAllowlist)
 	mux.HandleFunc("GET /internal/v1/staff", s.internalStaffGET)
 	mux.HandleFunc("GET /internal/v1/mail/watchers", s.internalMailWatchersGET)
@@ -294,8 +304,6 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /internal/v1/projects/{id}/proposal", s.internalProposal)
 	mux.HandleFunc("GET /internal/v1/legal-drafts", s.internalLegalDraftsGET)
 	mux.HandleFunc("POST /internal/v1/legal-drafts", s.internalLegalDraftsPOST)
-	mux.HandleFunc("GET /internal/v1/seo-briefs", s.internalSeoBriefsGET)
-	mux.HandleFunc("POST /internal/v1/seo-briefs", s.internalSeoBriefsPOST)
 	mux.HandleFunc("GET /internal/v1/seo/ga4", s.internalSeoGA4GET)
 	mux.HandleFunc("POST /internal/v1/seo/ga4", s.internalSeoGA4POST)
 	mux.HandleFunc("GET /internal/v1/seo/gsc", s.internalSeoGSCGET)
@@ -342,6 +350,17 @@ func RegisterUnavailable(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin", h)
 	mux.HandleFunc("GET /admin/{rest...}", h)
 	mux.HandleFunc("POST /admin/{rest...}", h)
+}
+
+func (s *Server) seoGoneGET(w http.ResponseWriter, r *http.Request) {
+	if s.requireAdmin(w, r) == nil {
+		return
+	}
+	http.Redirect(w, r, "/admin/docs/seo", http.StatusSeeOther)
+}
+
+func (s *Server) seoPackGone(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Onsite SEO is Cursor in the bet repo. There is no pack URL.", http.StatusGone)
 }
 
 func (s *Server) serveStatic(w http.ResponseWriter, r *http.Request) {
@@ -722,12 +741,6 @@ func statusCount(items any, status string) int {
 	n := 0
 	switch xs := items.(type) {
 	case []LegalDraft:
-		for _, d := range xs {
-			if d.Status == status {
-				n++
-			}
-		}
-	case []SeoBrief:
 		for _, d := range xs {
 			if d.Status == status {
 				n++

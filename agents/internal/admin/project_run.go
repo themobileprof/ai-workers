@@ -48,13 +48,11 @@ func (s RunStep) StampLabel() string {
 type runInput struct {
 	Project   Project
 	Drafts    []LegalDraft
-	Briefs    []SeoBrief
 	Decks     []GrowthDeck
 	Filings   []FileFiling
 	Items     []WorkItem
 	Events    []ProjectEvent
 	CanLegal  bool
-	CanSEO    bool
 	CanGrowth bool
 }
 
@@ -151,21 +149,15 @@ func projectRun(in runInput) []RunStep {
 	})
 
 	seo := RunStep{
-		ID: "seo", Kind: "As needed", Title: "Name the public page",
-		Why:  "Walk the designed page: facts, FAQ, schema, then an onsite pack. Offsite is a Delivery plan unless you Turn away.",
-		How:  []string{"Put the public URL on Card.", "Open SEO. Do the step marked now.", "Download the pack or give Cursor the URL. Turn away if a fact is invented."},
-		Href: base + "?tab=seo", Button: "Open SEO",
-		Help: "Ask SEO for " + name,
-		Done: len(in.Briefs) > 0,
+		ID: "seo", Kind: "As needed", Title: "Name the public page in Cursor",
+		Why:  "Onsite SEO is Cursor in the bet repo. Walk cite, FAQ, schema, then title/meta from the designed page.",
+		How:  []string{"Put the public URL and GitHub repo on Card.", "Open that repo in Cursor. Copy .cursor/rules/onsite-seo.mdc if it is missing.", "Offsite listings you already have: add a Delivery task."},
+		Href: "/admin/docs/seo", Button: "Open SEO sheet",
+		Help: "Onsite SEO for " + name,
+		Done: strings.TrimSpace(p.URL) != "" && strings.TrimSpace(p.GitRepo) != "",
 	}
 	if strings.TrimSpace(p.URL) == "" && !seo.Done {
 		seo.Detail = "Skip until there is a public URL on Card."
-	}
-	if !in.CanSEO {
-		if seo.Detail != "" {
-			seo.Detail += " "
-		}
-		seo.Detail += "SEO clerk is off until the LLM env is set, or you need the SEO desk tick."
 	}
 	steps = append(steps, seo)
 

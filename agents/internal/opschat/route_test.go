@@ -3,6 +3,7 @@ package opschat
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/samuel/ai-workers/agents/internal/llm"
@@ -45,6 +46,13 @@ func TestDecideDocumentIsFiles(t *testing.T) {
 func TestDecidePrefixOverridesThread(t *testing.T) {
 	d := Decide(Inbound{ChatID: "1", FromID: "1", Text: "/legal review this NDA"}, "growth")
 	if !d.Prefixed || d.Department != "legal" {
+		t.Fatalf("%+v", d)
+	}
+}
+
+func TestDecideSeoGone(t *testing.T) {
+	d := Decide(Inbound{ChatID: "1", FromID: "1", Text: "/seo HomeGauge rates"}, "")
+	if d.Kind != KindNote || d.Department != "" || !strings.Contains(d.Reply, "no SEO worker") {
 		t.Fatalf("%+v", d)
 	}
 }

@@ -1,0 +1,34 @@
+---
+description: Onsite SEO in a bet repo — titles, meta, FAQ, schema from the designed page. Copy this file into each public site repo.
+globs: **/*.{html,tsx,jsx,md,json}
+alwaysApply: false
+---
+
+# Onsite SEO (Cursor in this repo)
+
+There is no SEO worker. You edit this site’s source. Do not invent rankings, volume, Core Web Vitals, or ChatGPT citations.
+
+Legal name: **TheMobileProf Technologies**. Bets (Academy, HomeGauge, …) are pages under that company unless this page already names another legal entity.
+
+## Source of truth
+
+The **visible page** (H1, headings, body, buttons) is truth. Title tags and meta are chrome — a designer may never have seen them. Role **gap** = said on the page, missing from the title. Role **brochure** = title/meta only; do not treat it as the topic. Role **cannibal** = the same visible phrase is strong on two URLs.
+
+Every content word in a proposed query must already appear on the page or the bet one-liner. If Ikeja is not on the page, do not add Ikeja. No competitor domains. No US queries. No invented impressions.
+
+## Walk (one step at a time)
+
+1. **Cite** — 3–6 factual sentences already on the page (who, where, offer, constraint, hours, price if shown). No invented stats.
+2. **FAQ** — questions a Lagos / West Africa searcher would type that the page already answers. Visible Q&A first, then FAQPage JSON-LD that matches.
+3. **Schema** — JSON-LD only for types the page supports. Organization is TheMobileProf Technologies unless the page names someone else. LocalBusiness / Course / Offer / FAQPage only from attested facts. Flag if GPTBot or Google-Extended is disallowed.
+4. **Onsite** — weave cite + FAQ + schema into the page. Visible copy first (H1, subheads, body, CTAs). Chrome second (title ≤60, meta ≤155) so the snippet matches the designed page.
+5. **Offsite** — listings and partners this company already knows. File those as ordinary Delivery tasks. Do not cold-email strangers or buy links.
+
+One primary phrase per URL. Supporting phrases sit under it. Keep negatives from the copy (not the lender, invitation-only, no public checkout).
+
+## Do not
+
+- Invent a hidden SEO vocabulary the designer would not recognize.
+- Add products, cities, or promises the visible page does not already show.
+- Publish, merge, or send. Humans review the diff.
+- Treat Search Console / GA4 as a crawl. Those snapshots live on the office Defaults, not in this repo.

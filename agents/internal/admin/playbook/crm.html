@@ -46,11 +46,17 @@
 <section class="specimen">
   <p class="spec-no">Specimen 06 · morning card</p>
   <p class="you-say">08:30 Africa/Lagos. n8n <strong>Delivery morning ping</strong> (<code>deliveryDaily00001</code>).</p>
-  <p class="expect">Owner and BDM get one Telegram card: today’s Delivery tasks, Coming up dates, and CRM rows whose <code>next_action_by</code> is today or overdue (each with an Office → CRM link). Handlers only get their own tasks and dates. Won and lost are skipped. Empty of all three: no ping. It does not text the customer. <code>GET /internal/v1/crm/due</code> still exists; the 09:00 CRM-only cron is off.</p>
+  <p class="expect">Owner and BDM get one Telegram card: today’s Delivery tasks, Coming up dates, and CRM rows whose <code>next_action_by</code> is today or overdue (each with an Office → CRM link). Handlers only get their own tasks and dates. Won, lost, and rows with no By date are skipped. Empty of all three: no ping. It does not text the customer. <code>GET /internal/v1/crm/due</code> still exists; the 09:00 CRM-only cron is off.</p>
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 07 · Fathom sales call</p>
+  <p class="spec-no">Specimen 07 · take a due row off the morning card</p>
+  <p class="you-say">Office → CRM → the person → <strong>Due done</strong>. Or Telegram: <code>/crm done Marialena</code>. Or Log with “Take off the 08:30 ping” left on. Or Nurture.</p>
+  <p class="expect"><code>next_action_by</code> is cleared. Stage stays unless you tapped Won / Lost / Nurture. They leave tomorrow’s 08:30 card. Log without the checkbox, and <code>/crm follow up</code>, keep or set a date — they do not mark the ping done. Clearing the HTML date field and Save also works, but phones make that easy to miss.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 08 · Fathom sales call</p>
   <p class="you-say">Calendar title names a bet (for example <code>homegauge / rates with Apex</code>). Fathom invitee is a person already on Office → CRM, not on People.</p>
   <p class="expect">Delivery proposes the week plan as usual. The desk also files a <strong>call</strong> event on that known person. It does not create a new contact. It does not send WhatsApp. Staff on People are skipped.</p>
 </section>

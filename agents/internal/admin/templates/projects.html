@@ -30,7 +30,7 @@
     <input name="url" placeholder="https://">
   </label>
   <label>GitHub repo
-    <span class="hint">Optional. Named in the SEO pack so Cursor knows which repo to open. This office does not push PRs.</span>
+    <span class="hint">Optional. Cursor opens this repo for onsite SEO. This office does not push PRs.</span>
     <input name="git_repo" placeholder="themobileprof/academy">
   </label>
   <label>Stage
@@ -92,7 +92,7 @@
     <button type="button" role="tab" data-tab="stamp" aria-controls="tab-stamp">Decide</button>
     <button type="button" role="tab" data-tab="legal" aria-controls="tab-legal">Legal <span class="count">{{len .Drafts}}</span></button>
     <button type="button" role="tab" data-tab="files" aria-controls="tab-files">Files <span class="count">{{len .Filings}}</span></button>
-    <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO <span class="count">{{len .SeoBriefs}}</span></button>
+    <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO</button>
     <button type="button" role="tab" data-tab="deck" aria-controls="tab-deck">Deck <span class="count">{{len .Decks}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
     <button type="button" role="tab" data-tab="dates" aria-controls="tab-dates">Dates <span class="count">{{len .Events}}</span></button>
@@ -105,7 +105,7 @@
       <ol class="recipe">
         <li>Do the step marked <strong>now</strong>. Each one is a form already on this project.</li>
         <li><strong>Help?</strong> can walk that form. It never Accepts or sends mail.</li>
-        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, SEO, and Deck wait until you need them.</li>
+        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, SEO (Cursor in the bet repo), and Deck wait until you need them.</li>
       </ol>
       {{template "page-reads" (guideReads "projects")}}
       {{if .RunSteps}}
@@ -303,70 +303,16 @@
     </section>
 
     <section role="tabpanel" id="tab-seo" data-tab="seo">
-      <h3>SEO briefs</h3>
+      <h3>Onsite SEO is Cursor</h3>
       <ol class="recipe">
-        <li>Do the walk below, one step at a time. The clerk fetches the live URL and issues a pack.</li>
-        <li>Download the markdown or give Cursor the pack URL. You implement. This clerk cannot publish the live site.</li>
-        <li><strong>Turn away</strong> if a fact is invented. Offsite items write on Delivery after the delay unless you stop them.</li>
+        <li>Open the GitHub repo on Card in Cursor. Copy <code>.cursor/rules/onsite-seo.mdc</code> from this office if that repo does not have it yet.</li>
+        <li>Walk the live page in source: quotable facts, then FAQ, then schema, then title/meta and body. The visible page is the source of truth. Organization is TheMobileProf Technologies.</li>
+        <li>Offsite listings you already have belong on Delivery as ordinary tasks. Search Console and GA4 ids stay on Defaults.</li>
       </ol>
-      {{template "seo-walk" .}}
-      {{if .SeoBriefs}}
-      {{range .SeoBriefs}}
-      <section class="proposal">
-        <p class="kicker">{{.KindLabel}}{{if .URL}} · {{.URL}}{{end}}</p>
-        <div class="doc-card-head">
-          <h3>{{.Title}}</h3>
-          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
-        </div>
-        {{if .Meta}}<p>{{.Meta}}</p>{{end}}
-        {{if .H1}}<p class="hint">H1: {{.H1}}</p>{{end}}
-        {{if .Flags}}<p class="hint">{{range $i, $f := .Flags}}{{if $i}}; {{end}}{{$f}}{{end}}</p>{{end}}
-        {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
-        {{if .Proposed}}
-        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
-        <div class="actions">
-          <form class="inline" method="post" action="/admin/seo/{{.ID}}/approve">
-            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
-            <button type="submit">Accept</button>
-          </form>
-          <form class="inline" method="post" action="/admin/seo/{{.ID}}/reject">
-            <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=seo">
-            <button class="ghost" type="submit">Turn away</button>
-          </form>
-        </div>
-        {{else if eq .Status "approved"}}
-        <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
-        {{end}}
-      </section>
-      {{end}}
-      {{else}}
-      <p class="hint">No SEO briefs on this project yet.</p>
-      {{end}}
-      {{if .CanSEO}}
-      <form method="post" action="/admin/projects/{{.Project.ID}}/seo" class="person add">
-        <p class="hint">Skip to a step if you are not on the walk. Leave kind on Next walk step to stay in order.</p>
-        <div class="fields">
-          <label>Kind
-            <select name="action">
-              <option value="walk">Next walk step</option>
-              {{range .SeoKinds}}
-              <option value="{{.ID}}">{{.Label}}</option>
-              {{end}}
-            </select>
-          </label>
-          <label>URL<input name="url" value="{{if .SeoSeed.URL}}{{.SeoSeed.URL}}{{else}}{{.Project.URL}}{{end}}" placeholder="https://…"></label>
-          <label>Keyword<input name="keyword" value="{{.SeoSeed.Keyword}}"></label>
-        </div>
-        <label>Notes
-          <textarea name="human_feedback" rows="3" placeholder="Optional. The clerk fetches the URL."></textarea>
-        </label>
-        <div class="actions">
-          <button type="submit">Ask SEO</button>
-        </div>
-      </form>
-      {{else}}
-      <p class="hint">SEO clerk is off until the LLM env is set, or this person is not ticked for the SEO desk.</p>
-      {{end}}
+      {{template "page-reads" (guideReads "seo")}}
+      {{if .Project.URL}}<p class="hint">Public URL: <a class="quiet" href="{{.Project.URL}}">{{.Project.URL}}</a></p>{{end}}
+      {{if .Project.GitRepo}}<p class="hint">Repo: {{.Project.GitRepo}}</p>{{end}}
+      <p class="hint"><a class="quiet" href="/admin/docs/seo">SEO sheet</a> · <a class="quiet" href="/admin/settings?tab=seo">Search Console / GA4</a></p>
     </section>
 
     <section role="tabpanel" id="tab-deck" data-tab="deck">
@@ -410,7 +356,7 @@
           <input name="url" value="{{.Project.URL}}" placeholder="https://">
         </label>
         <label>GitHub repo
-          <span class="hint">Optional. Named in the SEO pack so Cursor knows which repo to open.</span>
+          <span class="hint">Optional. Cursor opens this repo for onsite SEO. This office does not push PRs.</span>
           <input name="git_repo" value="{{.Project.GitRepo}}" placeholder="themobileprof/academy">
         </label>
         <label>Stage

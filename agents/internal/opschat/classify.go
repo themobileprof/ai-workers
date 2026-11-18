@@ -20,7 +20,6 @@ Departments:
 - internal-ops — grants, mixed ops
 - crm — a person on the conversion book
 - product-dev — Card hypothesis/mission/evidence
-- seo — the bet's own page pack
 - community — Academy student rooms (usually the other bot)
 - hr — hiring copy (rare)
 If they replied to "Today on the desk", delivery.

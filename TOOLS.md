@@ -48,11 +48,30 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `telegram`
 - **URL:** https://core.telegram.org/
-- **Role:** Two bots. Ops (`Telegram account`): office assistant in Go. Staff identified by People `telegram_id`. One desk per turn; prefixes are optional shortcuts. Chat never Accepts. Academy (`Telegram Academy`): student groups, community mandate, Monday intro. No books, no legal, no HR on the Academy bot.
-- **Where:** Go `POST /webhook/telegram-ops/webhook` (Caddy). After Accounts work, Go calls n8n Books write. `/approve` `/kill` `/stop` call n8n Email outbox (owner/BDM). n8n Delivery morning ping at 08:30 Lagos still **sends** on this bot. Academy Telegram and weekly intro stay n8n.
-- **Secrets:** `TELEGRAM_OPS_BOT_TOKEN` and `TELEGRAM_OPS_WEBHOOK_SECRET` on the VM `.env` → agents. Same bot token as n8n credential Telegram account (morning ping). Never git.
-- **Env:** `TELEGRAM_OPS_BOT_TOKEN`, `TELEGRAM_OPS_WEBHOOK_SECRET`, `TELEGRAM_OPS_WEBHOOK_URL`
+- **Role:** Two bots. Ops (`Telegram account`): office assistant in Go. Staff identified by People `telegram_id`. One desk per turn; prefixes are optional shortcuts. Chat never Accepts. Academy (`Telegram Academy`): student groups, live LMS catalog, join onboard, DM email for billing. No books, no legal, no HR on the Academy bot.
+- **Where:** Go `POST /webhook/telegram-ops/webhook` and `POST /webhook/telegram-academy/webhook` (Caddy). After Accounts work, Go calls n8n Books write. `/approve` `/kill` `/stop` call n8n Email outbox (owner/BDM). n8n Delivery morning ping at 08:30 Lagos still **sends** on the ops bot. n8n Community weekly intro still **sends** on the Academy bot. Do not republish n8n Academy Telegram inbound — it would steal the webhook.
+- **Secrets:** `TELEGRAM_OPS_BOT_TOKEN`, `TELEGRAM_OPS_WEBHOOK_SECRET`, `TELEGRAM_ACADEMY_BOT_TOKEN`, `TELEGRAM_ACADEMY_WEBHOOK_SECRET` on the VM `.env` → agents. Academy token is the same as n8n credential Telegram Academy (weekly intro). Never git.
+- **Env:** `TELEGRAM_OPS_BOT_TOKEN`, `TELEGRAM_OPS_WEBHOOK_SECRET`, `TELEGRAM_OPS_WEBHOOK_URL`, `TELEGRAM_ACADEMY_BOT_TOKEN`, `TELEGRAM_ACADEMY_WEBHOOK_SECRET`, `TELEGRAM_ACADEMY_WEBHOOK_URL`
 - **n8n credentials:** `Telegram account`, `Telegram Academy`
+
+### ClubKonnect
+
+- **Id:** `clubkonnect`
+- **URL:** https://www.clubkonnect.com/
+- **Role:** Daily student airtime. Go sends ₦`REWARD_AMOUNT` once a day to yesterday’s most engaged Academy student (room chat + lesson questions + confirmed invites) after they confirm a Nigerian number in a private chat with the Academy host. A student who collected in the last 7 days is scored at half unless they still lead.
+- **Where:** Go `clubkonnect` client on the morning ritual (`POST /internal/v1/community/daily-engage`, n8n 09:30 Lagos). Not n8n. Students never hear the vendor name.
+- **Secrets:** `CLUBKONNECT_USERID` and `CLUBKONNECT_APIKEY` on the VM `.env` → agents. Never git. Whitelist the VM IP on the ClubKonnect dashboard if sends fail.
+- **Env:** `CLUBKONNECT_USERID`, `CLUBKONNECT_APIKEY`, `REWARD_AMOUNT`
+- **Desk keys:** `community.lms_register`, `community.telegram_invite`, `community.telegram_bot`
+
+### TheMobileProf LMS
+
+- **Id:** `lms`
+- **URL:** https://lms.themobileprof.com
+- **Role:** Public course catalog plus paid lesson bodies for the Academy community worker. `GET /api/courses` and `/api/mini-courses` are open. Lesson text is `POST /api/auth/admin/login` then `GET /api/admin/courses/{id}/lessons`. Open scholarship season is `GET /api/mini-courses/scholarship` (end date, discount name — not the code). Admin JWT then `GET /api/admin/sponsorships`, `GET /api/admin/sponsorships/{id}/usage` (code-use counts only), and `GET /api/mini-courses/scholarship/capstone/ranking` (lab tests passed, awards). Quiz answers and another student's paid/unpaid status are still not wired. Public list_price is not a receipt. Billing stays in Telegram DMs; a linked email files a Community job for a human. Discount codes never go in the student group.
+- **Where:** Go `lms.Client` on every community turn. Desk Community Students tab stores Telegram id + LMS email the student DMs.
+- **Secrets:** `LMS_EMAIL` and `LMS_PASSWORD` on the VM `.env` → agents (LMS admin used for catalog/lesson publish). Never git. Prefer a dedicated `community-bot@` admin over a founder login when you can.
+- **Env:** `LMS_API_BASE`, `LMS_EMAIL`, `LMS_PASSWORD`
 
 ### WhatsApp (Meta Cloud API)
 
@@ -105,7 +124,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `caddy`
 - **URL:** https://caddyserver.com/
-- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook*` `/form*` → n8n. Editor allowlist `/home*` `/signin*` `/rest*` `/assets*` `/static*` `/types*` → n8n. `/n8n/` redirects to `/home`. No catch-all to n8n. `/departments` and `/internal` stay unpublished.
+- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook/telegram-ops*` and `/webhook/telegram-academy*` → agents. `/webhook/books-write*` and `/webhook/email-outbox*` 404. Other `/webhook*` `/form*` → n8n. Editor allowlist `/home*` `/signin*` `/rest*` `/assets*` `/static*` `/types*` → n8n. `/n8n/` redirects to `/home`. No catch-all to n8n. `/departments` and `/internal` stay unpublished.
 - **Where:** Native on the host. Site block in `Caddyfile` (repo) → `/etc/caddy/conf.d/workers.caddy`. `/etc/caddy/Caddyfile` only imports `conf.d` so `enterprisellm.ng` can share the VM.
 - **Secrets:** None in git. ACME via the public hostname.
 
@@ -133,7 +152,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-search-console`
 - **URL:** https://search.google.com/search-console
-- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. n8n pulls ~28 days as `ga4-read`; the SEO clerk only quotes that snapshot.
+- **Role:** Your verified property only: queries, pages, clicks, impressions, position. Free API. n8n pulls ~28 days as `ga4-read`. Quote that snapshot; onsite SEO is Cursor in the bet repo.
 - **Where:** n8n workflow SEO GSC pull (same `googleApi` credential as GA4, plus `webmasters.readonly`). Property URL on desk Defaults (`seo.gsc_site_url`). Snapshot on `POST /internal/v1/seo/gsc`. The Go worker never holds the JSON key.
 - **Secrets:** Same n8n credential Google Analytics (add Search Console scope). Never git, never `.env`, never the Go worker.
 - **n8n credentials:** `Google Analytics`
@@ -143,7 +162,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-analytics`
 - **URL:** https://analytics.google.com/
-- **Role:** Organic traffic for your GA4 property. Free API. n8n pulls last 28 days as the `ga4-read` service account; the SEO clerk only quotes that snapshot.
+- **Role:** Organic traffic for your GA4 property. Free API. n8n pulls last 28 days as the `ga4-read` service account. Quote that snapshot; onsite SEO is Cursor in the bet repo.
 - **Where:** n8n workflow SEO GA4 pull (`googleApi` service account, not person OAuth). Property id on desk Defaults (`seo.ga4_property_id`). Snapshot on `POST /internal/v1/seo/ga4`. The Go worker never holds the JSON key.
 - **Secrets:** Service account JSON in n8n credential Google Analytics. Never git, never `.env`, never the Go worker.
 - **n8n credentials:** `Google Analytics`

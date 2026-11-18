@@ -115,7 +115,7 @@ func TestExportGuideAsksMarkdown(t *testing.T) {
 
 func TestRuntimeDeskMapHasPrefixes(t *testing.T) {
 	got := runtimeDeskMap()
-	for _, want := range []string{"/legal", "/seo", "/today", "/accounts"} {
+	for _, want := range []string{"/legal", "/today", "/accounts"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %s in %s", want, got)
 		}

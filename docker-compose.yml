@@ -92,6 +92,17 @@ services:
       TELEGRAM_OPS_BOT_TOKEN: ${TELEGRAM_OPS_BOT_TOKEN:-}
       TELEGRAM_OPS_WEBHOOK_SECRET: ${TELEGRAM_OPS_WEBHOOK_SECRET:-}
       TELEGRAM_OPS_WEBHOOK_URL: ${TELEGRAM_OPS_WEBHOOK_URL:-https://workers.themobileprof.com/webhook/telegram-ops/webhook}
+      TELEGRAM_ACADEMY_BOT_TOKEN: ${TELEGRAM_ACADEMY_BOT_TOKEN:-}
+      TELEGRAM_ACADEMY_WEBHOOK_SECRET: ${TELEGRAM_ACADEMY_WEBHOOK_SECRET:-}
+      TELEGRAM_ACADEMY_WEBHOOK_URL: ${TELEGRAM_ACADEMY_WEBHOOK_URL:-https://workers.themobileprof.com/webhook/telegram-academy/webhook}
+      LMS_API_BASE: ${LMS_API_BASE:-https://api.themobileprof.com}
+      LMS_EMAIL: ${LMS_EMAIL:-}
+      LMS_PASSWORD: ${LMS_PASSWORD:-}
+      CLUBKONNECT_USERID: ${CLUBKONNECT_USERID:-}
+      CLUBKONNECT_APIKEY: ${CLUBKONNECT_APIKEY:-}
+      REWARD_AMOUNT: ${REWARD_AMOUNT:-500}
+      JOIN_ORIGIN: ${JOIN_ORIGIN:-https://lms.themobileprof.com}
+      JOIN_SYNC_SECRET: ${JOIN_SYNC_SECRET:-}
       N8N_BASE_URL: ${N8N_BASE_URL:-http://n8n:5678}
     mem_limit: 256m
     memswap_limit: 256m

@@ -1,10 +1,11 @@
-<p class="lede">Room voice with a <strong>mandate</strong> per Academy Telegram group. Welcome, weekly intro, progress, lesson help, FAQ, moderation. Not sales and not the books desk. Cloud API WhatsApp cannot join ordinary groups.</p>
+<p class="lede">Room voice with a <strong>mandate</strong> per Academy Telegram group. Welcome, weekly intro, progress, lesson help from the live LMS catalog, FAQ, moderation, DM billing link. Not sales and not the books desk. Cloud API WhatsApp cannot join ordinary groups.</p>
 
 <ol class="steps">
-  <li>On <a href="/admin/community">Mandates</a>, write the brief and the catalog (Academy LMS is seeded from the public course list). Leave a course off the catalog and the worker must escalate instead of guessing.</li>
-  <li>Create the Academy Telegram bot (BotFather). <code>/setprivacy</code> Disable. Add it to the student group. Send a message. Copy <code>context_data.telegram_chat_id</code> from the <strong>Academy Telegram</strong> n8n execution onto the mandate.</li>
+  <li>On <a href="/admin/community">Mandates</a>, write the brief and the catalog (Academy LMS is seeded from the public course list). The live catalog from <code>api.themobileprof.com</code> overlays every turn. Leave a course off both and the worker must escalate instead of guessing.</li>
+  <li>Create the Academy Telegram bot (BotFather). <code>/setprivacy</code> Disable. Paste the token as <code>TELEGRAM_ACADEMY_BOT_TOKEN</code>. Add it to the student group — join binds the <code>lms</code> mandate chat id if it was empty, and the bot welcomes.</li>
   <li>Unprefixed group chat uses that mandate. <code>/cm</code> or <code>/community</code> also works. Ops prefixes (<code>/accounts</code>, <code>/approve</code>, …) are refused on this bot.</li>
-  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) posts in each room whose linked bet stage allows pings (testing / selling / fundable). Parked, killed, and idea stay quiet.</li>
+  <li>Payment or a student's own billing: they DM this bot the email on their LMS account. Never quote receipts in the group. Linked email files a Community job until an LMS admin lookup exists.</li>
+  <li>Monday 09:00 Lagos, <strong>Community weekly intro</strong> (<code>commWeeklyPing01</code>) still <strong>sends</strong> from n8n in each room whose linked bet stage allows pings (testing / selling / fundable). Parked, killed, and idea stay quiet.</li>
   <li>Do not add the ops Telegram bot to the student group. Office prefixes on customer WhatsApp (<code>/accounts</code>, <code>/ops</code>, <code>/legal</code>, <code>/seo</code>, <code>/today</code>) are rewritten to community with <code>accounts_denied: true</code>.</li>
   <li>Manual smoke: <strong>Smoke: community HTTP</strong> (<code>smkCommHttp0001</code>).</li>
 </ol>
@@ -60,13 +61,19 @@
     }
   }
 }</pre>
-  <p class="expect"><code>task_type</code> progress or lesson_help. <code>speak</code> true. Names Mini because it is in the catalog. Does not invent a course. Login or payment trouble sets <code>escalate_to_founder</code> true and files a Community job. n8n <code>GET /internal/v1/community/mandate?telegram_chat_id=</code> attaches the mandate before the worker runs.</p>
+  <p class="expect"><code>task_type</code> progress or lesson_help. <code>speak</code> true. Names Mini because it is in the live catalog or mandate. Does not invent a course. Login or payment trouble in the group tells them to DM the LMS email; a DM with an email files a Community job. Go inbound attaches the mandate and live catalog before the worker runs.</p>
 </section>
 
 <section class="specimen">
   <p class="spec-no">Specimen 05 · stay quiet</p>
   <p class="you-say">Group: “lol” / “ok” / members talking to each other.</p>
-  <p class="expect"><code>task_type</code> silent. <code>speak</code> false. Empty <code>output_text</code>. n8n does not send a message.</p>
+  <p class="expect"><code>task_type</code> silent. <code>speak</code> false. Empty <code>output_text</code>. Go does not send a message.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 07 · billing DM</p>
+  <p class="you-say">Student DMs the Academy bot: “did I pay? bola@themobileprof.com”</p>
+  <p class="expect">Go saves the email on that Telegram id (Community → Students). Replies that list_price is public and paid/unpaid needs a human. Files a Community job with <code>escalate_to_founder</code>. Same email in the group is refused: DM this bot instead. Never quote a receipt in the group.</p>
 </section>
 
 <section class="specimen">
@@ -84,14 +91,26 @@
   <p class="expect"><code>task_type</code> weekly_intro. <code>speak</code> true. Names itself, says unprefixed group chat already reaches it, mentions <code>/cm</code> / <code>/community</code>, then asks what people are working on. n8n <code>GET /internal/v1/community/mandates</code> then sends via the Academy bot to each <code>telegram_chat_id</code>.</p>
 </section>
 
+<section class="specimen">
+  <p class="spec-no">Specimen 08 · invite landing</p>
+  <p class="you-say">A student shares <code>https://lms.themobileprof.com/join/abc123</code>. A friend opens it.</p>
+  <p class="expect">LMS public page: create an Academy account, then join the Telegram class group. The page stores the hit and the HTTP referring page. Confirmed LMS signup counts as a referral. In Telegram, <code>/invite</code> is handled by the Academy bot (Go webhook) and replies with this same LMS link — it is not a web path. Student copy never names another bot, a desk, or a vendor.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 09 · daily airtime</p>
+  <p class="you-say">09:30 Africa/Lagos. n8n <strong>Community daily engage</strong> (<code>commEngageDaily01</code>).</p>
+  <p class="expect">Go scores yesterday Lagos: room messages (cap 8), lesson/workshop/progress turns (cap 8), confirmed invites (cap 15). Highest total wins. Staff on People are skipped. Group always gets a morning post: ₦500 is on offer even when nobody qualified, plus how to be eligible (lesson questions, room chat, /invite). Name the winner when there is one. Winner is DMed for a Nigerian number, confirms network, ClubKonnect sends <code>REWARD_AMOUNT</code>, then “reply SEEN”. Group cheer after seen. Phone numbers never go in the group. Failures file a Community job — students never hear the vendor name.</p>
+</section>
+
 <section class="later">
   <p class="stamp dark">Not wired · founder ping on escalate</p>
   <p>When you wire a Telegram card for <code>escalate_to_founder</code>, add the specimen: which chat id, what the card contains, and that community still replies in the original thread. Until then the Community desk job is the ping.</p>
 </section>
 
 <section class="later">
-  <p class="stamp dark">Not wired · LMS lesson token</p>
-  <p>Course titles are public (<code>GET https://api.themobileprof.com/api/courses</code>). Lesson video and quizzes need a Bearer token from <code>POST /api/auth/login</code>. Prefer a dedicated community-bot LMS user, secret in the VM <code>.env</code> — not a founder password in git. Until then the catalog is titles and syllabus lines only.</p>
+  <p class="stamp dark">Not wired · student billing lookup</p>
+  <p>Lesson bodies (including paid courses) come from LMS admin login on the VM. Whether a named student account is paid still needs a human — a DM with an LMS email files a Community job. Do not invent paid/unpaid.</p>
 </section>
 
 <section class="later">

@@ -104,6 +104,96 @@ func TestGroupWithoutMandate(t *testing.T) {
 	}
 }
 
+func TestLiveCatalogOverlay(t *testing.T) {
+	got := overlayFor(map[string]any{"chat_kind": "group", "catalog_live": "Live LMS catalog\n- Starting Termux"})
+	if !strings.Contains(got, "Starting Termux") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, "no mandate") {
+		t.Fatal("live catalog should skip unmatched overlay")
+	}
+}
+
+func TestLessonLiveOverlay(t *testing.T) {
+	got := overlayFor(map[string]any{
+		"chat_kind":    "group",
+		"catalog_live": "Live LMS catalog",
+		"lesson_live":  "LMS lesson bodies for The Free Cloud VM\n- lesson 1: The flags that keep it free",
+	})
+	if !strings.Contains(got, "The flags that keep it free") {
+		t.Fatal(got)
+	}
+}
+
+func TestWorkshopLiveOverlay(t *testing.T) {
+	got := overlayFor(map[string]any{
+		"chat_kind":     "group",
+		"workshop_live": "LMS workshop for lesson 2 \"Linux Navigation\" (3 steps). Restate what the current prompt expects",
+	})
+	if !strings.Contains(got, "Restate what the current prompt expects") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(systemPrompt, "workshop_help") || !strings.Contains(systemPrompt, "Do NOT lecture the concept") {
+		t.Fatal("system prompt missing workshop_help")
+	}
+}
+
+func TestConversationAsksOneThing(t *testing.T) {
+	if !strings.Contains(systemPrompt, "One question") || !strings.Contains(systemPrompt, "never ask for course, lesson, and step in the same message") {
+		t.Fatal(systemPrompt)
+	}
+	got := overlayFor(map[string]any{
+		"chat_kind": "dm",
+		"student":   map[string]any{"course_title": "Linux Navigation", "lesson_note": "pwd"},
+		"gather":    map[string]any{"missing": "step", "course": "Linux Navigation", "lesson": "pwd"},
+	})
+	if !strings.Contains(got, "Ask ONLY for this next: step") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "course=Linux Navigation") {
+		t.Fatal(got)
+	}
+}
+
+func TestScholarshipLiveOverlay(t *testing.T) {
+	got := overlayFor(map[string]any{
+		"chat_kind":        "group",
+		"scholarship_live": "Live Scholarship season (LMS). Never invent a discount code.",
+	})
+	if !strings.Contains(got, "Never invent a discount code") {
+		t.Fatal(got)
+	}
+}
+
+func TestScholarshipNudgeSilentWhenNotApproaching(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"should not send","structured_data":{"task_type":"scholarship_nudge","speak":true}}`}, contract.Request{
+		TaskDescription: "Daily scholarship check-in.",
+		ContextData:     []byte(`{"channel":"telegram","chat_kind":"group","action":"scholarship_nudge","scholarship_approaching":false}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.OutputText != "" || resp.StructuredData["speak"] != false {
+		t.Fatalf("%+v", resp)
+	}
+}
+
+func TestScholarshipNudgeFallback(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"","structured_data":{"task_type":"silent","speak":false}}`}, contract.Request{
+		TaskDescription: "Daily scholarship check-in.",
+		ContextData:     []byte(`{"channel":"telegram","chat_kind":"group","action":"scholarship_nudge","scholarship_approaching":true,"scholarship_live":"Live Scholarship season"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["task_type"] != "scholarship_nudge" || resp.StructuredData["speak"] != true {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if !strings.Contains(resp.OutputText, "course rep") || strings.Contains(resp.OutputText, "UNILAG") {
+		t.Fatalf("%s", resp.OutputText)
+	}
+}
+
 func TestWeeklyIntroFallback(t *testing.T) {
 	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"","structured_data":{"task_type":"silent","speak":false}}`}, contract.Request{
 		TaskDescription: "Weekly check-in.",

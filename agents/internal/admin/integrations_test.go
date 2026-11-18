@@ -53,12 +53,12 @@ func claimedCreds(t *testing.T) map[string]bool {
 }
 
 func isVendorEnv(name string) bool {
-	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_", "PAGESPEED_", "TELEGRAM_"} {
+	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_", "PAGESPEED_", "TELEGRAM_", "LMS_", "CLUBKONNECT_"} {
 		if strings.HasPrefix(name, p) || name == strings.TrimSuffix(p, "_") {
 			return true
 		}
 	}
-	return name == "PAYSTACK_SECRET_KEY"
+	return name == "PAYSTACK_SECRET_KEY" || name == "REWARD_AMOUNT"
 }
 
 func TestIntegrationsCoverVendorEnv(t *testing.T) {

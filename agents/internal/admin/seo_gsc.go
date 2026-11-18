@@ -86,7 +86,7 @@ func parseGscRows(v any, key string) []map[string]any {
 			name = name[:500]
 		}
 		out = append(out, map[string]any{
-			key:          name,
+			key:           name,
 			"clicks":      jsonFloat(m["clicks"]),
 			"impressions": jsonFloat(m["impressions"]),
 			"ctr":         jsonFloat(m["ctr"]),

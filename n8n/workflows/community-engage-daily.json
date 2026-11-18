@@ -1,0 +1,61 @@
+{
+  "id": "commEngageDaily01",
+  "name": "Community daily engage",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "commEngage00000trig01",
+      "name": "09:30 Lagos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/internal/v1/community/daily-engage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [240, 0],
+      "id": "commEngage00000call1",
+      "name": "Run daily engage"
+    }
+  ],
+  "connections": {
+    "09:30 Lagos": {
+      "main": [[{ "node": "Run daily engage", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

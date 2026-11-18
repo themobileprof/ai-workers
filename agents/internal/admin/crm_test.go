@@ -18,6 +18,10 @@ func TestCRMStage(t *testing.T) {
 	if c.Open() {
 		t.Fatal("won")
 	}
+	due := CRMContact{NextActionBy: "2026-10-27"}
+	if !due.HasDue() || (CRMContact{}).HasDue() {
+		t.Fatal("HasDue")
+	}
 }
 
 func TestFilterCRMContacts(t *testing.T) {
@@ -101,6 +105,23 @@ func TestCRMLookupQuery(t *testing.T) {
 	}
 }
 
+func TestCRMClearDueQuery(t *testing.T) {
+	q, ok := crmClearDueQuery("/crm done Marialena")
+	if !ok || q != "Marialena" {
+		t.Fatal(q, ok)
+	}
+	q, ok = crmClearDueQuery("due done Apex Motors")
+	if !ok || q != "Apex Motors" {
+		t.Fatal(q, ok)
+	}
+	if _, ok := crmClearDueQuery("follow up Apex"); ok {
+		t.Fatal("follow up is not clear-due")
+	}
+	if _, ok := crmClearDueQuery("Chinedu from Apex"); ok {
+		t.Fatal("file is not clear-due")
+	}
+}
+
 func TestCRMDueDigest(t *testing.T) {
 	today := time.Date(2026, 10, 24, 10, 0, 0, 0, lagosLocation())
 	if crmDueText(nil, today) != "" {
@@ -123,6 +144,9 @@ func TestCRMDueDigest(t *testing.T) {
 		t.Fatal(text)
 	}
 	if !strings.Contains(text, "(today)") || !strings.Contains(text, "does not message the customer") {
+		t.Fatal(text)
+	}
+	if !strings.Contains(text, "Due done") || !strings.Contains(text, "/crm done Apex") {
 		t.Fatal(text)
 	}
 	if strings.Contains(strings.ToLower(text), "whatsapp") && strings.Contains(text, "sent") {

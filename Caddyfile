@@ -9,7 +9,7 @@ workers.themobileprof.com {
 	}
 
 	# Public landing. Must not prefix-match /webhook or /n8n.
-	@public path_regexp ^/($|site(/.*)?)$
+	@public path_regexp ^/($|site(/.*)?|join(/.*)?)$
 	handle @public {
 		reverse_proxy 127.0.0.1:8000
 	}
@@ -21,6 +21,11 @@ workers.themobileprof.com {
 
 	# Office Telegram inbound is Go. Other /webhook* stay on n8n.
 	handle /webhook/telegram-ops* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# Academy student Telegram inbound is Go. Weekly intro still sends from n8n.
+	handle /webhook/telegram-academy* {
 		reverse_proxy 127.0.0.1:8000
 	}
 

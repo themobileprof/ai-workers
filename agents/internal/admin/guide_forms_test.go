@@ -101,4 +101,7 @@ func TestSafeFormActionBlocksStamps(t *testing.T) {
 	if safeFormAction("/admin/crm/4/log") != "/admin/crm/4/log" {
 		t.Fatal("crm log should pass")
 	}
+	if safeFormAction("/admin/crm/4/clear-due") != "/admin/crm/4/clear-due" {
+		t.Fatal("crm clear-due should pass")
+	}
 }

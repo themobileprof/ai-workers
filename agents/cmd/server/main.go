@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samuel/ai-workers/agents/internal/acadchat"
 	"github.com/samuel/ai-workers/agents/internal/admin"
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/departments/community"
@@ -23,8 +24,8 @@ import (
 	"github.com/samuel/ai-workers/agents/internal/departments/internalops"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
 	"github.com/samuel/ai-workers/agents/internal/departments/productdev"
-	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 	"github.com/samuel/ai-workers/agents/internal/llm"
+	"github.com/samuel/ai-workers/agents/internal/lms"
 	"github.com/samuel/ai-workers/agents/internal/opschat"
 )
 
@@ -48,6 +49,11 @@ func main() {
 	var adminReady bool
 	var desk *admin.Server
 	opsBot := opschat.NewBot(os.Getenv("TELEGRAM_OPS_BOT_TOKEN"), os.Getenv("TELEGRAM_OPS_WEBHOOK_SECRET"))
+	acadSecret := strings.TrimSpace(os.Getenv("TELEGRAM_ACADEMY_WEBHOOK_SECRET"))
+	if acadSecret == "" {
+		acadSecret = acadchat.DefaultWebhookSecret
+	}
+	acadBot := opschat.NewBot(os.Getenv("TELEGRAM_ACADEMY_BOT_TOKEN"), acadSecret)
 	if dsn := strings.TrimSpace(os.Getenv("ADMIN_DATABASE_URL")); dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		store, err := admin.Open(ctx, dsn)
@@ -77,7 +83,6 @@ func main() {
 				}
 				desk.WithPlacer(call(productdev.Handle))
 				desk.WithLegal(call(legal.Handle))
-				desk.WithSEO(call(seo.Handle))
 				desk.WithHR(call(hr.Handle))
 				desk.WithWorker("accounts", call(internalops.HandleAccounts))
 				desk.WithWorker("internal-ops", call(internalops.Handle))
@@ -88,6 +93,8 @@ func main() {
 				desk.WithWorker("files", call(files.Handle))
 				desk.WithGuide(completer)
 				desk.WithOpsTelegram(opsBot)
+				desk.WithAcademyTelegram(acadBot)
+				desk.WithLMS(lms.NewClient(os.Getenv("LMS_API_BASE")))
 				desk.WithN8n(os.Getenv("N8N_BASE_URL"), os.Getenv("INTERNAL_API_TOKEN"))
 				desk.Register(mux)
 				adminReady = true
@@ -107,7 +114,7 @@ func main() {
 			"vision_model": stack.VisionModel,
 			"vision_ready": stack.VisionModel != "",
 			"admin_ready":  adminReady,
-			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "delivery", "seo", "files"},
+			"departments":  []string{"internal-ops", "accounts", "growth", "product-dev", "community", "crm", "legal", "delivery", "files"},
 		})
 	})
 	internalTok := strings.TrimSpace(os.Getenv("INTERNAL_API_TOKEN"))
@@ -122,7 +129,6 @@ func main() {
 	mux.HandleFunc("POST /departments/crm", departmentHandler(completer, completerErr, "crm", crm.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/legal", departmentHandler(completer, completerErr, "legal", legal.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/delivery", departmentHandler(completer, completerErr, "delivery", delivery.Handle, desk, internalTok))
-	mux.HandleFunc("POST /departments/seo", departmentHandler(completer, completerErr, "seo", seo.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/files", departmentHandler(completer, completerErr, "files", files.Handle, desk, internalTok))
 	mux.HandleFunc("POST /departments/hr", departmentHandler(completer, completerErr, "hr", hr.Handle, desk, internalTok))
 
@@ -137,6 +143,7 @@ func main() {
 	}
 	log.Printf("agents listening on %s", addr)
 	go bindOpsTelegram(opsBot)
+	go bindAcademyTelegram(acadBot)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
@@ -153,6 +160,24 @@ func bindOpsTelegram(bot *opschat.Bot) {
 		return
 	}
 	log.Printf("telegram ops webhook bound")
+}
+
+func bindAcademyTelegram(bot *opschat.Bot) {
+	if bot == nil {
+		log.Printf("academy telegram skipped: TELEGRAM_ACADEMY_BOT_TOKEN is empty")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	url := os.Getenv("TELEGRAM_ACADEMY_WEBHOOK_URL")
+	if strings.TrimSpace(url) == "" {
+		url = acadchat.DefaultWebhookURL
+	}
+	if err := bot.SetWebhook(ctx, url); err != nil {
+		log.Printf("academy telegram setWebhook: %v", err)
+		return
+	}
+	log.Printf("telegram academy webhook bound")
 }
 
 // departmentHandler is POST /departments/{name}. n8n is the only caller. Body is contract.Request.
@@ -181,9 +206,6 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 		if dept == "delivery" && desk != nil {
 			req = desk.EnrichDelivery(r.Context(), req)
 		}
-		if dept == "seo" && desk != nil {
-			req = desk.EnrichSEO(r.Context(), req)
-		}
 		if dept == "files" && desk != nil {
 			req = desk.EnrichFiles(r.Context(), req)
 		}
@@ -192,6 +214,9 @@ func departmentHandler(c llm.Completer, initErr error, dept string, fn func(cont
 		}
 		if dept == "growth" && desk != nil {
 			req = desk.EnrichGrowth(r.Context(), req)
+		}
+		if dept == "community" && desk != nil {
+			req = desk.EnrichCommunity(r.Context(), req)
 		}
 		resp, err := fn(r.Context(), c, req)
 		contract.AttachChatID(&resp, req)

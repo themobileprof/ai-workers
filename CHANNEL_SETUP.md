@@ -26,7 +26,7 @@ Keep this section in sync with every channel change. IDs are not secrets. The ve
 | Name | Type | ID | Used by |
 | --- | --- | --- | --- |
 | Telegram account | `telegramApi` | `GD7WqGif3v6QlSbc` | Ops Telegram |
-| Telegram Academy | `telegramApi` | `acadTelegrCred001` | Academy Telegram trigger/send; weekly intro Telegram send. Create in n8n; bind the nodes if import id differs. |
+| Telegram Academy | `telegramApi` | `acadTelegrCred001` | Community weekly intro Telegram send. Inbound is Go (`TELEGRAM_ACADEMY_BOT_TOKEN`). Create in n8n; bind weekly intro if import id differs. |
 | WhatsApp OAuth account | `whatsAppTriggerApi` | `Oaps5dWBa76PVrD9` | Customer WhatsApp trigger |
 | WhatsApp account | `whatsAppApi` | `TpVfkoyKY6eZDl87` | Customer WhatsApp send |
 | Zoho Books | `oAuth2Api` | `ByEtw1MmiDqYxQWI` | Smoke: Zoho Books; `/accounts` `/ops` expenses; CRM contact upsert |
@@ -44,7 +44,6 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-growth.json` | `smkGrwthHttp0001` | no | Manual POST growth worker |
 | `n8n/workflows/smoke-community.json` | `smkCommHttp0001` | no | Manual POST community worker |
 | `n8n/workflows/smoke-legal.json` | `smkLegalHttp0001` | no | Manual POST legal worker (review flags; must not send) |
-| `n8n/workflows/smoke-seo.json` | `smkSeoHttp000001` | no | Manual POST SEO worker (page brief; must not publish) |
 | `n8n/workflows/smoke-hr.json` | `smkHrHttp0000001` | no | Manual POST HR worker (draft JD; must not hire or send) |
 | `n8n/workflows/smoke-zoho-books.json` | `smkZohoBooks0001` | no | GET Zoho orgs, chart of accounts, taxes, unpaid invoices |
 | `n8n/workflows/smoke-email.json` | `smkEmailSmtp0001` | no | Send one text mail From/To `info@themobileprof.com` |
@@ -60,9 +59,11 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/smoke-files.json` | `smkFilesHttp00001` | no | Manual POST files worker (classify; must not write Drive) |
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | no | Retired. Office inbound is Go `POST /webhook/telegram-ops/webhook`. Do not republish — n8n would steal the Telegram webhook. |
 | `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
-| `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | yes | Academy student rooms. Community only. No `/approve`, books, legal, or Delivery. |
+| `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | no | Retired inbound. Academy student rooms are Go `POST /webhook/telegram-academy/webhook`. Weekly intro still sends from `commWeeklyPing01`. Do not republish — n8n would steal the Telegram webhook. |
 | `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. Every DM with a phone files Office → CRM. Books upsert only with an email or once stage is qualified/proposal/won. Office prefixes refused. No admin-phone allowlist. |
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
+| `n8n/workflows/community-scholarship-daily.json` | `commScholDaily01` | yes | 09:15 Lagos daily: scholarship deadline nudge when a season ends within 21 days. Silent otherwise. Never posts a discount code. |
+| `n8n/workflows/community-engage-daily.json` | `commEngageDaily01` | yes | 09:30 Lagos: greet the room with ₦500 still on offer even if nobody qualified, how to be eligible, name yesterday’s winner if any, DM them for airtime. Go sends ClubKonnect. |
 | `n8n/workflows/delivery-daily.json` | `deliveryDaily00001` | yes | 08:30 Lagos: Telegram today’s tasks, coming dates, and (owner/BDM) CRM due. People with a Telegram id. Empty card: no ping. |
 | `n8n/workflows/crm-due.json` | `crmDueDaily00001` | no | Retired. Due rows ride the 08:30 Delivery ping. `GET /internal/v1/crm/due` still works. Do not republish. |
 | `n8n/workflows/email-outbox.json` | `emailOutbox000001` | yes (sub-workflow + Go webhook) | Stores one pending draft; delay-to-send (15 min office hours / 60 after hours); Go `/approve` sends now; `/stop` `/kill` drop. `POST http://n8n:5678/webhook/email-outbox`. Not public (Caddy 404). Must be published. |
@@ -83,7 +84,7 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 | `/accounts` | accounts |
 | `/ops` | internal-ops |
 | `/legal` | legal |
-| `/seo` | seo |
+| `/seo` | gone — Cursor in the bet repo |
 | `/file` | files (ops Telegram only; catalog match files itself; unsure Accept on Files) |
 | `/today` `/pm` `/idea` | delivery |
 | `/validate` | product-dev |
@@ -93,11 +94,11 @@ UI leftover (not in git): `thnYcpkfxCvFveX8` “My workflow”.
 
 On the **Academy** bot, `/accounts` `/ops` `/legal` `/seo` `/file` `/hr` `/approve` `/kill` `/growth` `/crm` `/validate` `/today` `/idea` are refused. Those stay on the ops bot.
 
-Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable), then paste `context_data.telegram_chat_id` from the n8n execution onto the mandate. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram (and any leftover WhatsApp) room. Do not add the **ops** bot to student groups.
+Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cannot join ordinary groups — do not try to add that number to the LMS WhatsApp room. Write the brief and catalog on **`/admin/community`**, add the Academy bot to the student Telegram group (BotFather: `/setprivacy` **Disable** so it hears unprefixed chat; `/setjoingroups` Enable). Join binds the `lms` mandate chat id if it was empty. Chatter (`speak: false`) is not sent. Monday 09:00 Lagos the worker introduces itself in each matched Telegram room (n8n send). Do not add the **ops** bot to student groups.
 
 Ops Telegram is gated by People `telegram_id` (Go looks up the People card). Unknown ids get the number to paste on People. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** Go picks **one** desk and does the work in that chat. A reply to the 08:30 “Today on the desk” card is Delivery. Chat never Accepts. `/approve` `/kill` `/stop` (owner/BDM) call n8n Email outbox for a pending info@ draft. Receipt photos and `/accounts` `/ops` that classify as accounts then call n8n Books write.
 
-Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, SEO, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
+Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
 
 Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops` for staff who may Accounts) are downloaded and OCR’d with Gemini. WhatsApp photos stay growth — not receipts. A failed read must not invent amounts.
 
@@ -106,15 +107,15 @@ Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops` for staff who may Acc
 Source of truth for **projects**, people (including Telegram ids), and Zoho default ids: **`https://workers.themobileprof.com/admin/`** (Caddy `/admin*` → agents on `127.0.0.1:8000`). Sign in with phone `2348033954301` (or the email on that user) and `ADMIN_BOOTSTRAP_PASSWORD` from the VM `.env`. This is not n8n.
 
 - Postgres database/role **`aiworkers`** (never the n8n database). Bootstrap: `scripts/bootstrap-admin-db.sh` on the VM.
-- **People** (`/admin/users`, owner only): add a person, office seat (owner / bdm / cofounder / assistant / viewer), **hours/week** (Delivery pace, default 6), and **one or more handler desks**. Assigned desks appear when **that person signs in** (`/admin/desks/{slug}` — Ask worker, chat, Accept / Turn away). Chat does not stamp. They are not on the company Board. Ticking a desk grants `web_admin`. Owner and BDM still land on Board; tick desks on their own People card if they also handle a worker. Specialized books stay at `/admin/legal`, `/admin/seo`, `/admin/growth`, `/admin/delivery`, `/admin/projects` and still require that desk assignment. Seat a person on a project Face tab to onboard them onto Delivery — that is roster, not hiring.
+- **People** (`/admin/users`, owner only): add a person, office seat (owner / bdm / cofounder / assistant / viewer), **hours/week** (Delivery pace, default 6), and **one or more handler desks**. Assigned desks appear when **that person signs in** (`/admin/desks/{slug}` — Ask worker, chat, Accept / Turn away). Chat does not stamp. They are not on the company Board. Ticking a desk grants `web_admin`. Owner and BDM still land on Board; tick desks on their own People card if they also handle a worker. Specialized books stay at `/admin/legal`, `/admin/growth`, `/admin/delivery`, `/admin/projects` and still require that desk assignment. Onsite SEO is Cursor in the bet repo (`/admin/docs/seo`). Seat a person on a project Face tab to onboard them onto Delivery — that is roster, not hiring.
 - **Projects** (`/admin/projects`) is the incubation book: name, one-liner, public URL, journey/gate (playbook stamp), stage, this-week note, and seats (`cofounder`, `assistant`). Seeded bets: MomLaunchpad, Academy, Finchest, HomeGauge, Mechazone. **Ask placement** writes a proposal only; Accept / Amend / Reject on the desk moves the stamp. The worker cannot commit. **Ask draft** (Legal) writes a proposed NDA/contract on that project; Accept on Legal or the project card. The worker cannot stamp approved or send. **Delivery** (`/admin/delivery`) holds tasks across bets. Stamp caps how many are open; hours/week on People is pace. Accept on the Delivery desk writes a proposed plan. Own `/today` check-ins may apply immediately. n8n: `GET /internal/v1/projects`, `GET /internal/v1/journeys`, `POST /internal/v1/projects/{id}/proposal`, `GET|POST /internal/v1/legal-drafts`, `GET /internal/v1/delivery/context`, `GET /internal/v1/delivery/digest`, `POST /internal/v1/delivery/checkin`, `POST /internal/v1/jobs` (`X-Internal-Token`). Proposal, legal, and job POSTs do not commit the stamp. Hypotheses are not stored yet.
-- People seats: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), leftover `accounts` / `operator` / `viewer`. Handler desks (Accounts, Growth, Community, CRM, Legal, SEO, Delivery, Ops, Product) are assigned separately, one or more per person. Paste the ops-bot Telegram id on the card — that is how the office bot knows them. Capabilities: `web_admin` (desk login), `zoho_write` (reserved). `whatsapp_accounts` is leftover and unused. Onboarding is People + hours/week + Telegram id + Face seat. There is no recruiting desk.
+- People seats: `owner`, `bdm` (all projects), `cofounder`, `assistant` (seat on a project), leftover `accounts` / `operator` / `viewer`. Handler desks (Accounts, Growth, Community, CRM, Legal, Delivery, Ops, Product) are assigned separately, one or more per person. Paste the ops-bot Telegram id on the card — that is how the office bot knows them. Capabilities: `web_admin` (desk login), `zoho_write` (reserved). `whatsapp_accounts` is leftover and unused. Onboarding is People + hours/week + Telegram id + Face seat. There is no recruiting desk.
 - n8n Ops Telegram **Fetch staff** `GET http://agents:8000/internal/v1/staff?telegram_id=` with `X-Internal-Token`. Unknown ids cannot run prefixes or `/approve`.
-- **Community** (`/admin/community`, community desk): one **mandate** per student room (brief + catalog + `telegram_chat_id`). Academy LMS is seeded from the public catalog at `https://api.themobileprof.com/api/courses` (Micro / Mini paths / Professional). Lesson video and quizzes need an LMS login token — not wired. Paste the Telegram chat id from an **Academy Telegram** n8n execution after the bot is in the room. n8n `GET /internal/v1/community/mandate?telegram_chat_id=` and `GET /internal/v1/community/mandates`. Weekly intro: **Community weekly intro** (`commWeeklyPing01`) Monday 09:00 Lagos, skipped when the linked bet’s stamp has no pings (parked / killed / idea). The worker stays silent on chatter (`speak: false`). Escalate files a Community job. The worker cannot reset passwords. The Cloud API WhatsApp number cannot join ordinary groups.
+- **Community** (`/admin/community`, community desk): one **mandate** per student room (brief + catalog + `telegram_chat_id`). Academy inbound is Go. Live public catalog (`LMS_API_BASE`) overlays every turn; paid lesson bodies need `LMS_EMAIL` / `LMS_PASSWORD` (admin login). Adding the Academy bot to the group binds the `lms` mandate chat id if it was empty. Students tab stores Telegram id + LMS email they DM. `/invite` is `https://lms.themobileprof.com/join/{code}` (LMS register + Telegram host; workers `/join` redirects there). Daily airtime: **Community daily engage** (`commEngageDaily01`) 09:30 Lagos scores yesterday (room + lesson questions + confirmed invites) and posts in the class even when nobody qualified — ₦500 is still on offer, plus how to earn it. It DMs the winner once; a student who collected in the last 7 days is less likely to win again unless they clearly lead. ClubKonnect keys stay on the VM `.env`. Another student's paid/unpaid status is still a Community job. Weekly intro: **Community weekly intro** (`commWeeklyPing01`) Monday 09:00 Lagos still **sends** from n8n. Scholarship deadline: **Community scholarship daily** (`commScholDaily01`) 09:15 Lagos when a season ends within 21 days. The worker stays silent on chatter (`speak: false`). Never quote receipts or a discount code in the group. The Cloud API WhatsApp number cannot join ordinary groups.
 - n8n Customer WhatsApp does **not** fetch an allowlist. Every 1:1 DM is a customer.
 - n8n **Books write**, **CRM upsert** (and their smokes), and Ops Telegram `/crm` **Fetch desk settings** `GET http://agents:8000/internal/v1/settings`. Org id, paid-through, default expense, chart-of-accounts ids (Office Supplies / Advertising / Lodging / Uncategorized), Paystack deposit account, timezone, and Paystack currency live on **Desk → Defaults**. Amend there — do not hardcode ids in the workflow. If the fetch fails, Books write still has the seeded fallbacks.
 - **Third-party tools** live in [`TOOLS.md`](TOOLS.md) (GitHub). Add a section there when a vendor is wired — not a desk page.
-- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page. **`/webhook/telegram-ops*`** is Go. **`/webhook/books-write*`** and **`/webhook/email-outbox*`** 404 publicly. Other **`/webhook*`** stay on n8n. Do **not** set `N8N_PATH`.
+- **n8n** in the desk (`/admin/workflows`) iframes `https://workers.themobileprof.com/home` (n8n’s overview). `/n8n/` redirects there. n8n still has its own login. Caddy allows `frame-ancestors 'self'` only so other sites cannot embed it. Public `/` is the project page. **`/webhook/telegram-ops*`** and **`/webhook/telegram-academy*`** are Go. **`/webhook/books-write*`** and **`/webhook/email-outbox*`** 404 publicly. Other **`/webhook*`** stay on n8n. Do **not** set `N8N_PATH`.
 - **Docs** (`/admin/docs`) is the field playbook: **Company desk** and **Projects** first (humans), then each worker specimen. Partial workers keep a later-box until the workflow is wired. GitHub usage + code map: [`README.md`](README.md).
 - Caddy must not proxy `/departments` or `/internal`. Departments stay on the Docker network.
 
@@ -256,11 +257,10 @@ Cloud API WhatsApp cannot join ordinary groups. Host the LMS class here.
 
 1. BotFather `/newbot` (a second bot). Suggested name: Academy host. Copy the token.
 2. `/setjoingroups` → Enable. `/setprivacy` → **Disable** (otherwise the bot only hears slash commands and stays mute on “I am on Linux Mini lesson 3”).
-3. n8n → **Credentials** → Telegram API → name exactly **Telegram Academy** → paste token. Open **Academy Telegram** and **Community weekly intro** and select that credential on the Telegram nodes if import did not bind `acadTelegrCred001`.
-4. Create or open the student Telegram group. Add the Academy bot. Send a message (any text).
-5. In n8n, open the **Academy Telegram** execution. Copy `context_data.telegram_chat_id` onto **Desk → Community** for the LMS mandate.
-6. Message `/help` in the group. Then a course/lesson line with no prefix. Chatter should stay silent.
-7. `getWebhookInfo` on this bot’s token must also show a production `/webhook/` URL.
+3. Paste the token on the VM `.env` as `TELEGRAM_ACADEMY_BOT_TOKEN`. n8n → **Credentials** → Telegram API → name exactly **Telegram Academy** (weekly intro send). Same token.
+4. Create or open the student Telegram group. Add the Academy bot. Join binds the `lms` mandate chat id if it was empty. Welcome is automatic.
+5. Message `/help` in the group. Then a course/lesson line with no prefix. Chatter should stay silent. Payment: DM the bot the LMS email — never in the group.
+6. `getWebhookInfo` on this bot’s token must show `https://workers.themobileprof.com/webhook/telegram-academy/webhook`.
 
 Do not reuse the ops token on this credential.
 
@@ -320,7 +320,7 @@ On that number, n8n routes customers only:
 | none, 1:1 | growth (CRM upsert on every DM with a phone) |
 | `/accounts` `/ops` `/legal` `/seo` `/today` `/file` `/approve` | refused (`access_denied`) — staff use ops Telegram |
 
-Student rooms are **Academy Telegram**, not this WhatsApp number. Cloud API Business numbers cannot be added to ordinary WhatsApp groups. Keep this number for 1:1 customers. Copy `context_data.telegram_chat_id` from **Academy Telegram** onto the mandate. Do not create a second WhatsApp number for community.
+Student rooms are **Academy Telegram**, not this WhatsApp number. Cloud API Business numbers cannot be added to ordinary WhatsApp groups. Keep this number for 1:1 customers. Add the Academy bot to the group; the `lms` mandate chat id binds on join. Do not create a second WhatsApp number for community.
 
 Intern field missions: ops Telegram (`/today` / the morning ping), not customer WhatsApp. Do not mix intern debriefs and customer support on the WhatsApp number.
 
@@ -351,4 +351,4 @@ When a new flow is described in Cursor, add or edit a JSON file under `n8n/workf
 5. Email inbound is live: customer mail `info@` → CRM story on Office → CRM. Important → Telegram to owner/BDM. Nothing is sent. CVs are dropped.
 6. Only then: intern mission on WhatsApp.
 
-If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. Ops Telegram inbound is Go (`/webhook/telegram-ops*`). Books write and email outbox are Docker-only (`http://n8n:5678/webhook/books-write`, `…/email-outbox`); Caddy 404s those on the public host. Other `/webhook*` stay on n8n. After a CLI import, n8n must be restarted or WhatsApp stays 404 even while the workflow looks published (morning ping can still send).
+If a channel fails, check Caddy (`https://workers.themobileprof.com`), workflow published, and production vs test webhook URL before touching the Go worker. Ops Telegram inbound is Go (`/webhook/telegram-ops*`). Academy Telegram inbound is Go (`/webhook/telegram-academy*`). Books write and email outbox are Docker-only (`http://n8n:5678/webhook/books-write`, `…/email-outbox`); Caddy 404s those on the public host. Other `/webhook*` stay on n8n. After a CLI import, n8n must be restarted or WhatsApp stays 404 even while the workflow looks published (morning ping can still send).

@@ -81,11 +81,11 @@ A reply to the 08:30 card is Delivery. Other unprefixed text picks one desk and 
 
 ## What does /approve do?
 
-On ops Telegram it only sends the pending info@ email draft. `/kill` drops that draft. It does not Accept a contract, SEO brief, pitch deck, delivery plan, project gate, or hire. Recruiting is closed.
+On ops Telegram it only sends the pending info@ email draft. `/kill` drops that draft. It does not Accept a contract, pitch deck, delivery plan, project gate, or hire. Recruiting is closed.
 
 ## How do I talk to the Academy / community bot?
 
-Student rooms are Academy Telegram, not WhatsApp groups (Cloud API cannot join ordinary groups). Owner sets a mandate on `/admin/community` (brief, catalog, `telegram_chat_id`). `/cm` or `/community` on the Academy bot. Ops prefixes on that bot are refused. Do not add the ops bot to class.
+Student rooms are Academy Telegram, not WhatsApp groups (Cloud API cannot join ordinary groups). Owner sets a mandate on `/admin/community`. Add the Academy bot to the group — the `lms` chat id binds on join. `/cm` or `/community` on the Academy bot. Payment: DM that bot the email on the LMS account; never quote receipts in the group. Ops prefixes on that bot are refused. Do not add the ops bot to class.
 
 ## How do I file an NDA?
 
@@ -97,7 +97,7 @@ Tick Growth. Write the Card one-liner first. Open the project → Deck → Start
 
 ## How do I ask for SEO copy?
 
-Tick SEO. Put the public URL on the project Card. Open the project → SEO. Do the step marked **now** (facts, then FAQ, then schema, then onsite, then offsite), or `/seo` on ops Telegram to continue the walk. The clerk fetches the live URL. The visible page is the source of truth. Ask issues a markdown pack — download it or give Cursor the URL. Offsite work becomes a Delivery week plan that writes after the delay unless you Turn away. The clerk cannot send, publish the live site, or invent ChatGPT citations. GA4 and Search Console last-28-days arrive from n8n; quote only those snapshots. Customer WhatsApp cannot run `/seo`.
+There is no SEO worker. Put the public URL and GitHub repo on the project Card. Open that repo in Cursor. Copy `.cursor/rules/onsite-seo.mdc` from this office if it is missing. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Offsite listings you already have: add a Delivery task. Do not invent ChatGPT citations. GA4 and Search Console last-28-days arrive from n8n; quote only those snapshots. `/seo` on ops Telegram says the worker is gone. Customer WhatsApp still refuses the prefix.
 
 ## Why can’t I see the Board?
 

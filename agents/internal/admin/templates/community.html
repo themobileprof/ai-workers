@@ -1,12 +1,12 @@
 {{define "content"}}
 <aside class="now" aria-label="What to do">
   <div>
-    <p class="do">Community · {{len .Mandates}} rooms</p>
+    <p class="do">Community · {{len .Mandates}} rooms · {{len .Students}} students</p>
     <h2>Connect each Telegram room</h2>
     <ol class="recipe">
       <li>Open the room (or <strong>New mandate</strong>).</li>
-      <li>Add the Academy Telegram bot to that group and send a message.</li>
-      <li>Copy <code>telegram_chat_id</code> from n8n into this form and save. Do not put campus trainings here.</li>
+      <li>Add the Academy Telegram bot to that group. On join, the lms mandate chat id fills itself if it was empty.</li>
+      <li>Students talk about course titles and lessons. Payment and billing: they DM the bot their LMS email — never in the group. /invite is their landing page (Academy register + Telegram). 09:30 Lagos posts even when nobody earned ₦500, and names yesterday’s winner when there is one.</li>
     </ol>
     {{template "page-reads" (guideReads "community")}}
   </div>
@@ -21,6 +21,7 @@
 <div class="tabset" data-tabs data-default="{{if .Mandate}}edit{{else}}rooms{{end}}">
   <nav class="tabs" role="tablist" aria-label="Community">
     <button type="button" role="tab" data-tab="rooms" aria-controls="tab-rooms">Rooms <span class="count">{{len .Mandates}}</span></button>
+    <button type="button" role="tab" data-tab="students" aria-controls="tab-students">Students <span class="count">{{len .Students}}</span></button>
     <button type="button" role="tab" data-tab="edit" aria-controls="tab-edit">{{if .Mandate}}Amend{{else}}New mandate{{end}}</button>
   </nav>
   <div class="tab-panels">
@@ -33,7 +34,7 @@
           <h3>{{.Title}}</h3>
           <span class="stamp {{if .Active}}ok{{else}}dark{{end}}">{{.Slug}}</span>
         </div>
-        <p class="hint">Telegram chat <code>{{if .TelegramChatID}}{{.TelegramChatID}}{{else}}not set — add the Academy bot to the group, send a message, copy telegram_chat_id from n8n{{end}}</code>{{if .WhatsAppGroupID}} · WhatsApp <code>{{.WhatsAppGroupID}}</code>{{end}}</p>
+        <p class="hint">Telegram chat <code>{{if .TelegramChatID}}{{.TelegramChatID}}{{else}}not set — add the Academy bot; join binds the lms mandate{{end}}</code>{{if .WhatsAppGroupID}} · WhatsApp <code>{{.WhatsAppGroupID}}</code>{{end}}</p>
         {{if .Brief}}<pre class="legal-body">{{.Brief}}</pre>{{end}}
         <div class="actions">
           <a class="ghost" href="/admin/community?id={{.ID}}">Amend</a>
@@ -47,10 +48,41 @@
       <p class="hint">No rooms yet. Open New mandate and name the Telegram group.</p>
       {{end}}
     </section>
+    <section role="tabpanel" id="tab-students" data-tab="students">
+      <p class="hint">Telegram people this bot has seen. Email is what they DM'd for LMS billing — not proof they paid. Receipts stay in DMs. Invite is their /join link for friends.</p>
+      {{if .Students}}
+      <table class="roster">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Telegram</th>
+            <th>LMS email</th>
+            <th>Invite</th>
+            <th>Course</th>
+            <th>Lesson</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Students}}
+          <tr>
+            <td>{{if .Name}}{{.Name}}{{else}}—{{end}}{{if .Username}} <span class="quiet">@{{.Username}}</span>{{end}}</td>
+            <td><code>{{.TelegramID}}</code></td>
+            <td>{{if .Email}}{{.Email}}{{else}}not linked{{end}}</td>
+            <td>{{if .ReferralCode}}<code>https://lms.themobileprof.com/join/{{.ReferralCode}}</code>{{else}}—{{end}}</td>
+            <td>{{if .CourseTitle}}{{.CourseTitle}}{{else}}—{{end}}</td>
+            <td>{{if .LessonNote}}{{.LessonNote}}{{else}}—{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="hint">No students yet. They appear when someone joins the Academy group or DMs this bot.</p>
+      {{end}}
+    </section>
     <section role="tabpanel" id="tab-edit" data-tab="edit">
       <form method="post" action="/admin/community" class="person add">
         {{if .Mandate}}<input type="hidden" name="id" value="{{.Mandate.ID}}">{{end}}
-        <p class="hint">List only courses this room may talk about. If a course is missing here, the worker must ask you — it will not guess.</p>
+        <p class="hint">List only courses this room may talk about. The live LMS catalog is attached every turn. If a course is missing from both, the worker must ask you — it will not guess.</p>
         <div class="fields">
           <label>Title
             <input name="title" required value="{{if .Mandate}}{{.Mandate.Title}}{{end}}">
@@ -67,7 +99,7 @@
             <input name="whatsapp_group_id" value="{{if .Mandate}}{{.Mandate.WhatsAppGroupID}}{{end}}" placeholder="from context_data.group_id">
           </label>
           <label>Telegram chat id
-            <input name="telegram_chat_id" value="{{if .Mandate}}{{.Mandate.TelegramChatID}}{{end}}" placeholder="from context_data.telegram_chat_id">
+            <input name="telegram_chat_id" value="{{if .Mandate}}{{.Mandate.TelegramChatID}}{{end}}" placeholder="binds on Academy bot join for slug lms">
           </label>
           <label>Live
             <select name="active">

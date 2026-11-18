@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join TheMobileProf Academy</title>
+  <link rel="icon" href="/site/themobileprof_cloud.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site/desk.css">
+  <style>
+    body.join { background-color: #071018; }
+    .join-main { max-width: 34rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    .join-main h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.15; margin: 0.3rem 0 0.8rem; }
+    .join-main .lede { color: var(--muted); margin: 0 0 1.8rem; }
+    .join-steps { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 1rem; }
+    .join-steps li { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 1.1rem 1.15rem 1.2rem; }
+    .join-steps .n { font-family: Fraunces, Georgia, serif; color: var(--brass); font-size: 1.4rem; }
+    .join-steps h2 { margin: 0.15rem 0 0.4rem; font-size: 1.15rem; }
+    .join-steps p { margin: 0 0 0.85rem; color: var(--muted); }
+    .join-steps a.do { display: inline-block; background: var(--brass); color: #041018; font-weight: 600; text-decoration: none; padding: 0.55rem 0.95rem; border-radius: 999px; }
+    .join-note { color: var(--muted); font-size: 0.92rem; }
+  </style>
+</head>
+<body class="sky join">
+  <div class="grain"></div>
+  <header class="mast public">
+    <div class="brand">
+      <img class="logo" src="/site/themobileprof_cloud.png" width="56" height="56" alt="TheMobileProf">
+      <div>
+        <p class="kicker">Academy</p>
+        <h1>TheMobileProf</h1>
+      </div>
+    </div>
+  </header>
+  <main class="join-main">
+    {{if .Who}}<p class="kicker">{{.Who}} invited you</p>{{end}}
+    <h1>Class on your phone. Friends in the room.</h1>
+    <p class="lede">Two taps. First you open an Academy account so your lessons live in one place. Then you say hi to the host — that drops you into the Telegram class. {{if .Naira}}Most engaged student each day gets ₦{{.Naira}} airtime.{{end}}</p>
+    <ol class="join-steps">
+      <li>
+        <p class="n">1</p>
+        <h2>Create your Academy account</h2>
+        <p>Sign in or register on the LMS. Keep the same email you will use for class.</p>
+        {{if .LMS}}<a class="do" href="{{.LMS}}">Open the Academy</a>{{end}}
+      </li>
+      <li>
+        <p class="n">2</p>
+        <h2>Join the Telegram room</h2>
+        <p>This opens a private chat with the Academy host. The host sends the group link. That is how your invite is counted.</p>
+        {{if .Telegram}}<a class="do" href="{{.Telegram}}">Say hi in Telegram</a>{{end}}
+      </li>
+    </ol>
+    <p class="join-note">Already in the group? Stay. Ask a lesson question, talk in the room, and share this page with someone who should be here.</p>
+  </main>
+</body>
+</html>

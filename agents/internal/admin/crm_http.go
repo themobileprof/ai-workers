@@ -21,7 +21,9 @@ func crmFlash(ok string) string {
 	case "lost":
 		return "Marked lost."
 	case "nurture":
-		return "Moved to nurture."
+		return "Moved to nurture. Off the 08:30 ping until you set a new By date."
+	case "due_cleared":
+		return "Off the 08:30 ping. Set a new By date when there is a later step."
 	default:
 		return ""
 	}
@@ -267,7 +269,21 @@ func (s *Server) crmLogPOST(w http.ResponseWriter, r *http.Request) {
 			Name: c.Name, Email: c.Email, Phone: c.Phone, Notes: body, Source: crmChannel(r.FormValue("channel")),
 		})
 	}
+	if formYes(r.FormValue("clear_due")) {
+		if err := s.store.ClearCRMDue(r.Context(), c.ID); err != nil {
+			s.render(w, "crm", s.crmPersonView(r, u, c, err.Error(), ""))
+			return
+		}
+	}
 	http.Redirect(w, r, adminNext(r, "/admin/crm/"+strconv.FormatInt(c.ID, 10)+"?ok=logged"), http.StatusSeeOther)
+}
+
+func formYes(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "on", "yes", "true":
+		return true
+	}
+	return false
 }
 
 func (s *Server) crmStamp(stage string) http.HandlerFunc {
@@ -291,6 +307,25 @@ func (s *Server) crmStamp(stage string) http.HandlerFunc {
 	}
 }
 
+func (s *Server) crmClearDuePOST(w http.ResponseWriter, r *http.Request) {
+	if !sameOrigin(w, r) {
+		return
+	}
+	u := s.requireCRM(w, r)
+	if u == nil {
+		return
+	}
+	c, ok := s.loadVisibleCRM(w, r, u)
+	if !ok {
+		return
+	}
+	if err := s.store.ClearCRMDue(r.Context(), c.ID); err != nil {
+		s.render(w, "crm", s.crmPersonView(r, u, c, err.Error(), ""))
+		return
+	}
+	http.Redirect(w, r, adminNext(r, "/admin/crm/"+strconv.FormatInt(c.ID, 10)+"?ok=due_cleared"), http.StatusSeeOther)
+}
+
 func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, resp contract.Response) {
 	if s == nil || s.store == nil || resp.StructuredData == nil {
 		return
@@ -303,7 +338,11 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 	data := contract.ContextObject(req.ContextData)
 	waPhone := strVal(data["from"])
 	whatsappLead := strVal(data["channel"]) == "whatsapp" && len(normalizePhone(waPhone)) >= 8
-	if !boolVal(sd["record_lead"]) && !whatsappLead && task != "file_thread" && task != "important" && task != "qualify_lead" && task != "update_record" && task != "follow_up" {
+	clearName, wantClear := crmClearDueQuery(req.TaskDescription)
+	if task == "clear_due" || task == "due_done" {
+		wantClear = true
+	}
+	if !boolVal(sd["record_lead"]) && !whatsappLead && !wantClear && task != "file_thread" && task != "important" && task != "qualify_lead" && task != "update_record" && task != "follow_up" {
 		return
 	}
 	email := firstNonEmpty(strVal(sd["email"]), strVal(data["from"]))
@@ -315,10 +354,14 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 		phone = strVal(data["from"])
 	}
 	name := firstNonEmpty(firstNonEmpty(strVal(sd["contact_name"]), strVal(sd["name"])), strVal(data["profile_name"]))
+	if wantClear {
+		name = firstNonEmpty(name, clearName)
+	}
 	company := strVal(sd["company_name"])
 	pid := int64Val(sd["project_id"])
 	exist, _ := data["existing_contact"].(map[string]any)
 	known := false
+	var contactID int64
 	if exist != nil {
 		name = firstNonEmpty(name, firstNonEmpty(strVal(exist["contact_name"]), strVal(exist["name"])))
 		company = firstNonEmpty(company, firstNonEmpty(strVal(exist["company_name"]), strVal(exist["company"])))
@@ -330,6 +373,7 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 		if id := int64Val(exist["contact_id"]); id > 0 {
 			if got, err := s.store.GetCRMContact(ctx, id); err == nil {
 				known = true
+				contactID = got.ID
 				name = firstNonEmpty(name, got.Name)
 				company = firstNonEmpty(company, got.Company)
 				email = firstNonEmpty(email, got.Email)
@@ -345,6 +389,7 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 		return
 	} else if ok {
 		known = true
+		contactID = hit.ID
 		name = hit.Name
 		company = firstNonEmpty(company, hit.Company)
 		email = firstNonEmpty(email, hit.Email)
@@ -353,7 +398,12 @@ func (s *Server) applyCRMResponse(ctx context.Context, req contract.Request, res
 			pid = hit.ProjectID
 		}
 	}
-	if task == "follow_up" && !known {
+	if (task == "follow_up" || wantClear) && !known {
+		return
+	}
+	if wantClear {
+		_ = s.store.ClearCRMDue(ctx, contactID)
+		sd["crm_contact_id"] = contactID
 		return
 	}
 	if pid == 0 {

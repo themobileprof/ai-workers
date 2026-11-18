@@ -24,7 +24,7 @@ If you also handle Legal or SEO, tick those desks on your own People card or the
 
 ### Handler desk
 
-Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not Accept. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per Academy Telegram room. Academy LMS is seeded from the public course list. Paste `telegram_chat_id` from an Academy Telegram n8n execution after the bot is in the group. Monday 09:00 Lagos the worker introduces itself in each matched room whose bet stage allows pings.
+Anyone assigned desks lands on `/admin/desks/{slug}` (or a picker if several). Ask the worker, chat the job, Accept or Turn away. Chat does not Accept. Community handlers also get **Mandates** (`/admin/community`): one brief + catalog per Academy Telegram room. Academy inbound is Go; the live LMS catalog overlays every turn. Add the Academy bot to the group — the `lms` mandate chat id binds on join. Students DM the bot their LMS email for billing. Monday 09:00 Lagos the worker introduces itself in each matched room whose bet stage allows pings.
 
 ### Chat prefixes
 
@@ -35,7 +35,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/accounts` | accounts (ops Telegram, if that desk is on the People card) |
 | `/ops` | internal-ops (ops Telegram) |
 | `/legal` | legal (ops Telegram) |
-| `/seo` | seo (ops Telegram) |
+| `/seo` | gone — Cursor in the bet repo |
 | `/file` | files (ops Telegram; catalog match files itself) |
 | `/today` `/pm` `/idea` | delivery (ops Telegram) |
 | `/growth` | growth |
@@ -46,7 +46,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | none, 1:1 WhatsApp | growth (customers; files Office → CRM) |
 | none, group | community (Academy Telegram student rooms — do not add ops to class) |
 
-`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft, project stage, or SEO brief. Inbound info@ files a CRM story and does not auto-send.
+`/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops it (and `/stop` also cancels a delayed Delivery plan). They do not Accept a legal draft or project stage. Inbound info@ files a CRM story and does not auto-send.
 
 Customer-development field work (rates at a mortgage desk, mechanics, a PHC) is a human on a project, not a chat prefix. Bring the names back; `/validate` `analyse_evidence` can score them. You still decide GO/PIVOT/KILL on the project.
 
@@ -57,7 +57,7 @@ Full channel inventory: [`CHANNEL_SETUP.md`](CHANNEL_SETUP.md). Vendors: [`TOOLS
 ```
 agents/cmd/server/          HTTP process (site, /admin, /departments, /internal)
 agents/internal/contract/   n8n ↔ Go JSON envelope
-agents/internal/departments/{growth,community,crm,legal,seo,delivery,productdev}/
+agents/internal/departments/{growth,community,crm,legal,delivery,productdev}/
 agents/internal/departments/internalops/  /ops and /accounts (HandleAccounts)
 agents/internal/admin/      desk: templates/, playbook/, guide/, Postgres `aiworkers`
                             docs.go catalog · desks.go handler list · store.go migrate
@@ -89,7 +89,6 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | GET | `/internal/v1/projects` · `/internal/v1/journeys` |
 | POST | `/internal/v1/projects/{id}/proposal` |
 | GET, POST | `/internal/v1/legal-drafts` |
-| GET, POST | `/internal/v1/seo-briefs` |
 | GET, POST | `/internal/v1/seo/ga4` |
 | GET, POST | `/internal/v1/seo/gsc` |
 | GET, POST | `/internal/v1/file-filings` |

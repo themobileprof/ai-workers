@@ -127,17 +127,16 @@ func displayTask(in opschat.Inbound, task string) string {
 
 func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, dept string, thread []OpsChatLine) contract.Request {
 	data := map[string]any{
-		"channel":        "telegram",
-		"chat_kind":      "dm",
-		"department":     dept,
-		"chat_id":        in.ChatID,
-		"from":           in.FromID,
-		"actor_id":       u.ID,
-		"actor_name":     u.Name,
-		"actor_role":     u.Role,
-		"cannot_send":    true,
-		"cannot_hire":    true,
-		"cannot_publish": dept == "seo",
+		"channel":     "telegram",
+		"chat_kind":   "dm",
+		"department":  dept,
+		"chat_id":     in.ChatID,
+		"from":        in.FromID,
+		"actor_id":    u.ID,
+		"actor_name":  u.Name,
+		"actor_role":  u.Role,
+		"cannot_send": true,
+		"cannot_hire": true,
 	}
 	if in.ReplyTo != "" {
 		data["reply_to"] = in.ReplyTo
@@ -178,9 +177,6 @@ func (s *Server) callDepartment(ctx context.Context, dept string, req contract.R
 	if dept == "delivery" {
 		req = s.EnrichDelivery(ctx, req)
 	}
-	if dept == "seo" {
-		req = s.EnrichSEO(ctx, req)
-	}
 	if dept == "files" {
 		req = s.EnrichFiles(ctx, req)
 	}
@@ -189,6 +185,9 @@ func (s *Server) callDepartment(ctx context.Context, dept string, req contract.R
 	}
 	if dept == "growth" {
 		req = s.EnrichGrowth(ctx, req)
+	}
+	if dept == "community" {
+		req = s.EnrichCommunity(ctx, req)
 	}
 	fn := s.deptFunc(dept)
 	if fn == nil {

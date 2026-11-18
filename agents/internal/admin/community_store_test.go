@@ -34,7 +34,7 @@ func TestCommunityTemplateRenders(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := buf.String()
-	if !strings.Contains(got, "Academy Telegram") || !strings.Contains(got, "New mandate") {
+	if !strings.Contains(got, "Academy Telegram") || !strings.Contains(got, "New mandate") || !strings.Contains(got, "Students") {
 		t.Fatal(got)
 	}
 	m := CommunityMandate{ID: 1, Title: "Academy LMS", SiteURL: "https://lms.themobileprof.com", Brief: "Host the room.", Catalog: "Mini, Path, Professional", Active: true}
@@ -56,7 +56,7 @@ func TestLMSCatalogMentionsTiers(t *testing.T) {
 			t.Fatal(part)
 		}
 	}
-	if !strings.Contains(lmsMandateBrief, "escalate") || !strings.Contains(lmsMandateBrief, "lesson") || !strings.Contains(lmsMandateBrief, "/cm") || !strings.Contains(lmsMandateBrief, "Telegram") {
+	if !strings.Contains(lmsMandateBrief, "escalate") || !strings.Contains(lmsMandateBrief, "lesson") || !strings.Contains(lmsMandateBrief, "/cm") || !strings.Contains(lmsMandateBrief, "Telegram") || !strings.Contains(lmsMandateBrief, "workshop") || !strings.Contains(lmsMandateBrief, "scholarship") || !strings.Contains(lmsMandateBrief, "airtime") {
 		t.Fatal("seed brief")
 	}
 }

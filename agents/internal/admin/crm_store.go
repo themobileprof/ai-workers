@@ -63,6 +63,10 @@ func (c CRMContact) Open() bool {
 	}
 }
 
+func (c CRMContact) HasDue() bool {
+	return strings.TrimSpace(c.NextActionBy) != ""
+}
+
 func (c CRMContact) StatusStamp() string {
 	switch c.Stage {
 	case "won":
@@ -416,7 +420,11 @@ RETURNING id, created_at, updated_at
 
 func (s *Store) SetCRMStage(ctx context.Context, id int64, stage string) error {
 	stage = crmStage(stage)
-	tag, err := s.pool.Exec(ctx, `UPDATE crm_contacts SET stage = $2, updated_at = now() WHERE id = $1`, id, stage)
+	q := `UPDATE crm_contacts SET stage = $2, updated_at = now() WHERE id = $1`
+	if stage == "nurture" || stage == "won" || stage == "lost" {
+		q = `UPDATE crm_contacts SET stage = $2, next_action_by = NULL, updated_at = now() WHERE id = $1`
+	}
+	tag, err := s.pool.Exec(ctx, q, id, stage)
 	if err != nil {
 		return err
 	}
@@ -424,6 +432,21 @@ func (s *Store) SetCRMStage(ctx context.Context, id int64, stage string) error {
 		return errors.New("contact not found")
 	}
 	_ = s.InsertCRMEvent(ctx, CRMEvent{ContactID: id, Channel: "stage", Direction: "note", Summary: "Marked " + stage})
+	return nil
+}
+
+func (s *Store) ClearCRMDue(ctx context.Context, id int64) error {
+	if id == 0 {
+		return errors.New("contact not found")
+	}
+	tag, err := s.pool.Exec(ctx, `UPDATE crm_contacts SET next_action_by = NULL, updated_at = now() WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("contact not found")
+	}
+	_ = s.InsertCRMEvent(ctx, CRMEvent{ContactID: id, Channel: "desk", Direction: "note", Summary: "Cleared from morning ping"})
 	return nil
 }
 

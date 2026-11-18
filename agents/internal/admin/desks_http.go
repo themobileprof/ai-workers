@@ -30,8 +30,6 @@ func (s *Server) workerFor(desk Desk) PlaceFunc {
 	switch desk.Slug {
 	case "legal":
 		return s.legal
-	case "seo":
-		return s.seo
 	case "hr":
 		return s.hr
 	case "product-dev":
@@ -323,20 +321,6 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		if status == "accepted" {
 			_, _ = s.store.AcceptPlanItems(ctx, actor, workItemsFromPlan(job.Payload["items"]))
 		}
-	case "seo_brief":
-		mapped := "approved"
-		if status == "rejected" {
-			mapped = "rejected"
-		}
-		if status == "accepted" || status == "rejected" {
-			_ = s.store.SetSeoStatus(ctx, job.RefID, mapped)
-		}
-		if status == "accepted" {
-			_ = s.afterSeoApproved(ctx, actor, job.RefID)
-		}
-		if status == "rejected" {
-			s.stopSeoAutomation(ctx, job.RefID)
-		}
 	case "growth_deck":
 		mapped := "approved"
 		if status == "rejected" {
@@ -372,11 +356,10 @@ func (d Desk) Path() string { return "/admin/desks/" + d.Slug }
 
 func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task string, job *DeskJob, thread []JobMessage) contract.Request {
 	data := map[string]any{
-		"channel":        "desk",
-		"department":     desk.Department,
-		"cannot_send":    true,
-		"cannot_hire":    true,
-		"cannot_publish": desk.Slug == "seo",
+		"channel":     "desk",
+		"department":  desk.Department,
+		"cannot_send": true,
+		"cannot_hire": true,
 	}
 	if u != nil {
 		data["actor_id"] = u.ID
@@ -422,6 +405,9 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 	}
 	if desk.Slug == "growth" && s != nil {
 		req = s.EnrichGrowth(rctx, req)
+	}
+	if desk.Slug == "community" && s != nil {
+		req = s.EnrichCommunity(rctx, req)
 	}
 	return req
 }
@@ -488,9 +474,6 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 		if boolVal(sd["save_plan"]) {
 			stampAutoAt(sd, time.Now())
 		}
-	}
-	if dept == "seo" {
-		s.applySeoResponse(ctx, req, resp)
 	}
 	if dept == "files" {
 		s.applyFilesResponse(ctx, req, resp)

@@ -59,7 +59,7 @@ var (
 )
 
 func mustGuideFiles() error {
-	for _, name := range []string{"guide/handbook.md", "guide/faq.md"} {
+	for _, name := range []string{"guide/handbook.md", "guide/faq.md", "guide/onsite-seo.md"} {
 		if _, err := guideFS.ReadFile(name); err != nil {
 			return err
 		}
@@ -276,6 +276,8 @@ func buildGuideContext(in guideInput) (string, []string) {
 	b.WriteString("\n\n# FAQ\n")
 	faqRaw := readGuideFile("faq.md")
 	b.WriteString(faqRaw)
+	b.WriteString("\n\n# Onsite SEO (Cursor in the bet repo)\n")
+	b.WriteString(readGuideFile("onsite-seo.md"))
 	faqHit, n := bestFAQ(in.Question, parseFAQ(faqRaw))
 	if n >= 2 {
 		b.WriteString("\n\n# Closest FAQ\nQ: ")

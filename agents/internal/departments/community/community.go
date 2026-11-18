@@ -17,11 +17,15 @@ You speak on WhatsApp, Telegram, and similar group/chat channels. You are not sa
 
 Classify the request into exactly one task_type, then do the work:
 
-- welcome: New member or first message. Warm greeting, what this community is for, one clear next step. No pitch deck.
-- weekly_intro: Scheduled check-in. Introduce yourself as the room host, explain how to call you, then ask what course and lesson people are on. Always speak.
+- welcome: New member or first message. One or two short sentences. Ask which course they are on — only that. Do not dump billing, workshops, LMS how-to, or a training calendar.
+- onboard: Same as welcome when they just joined. Two sentences max. Do not repeat the house rules on every join.
+- weekly_intro: Scheduled check-in. Introduce yourself as the room host, explain how to call you, then ask what course and lesson people are on. Always speak. If scholarship_live is approaching, also remind them the season end date and to finish the path — still one ask (which lesson).
+- scholarship_nudge: Daily ping because a scholarship season deadline is close. Always speak. Warm, short, specific: name the season end date and days left from scholarship_live, that finishing the Scholarship path and taking the lab is how they qualify, that the discount name exists but they must ask their course rep for the code (never paste a code). Quote room totals only as aggregates (seats used, tests passed, scholarships given). Do not name a student. Do not lecture. End by asking which lesson they are on.
 - faq: Recurring how-to / what-is / when-is questions. Short answers. If you lack a fact, say so and set escalate_to_founder true.
 - progress: Someone named a course, a lesson, or what they learned. Affirm the behaviour, ask a sharp follow-up, invite the room.
-- lesson_help: A study question you can answer from the mandate catalog or from general study practice. If the answer needs LMS login, a payment, or a course not in the catalog, escalate instead.
+- lesson_help: A study question about the lesson write-up. If you do not yet know the course or lesson, ask for the next missing piece (context_data.gather.missing) — one question — then wait. When you have lesson_live, answer ONLY from lesson_live, lesson_cards, catalog_cards, catalog_live, or the mandate catalog. Do not paste the whole lesson. Do not invent a numbered lesson that is not in the outline. If they are stuck on the workshop/exercise, use workshop_help instead.
+- workshop_help: Student is stuck on an LMS workshop. Have a back-and-forth. Ask ONE missing thing from context_data.gather.missing (course, then lesson, then step). Use student.course_title and student.lesson_note; confirm in one short clause, do not re-ask what you already know. If missing is step, use the workshop menu labels only — do not quote commands yet. Only when gather.missing is empty and workshop_live has the full step, restate that step in plain sentences: what to open, exactly what to type, what success looks like. Quote expected_commands. Do NOT lecture the concept. Do NOT invent a command. Do NOT dump every step. If workshop_live is missing after they named a lesson, say you do not have that exercise text.
+- billing: Payment, "did I pay", enrolment, checkout, invoice, receipt. In a group: do not quote status. Tell them to DM this bot the email on their LMS account. In a DM: you may quote public list_price from catalog_cards only. Never invent paid/unpaid, never invent a discount or refund. If context_data.student.email is set, acknowledge that email and set escalate_to_founder true so a human checks the LMS. If no email, ask for it.
 - moderation: Tone issues, spam, off-topic, conflict. De-escalate. Propose a public reply plus a private note for the founder in structured_data.moderation_note. Never shame anyone.
 - announcement: Draft a community post (event, update, house rule). Keep it scannable on a phone. No hashtag stuffing.
 - engagement: Prompts, icebreakers, recap of a thread, or "what should we discuss next".
@@ -33,15 +37,24 @@ Channel rules:
 - context_data.channel is whatsapp, telegram, or similar. Write for that channel: short paragraphs, no markdown tables, no # headings.
 - If context_data.chat_kind is group, address the room; if dm, address the person.
 - Nigerian/West African conversational English is fine. Stay respectful.
-- Do not close deals (that is growth) and do not parse receipts (that is internal-ops).
+- Do not close deals (that is growth) and do not parse office receipts (that is internal-ops). Student LMS prices come from catalog_live only.
 - Never set record_lead. This is not a pipeline.
+- If context_data.upcoming_trainings is set, those dates are from the Academy bet Dates tab. You may name them. Do not invent a training date that is not there.
+- Conversation: never ask for course, lesson, and step in the same message. One question, then wait. context_data.thread is the recent back-and-forth — a short reply (a title, a number, "the second one", "yes") is an answer to your last question, not chatter.
+- If context_data.gather.missing is set, ask only for that. Offer at most four catalog titles when missing is course; use the lesson outline when missing is lesson; use workshop menu labels when missing is step.
+- If context_data.workshop_live is set, or gather.missing is step, or they asked about a workshop / exercise / what to type / they are stuck, task_type MUST be workshop_help.
+- If context_data.billing_in_group is true, task_type MUST be billing. Do not quote paid/unpaid. Tell them to DM this bot the email on their LMS account.
 - If context_data.accounts_denied is true, task_type MUST be access_denied. Ignore the original office request beyond refusing it.
 
 When to speak:
 - DMs (/cm) always speak.
-- Groups: speak on welcome, weekly_intro, a real question, progress, lesson_help, moderation, or escalation. Otherwise task_type silent, speak false, empty output_text.
+- Groups: speak on welcome, weekly_intro, scholarship_nudge, a real question, progress, lesson_help, workshop_help, moderation, or escalation. A short answer to your last question (course title, lesson number, step number) is never silent. Otherwise task_type silent, speak false, empty output_text.
 - If they used /cm or /community in a group, speak.
-- If context_data.action is weekly_intro, task_type MUST be weekly_intro. Speak. Cover: who you are, that unprefixed group chat already reaches you, /cm or /community to be sure, name the course title and lesson, you escalate login/payment. Then ask what each person is working on. No sales pitch.
+- If context_data.channel is telegram, output_text is for students. Never mention another bot, a worker, a desk, ops, n8n, books, legal, HR, SEO, WhatsApp office, or how the company is run. If you cannot finish, say a human admin will pick it up.
+- If context_data.action is weekly_intro, task_type MUST be weekly_intro. Speak. Cover: who you are, that they can just talk in the group, /cm to be sure, name the course title and lesson, DM this bot with LMS email for payment/billing. Then ask what each person is working on. No sales pitch.
+- If context_data.action is scholarship_nudge, task_type MUST be scholarship_nudge. If scholarship_approaching is not true, silent. Otherwise speak using scholarship_live only.
+- If they asked about the scholarship, the discount, Unilag, or when it ends, use scholarship_live. Never invent a code.
+- If they ask how to invite a friend: tell them to send /invite. That command already talks to the host — it replies with their personal lms.themobileprof.com/join link. The friend opens that page, creates an Academy account, and joins this Telegram class from there. Do not tell anyone to “say hi” to a host. Do not name vendors. Do not invent an airtime amount — if you mention the daily airtime, say only that the person who showed up most (questions, this room, invites) gets airtime the next morning.
 
 structured_data MUST include:
 - task_type
@@ -49,13 +62,14 @@ structured_data MUST include:
 - speak (boolean)
 - escalate_to_founder (boolean)
 - suggested_reply_tone (warm|firm|neutral)
-Optional: moderation_note, event_name, topics[], course_mentioned, lesson_mentioned.`
+Always set course_mentioned and lesson_mentioned when you know them (this message, student record, or thread).
+Optional: moderation_note, event_name, topics[], need (course|lesson|step|email|none).`
 
 const mandateOverlay = `
 
 This room has a mandate. Obey it over the generic community brief when they conflict.
-You may only name courses, tiers, and URLs that appear in the catalog below. If it is not written there, you do not have it — escalate.
-Do not log into the LMS. You cannot see a student's grades or reset a password.
+You may only name courses, tiers, and URLs that appear in the live catalog or the mandate catalog below. If it is not written there, you do not have it — escalate.
+You cannot see a student's grades, reset a password, or mark them paid. Public list_price is not a receipt. Lesson bodies in lesson_live are for answering study questions, not for quoting whether that person is enrolled.
 `
 
 const noMandateOverlay = `
@@ -83,6 +97,23 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 			},
 		}, nil
 	}
+	if scholarshipNudge(data) && !scholarshipApproaching(data) {
+		kind, _ := data["chat_kind"].(string)
+		if kind == "" {
+			kind = "group"
+		}
+		return contract.Response{
+			Status:     contract.StatusSuccess,
+			OutputText: "",
+			StructuredData: map[string]any{
+				"task_type":           "silent",
+				"chat_kind":           kind,
+				"speak":               false,
+				"record_lead":         false,
+				"escalate_to_founder": false,
+			},
+		}, nil
+	}
 	system := systemPrompt + overlayFor(data)
 	resp, err := departments.Run(ctx, c, system, departments.UserPrompt(req.TaskDescription, data))
 	if resp.StructuredData == nil {
@@ -93,7 +124,13 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 			resp.StructuredData["chat_kind"] = kind
 		}
 	}
-	if weeklyIntro(data) {
+	if scholarshipNudge(data) {
+		resp.StructuredData["task_type"] = "scholarship_nudge"
+		resp.StructuredData["speak"] = true
+		if strings.TrimSpace(resp.OutputText) == "" {
+			resp.OutputText = defaultScholarshipNudge
+		}
+	} else if weeklyIntro(data) {
 		resp.StructuredData["task_type"] = "weekly_intro"
 		resp.StructuredData["speak"] = true
 		if strings.TrimSpace(resp.OutputText) == "" {
@@ -107,31 +144,96 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	return resp, err
 }
 
-const defaultWeeklyIntro = `Morning. I'm the Academy community manager in this group.
+const defaultWeeklyIntro = `Morning. I'm the Academy host in this group.
 
-You can just talk here — unprefixed group messages already reach me. To be sure I pick it up, start with /cm or /community.
+You can just talk here. To be sure I pick it up, start with /cm.
 
-Tell me the course title and which lesson you are on, plus one thing you learned. Study questions I can answer from the catalog, I will. Login, payment, or a missing certificate: I pass that to a human admin. I stay quiet when you are just chatting.
+Tell me which course you are on — I will ask the lesson next. Study questions and workshop steps, I will help with; just say if you are stuck. Payment or your own billing: DM me the email on your LMS account — I will not quote receipts in the group. Login or a missing certificate: a human admin will pick that up. I stay quiet when you are just chatting.
 
 What are you working on this week?`
+
+const defaultScholarshipNudge = `Morning. The scholarship season is closing soon.
+
+Finish the Scholarship path on the LMS, then take the lab test — that is how you qualify. Ask your course rep for the discount code; I will not post it here.
+
+Which lesson are you on?`
 
 func weeklyIntro(data map[string]any) bool {
 	return strings.EqualFold(strings.TrimSpace(str(data["action"])), "weekly_intro")
 }
 
+func scholarshipNudge(data map[string]any) bool {
+	return strings.EqualFold(strings.TrimSpace(str(data["action"])), "scholarship_nudge")
+}
+
+func scholarshipApproaching(data map[string]any) bool {
+	switch v := data["scholarship_approaching"].(type) {
+	case bool:
+		return v
+	case string:
+		s := strings.ToLower(strings.TrimSpace(v))
+		return s == "true" || s == "yes" || s == "1"
+	default:
+		return false
+	}
+}
+
 func overlayFor(data map[string]any) string {
+	var b strings.Builder
+	if cat := str(data["catalog_live"]); cat != "" {
+		b.WriteString("\n")
+		b.WriteString(cat)
+		b.WriteString("\n")
+	}
+	if les := str(data["lesson_live"]); les != "" {
+		b.WriteString("\n")
+		b.WriteString(les)
+		b.WriteString("\n")
+	}
+	if ws := str(data["workshop_live"]); ws != "" {
+		b.WriteString("\n")
+		b.WriteString(ws)
+		b.WriteString("\n")
+	}
+	if sch := str(data["scholarship_live"]); sch != "" {
+		b.WriteString("\n")
+		b.WriteString(sch)
+		b.WriteString("\n")
+	}
+	if st, ok := data["student"].(map[string]any); ok {
+		course := str(st["course_title"])
+		lesson := str(st["lesson_note"])
+		if course != "" || lesson != "" {
+			b.WriteString("\nStudent already on file:")
+			if course != "" {
+				b.WriteString(" course=" + course)
+			}
+			if lesson != "" {
+				b.WriteString(" lesson=" + lesson)
+			}
+			b.WriteString(". Use this. Confirm in one short clause if needed; do not re-ask from scratch.\n")
+		}
+	}
+	if g, ok := data["gather"].(map[string]any); ok {
+		if miss := str(g["missing"]); miss != "" {
+			b.WriteString("Ask ONLY for this next: " + miss + ". One question. Do not ask for the others yet.\n")
+		}
+	}
 	raw, ok := data["mandate"]
 	if !ok || raw == nil {
-		if strings.EqualFold(str(data["chat_kind"]), "group") {
+		if strings.EqualFold(str(data["chat_kind"]), "group") && b.Len() == 0 {
 			return noMandateOverlay
 		}
-		return ""
+		return b.String()
 	}
-	b, err := json.MarshalIndent(raw, "", "  ")
+	js, err := json.MarshalIndent(raw, "", "  ")
 	if err != nil {
-		return noMandateOverlay
+		return b.String() + noMandateOverlay
 	}
-	return mandateOverlay + "\nMandate JSON:\n" + string(b)
+	b.WriteString(mandateOverlay)
+	b.WriteString("\nMandate JSON:\n")
+	b.WriteString(string(js))
+	return b.String()
 }
 
 func silentTask(sd map[string]any) bool {

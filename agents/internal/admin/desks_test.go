@@ -22,8 +22,8 @@ func TestAllDesksUnique(t *testing.T) {
 	if _, ok := LookupDesk("hr"); ok {
 		t.Fatal("hr desk removed")
 	}
-	if _, ok := LookupDesk("seo"); !ok {
-		t.Fatal("seo")
+	if _, ok := LookupDesk("seo"); ok {
+		t.Fatal("seo desk removed")
 	}
 	cm, ok := LookupDesk("community")
 	if !ok || cm.BookPath != "/admin/community" {
@@ -169,8 +169,8 @@ func TestShouldFileInboundJob(t *testing.T) {
 	if !shouldFileInboundJob("legal", map[string]any{"channel": "telegram"}, map[string]any{}) {
 		t.Fatal("telegram legal")
 	}
-	if !shouldFileInboundJob("seo", map[string]any{"channel": "whatsapp"}, map[string]any{"save_brief": true}) {
-		t.Fatal("seo inbound")
+	if shouldFileInboundJob("seo", map[string]any{"channel": "whatsapp"}, map[string]any{"save_brief": true}) {
+		t.Fatal("seo worker is gone")
 	}
 	if shouldFileInboundJob("delivery", map[string]any{"channel": "whatsapp"}, map[string]any{"task_type": "today"}) {
 		t.Fatal("delivery ping without save_plan")

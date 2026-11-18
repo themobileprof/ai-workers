@@ -65,13 +65,13 @@ func parseGa4Snapshot(body map[string]any) (map[string]any, error) {
 		return nil, errors.New("property_id required")
 	}
 	out := map[string]any{
-		"source":            src,
-		"property_id":       pid,
-		"range":             firstNonEmpty(strVal(body["range"]), "28daysAgo:yesterday"),
-		"sessions":          jsonFloat(body["sessions"]),
-		"organic_sessions":  jsonFloat(body["organic_sessions"]),
-		"channels":          parseGa4Channels(body["channels"]),
-		"landing_pages":     parseGa4Landings(body["landing_pages"]),
+		"source":           src,
+		"property_id":      pid,
+		"range":            firstNonEmpty(strVal(body["range"]), "28daysAgo:yesterday"),
+		"sessions":         jsonFloat(body["sessions"]),
+		"organic_sessions": jsonFloat(body["organic_sessions"]),
+		"channels":         parseGa4Channels(body["channels"]),
+		"landing_pages":    parseGa4Landings(body["landing_pages"]),
 	}
 	if ts := strings.TrimSpace(strVal(body["fetched_at"])); ts != "" {
 		if _, err := time.Parse(time.RFC3339, ts); err == nil {
@@ -97,10 +97,10 @@ func parseGa4Channels(v any) []map[string]any {
 			continue
 		}
 		out = append(out, map[string]any{
-			"name":              name,
-			"sessions":          jsonFloat(m["sessions"]),
-			"engaged_sessions":  jsonFloat(m["engaged_sessions"]),
-			"bounce_rate":       jsonFloat(m["bounce_rate"]),
+			"name":             name,
+			"sessions":         jsonFloat(m["sessions"]),
+			"engaged_sessions": jsonFloat(m["engaged_sessions"]),
+			"bounce_rate":      jsonFloat(m["bounce_rate"]),
 		})
 		if len(out) >= ga4SnapshotCap {
 			break
@@ -125,9 +125,9 @@ func parseGa4Landings(v any) []map[string]any {
 			path = path[:500]
 		}
 		out = append(out, map[string]any{
-			"path":             path,
-			"sessions":         jsonFloat(m["sessions"]),
-			"engagement_rate":  jsonFloat(m["engagement_rate"]),
+			"path":            path,
+			"sessions":        jsonFloat(m["sessions"]),
+			"engagement_rate": jsonFloat(m["engagement_rate"]),
 		})
 		if len(out) >= ga4SnapshotCap {
 			break

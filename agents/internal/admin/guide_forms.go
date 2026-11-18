@@ -6,7 +6,6 @@ import (
 
 	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/departments/legal"
-	"github.com/samuel/ai-workers/agents/internal/departments/seo"
 )
 
 // formRecipe is one page form Help? can fill. Submit posts the same action as the HTML form.
@@ -45,10 +44,6 @@ func formCatalog() []formRecipe {
 	legalTpl := []string{""}
 	for _, s := range legal.Specs() {
 		legalTpl = append(legalTpl, s.ID+"|"+s.Label)
-	}
-	seoActs := []string{}
-	for _, s := range seo.Specs() {
-		seoActs = append(seoActs, s.ID+"|"+s.Label)
 	}
 	deckActs := []string{}
 	for _, s := range growth.Specs() {
@@ -113,7 +108,7 @@ func formCatalog() []formRecipe {
 				{Name: "role", Label: "Role", Prompt: "Office seat: cofounder, assistant, bdm, or owner. Skip for cofounder.", Kind: "select", Default: "cofounder", Options: roles},
 				{Name: "hours_per_week", Label: "Hours / week", Prompt: "Hours per week Delivery may give them. Skip for 6.", Kind: "number", Default: "6"},
 				{Name: "password", Label: "Password", Prompt: "A login they will remember — skip if they only work in the field with no desk tick.", Kind: "secret"},
-				{Name: "desk", Label: "Desks", Prompt: "Desks to tick (comma list: legal, seo, delivery…). Skip if they have no login.", Kind: "multi", Multi: true, Options: deskOpts},
+				{Name: "desk", Label: "Desks", Prompt: "Desks to tick (comma list: legal, delivery…). Skip if they have no login.", Kind: "multi", Multi: true, Options: deskOpts},
 			},
 		},
 		{
@@ -152,19 +147,6 @@ func formCatalog() []formRecipe {
 			},
 		},
 		{
-			ID: "ask_seo", Title: "Ask SEO", Button: "Ask SEO",
-			Action: "/admin/projects/{project_id}/seo", Href: "/admin/projects/{project_id}?tab=seo",
-			Desk: "seo", NeedProject: true,
-			Use: "Ask SEO to fetch a live URL. Walk is facts, then FAQ, then schema, then onsite pack, then offsite. The visible page is the source of truth. Ask issues a markdown pack for Cursor. Offsite items file a Delivery plan that writes after the delay unless you Turn away. Does not publish the live site or invent ChatGPT citations.",
-			Fields: []formField{
-				{Name: "project_id", Label: "Project", Prompt: "Which project’s page?", Kind: "project", Required: true, PathOnly: true},
-				{Name: "action", Label: "Kind", Prompt: "Kind: next walk step, quotable facts, FAQ, schema, onsite pack, offsite, or skip to inventory/audit. Skip for the next walk step.", Kind: "select", Default: "walk", Options: append([]string{"walk|Next walk step"}, seoActs...)},
-				{Name: "url", Label: "URL", Prompt: "Live page URL. Skip to use the Card URL. The clerk fetches it.", Kind: "text"},
-				{Name: "keyword", Label: "Keyword", Prompt: "Keyword if you already know it. Skip if none. Do not invent volume.", Kind: "text"},
-				{Name: "human_feedback", Label: "Notes", Prompt: "Optional notes. Do not paste the whole page — the clerk fetches.", Kind: "textarea"},
-			},
-		},
-		{
 			ID: "ask_deck", Title: "Ask a pitch deck", Button: "Ask Growth",
 			Action: "/admin/projects/{project_id}/deck", Href: "/admin/projects/{project_id}?tab=deck",
 			Desk: "growth", NeedProject: true,
@@ -191,7 +173,7 @@ func formCatalog() []formRecipe {
 			Action: "/admin/desks/{desk}/ask", Href: "/admin/desks/{desk}",
 			Use: "Ask a handler worker (accounts, growth, legal…) to start a proposed job. Does not Accept.",
 			Fields: []formField{
-				{Name: "desk", Label: "Worker", Prompt: "Which worker? accounts, growth, community, crm, legal, seo, delivery, internal-ops, product-dev.", Kind: "desk", Required: true, PathOnly: true, Options: deskOpts},
+				{Name: "desk", Label: "Worker", Prompt: "Which worker? accounts, growth, community, crm, legal, delivery, internal-ops, product-dev.", Kind: "desk", Required: true, PathOnly: true, Options: deskOpts},
 				{Name: "task", Label: "Task", Prompt: "What should this worker draft or flag? One or two sentences.", Kind: "textarea", Required: true},
 			},
 		},
@@ -221,6 +203,15 @@ func formCatalog() []formRecipe {
 				{Name: "channel", Label: "Channel", Prompt: "call, whatsapp, email, or note.", Kind: "select", Default: "call", Options: []string{"call", "whatsapp", "email", "desk"}},
 				{Name: "direction", Label: "Direction", Prompt: "they reached us (in), we reached them (out), or a note.", Kind: "select", Default: "in", Options: []string{"in", "out", "note"}},
 				{Name: "body", Label: "What happened", Prompt: "What was said. This is a record, not a message to send.", Kind: "textarea", Required: true},
+				{Name: "clear_due", Label: "Take off 08:30 ping", Prompt: "yes to leave the morning card, or no to keep the due date.", Kind: "check", Default: "on"},
+			},
+		},
+		{
+			ID: "clear_crm_due", Title: "CRM due done", Button: "Due done",
+			Action: "/admin/crm/{contact_id}/clear-due", Href: "/admin/crm/{contact_id}",
+			Use: "Take a person off the 08:30 CRM due card without changing stage. Same as Office → CRM → the person → Due done.",
+			Fields: []formField{
+				{Name: "contact_id", Label: "Person", Prompt: "Which CRM contact id? Open the person on Office → CRM if you do not know.", Kind: "text", Required: true, PathOnly: true},
 			},
 		},
 		{
@@ -260,7 +251,7 @@ func formCatalog() []formRecipe {
 				{Name: "catalog", Label: "Catalog", Prompt: "Courses this room may name. If a course is missing here, the worker must ask you.", Kind: "textarea", Required: true},
 				{Name: "slug", Label: "Slug", Prompt: "Slug. Skip to infer.", Kind: "text"},
 				{Name: "site_url", Label: "Site", Prompt: "Site URL if this room has one.", Kind: "text"},
-				{Name: "telegram_chat_id", Label: "Telegram chat id", Prompt: "Telegram chat id from an Academy Telegram execution. Skip if you will paste it later.", Kind: "text"},
+				{Name: "telegram_chat_id", Label: "Telegram chat id", Prompt: "Telegram chat id. Skip for the lms mandate — join binds it.", Kind: "text"},
 				{Name: "whatsapp_group_id", Label: "WhatsApp group id", Prompt: "WhatsApp group id — usually skip (Cloud API cannot join ordinary groups).", Kind: "text"},
 				{Name: "active", Label: "Live", Prompt: "On or paused? Skip for On.", Kind: "select", Default: "true", Options: []string{"true|On", "false|Paused"}},
 			},

@@ -64,6 +64,23 @@ func crmLookupQuery(raw string) string {
 	return s
 }
 
+func crmClearDueQuery(raw string) (string, bool) {
+	s := strings.TrimSpace(raw)
+	s = strings.TrimPrefix(s, "/crm")
+	s = strings.TrimSpace(s)
+	lower := strings.ToLower(s)
+	for _, p := range []string{"due done ", "clear due ", "clear-due ", "done "} {
+		if strings.HasPrefix(lower, p) {
+			return strings.Trim(strings.TrimSpace(s[len(p):]), ".?! "), true
+		}
+	}
+	switch lower {
+	case "done", "due done", "clear due", "clear-due":
+		return "", true
+	}
+	return "", false
+}
+
 func likeContains(q string) string {
 	q = strings.ReplaceAll(q, `\`, `\\`)
 	q = strings.ReplaceAll(q, `%`, `\%`)
@@ -121,7 +138,7 @@ func crmDueText(contacts []CRMContact, today time.Time) string {
 		b.WriteString(strconv.Itoa(len(contacts) - capN))
 		b.WriteString(" more on Office → CRM")
 	}
-	b.WriteString("\n\nThis does not message the customer. Open the person, Log after you act, or /crm follow up Apex.")
+	b.WriteString("\n\nThis does not message the customer. Tap Due done on the person, or /crm done Apex, to leave this card.")
 	text := b.String()
 	if len(text) > 3900 {
 		text = text[:3890] + "…"
