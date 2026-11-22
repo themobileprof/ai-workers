@@ -1,0 +1,19 @@
+---
+description: Write office docs and desk copy in complete sentences, not telegraphic fragments.
+globs: "{HOW_YOU_RUN.md,OFFICE.md,README.md,CURSOR_INSTRUCTIONS.md,CHANNEL_SETUP.md,TOOLS.md,agents/internal/admin/playbook/*.html,agents/internal/admin/guide/*.md}"
+alwaysApply: true
+---
+
+# Complete sentences in docs
+
+Office manuals, playbooks, FAQ, handbook, README, and desk Help copy use **full descriptive sentences**. A reader who has never seen the stack should understand a paragraph without decoding shorthand.
+
+Do **not** stack three clipped clauses. Connect who, what, and where.
+
+```
+Bad: WhatsApp 1:1 is sales. Every phone files CRM. Ops /growth is copy, a pitch session, or Search ads — not spend.
+
+Good: A customer WhatsApp 1:1 is a sales conversation. When the message includes a phone number, the desk files that person on Office → CRM. On ops Telegram, `/growth` drafts social copy, walks a pitch deck, or drafts Search ads; it still cannot spend.
+```
+
+Lists and tables are fine. Each cell or bullet still reads as a sentence (subject and verb), not a label farm (`Pitch: project → Deck`). Commands, paths, and field names stay in backticks. Keep facts; do not invent a warmer tone that hides a constraint.

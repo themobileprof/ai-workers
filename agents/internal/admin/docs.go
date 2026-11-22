@@ -63,7 +63,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Desk · ops Telegram · clocks",
 		Wire:     "live",
-		Summary:  "What to click for each worker: Accept vs Place vs Cursor. Lagos clocks. Ads, TRAFFIC.md, Community airtime, Books. Chat never Accepts.",
+		Summary:  "How to run each worker in complete sentences: when to Accept, when to Place, when to use Cursor, Lagos clocks, TRAFFIC.md, Community airtime, and Books. Chat never Accepts.",
 		Prefixes: []string{"Accept", "Place", "TRAFFIC.md", "ops Telegram"},
 	},
 	{

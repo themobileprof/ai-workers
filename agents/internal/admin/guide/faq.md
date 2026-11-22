@@ -4,7 +4,7 @@ Durable answers. Add a `##` question when real people ask something this file do
 
 ## Where is the full how-to for these workers?
 
-Docs → **How you run this office** (`/admin/docs/howto`). Same map in the repo: `HOW_YOU_RUN.md`. Seat sheets stay under How you fit. Help? never Accepts.
+Open Docs → **How you run this office** (`/admin/docs/howto`). That sheet walks each worker in complete sentences: when to Accept, when to Place, and when to use Cursor. The same map in the repo is `HOW_YOU_RUN.md`. Seat sheets stay under How you fit. Help? can fill a form; it never Accepts.
 
 ## How do I start or run a project?
 

@@ -1,94 +1,94 @@
-<p class="lede">Operator manual for this office. Workers propose. You click <strong>Accept</strong>. Chat never Accepts, never Places, never sends. Seat sheets stay on <a href="/admin/docs/you">How you fit</a>. JSON specimens stay on each worker sheet. Same map in git: <code>HOW_YOU_RUN.md</code>.</p>
+<p class="lede">This is the operator manual for the signed-in desk. Workers propose; you click <strong>Accept</strong>. Chat never Accepts, never Places an ad, and never sends mail or WhatsApp on its own. Seat sheets stay on <a href="/admin/docs/you">How you fit</a>. JSON specimens sit on each worker sheet. The same map in git is <code>HOW_YOU_RUN.md</code>.</p>
 
 <ol class="steps">
   <li>Sign in on the desk. Owner and BDM land on Board. Everyone else lands on the desks ticked on their People card.</li>
-  <li>Ask or send ops Telegram (prefix, or plain text — the bot picks one desk). The worker proposes.</li>
-  <li>Accept or Turn away on the desk. <code>/approve</code> only sends a pending info@ draft. It is not Accept.</li>
+  <li>Ask on the desk, or send ops Telegram with a prefix, or send plain 1:1 text so the bot picks one desk. The worker proposes.</li>
+  <li>Accept or Turn away on the desk. <code>/approve</code> only sends a pending info@ draft. That command is not Accept.</li>
 </ol>
 
 <h3>Four doors</h3>
 <div class="channels" aria-label="Channels">
   <div class="channel">
     <strong>Desk</strong>
-    <p><code>/admin/</code>. Accept, Place, Cards, Defaults. Help? (bottom right) fills the same form as the page. It never Accepts.</p>
+    <p>The website at <code>/admin/</code> is where you Accept jobs, Place ads, edit Cards, and amend Defaults. Help? at the bottom right fills the same form as the page you are on; it never Accepts.</p>
   </div>
   <div class="channel">
     <strong>Ops Telegram</strong>
-    <p>Staff bot. Prefixes follow the People card. Plain 1:1 picks one desk. Customer WhatsApp cannot run office prefixes.</p>
+    <p>This is the staff bot. Prefixes follow the desks ticked on your People card. Plain 1:1 text lets the bot pick one desk and do that work in the chat. Customer WhatsApp cannot run those office prefixes.</p>
   </div>
   <div class="channel">
     <strong>Customer WhatsApp</strong>
-    <p>Sales 1:1. Files CRM when there is a phone. Not a class group. Not Books, Legal, or Delivery.</p>
+    <p>A 1:1 chat is a sales conversation. When the message includes a phone number, the desk files that person on Office → CRM. This number is not a class group and cannot run Books, Legal, or Delivery.</p>
   </div>
   <div class="channel">
     <strong>Academy Telegram</strong>
-    <p>Student rooms. Community host. Do not add the ops bot to class.</p>
+    <p>Student rooms use the Community host only. Do not add the ops bot to class.</p>
   </div>
 </div>
 
 <h3>Lagos clocks</h3>
 <ol class="recipe">
-  <li>06:00–06:10 — organic GA4 and Search Console last 28 days (Defaults → Traffic). Quote only those snapshots.</li>
-  <li>06:20 — paid GA4 last 7 days + funnel on the Growth book. A proposed <strong>Paid traffic glance</strong> job if there were paid sessions. It does not Place.</li>
-  <li>07:00 — ads prune. After a full week: pause cells that spent with 0 clicks; turn off wasted dayparts. Conversions wait two weeks, 5+ clicks, and only if tracking already fired.</li>
-  <li>08:30 — ops Telegram: today’s tasks, Coming up, CRM due (owner/BDM).</li>
-  <li>09:30 — Academy check-in. 16:00 — ₦500 airtime even when nobody earned it. Monday 09:00 intro when the bet’s stage allows pings.</li>
+  <li>At 06:00 and 06:10, n8n pulls organic GA4 and Search Console for the last 28 days onto Defaults → Traffic. Quote only those snapshots.</li>
+  <li>At 06:20, paid GA4 for the last 7 days and the funnel land on the Growth book. If there were paid sessions, Go files one proposed <strong>Paid traffic glance</strong> job for that Lagos day. The glance does not Place.</li>
+  <li>At 07:00, ads prune runs. After a campaign has run a full week, it pauses a cell that spent with 0 clicks and turns off wasted Lagos dayparts. Conversions wait two weeks, at least 5 clicks, and tracking that already fired.</li>
+  <li>At 08:30, ops Telegram lists today’s Delivery tasks, Coming up dates, and (for owner and BDM) CRM due rows.</li>
+  <li>At 09:30 the Academy host checks in. At 16:00 it sends ₦500 even when nobody earned it. Monday 09:00 is the intro, when the linked bet’s stage allows pings.</li>
 </ol>
-<p class="hint">Campaigns start PAUSED unless Defaults → Ads says ENABLED. ClubKonnect keys stay in the VM <code>.env</code>.</p>
+<p class="hint">New campaigns start PAUSED unless you set ENABLED on Defaults → Ads. ClubKonnect keys stay in the VM <code>.env</code>.</p>
 
 <h3>Run a bet</h3>
 <ol class="steps">
-  <li>Projects → the bet → <strong>Run</strong>. Same kit every time: Card, Face, Decide, Dates, Work.</li>
-  <li>Card holds who pays, this week, public URL, GitHub repo, and the Funnel line from <code>TRAFFIC.md</code>.</li>
-  <li>Ask placement, then Accept on <strong>Decide</strong> to write the stage. Chat never stamps GO / PIVOT / KILL.</li>
-  <li><code>/validate</code> proposes hypothesis, mission, evidence. Accept on Product writes the Card. Decide still writes the stage.</li>
+  <li>Open Projects, then the bet, then the <strong>Run</strong> tab. Every bet uses the same kit: Card, Face, Decide, Dates, then Work.</li>
+  <li>The Card holds who pays, this week’s line, the public URL, the GitHub repo, and the Funnel line copied from <code>TRAFFIC.md</code>.</li>
+  <li>Ask placement, then Accept on <strong>Decide</strong> to write the stage. Chat never stamps GO, PIVOT, or KILL.</li>
+  <li><code>/validate</code> can propose a hypothesis, mission, and evidence. Accept on Product writes those fields onto the Card. Accept on Decide is still what writes the stage.</li>
 </ol>
 
-<h3>Growth — sales, pitch, ads</h3>
+<h3>Growth — sales, pitch, and ads</h3>
 <ol class="steps">
-  <li>WhatsApp 1:1 is sales. Every phone files CRM. Ops <code>/growth</code> is copy, a pitch session, or Search ads — not spend.</li>
-  <li>Pitch: project → Deck → Start session. Ten Kawasaki slides from the Card. Accept on <a href="/admin/growth">Growth</a>. You paste into Slides. <code>/file</code> the PDF under <strong>product</strong>.</li>
-  <li>Ads: public URL on the Card. Project → Ads → six steps (URL, geo/keyword cells, keywords, headlines ≤30, descriptions ≤90, Pexels). Cells are named places + themes already on the Card — not age or gender. Go drops a city that is not on the Card.</li>
-  <li>Accept, then <strong>Place</strong> on Google Search or Meta. Chat never Places. Probe is platform-minimum daily, never remaining/90, exact match, Google Search only. UTM campaign is the bet slug.</li>
-  <li>Evaluate: Growth book GA4, or <code>/growth How are the HomeGauge ads doing in GA4?</code>, or the morning glance job. Funnel events must already fire (Card / <code>TRAFFIC.md</code>). Do not invent <code>generate_lead</code>.</li>
+  <li>A customer WhatsApp 1:1 is a sales conversation. When the message includes a phone number, the desk files that person on Office → CRM. On ops Telegram, <code>/growth</code> drafts social copy, walks a pitch deck, or drafts Search ads; it still cannot spend.</li>
+  <li>For a pitch, open the project → Deck → Start session. Chat Guy Kawasaki’s ten slides from the Card. Accept on <a href="/admin/growth">Growth</a>, paste the markdown into Slides yourself, and <code>/file</code> the PDF under <strong>product</strong>.</li>
+  <li>For ads, put a public URL on the Card first. Open Ads and walk the six steps (final URL, geo and keyword cells, keywords, headlines ≤30 characters, descriptions ≤90, then Pexels queries). Cells are named places plus themes already on the Card, not age or gender. Go drops a city that is not on the Card.</li>
+  <li>Accept, then click <strong>Place</strong> on Google Search or Meta. Chat never Places. Place is a cheap probe at the platform-minimum daily budget, never more than remaining funds divided by 90, exact match only, Google Search only. The campaign name and <code>utm_campaign</code> are the bet slug.</li>
+  <li>To evaluate without spending, read the GA4 block on the Growth book, ask <code>/growth How are the HomeGauge ads doing in GA4?</code>, or open the morning glance job. Funnel events must already fire on the site (Card / <code>TRAFFIC.md</code>). Do not invent <code>generate_lead</code>.</li>
 </ol>
-<p class="hint">n8n holds Ads tokens. Ids on <a href="/admin/settings?tab=ads">Defaults → Ads</a>. <code>GOOGLE_ADS_DEVELOPER_TOKEN</code> in <code>.env</code> for n8n. Search Pexels yourself.</p>
+<p class="hint">n8n holds the Ads tokens. Account ids live on <a href="/admin/settings?tab=ads">Defaults → Ads</a>. <code>GOOGLE_ADS_DEVELOPER_TOKEN</code> stays in <code>.env</code> for n8n. Search the Pexels phrases yourself.</p>
 
 <h3>SEO and funnels — Cursor in the bet repo</h3>
 <ol class="steps">
-  <li>There is no SEO worker. Put URL + GitHub repo on Card. Open that repo in Cursor.</li>
-  <li>Copy <code>.cursor/rules/onsite-seo.mdc</code> and <code>traffic.mdc</code>. Copy <code>TRAFFIC.md</code> to the repo root (office skeleton: <code>guide/TRAFFIC.md</code>).</li>
-  <li>Keep <code>TRAFFIC.md</code> in the same diff as a new page or <code>gtag</code> event. Paste the Funnel line onto Card (SEO tab has the same field).</li>
-  <li>Walk cite → FAQ → schema → title/meta from the designed page. Offsite listings are Delivery tasks. This office does not push PRs.</li>
+  <li>There is no SEO worker. Put the public URL and GitHub repo on the Card, then open that repo in Cursor.</li>
+  <li>Copy <code>.cursor/rules/onsite-seo.mdc</code> and <code>traffic.mdc</code> from this office if they are missing. Copy <code>TRAFFIC.md</code> to the repo root (the office skeleton is <code>guide/TRAFFIC.md</code>).</li>
+  <li>Keep <code>TRAFFIC.md</code> in the same git diff as a new page or a new <code>gtag</code> event. Paste the Funnel line onto the Card (the SEO tab has the same field).</li>
+  <li>Walk cite → FAQ → schema → title and meta from the designed page. Offsite listings you already have belong on Delivery as ordinary tasks. This office does not push pull requests.</li>
 </ol>
 <p class="hint"><a href="/admin/docs/seo">SEO sheet</a> · <a href="/admin/settings?tab=seo">Search Console / GA4 ids</a></p>
 
-<h3>Community, CRM, Books, Legal, Delivery, Files</h3>
+<h3>Community, CRM, Books, Legal, Delivery, and Files</h3>
 <ol class="recipe">
-  <li><strong>Community</strong> — one mandate per Academy Telegram room. Students DM the Academy bot their LMS email. 16:00 ₦500 even when nobody earned it. Campus weeks are Dates, not Community.</li>
-  <li><strong>CRM</strong> — Office → CRM. WhatsApp, info@, <code>/crm</code>. It does not send. Books contact when there is an email or once qualified+.</li>
-  <li><strong>Accounts</strong> — ops <code>/accounts</code> with a receipt. n8n posts to Books. Go never computes VAT. Customer WhatsApp cannot book.</li>
-  <li><strong>Legal</strong> — Ask draft on the bet, Accept on Legal, copy the text. Watch flags labour/CAC/NDPR after another desk answers. It cannot email the other party.</li>
-  <li><strong>Delivery</strong> — week board. Stage caps open tasks. Fathom notes are a proposed plan. 08:30 ping is tasks + Coming up + CRM due.</li>
-  <li><strong>Files</strong> — ops <code>/file</code>. Catalog match files itself. Odd paths wait for Accept. Office papers use slug <code>themobileprof</code>.</li>
+  <li><strong>Community.</strong> Create one mandate per Academy Telegram room. Students DM the Academy bot the email on their LMS account. At 16:00 Lagos the host sends ₦500 even when nobody earned it. Campus weeks belong on Dates, not on Community.</li>
+  <li><strong>CRM.</strong> Office → CRM is the conversion book. WhatsApp, info@, and <code>/crm</code> file a timeline on the person. The clerk does not send. n8n upserts a Books contact when there is an email, or once the stage is qualified or later.</li>
+  <li><strong>Accounts.</strong> On ops Telegram send a receipt with <code>/accounts</code>. n8n posts the Zoho document. Go never computes VAT. Customer WhatsApp cannot book this.</li>
+  <li><strong>Legal.</strong> Ask a draft on the bet, Accept on Legal, and copy the text yourself. Watch flags labour, CAC, or NDPR after another desk answers. The clerk cannot email the other party.</li>
+  <li><strong>Delivery.</strong> This is the week board. The project’s stage caps how many tasks may be open. Fathom notes arrive as a proposed plan. The 08:30 ping lists tasks, Coming up, and CRM due.</li>
+  <li><strong>Files.</strong> On ops Telegram send <code>/file</code> or drop a PDF. A catalog match files itself. Odd paths wait for Accept. Office papers use the slug <code>themobileprof</code>.</li>
 </ol>
 
-<h3>Defaults vs secrets</h3>
-<p>Ids (Zoho, Ads customer, GA4 property, Drive) live on <a href="/admin/settings">Defaults</a>. OAuth, developer token, ClubKonnect, and the GA4 JSON key stay in n8n or the VM <code>.env</code>. Saving one tab does not wipe the others.</p>
+<h3>Defaults versus secrets</h3>
+<p>Ids (Zoho, Ads customer, GA4 property, Drive) live on <a href="/admin/settings">Defaults</a>. OAuth tokens, the Ads developer token, ClubKonnect keys, and the GA4 JSON key stay in n8n or the VM <code>.env</code>. Saving one tab does not wipe the others.</p>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · ads without spending from chat</p>
-  <p class="you-say">HomeGauge → Ads → walk the six steps → Accept on Growth → Place Google Search.</p>
-  <p class="expect">Pack on the Growth book. Place is n8n at the platform minimum, campaign named <code>homegauge</code>, UTM on the landing URL. Chat still cannot_spend. 07:00 prune waits a week. 06:20 GA4 may file a glance job. You decide whether to Place again or leave PAUSED.</p>
+  <p class="you-say">On HomeGauge, open Ads, walk the six steps, Accept on Growth, then Place Google Search.</p>
+  <p class="expect">The pack lands on the Growth book. Place runs in n8n at the platform-minimum daily budget, names the campaign <code>homegauge</code>, and stamps UTM on the landing URL. Chat still cannot spend. Prune at 07:00 waits a full week. The 06:20 GA4 pull may file a glance job. You decide whether to Place again or leave the campaign PAUSED.</p>
 </section>
 
 <section class="specimen">
-  <p class="spec-no">Specimen 02 · site + funnel while Cursor builds</p>
-  <p class="you-say">Copy <code>TRAFFIC.md</code> into <code>themobileprof/homegauge</code>. Add a waitlist event in the same diff. Paste <code>Session:session_start, Landing:page_view, Waitlist:/waitlist</code> on Card.</p>
-  <p class="expect">Growth will not invent <code>generate_lead</code>. Ads keywords stay words already on the Card. Humans review the git diff. This office does not push.</p>
+  <p class="spec-no">Specimen 02 · site and funnel while Cursor builds</p>
+  <p class="you-say">Copy <code>TRAFFIC.md</code> into <code>themobileprof/homegauge</code>. Add a waitlist event in the same diff. Paste <code>Session:session_start, Landing:page_view, Waitlist:/waitlist</code> onto the Card.</p>
+  <p class="expect">Growth will not invent <code>generate_lead</code>. Ads keywords stay words already on the Card. A human reviews the git diff. This office does not push.</p>
 </section>
 
 <section class="later">
   <p class="stamp dark">Not this office · AutoGPT that Accepts</p>
-  <p>Clerks may look at the Card and the last GA4 snapshot, then propose. They do not Place, send, or stamp a stage. Cursor in the bet repo is the builder agent. Prune and airtime stay code.</p>
+  <p>Clerks may look at the Card and the last GA4 snapshot, then propose. They do not Place, send, or stamp a stage. Cursor in the bet repo is the builder. Prune and airtime stay ordinary code, not a free loop.</p>
 </section>
