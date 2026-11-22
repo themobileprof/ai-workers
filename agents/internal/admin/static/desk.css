@@ -551,6 +551,20 @@ textarea {
   font-size: 0.75rem;
 }
 .pulse strong { font-family: "Fraunces", Georgia, serif; font-size: 1.15rem; font-weight: 700; margin-right: 0.3rem; color: var(--paper); opacity: 1; }
+.does {
+  margin: 0 0 1.5rem;
+  max-width: 44rem;
+}
+.does h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+  color: var(--brass);
+}
+.does p {
+  margin: 0;
+  opacity: 0.88;
+  line-height: 1.55;
+}
 .tabset { margin: 0 0 0.5rem; }
 .tabs {
   display: flex;

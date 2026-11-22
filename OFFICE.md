@@ -2,6 +2,8 @@
 
 Use this file as the description of the live system. It is not a pitch. It is not a generic “solo incubator AI stack.” If this file and a brochure disagree, this file wins.
 
+**How to use the workers** (click paths, clocks, Accept vs Place): [`HOW_YOU_RUN.md`](HOW_YOU_RUN.md) and desk **Docs → How you run this office**.
+
 **Company:** TheMobileProf Technologies (one CAC company, Lagos).  
 **Desk:** https://workers.themobileprof.com/admin/  
 **Rule:** Workers propose. A human clicks **Accept**. Chat never Accepts.
@@ -78,7 +80,7 @@ These are the website, not extra agents:
 4. Put a date on it (campus week, field week, launch)
 5. Give someone work (one Delivery task)
 
-Then: this gate’s mission from the journey catalog. Then Legal / Files / onsite SEO in Cursor as needed.
+Then: this gate’s mission from the journey catalog. Then Legal / Files / onsite SEO in Cursor / Deck / Ads as needed.
 
 Stages (the coloured label): Idea, Testing, Selling, Fundable, Parked, Killed. Stage caps how many Delivery tasks may be open: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace.
 
@@ -115,11 +117,11 @@ Wider prompt: accounts, legal-read, grant eligibility. Accounts via `/ops` still
 
 ### Growth (`/growth`) — live
 
-Inbound front office: customer WhatsApp, social copy, and a **pitch-deck session** on the bet (chat each of Guy Kawasaki’s 10 slides from the Card; the markdown pack updates every turn). Ask issues `/site/deck/{token}`. Humans Accept on the Growth book. Chat never Accepts. Export a PDF and `/file` it under `{bet}/product`. Legal reviews claims if you paste the pack; it does not write the plan.
+Inbound front office: customer WhatsApp, social copy, a **pitch-deck session** on the bet (chat each of Guy Kawasaki’s 10 slides from the Card), and a **Search ads pack** (Google Search RSA: geo/keyword test cells, headlines, descriptions, Pexels queries a human searches). The markdown pack updates every turn. Ask issues `/site/deck/{token}`. Humans Accept on the Growth book. Chat never Accepts. Pitch: you paste into Slides. Ads: Accept, then Place on Google Search or Meta — n8n holds the tokens, probes at the platform minimum, experiments each cell across a full week of Lagos hours, and each morning cuts wasted cells and dayparts. Place stamps UTM. GA4 last 7 days of paid sessions and the funnel land on the Growth book. A proposed glance job quotes those numbers; it does not Place. Go drops geo/keywords that are not on the Card. Export a PDF or stills and `/file` them under `{bet}/product`. The clerk cannot send or spend from chat. Legal reviews claims if you paste a pitch pack; it does not write the plan.
 
-Every customer WhatsApp DM with a phone files **Office → CRM**. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+. Customer WhatsApp is still sales — not the deck session.
+Every customer WhatsApp DM with a phone files **Office → CRM**. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+. Customer WhatsApp is still sales — not the deck session or the ads pack.
 
-It is **not** an outbound scraper. It cannot send. Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply. Do not invent waitlist / MAU / burn.
+It is **not** an outbound scraper. It cannot send. Chat never Places. Place on the desk talks to n8n (Google Ads OAuth + developer token, Facebook Ads credential). Bare 1:1 WhatsApp is Growth. Inbound info@ is CRM, not a Growth auto-reply. Do not invent waitlist / MAU / burn / CPC.
 
 ### CRM (`/crm`) — live
 
@@ -141,7 +143,7 @@ It is **not** a grant officer. Grants live on Office → Grants (`/ops` can file
 
 ### SEO — gone as a worker — Cursor in the bet repo
 
-Onsite titles, meta, FAQ, and schema live in the public site’s GitHub repo. Copy `.cursor/rules/onsite-seo.mdc` into that repo. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Organization is TheMobileProf Technologies. `/seo` on ops Telegram says the worker is gone.
+Onsite titles, meta, FAQ, and schema live in the public site’s GitHub repo. Copy `.cursor/rules/onsite-seo.mdc` and `traffic.mdc` into that repo. Keep `TRAFFIC.md` at the repo root — SEO phrases, the ads landing, and GA4 funnel events in one brief while Cursor builds the site. Paste the Funnel line onto the project Card. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Organization is TheMobileProf Technologies. `/seo` on ops Telegram says the worker is gone.
 
 Offsite listings you already know are ordinary Delivery tasks. Search Console and GA4 last-28-days still arrive from n8n (service account, *your* properties only). Quote those snapshots.
 

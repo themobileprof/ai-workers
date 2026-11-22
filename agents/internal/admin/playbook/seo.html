@@ -1,8 +1,9 @@
-<p class="lede">Onsite SEO is Cursor in the bet repo. There is no SEO worker, no <code>/seo</code> desk, and no pack URL. Copy <code>.cursor/rules/onsite-seo.mdc</code> into the public site repo. Walk cite → FAQ → schema → title/meta from the designed page. Search Console and GA4 last-28-days still land on Defaults. Offsite listings are ordinary Delivery tasks.</p>
+<p class="lede">Onsite SEO is Cursor in the bet repo. There is no SEO worker, no <code>/seo</code> desk, and no pack URL. Copy <code>.cursor/rules/onsite-seo.mdc</code> and <code>traffic.mdc</code> into the public site repo. Keep <code>TRAFFIC.md</code> at the repo root — phrases, ads landing, and GA4 funnel in one brief. Walk cite → FAQ → schema → title/meta from the designed page. Search Console and GA4 last-28-days still land on Defaults. Offsite listings are ordinary Delivery tasks.</p>
 
 <ol class="steps">
   <li>Put the public URL on the bet Card. Optional GitHub repo tells Cursor which workspace to open. This office does not push PRs.</li>
-  <li>Open that repo in Cursor. Copy <code>.cursor/rules/onsite-seo.mdc</code> from this office if the bet does not have it yet.</li>
+  <li>Open that repo in Cursor. Copy <code>.cursor/rules/onsite-seo.mdc</code> and <code>.cursor/rules/traffic.mdc</code> from this office if they are missing. Copy <code>TRAFFIC.md</code> to the repo root (skeleton: office <code>guide/TRAFFIC.md</code>).</li>
+  <li>Keep <code>TRAFFIC.md</code> in the same diffs as new pages or GA4 events. Paste the Funnel line onto Card.</li>
   <li>Walk the <strong>source</strong>, not fetched HTML: quotable facts, then FAQ, then schema, then the visible page and title/meta together. Organization is TheMobileProf Technologies unless the page already names someone else.</li>
   <li>The visible page is the source of truth (a designer may never have seen title/meta). Do not invent volume, rankings, or ChatGPT citations.</li>
   <li>Offsite listings you already have: add a Delivery task. Search Console / GA4 ids stay on <a href="/admin/settings?tab=seo">Defaults → Traffic</a>.</li>
@@ -32,4 +33,10 @@
   <p class="spec-no">Specimen 04 · Search Console / GA4</p>
   <p class="you-say">Defaults → Traffic. Paste the verified site and the GA4 property id. Save.</p>
   <p class="expect">n8n <code>seo-gsc</code> and <code>seo-ga4</code> POST last-28-days to <code>/internal/v1/seo/gsc</code> and <code>/internal/v1/seo/ga4</code>. Quote only those snapshots. The Go process never holds the JSON key.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 05 · TRAFFIC.md</p>
+  <p class="you-say">Copy office <code>guide/TRAFFIC.md</code> to the bet repo root. Fill Offer, Search table, Funnel line, Ads landing from the designed page. Paste Funnel onto Card.</p>
+  <p class="expect">Cursor building pages and events keeps that file in the same diff. Growth does not invent <code>generate_lead</code> unless it is on Card. Daily ads-ga4 still uses Defaults as the company-wide fallback until a per-bet report is published.</p>
 </section>

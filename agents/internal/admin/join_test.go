@@ -1,11 +1,14 @@
 package admin
 
 import (
+	"context"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/samuel/ai-workers/agents/internal/acadchat"
+	"github.com/samuel/ai-workers/agents/internal/llm"
 )
 
 func TestJoinRedirectsToLMS(t *testing.T) {
@@ -65,6 +68,55 @@ func TestDailyGroupTextRemindsAirtimeWhenNobodyWon(t *testing.T) {
 		if strings.Contains(low, bad) {
 			t.Fatal(bad)
 		}
+	}
+}
+
+type stubMorningLLM struct{ text string }
+
+func (s stubMorningLLM) Complete(context.Context, llm.Request) (string, error) {
+	return s.text, nil
+}
+
+func TestMorningHookRotates(t *testing.T) {
+	seen := map[string]bool{}
+	base := time.Date(2026, 11, 16, 0, 0, 0, 0, lagosLocation())
+	for i := 0; i < 6; i++ {
+		seen[morningHook(base.AddDate(0, 0, i))] = true
+	}
+	for _, want := range []string{"greet", "progress", "questions"} {
+		if !seen[want] {
+			t.Fatal(want)
+		}
+	}
+}
+
+func TestDailyGroupPostsUsesLLMWhenFactsHold(t *testing.T) {
+	s := &Server{guide: stubMorningLLM{text: "AIRTIME:\nAda took yesterday's ₦500. Ask a lesson question, talk in class, or type /invite. Share https://lms.themobileprof.com/join\n"}}
+	p := s.dailyGroupPosts(nil, RewardDay{WinnerName: "Ada", Amount: 500, Day: time.Date(2026, 11, 17, 0, 0, 0, 0, lagosLocation())}, true, "airtime")
+	if !p.FromLLM || !strings.Contains(p.Airtime, "Ada") || !strings.Contains(p.Airtime, "/invite") {
+		t.Fatalf("%+v", p)
+	}
+	s.guide = stubMorningLLM{text: "OPENER:\nMorning people — which lesson are you on?\n"}
+	c := s.dailyGroupPosts(nil, RewardDay{Day: time.Date(2026, 11, 17, 0, 0, 0, 0, lagosLocation())}, false, "checkin")
+	if !c.FromLLM || !strings.Contains(c.Opener, "lesson") {
+		t.Fatalf("%+v", c)
+	}
+}
+
+func TestDailyGroupPostsFallsBackWhenLLMDropsFacts(t *testing.T) {
+	s := &Server{guide: stubMorningLLM{text: "Come collect airtime from the worker desk, n8n will score you."}}
+	p := s.dailyGroupPosts(nil, RewardDay{Amount: 500}, false, "airtime")
+	if p.FromLLM || !strings.Contains(p.Airtime, "₦500") || !strings.Contains(p.Airtime, "/invite") {
+		t.Fatalf("%+v", p)
+	}
+	if strings.Contains(strings.ToLower(p.Airtime), "n8n") {
+		t.Fatal(p.Airtime)
+	}
+}
+
+func TestDailyEngageBeat(t *testing.T) {
+	if dailyEngageBeat("") != "checkin" || dailyEngageBeat("AIRTIME") != "airtime" || dailyEngageBeat("reward") != "airtime" {
+		t.Fatal("beat")
 	}
 }
 

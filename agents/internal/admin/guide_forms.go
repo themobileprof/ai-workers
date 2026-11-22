@@ -47,6 +47,9 @@ func formCatalog() []formRecipe {
 	}
 	deckActs := []string{}
 	for _, s := range growth.Specs() {
+		if s.ID == "ads" {
+			continue
+		}
 		deckActs = append(deckActs, s.ID+"|"+s.Label)
 	}
 	deskOpts := []string{}
@@ -156,6 +159,17 @@ func formCatalog() []formRecipe {
 				{Name: "action", Label: "Kind", Prompt: "Kind: session, or business plan. Skip for a copy session.", Kind: "select", Default: "session", Options: deckActs},
 				{Name: "audience", Label: "Room", Prompt: "Who sits in the room? Named people only.", Kind: "textarea"},
 				{Name: "human_feedback", Label: "Opening note", Prompt: "Optional. The clerk already has the Card.", Kind: "textarea"},
+			},
+		},
+		{
+			ID: "ask_ads", Title: "Ask Search ads", Button: "Ask Growth",
+			Action: "/admin/projects/{project_id}/ads", Href: "/admin/projects/{project_id}?tab=ads",
+			Desk: "growth", NeedProject: true,
+			Use: "Start a Google Search RSA pack on a bet. Geo and keyword test cells from the Card. Pexels queries a human will search. Does not spend, publish, invent a city, or log into Google Ads.",
+			Fields: []formField{
+				{Name: "project_id", Label: "Project", Prompt: "Which project’s Search ads?", Kind: "project", Required: true, PathOnly: true},
+				{Name: "action", Label: "Kind", Prompt: "Keep Search ads.", Kind: "select", Default: "ads", Options: []string{"ads|Search ads"}},
+				{Name: "human_feedback", Label: "Opening note", Prompt: "Optional. Named places already on the Card. The clerk cannot spend.", Kind: "textarea"},
 			},
 		},
 		{

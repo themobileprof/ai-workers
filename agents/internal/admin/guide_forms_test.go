@@ -14,7 +14,7 @@ func (s stubGuide) Complete(context.Context, llm.Request) (string, error) { retu
 
 func TestCatalogPromptListsFormsNotKeywords(t *testing.T) {
 	got := catalogPrompt(formCatalog())
-	if !strings.Contains(got, "id=add_date") || !strings.Contains(got, "id=add_task") || !strings.Contains(got, "id=add_crm") || !strings.Contains(got, "id=log_crm") {
+	if !strings.Contains(got, "id=add_date") || !strings.Contains(got, "id=add_task") || !strings.Contains(got, "id=add_crm") || !strings.Contains(got, "id=log_crm") || !strings.Contains(got, "id=ask_ads") {
 		t.Fatalf("%s", got)
 	}
 	if strings.Contains(got, "unilag") {

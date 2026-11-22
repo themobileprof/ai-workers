@@ -166,6 +166,14 @@
   </ol>
   {{end}}
   {{end}}
+  {{define "worker-does"}}
+  {{if .}}
+  <section class="does">
+    <h3>What this worker does</h3>
+    <p>{{.}}</p>
+  </section>
+  {{end}}
+  {{end}}
   {{if .User}}
   <div class="guide-dock">
     <section class="guide-panel" id="guide-panel" hidden>

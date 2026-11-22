@@ -1,0 +1,750 @@
+{
+  "id": "adsPlace00000001",
+  "name": "Ads place",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "adsPlace00000001trig",
+      "name": "When executed by another workflow"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ads-place",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "id": "adsPlace00000001hook",
+      "name": "Go webhook",
+      "webhookId": "ads-place"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst headers = raw.headers || {};\nconst token = String(headers['x-internal-token'] || headers['X-Internal-Token'] || '').trim();\nconst want = String($env.INTERNAL_API_TOKEN || '').trim();\nif (!want || token !== want) {\n  throw new Error('forbidden');\n}\nconst body = (raw.body && typeof raw.body === 'object') ? raw.body : raw;\nreturn [{ json: body }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        200
+      ],
+      "id": "adsPlace00000001gate",
+      "name": "Gate token"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        0
+      ],
+      "id": "adsPlace00000001in",
+      "name": "Incoming"
+    },
+    {
+      "parameters": {
+        "jsCode": "function digits(s) { return String(s || '').replace(/\\D/g, ''); }\nfunction clip(s, n) { return String(s || '').trim().slice(0, n); }\nconst j = $input.first().json || {};\nconst channel = String(j.channel || '').toLowerCase();\nconst slug = clip(j.slug || j.name || 'campaign', 80) || 'campaign';\nconst statusIn = String(j.campaign_status || 'PAUSED').toUpperCase();\nconst googleStatus = statusIn === 'ENABLED' ? 'ENABLED' : 'PAUSED';\nconst metaStatus = googleStatus === 'ENABLED' ? 'ACTIVE' : 'PAUSED';\nconst capN = Number(j.daily_cap);\nconst cap = Number.isFinite(capN) && capN > 0 ? capN : 0;\nconst finalUrl = String(j.final_url || '').trim();\nconst headlines = (Array.isArray(j.headlines) ? j.headlines : []).map((h) => clip(h, 30)).filter(Boolean).slice(0, 15);\nconst descriptions = (Array.isArray(j.descriptions) ? j.descriptions : []).map((d) => clip(d, 90)).filter(Boolean).slice(0, 4);\nconst keywords = (Array.isArray(j.keywords) ? j.keywords : []).map((k) => clip(k, 80)).filter(Boolean).slice(0, 20);\nconst cells = (Array.isArray(j.cells) ? j.cells : []).map((c) => ({ geo: clip(c && c.geo, 80), theme: clip(c && c.theme, 80), why: clip(c && c.why, 120) })).filter((c) => c.geo || c.theme).slice(0, 5);\nif (!finalUrl || headlines.length < 3 || descriptions.length < 2 || !keywords.length) {\n  return [{ json: { skip: true, status: 'error', audit_text: 'Pack needs a final URL, three headlines, two descriptions, and a keyword.' } }];\n}\nconst experiments = (cells.length ? cells : [{ geo: 'Nigeria', theme: 'search' }]).map((c) => ({\n  geo: c.geo || 'Nigeria',\n  theme: c.theme || 'search',\n  name: clip([slug, c.geo || 'Nigeria', c.theme || 'search'].filter(Boolean).join(' \u00b7 '), 100),\n  url: clip(c.url || finalUrl, 500)\n}));\nconst geoNames = [...new Set(experiments.map((e) => e.geo).filter(Boolean))];\nif (!geoNames.includes('Nigeria')) geoNames.push('Nigeria');\nconst geoQuery = \"SELECT geo_target_constant.resource_name, geo_target_constant.name, geo_target_constant.canonical_name, geo_target_constant.country_code, geo_target_constant.target_type FROM geo_target_constant WHERE geo_target_constant.status = 'ENABLED' AND geo_target_constant.name IN (\" + geoNames.map((g) => \"'\" + String(g).replace(/'/g, '') + \"'\").join(', ') + \")\";\nconst base = { skip: false, slug, cap, google_status: googleStatus, meta_status: metaStatus, final_url: finalUrl, headlines, descriptions, keywords, experiments, geo_query: geoQuery };\nif (channel === 'google') {\n  const cid = digits(j.google_customer_id);\n  const login = digits(j.google_login_customer_id) || cid;\n  const token = String($env.GOOGLE_ADS_DEVELOPER_TOKEN || '').trim();\n  if (!cid) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Google Ads customer id on Defaults \u2192 Ads.' } }];\n  if (!token) return [{ json: { skip: true, status: 'error', audit_text: 'GOOGLE_ADS_DEVELOPER_TOKEN is missing on n8n.' } }];\n  return [{ json: { ...base, channel: 'google', customer_id: cid, login_customer_id: login, funds_query: \"SELECT account_budget.approved_spending_limit_micros, account_budget.approved_spending_limit_type, account_budget.amount_served_micros, account_budget.total_adjustments_micros, account_budget.status FROM account_budget WHERE account_budget.status = 'APPROVED'\" } }];\n}\nif (channel === 'meta') {\n  let act = String(j.meta_ad_account_id || '').trim();\n  if (act.toLowerCase().startsWith('act_')) act = act.slice(4);\n  act = digits(act);\n  const pageId = digits(j.meta_page_id);\n  if (!act || !pageId) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Meta ad account id and Page id on Defaults \u2192 Ads.' } }];\n  return [{ json: { ...base, channel: 'meta', act_id: act, page_id: pageId } }];\n}\nreturn [{ json: { skip: true, status: 'error', audit_text: 'Pick Google Search or Meta.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        0
+      ],
+      "id": "adsPlace00000001prep",
+      "name": "Prepare pack"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPlace00000001skipc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "adsPlace00000001skip",
+      "name": "Skip empty"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json || {};\nreturn [{ json: { skip: true, status: j.status || 'error', audit_text: j.audit_text || 'Ads: nothing to place.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        -200
+      ],
+      "id": "adsPlace00000001pass",
+      "name": "Result skip"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "adsPlace00000001swg",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "google",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "google"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "adsPlace00000001swm",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "meta",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "meta"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        780,
+        80
+      ],
+      "id": "adsPlace00000001swch",
+      "name": "Channel"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $('Prepare pack').item.json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $('Prepare pack').item.json.funds_query, pageSize: 20 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        -40
+      ],
+      "id": "adsPlace00000001gfnd",
+      "name": "GET Google funds",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $('Prepare pack').item.json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $('Prepare pack').item.json.geo_query, pageSize: 50 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1220,
+        -40
+      ],
+      "id": "adsPlace00000001ggeo",
+      "name": "GET Google geos",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function flattenSearch(res) {\n  if (Array.isArray(res)) return res.flatMap((chunk) => chunk.results || []);\n  if (res && Array.isArray(res.results)) return res.results;\n  return [];\n}\nfunction num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }\nfunction conservativeDaily(remaining, cap, minDaily, infinite) {\n  if (infinite && remaining <= 0) {\n    if (!(cap > 0)) return { ok: false, audit: 'Google Ads did not report remaining funds (open-ended or empty). Set a ceiling on Defaults \u2192 Ads so Place does not run unbounded.' };\n    if (cap < minDaily) return { ok: false, audit: 'Defaults ceiling is below the Google minimum daily (1 in account currency).' };\n    return { ok: true, daily: minDaily, how: 'open-ended account, platform minimum probe' };\n  }\n  if (remaining < minDaily) return { ok: false, audit: 'Google Ads remaining is too low to schedule (need at least 1 in account currency). Add funds, then Place again.' };\n  if (cap > 0 && cap < minDaily) return { ok: false, audit: 'Defaults ceiling is below the Google minimum daily (1 in account currency).' };\n  let daily = minDaily;\n  const reserve = Math.floor(remaining / 90);\n  if (reserve >= minDaily) daily = Math.min(daily, reserve);\n  if (cap > 0) daily = Math.min(daily, cap);\n  return { ok: true, daily, how: 'platform minimum probe; never above remaining/90 or Defaults ceiling' };\n}\nconst p = $('Prepare pack').item.json;\nconst fundsRes = $('GET Google funds').first().json || {};\nif (fundsRes.error) {\n  const msg = (fundsRes.error && (fundsRes.error.message || fundsRes.error.status)) || JSON.stringify(fundsRes);\n  return [{ json: { skip: true, status: 'error', audit_text: 'Google Ads funds: ' + String(msg).slice(0, 400) } }];\n}\nconst fundRows = flattenSearch(fundsRes);\nlet remaining = 0;\nlet infinite = fundRows.length === 0;\nfor (const row of fundRows) {\n  const b = row.accountBudget || row.account_budget || {};\n  const type = String(b.approvedSpendingLimitType || b.approved_spending_limit_type || '');\n  if (type === 'INFINITE') { infinite = true; continue; }\n  const limit = num(b.approvedSpendingLimitMicros || b.approved_spending_limit_micros);\n  const served = num(b.amountServedMicros || b.amount_served_micros);\n  const adj = num(b.totalAdjustmentsMicros || b.total_adjustments_micros);\n  const left = limit - served + adj;\n  if (left > remaining) remaining = left;\n}\nconst capMicros = p.cap > 0 ? Math.round(p.cap * 1e6) : 0;\nconst minDaily = 1000000;\nconst bud = conservativeDaily(remaining, capMicros, minDaily, infinite);\nif (!bud.ok) return [{ json: { skip: true, status: 'error', audit_text: bud.audit } }];\nconst daily = bud.daily;\nconst how = bud.how;\nlet geoRows = [];\ntry { geoRows = flattenSearch($('GET Google geos').first().json || {}); } catch (e) {}\nfunction scoreGeo(row, want) {\n  const g = row.geoTargetConstant || row.geo_target_constant || {};\n  const name = String(g.name || '').toLowerCase();\n  const canon = String(g.canonicalName || g.canonical_name || '').toLowerCase();\n  const cc = String(g.countryCode || g.country_code || '').toUpperCase();\n  const type = String(g.targetType || g.target_type || '');\n  const w = String(want || '').toLowerCase();\n  if (!w || (name !== w && canon.indexOf(w) < 0)) return -1;\n  let s = 1;\n  if (name === w) s += 5;\n  if (cc === 'NG') s += 4;\n  if (type === 'City') s += 3;\n  if (type === 'Region' || type === 'Province' || type === 'State') s += 2;\n  if (type === 'Country') s += 1;\n  return s;\n}\nfunction geoFor(want) {\n  let best = null, bestS = 0;\n  for (const row of geoRows) {\n    const s = scoreGeo(row, want);\n    if (s > bestS) { bestS = s; best = row.geoTargetConstant || row.geo_target_constant; }\n  }\n  return (best && (best.resourceName || best.resource_name)) || '';\n}\nfunction keysFor(theme, geo, all) {\n  const tokens = (String(theme || '') + ' ' + String(geo || '')).toLowerCase().split(/\\s+/).filter((x) => x.length >= 3);\n  const hit = all.filter((k) => tokens.some((tok) => k.toLowerCase().includes(tok)));\n  return hit.length ? hit : all;\n}\nconst cust = 'customers/' + p.customer_id;\nconst operations = [\n  { campaignBudgetOperation: { create: { resourceName: cust + '/campaignBudgets/-1', name: p.slug + ' daily', amountMicros: String(daily), deliveryMethod: 'STANDARD', explicitlyShared: false } } },\n  { campaignOperation: { create: { resourceName: cust + '/campaigns/-2', name: p.slug, status: p.google_status, advertisingChannelType: 'SEARCH', campaignBudget: cust + '/campaignBudgets/-1', containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING', networkSettings: { targetGoogleSearch: true, targetSearchNetwork: false, targetContentNetwork: false, targetPartnerSearchNetwork: false }, maximizeClicks: { cpcBidCeilingMicros: String(Math.min(daily, minDaily)) } } } }\n];\nconst experiments = p.experiments || [];\nexperiments.forEach((ex, i) => {\n  const ag = cust + '/adGroups/' + (-(10 + i));\n  operations.push({ adGroupOperation: { create: { resourceName: ag, name: ex.name, campaign: cust + '/campaigns/-2', status: 'ENABLED', type: 'SEARCH_STANDARD' } } });\n  operations.push({ adGroupAdOperation: { create: { adGroup: ag, status: p.google_status, ad: { responsiveSearchAd: { headlines: p.headlines.map((text) => ({ text })), descriptions: p.descriptions.map((text) => ({ text })) }, finalUrls: [ex.url || p.final_url] } } } });\n  const loc = geoFor(ex.geo);\n  if (loc) operations.push({ adGroupCriterionOperation: { create: { adGroup: ag, location: { geoTargetConstant: loc } } } });\n  for (const text of keysFor(ex.theme, ex.geo, p.keywords)) {\n    operations.push({ adGroupCriterionOperation: { create: { adGroup: ag, status: 'ENABLED', keyword: { text, matchType: 'EXACT' } } } });\n  }\n});\nconst remainingUnits = remaining / 1e6;\nconst dailyUnits = daily / 1e6;\nreturn [{ json: {\n  skip: false,\n  customer_id: p.customer_id,\n  login_customer_id: p.login_customer_id,\n  google_body: { mutateOperations: operations },\n  slug: p.slug,\n  google_status: p.google_status,\n  experiment_count: experiments.length,\n  remaining_units: remainingUnits,\n  daily_units: dailyUnits,\n  budget_how: how,\n  audit_preview: 'Conservative Place. Google Ads remaining ~' + remainingUnits.toFixed(2) + '. Daily ' + dailyUnits.toFixed(2) + ' (' + how + '). ' + experiments.length + ' cell experiments, all Lagos hours for a week, exact match, Google Search only. Status ' + p.google_status + '.'\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -40
+      ],
+      "id": "adsPlace00000001gbld",
+      "name": "Build Google"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPlace00000001gskc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1640,
+        -40
+      ],
+      "id": "adsPlace00000001gskp",
+      "name": "Skip google"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:mutate' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.google_body) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1860,
+        40
+      ],
+      "id": "adsPlace00000001gmut",
+      "name": "POST Google mutate",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Build Google').item.json;\nconst res = $input.first().json || {};\nif (res.error || !Array.isArray(res.mutateOperationResponses)) {\n  const msg = (res.error && (res.error.message || res.error.status)) || res.message || JSON.stringify(res);\n  return [{ json: { skip: true, status: 'error', audit_text: 'Google Ads: ' + String(msg).slice(0, 400) } }];\n}\nconst ops = res.mutateOperationResponses || [];\nconst camp = (ops[1] && ops[1].campaignResult && ops[1].campaignResult.resourceName) || '';\nconst audit = (p.audit_preview || 'Placed Google Search.') + ' Campaign ' + (camp || p.slug) + '.';\nreturn [{ json: { status: 'ok', channel: 'google', id: camp, campaign_id: camp, resource_name: camp, audit_text: audit } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        40
+      ],
+      "id": "adsPlace00000001gres",
+      "name": "Result google"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "GET",
+        "url": "={{ 'https://graph.facebook.com/v21.0/act_' + $('Prepare pack').item.json.act_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "balance,amount_spent,spend_cap,currency,min_daily_budget,account_status"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        240
+      ],
+      "id": "adsPlace00000001mfnd",
+      "name": "GET Meta account",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "facebookAdsOAuth001",
+          "name": "Facebook Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }\nfunction form(obj) {\n  return Object.keys(obj).map((k) => {\n    const v = String(obj[k]);\n    if (v.indexOf('{result=') >= 0) return encodeURIComponent(k) + '=' + v;\n    return encodeURIComponent(k) + '=' + encodeURIComponent(v);\n  }).join('&');\n}\nfunction conservativeDaily(remaining, cap, minDaily, infinite) {\n  if (infinite && remaining <= 0) {\n    if (!(cap > 0)) return { ok: false, audit: 'Meta did not report a remaining amount. Set a ceiling on Defaults \u2192 Ads so Place does not run unbounded.' };\n    if (cap < minDaily) return { ok: false, audit: 'Defaults ceiling is below Meta\u2019s minimum daily budget.' };\n    return { ok: true, daily: minDaily, how: 'open-ended account, platform minimum probe' };\n  }\n  if (remaining < minDaily) return { ok: false, audit: 'Meta remaining is too low to schedule. Add funds, then Place again.' };\n  if (cap > 0 && cap < minDaily) return { ok: false, audit: 'Defaults ceiling is below Meta\u2019s minimum daily budget.' };\n  let daily = minDaily;\n  const reserve = Math.floor(remaining / 90);\n  if (reserve >= minDaily) daily = Math.min(daily, reserve);\n  if (cap > 0) daily = Math.min(daily, cap);\n  return { ok: true, daily, how: 'platform minimum probe; never above remaining/90 or Defaults ceiling' };\n}\nconst p = $('Prepare pack').item.json;\nconst acc = $('GET Meta account').first().json || {};\nif (acc.error) {\n  const err = acc.error || acc;\n  return [{ json: { skip: true, status: 'error', audit_text: 'Meta account: ' + String(err.error_user_msg || err.message || JSON.stringify(acc)).slice(0, 400) } }];\n}\nconst balance = num(acc.balance);\nconst spent = num(acc.amount_spent);\nconst spendCap = num(acc.spend_cap);\nconst minDaily = Math.max(num(acc.min_daily_budget), 100);\nlet remaining = 0;\nlet infinite = false;\nif (spendCap > 0) remaining = Math.max(0, spendCap - spent);\nelse if (balance > 0) remaining = balance;\nelse infinite = true;\nconst capCents = p.cap > 0 ? Math.round(p.cap * 100) : 0;\nconst bud = conservativeDaily(remaining, capCents, minDaily, infinite);\nif (!bud.ok) return [{ json: { skip: true, status: 'error', audit_text: bud.audit } }];\nconst daily = bud.daily;\nconst how = bud.how;\nconst experiments = p.experiments || [];\nconst batch = [];\nbatch.push({ method: 'POST', name: 'camp', relative_url: 'act_' + p.act_id + '/campaigns', body: form({ name: p.slug, objective: 'OUTCOME_TRAFFIC', status: p.meta_status, special_ad_categories: '[]', daily_budget: String(daily), bid_strategy: 'LOWEST_COST_WITHOUT_CAP' }) });\nexperiments.forEach((ex, i) => {\n  const setName = 'set' + i;\n  const crName = 'cr' + i;\n  batch.push({ method: 'POST', name: crName, relative_url: 'act_' + p.act_id + '/adcreatives', body: form({ name: ex.name + ' creative', object_story_spec: JSON.stringify({ page_id: p.page_id, link_data: { link: ex.url || p.final_url, message: p.descriptions[0], name: p.headlines[0], call_to_action: { type: 'LEARN_MORE' } } }) }) });\n  batch.push({ method: 'POST', name: setName, relative_url: 'act_' + p.act_id + '/adsets', body: form({ name: ex.name, campaign_id: '{result=camp:$.id}', billing_event: 'IMPRESSIONS', optimization_goal: 'LINK_CLICKS', status: p.meta_status, targeting: JSON.stringify({ geo_locations: { countries: ['NG'] } }), promoted_object: JSON.stringify({ page_id: p.page_id }) }) });\n  batch.push({ method: 'POST', name: 'ad' + i, relative_url: 'act_' + p.act_id + '/ads', body: form({ name: ex.name + ' ad', adset_id: '{result=' + setName + ':$.id}', creative: JSON.stringify({ creative_id: '{result=' + crName + ':$.id}' }), status: p.meta_status }) });\n});\nconst remainingUnits = remaining / 100;\nconst dailyUnits = daily / 100;\nreturn [{ json: {\n  skip: false,\n  batch,\n  slug: p.slug,\n  meta_status: p.meta_status,\n  experiment_count: experiments.length,\n  remaining_units: remainingUnits,\n  daily_units: dailyUnits,\n  budget_how: how\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        240
+      ],
+      "id": "adsPlace00000001mbld",
+      "name": "Build Meta"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPlace00000001mskc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        240
+      ],
+      "id": "adsPlace00000001mskp",
+      "name": "Skip meta"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ batch: $json.batch }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1660,
+        320
+      ],
+      "id": "adsPlace00000001mbt",
+      "name": "POST Meta batch",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "facebookAdsOAuth001",
+          "name": "Facebook Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseBody(item) {\n  if (!item) return {};\n  const body = item.body;\n  if (typeof body === 'string') {\n    try { return JSON.parse(body); } catch (e) { return { message: body }; }\n  }\n  return body || item;\n}\nconst p = $('Build Meta').item.json;\nconst raw = $input.first().json;\nconst list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : [raw]);\nconst first = list[0] || {};\nconst camp = parseBody(first);\nif ((first.code && first.code >= 400) || camp.error || !camp.id) {\n  const msg = (camp.error && (camp.error.message || camp.error.error_user_msg)) || camp.message || JSON.stringify(camp);\n  return [{ json: { skip: true, status: 'error', audit_text: 'Meta: ' + String(msg).slice(0, 400) } }];\n}\nconst audit = 'Placed Meta campaign ' + camp.id + ' (' + p.meta_status + '). Account remaining ~' + Number(p.remaining_units).toFixed(2) + '. Daily ' + Number(p.daily_units).toFixed(2) + ' (' + p.budget_how + '). ' + p.experiment_count + ' cell experiments, all Lagos hours for a week, one campaign budget so Meta can shift to what works.';\nreturn [{ json: { status: 'ok', channel: 'meta', id: String(camp.id), campaign_id: String(camp.id), resource_name: String(camp.id), audit_text: audit } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        320
+      ],
+      "id": "adsPlace00000001mres",
+      "name": "Result meta"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { skip: true, status: 'error', audit_text: 'Pick Google Search or Meta.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        440
+      ],
+      "id": "adsPlace00000001fal",
+      "name": "Result fallback"
+    }
+  ],
+  "connections": {
+    "When executed by another workflow": {
+      "main": [
+        [
+          {
+            "node": "Incoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Go webhook": {
+      "main": [
+        [
+          {
+            "node": "Gate token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate token": {
+      "main": [
+        [
+          {
+            "node": "Incoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incoming": {
+      "main": [
+        [
+          {
+            "node": "Prepare pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare pack": {
+      "main": [
+        [
+          {
+            "node": "Skip empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip empty": {
+      "main": [
+        [
+          {
+            "node": "Result skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channel": {
+      "main": [
+        [
+          {
+            "node": "GET Google funds",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Meta account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Result fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Google funds": {
+      "main": [
+        [
+          {
+            "node": "GET Google geos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Google geos": {
+      "main": [
+        [
+          {
+            "node": "Build Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Google": {
+      "main": [
+        [
+          {
+            "node": "Skip google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip google": {
+      "main": [
+        [
+          {
+            "node": "Result skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST Google mutate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Google mutate": {
+      "main": [
+        [
+          {
+            "node": "Result google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Meta account": {
+      "main": [
+        [
+          {
+            "node": "Build Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Meta": {
+      "main": [
+        [
+          {
+            "node": "Skip meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip meta": {
+      "main": [
+        [
+          {
+            "node": "Result skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST Meta batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Meta batch": {
+      "main": [
+        [
+          {
+            "node": "Result meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "executionTimeout": 90
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

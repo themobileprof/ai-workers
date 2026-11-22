@@ -9,7 +9,7 @@ REMOTE_DIR="${N8N_REMOTE_DIR:-/home/cursor/ai-workers}"
 # Execute Workflow refuses inactive children. Webhooks also stay dark after import.
 # filesPlace0000001, delayApply0000001, opsTelegram00001, and acadTelegram00001 stay unpublished.
 # Ops and Academy Telegram inbound is Go. Do not republish those ids (n8n would steal the webhook).
-DEFAULT_PUBLISH="paystackPaid000001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,commWeeklyPing01,commScholDaily01,commEngageDaily01,deliveryDaily00001,pmNotesFathom00001,seoGa4Daily00001,seoGscDaily00001"
+DEFAULT_PUBLISH="paystackPaid000001,custWhatsApp0001,inbdEmailImap0001,booksWriteDoc0001,crmUpsertCont0001,emailOutbox000001,adsPlace00000001,adsPrune00000001,adsGa4Daily00001,commWeeklyPing01,commScholDaily01,commEngageDaily01,commEngageAirtime1,deliveryDaily00001,pmNotesFathom00001,seoGa4Daily00001,seoGscDaily00001"
 PUBLISH="${N8N_PUBLISH:-$DEFAULT_PUBLISH}"
 
 instance_field() {

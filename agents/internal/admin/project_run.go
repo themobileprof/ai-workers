@@ -151,7 +151,7 @@ func projectRun(in runInput) []RunStep {
 	seo := RunStep{
 		ID: "seo", Kind: "As needed", Title: "Name the public page in Cursor",
 		Why:  "Onsite SEO is Cursor in the bet repo. Walk cite, FAQ, schema, then title/meta from the designed page.",
-		How:  []string{"Put the public URL and GitHub repo on Card.", "Open that repo in Cursor. Copy .cursor/rules/onsite-seo.mdc if it is missing.", "Offsite listings you already have: add a Delivery task."},
+		How:  []string{"Put the public URL and GitHub repo on Card.", "Open that repo in Cursor. Copy .cursor/rules/onsite-seo.mdc and traffic.mdc if they are missing. Copy TRAFFIC.md to the repo root.", "Paste the Funnel line from TRAFFIC.md onto Card. Offsite listings you already have: add a Delivery task."},
 		Href: "/admin/docs/seo", Button: "Open SEO sheet",
 		Help: "Onsite SEO for " + name,
 		Done: strings.TrimSpace(p.URL) != "" && strings.TrimSpace(p.GitRepo) != "",
@@ -161,13 +161,21 @@ func projectRun(in runInput) []RunStep {
 	}
 	steps = append(steps, seo)
 
+	pitchN, adsN := 0, 0
+	for _, d := range in.Decks {
+		if d.Kind == "ads" {
+			adsN++
+		} else {
+			pitchN++
+		}
+	}
 	deck := RunStep{
 		ID: "deck", Kind: "As needed", Title: "Pitch deck from the Card",
 		Why:  "Chat Growth one Kawasaki slide at a time from the Card. The pack updates every turn. Growth cannot send or invent traction.",
 		How:  []string{"Write the Card one-liner first.", "Open Deck. Start a session and chat each slide.", "Download the pack or give Cursor the URL. Export a PDF and /file it under product. Turn away if a fact is invented."},
 		Href: base + "?tab=deck", Button: "Open Deck",
 		Help: "Ask a pitch deck for " + name,
-		Done: len(in.Decks) > 0,
+		Done: pitchN > 0,
 	}
 	if strings.TrimSpace(p.OneLiner) == "" && !deck.Done {
 		deck.Detail = "Skip until the Card has a one-liner."
@@ -179,6 +187,31 @@ func projectRun(in runInput) []RunStep {
 		deck.Detail += "Growth clerk is off until the LLM env is set, or you need the Growth desk tick."
 	}
 	steps = append(steps, deck)
+
+	ads := RunStep{
+		ID: "ads", Kind: "As needed", Title: "Search ads from the Card",
+		Why:  "Chat Growth Google Search RSA copy, geo/keyword test cells, and Pexels queries. Accept, then Place from the desk. The clerk cannot spend from chat.",
+		How:  []string{"Need a one-liner and a public URL.", "Open Ads. Start a session. Chat URL, cells, keywords, headlines, descriptions, then Pexels queries.", "Accept the pack. Place on Google Search or Meta — n8n probes at the platform minimum for a week of Lagos hours, then cuts wasted cells and dayparts. Search Pexels yourself and /file stills under product."},
+		Href: base + "?tab=ads", Button: "Open Ads",
+		Help: "Ask Search ads for " + name,
+		Done: adsN > 0,
+	}
+	if strings.TrimSpace(p.OneLiner) == "" && !ads.Done {
+		ads.Detail = "Skip until the Card has a one-liner."
+	}
+	if strings.TrimSpace(p.URL) == "" && !ads.Done {
+		if ads.Detail != "" {
+			ads.Detail += " "
+		}
+		ads.Detail += "Skip until the Card has a public URL."
+	}
+	if !in.CanGrowth {
+		if ads.Detail != "" {
+			ads.Detail += " "
+		}
+		ads.Detail += "Growth clerk is off until the LLM env is set, or you need the Growth desk tick."
+	}
+	steps = append(steps, ads)
 	return finishRun(steps)
 }
 

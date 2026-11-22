@@ -127,6 +127,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateGrowth(ctx); err != nil {
 		return err
 	}
+	if err := s.migrateAdsGA4(ctx); err != nil {
+		return err
+	}
 	if err := s.migrateFiles(ctx); err != nil {
 		return err
 	}

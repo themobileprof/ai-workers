@@ -237,6 +237,18 @@ RETURNING id
 	return s.GetDeskJob(ctx, id)
 }
 
+func (s *Store) UpdateDeskJobSummary(ctx context.Context, id int64, summary string) error {
+	summary = strings.TrimSpace(summary)
+	if id <= 0 || summary == "" {
+		return errors.New("job summary")
+	}
+	if len(summary) > 800 {
+		summary = summary[:797] + "…"
+	}
+	_, err := s.pool.Exec(ctx, `UPDATE desk_jobs SET summary=$2, updated_at=now() WHERE id=$1`, id, summary)
+	return err
+}
+
 func (s *Store) SetDeskJobStatus(ctx context.Context, id int64, status string) error {
 	status = strings.TrimSpace(status)
 	switch status {

@@ -102,6 +102,11 @@ type pageData struct {
 	DeckSeed       deckSeed
 	LiveDeck       *GrowthDeck
 	DeckJob        *DeskJob
+	LiveAds        *GrowthDeck
+	AdsJob         *DeskJob
+	AdsMessages    []JobMessage
+	AdsDecks       []GrowthDeck
+	AdsGA4         *AdsGA4View
 	GuideAsks      []GuideAsk
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
@@ -138,12 +143,13 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"deskNavOn":    deskNavOn,
 		"officeMenuOn": officeMenuOn,
 		"guideReads":   guideReads,
+		"workerDoes":   workerDoes,
 	}
 	pages := map[string]*template.Template{}
 	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "growth", "guide", "files", "grants", "crm"} {
 		files := []string{"templates/layout.html", "templates/" + name + ".html"}
 		if name == "growth" || name == "projects" {
-			files = append(files, "templates/deck_walk.html")
+			files = append(files, "templates/deck_walk.html", "templates/ads_walk.html", "templates/ads_ga4.html")
 		}
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, files...)
 		if err != nil {
@@ -209,6 +215,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/projects", s.projectsPOST)
 	mux.HandleFunc("POST /admin/projects/{id}", s.projectSave)
 	mux.HandleFunc("POST /admin/projects/{id}/memory", s.projectMemoryPOST)
+	mux.HandleFunc("POST /admin/projects/{id}/funnel", s.projectFunnelPOST)
 	mux.HandleFunc("POST /admin/projects/{id}/delete", s.projectDelete)
 	mux.HandleFunc("POST /admin/projects/{id}/members", s.projectMemberAdd)
 	mux.HandleFunc("POST /admin/projects/{id}/members/{uid}/delete", s.projectMemberRemove)
@@ -243,8 +250,10 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/growth/{id}/pack.md", s.growthPackDownload)
 	mux.HandleFunc("POST /admin/growth/{id}/approve", s.growthStamp("approved"))
 	mux.HandleFunc("POST /admin/growth/{id}/reject", s.growthStamp("rejected"))
+	mux.HandleFunc("POST /admin/growth/{id}/place", s.growthPlace)
 	mux.HandleFunc("GET /site/deck/{token}", s.growthPackPublic)
 	mux.HandleFunc("POST /admin/projects/{id}/deck", s.projectDeck)
+	mux.HandleFunc("POST /admin/projects/{id}/ads", s.projectAds)
 	mux.HandleFunc("GET /admin/hr", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/delivery", http.StatusSeeOther)
 	})
@@ -320,6 +329,12 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /internal/v1/file-filings", s.internalFileFilingsGET)
 	mux.HandleFunc("POST /internal/v1/file-filings", s.internalFileFilingsPOST)
 	mux.HandleFunc("POST /internal/v1/file-filings/{id}/placed", s.internalFilePlacedPOST)
+	mux.HandleFunc("GET /internal/v1/ads/placements", s.internalAdsPlacementsGET)
+	mux.HandleFunc("POST /internal/v1/ads/placements/decide", s.internalAdsDecidePOST)
+	mux.HandleFunc("POST /internal/v1/ads/placements/pruned", s.internalAdsPrunedPOST)
+	mux.HandleFunc("GET /internal/v1/ads/ga4-query", s.internalAdsGA4QueryGET)
+	mux.HandleFunc("GET /internal/v1/ads/ga4", s.internalAdsGA4GET)
+	mux.HandleFunc("POST /internal/v1/ads/ga4", s.internalAdsGA4POST)
 }
 
 func RegisterPublic(mux *http.ServeMux) {

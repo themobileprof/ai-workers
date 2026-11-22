@@ -29,9 +29,13 @@ One primary phrase per URL. Cluster synonyms; one URL owns the cluster. Keep neg
 
 Search Console and GA4 property ids live on Defaults (`/admin/settings` → Traffic). n8n pulls last-28-days as `ga4-read`. Quote only those snapshots. Cursor in the bet repo does not call Google APIs.
 
+## Traffic brief
+
+`TRAFFIC.md` in that same repo coordinates SEO phrases, the ads landing URL, and the GA4 funnel. Cursor building the site reads it. Paste the Funnel line onto the project Card (`funnel_steps`). Copy `guide/TRAFFIC.md` from this office as the skeleton. Copy `.cursor/rules/traffic.mdc` too (set `alwaysApply: true` in the bet repo).
+
 ## How you start
 
 1. Put the public URL (and GitHub repo) on the project Card.
-2. Open that repo in Cursor. Paste or copy `.cursor/rules/onsite-seo.mdc`.
-3. Do the walk in source. Humans review the diff. This office does not push PRs.
+2. Open that repo in Cursor. Paste or copy `.cursor/rules/onsite-seo.mdc` and `.cursor/rules/traffic.mdc`. Copy `TRAFFIC.md` to the repo root if it is missing.
+3. Do the walk in source. Keep `TRAFFIC.md` in the same diffs as new pages or events. Humans review the diff. This office does not push PRs.
 4. Offsite listings you already have: Delivery → Add a task.

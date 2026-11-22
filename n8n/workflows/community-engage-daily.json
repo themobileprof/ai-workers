@@ -36,6 +36,9 @@
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"beat\":\"checkin\"}",
         "options": { "timeout": 60000 }
       },
       "type": "n8n-nodes-base.httpRequest",

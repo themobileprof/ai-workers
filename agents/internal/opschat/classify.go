@@ -13,7 +13,7 @@ const classifyOverlay = `You route one office Telegram message for TheMobileProf
 Pick exactly one department. Do the routing only — do not do the desk's work. Do not list options. Do not ask which desk. Do not say "or".
 Departments:
 - delivery — this week's tasks, morning-card check-ins (done / still / blocked)
-- growth — sales copy, customer replies, Kawasaki pitch-deck slides
+- growth — sales copy, customer replies, Kawasaki pitch-deck slides, Google Search ads pack
 - legal — NDA/contract draft or claims review
 - files — data-room classify
 - accounts — receipt, bill, invoice (Books)
@@ -23,7 +23,7 @@ Departments:
 - community — Academy student rooms (usually the other bot)
 - hr — hiring copy (rare)
 If they replied to "Today on the desk", delivery.
-If they are tightening slide copy, growth.
+If they are tightening slide copy or Search ads, growth.
 structured_data MUST include department: one id from the list above.
 output_text: unused, keep short.
 status: success.`

@@ -36,11 +36,11 @@ Do this, in order:
 
 - Path: `/admin/desks/{slug}` after the owner ticked that slug on your card.
 - Accounts `/accounts` — Books classifier. n8n posts to Zoho Books and Paystack. Go never computes VAT.
-- Growth `/growth` — sales copy, replies, and a pitch-deck session on the bet when you ask. Chat each slide on the project Deck tab. Ask on `/admin/growth` issues a markdown URL. Bare 1:1 chat is Growth (sales). Inbound info@ is CRM. The worker cannot send.
+- Growth `/growth` — sales copy, replies, a pitch-deck session, and a Google Search ads pack on the bet when you ask. Chat slides on Deck or RSA steps on Ads. Ask on `/admin/growth` issues a markdown URL. Pitch: paste into Slides. Ads: Accept, then Place (n8n holds the tokens). The clerk cannot send or spend from chat. Bare 1:1 chat is Growth (sales). Inbound info@ is CRM.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
 - CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step from that story. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN after another worker answers. Caution and stop also file a Legal job.
-- SEO — not a worker. Open the bet repo in Cursor. Copy `.cursor/rules/onsite-seo.mdc`. Walk cite → FAQ → schema → title/meta from the designed page. `/seo` on ops Telegram says the worker is gone. Offsite listings are Delivery tasks. GA4 and Search Console last-28-days arrive from n8n.
+- SEO — not a worker. Open the bet repo in Cursor. Copy `.cursor/rules/onsite-seo.mdc` and `traffic.mdc`. Keep `TRAFFIC.md` at the repo root for phrases, the ads landing, and funnel events. Walk cite → FAQ → schema → title/meta from the designed page. `/seo` on ops Telegram says the worker is gone. Offsite listings are Delivery tasks. GA4 and Search Console last-28-days arrive from n8n.
 - Files `/file` — data room. Drop a PDF on ops Telegram. A catalog match files itself. Odd paths stay on `/admin/files` for Accept. n8n writes Google Drive. The worker cannot upload or invent a folder.
 - Delivery `/today` — see Delivery above. Owner/BDM can open Delivery even without a tick.
 - Ops `/ops` — operations room. Accounts via `/ops` still writes Books. `/ops legal` is chat-only; filing is `/legal`.
@@ -48,7 +48,7 @@ Do this, in order:
 
 ## Docs
 
-- `/admin/docs` — on the rail for everyone signed in. Start at How you fit, then the sheet that matches the People card. Worker specimens sit below the player sheets.
+- `/admin/docs` — on the rail for everyone signed in. Start at How you fit, then **How you run this office** (`/admin/docs/howto`) for ads Place, `TRAFFIC.md`, Community clocks, and Books. Then the sheet that matches the People card. Worker specimens sit below the player sheets. Same map in git: `HOW_YOU_RUN.md`.
 - Print from the browser. If the card and the sheet disagree, amend People or the Face tab — do not invent a second company.
 - Asked `/admin/guide` (owner / BDM, on the Docs rail) — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
 

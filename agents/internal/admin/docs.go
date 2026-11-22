@@ -57,6 +57,16 @@ var docCatalog = []DocMeta{
 		Prefixes: []string{"Owner", "BDM", "Project face", "Field", "Handler"},
 	},
 	{
+		Slug:     "howto",
+		Title:    "How you run this office",
+		Kicker:   "Operator manual",
+		Kind:     "player",
+		Path:     "Desk · ops Telegram · clocks",
+		Wire:     "live",
+		Summary:  "What to click for each worker: Accept vs Place vs Cursor. Lagos clocks. Ads, TRAFFIC.md, Community airtime, Books. Chat never Accepts.",
+		Prefixes: []string{"Accept", "Place", "TRAFFIC.md", "ops Telegram"},
+	},
+	{
 		Slug:     "owner",
 		Title:    "Owner",
 		Kicker:   "Office",
@@ -139,8 +149,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat, marketing copy, and a pitch-deck session on the bet. Chat each slide; the markdown pack updates every turn. Every customer WhatsApp DM files Office → CRM. Books upserts only with an email or once qualified+. Inbound info@ is CRM, not an auto-reply. The worker cannot send.",
-		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ask deck"},
+		Summary:  "Sales chat, marketing copy, a pitch-deck session, and Search ads you Accept then Place. Go drops cities not on the Card. Morning GA4 glance proposes; it does not Place. Every customer WhatsApp DM files Office → CRM. The worker cannot send or spend.",
+		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ads · Place"},
 	},
 	{
 		Slug:     "community",
@@ -148,7 +158,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Room voice",
 		Path:     "POST /departments/community",
 		Wire:     "live",
-		Summary:  "Mandated Academy Telegram rooms, live LMS catalog, join onboard, DM billing email, /invite landing (LMS + Telegram), Monday intro, daily ₦500 airtime post even when nobody qualified, /cm. WhatsApp Cloud API cannot join ordinary groups.",
+		Summary:  "Mandated Academy Telegram rooms, live LMS catalog, join onboard, DM billing email, /invite landing (LMS + Telegram), Monday intro, daily ₦500 airtime (LLM-worded check-in then facts, even when nobody qualified), /cm. WhatsApp Cloud API cannot join ordinary groups.",
 		Prefixes: []string{"/cm", "/community", "Academy Telegram group"},
 	},
 	{
@@ -194,7 +204,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Cursor in the bet repo",
 		Wire:     "live",
-		Summary:  "Onsite SEO is Cursor in the public site repo. Walk cite → FAQ → schema → title/meta from the designed page. Copy .cursor/rules/onsite-seo.mdc into that repo. Offsite listings are Delivery tasks. Search Console and GA4 last-28-days still arrive from n8n. There is no SEO worker.",
+		Summary:  "Onsite SEO is Cursor in the public site repo. Copy .cursor/rules/onsite-seo.mdc and traffic.mdc. TRAFFIC.md at the repo root coordinates phrases, the ads landing, and GA4 funnel events. Walk cite → FAQ → schema → title/meta from the designed page. Offsite listings are Delivery tasks. Search Console and GA4 last-28-days still arrive from n8n. There is no SEO worker.",
 		Prefixes: []string{"Cursor", "project SEO tab"},
 	},
 	{

@@ -14,6 +14,8 @@ Legal name: **TheMobileProf Technologies**. Bets (Academy, HomeGauge, …) are p
 
 The **visible page** (H1, headings, body, buttons) is truth. Title tags and meta are chrome — a designer may never have seen them. Role **gap** = said on the page, missing from the title. Role **brochure** = title/meta only; do not treat it as the topic. Role **cannibal** = the same visible phrase is strong on two URLs.
 
+Keep **`TRAFFIC.md`** at the repo root. It names which URL owns which phrase, the ads landing, and the GA4 funnel events this site actually fires. Update it in the same diff as a new page or a new `gtag` event. Copy `.cursor/rules/traffic.mdc` from the office if it is missing.
+
 Every content word in a proposed query must already appear on the page or the bet one-liner. If Ikeja is not on the page, do not add Ikeja. No competitor domains. No US queries. No invented impressions.
 
 ## Walk (one step at a time)

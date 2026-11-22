@@ -33,6 +33,10 @@
     <span class="hint">Optional. Cursor opens this repo for onsite SEO. This office does not push PRs.</span>
     <input name="git_repo" placeholder="themobileprof/academy">
   </label>
+  <label>Funnel steps
+    <span class="hint">Paste from TRAFFIC.md. Session:session_start, Landing:page_view. A third event only if it already fires.</span>
+    <input name="funnel_steps" placeholder="Session:session_start, Landing:page_view">
+  </label>
   <label>Stage
     <span class="hint">Leave as Idea unless you already know it is testing, selling, parked, or killed.</span>
     <select name="stage">
@@ -94,6 +98,7 @@
     <button type="button" role="tab" data-tab="files" aria-controls="tab-files">Files <span class="count">{{len .Filings}}</span></button>
     <button type="button" role="tab" data-tab="seo" aria-controls="tab-seo">SEO</button>
     <button type="button" role="tab" data-tab="deck" aria-controls="tab-deck">Deck <span class="count">{{len .Decks}}</span></button>
+    <button type="button" role="tab" data-tab="ads" aria-controls="tab-ads">Ads <span class="count">{{len .AdsDecks}}</span></button>
     <button type="button" role="tab" data-tab="card" aria-controls="tab-card">Card</button>
     <button type="button" role="tab" data-tab="dates" aria-controls="tab-dates">Dates <span class="count">{{len .Events}}</span></button>
     <button type="button" role="tab" data-tab="work" aria-controls="tab-work">Work <span class="count">{{len .WorkItems}}</span></button>
@@ -105,7 +110,7 @@
       <ol class="recipe">
         <li>Do the step marked <strong>now</strong>. Each one is a form already on this project.</li>
         <li><strong>Help?</strong> can walk that form. It never Accepts or sends mail.</li>
-        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, SEO (Cursor in the bet repo), and Deck wait until you need them.</li>
+        <li>Must steps are the same for every project. This gate is the journey you Accepted. Legal, Files, SEO (Cursor in the bet repo), Deck, and Ads wait until you need them.</li>
       </ol>
       {{template "page-reads" (guideReads "projects")}}
       {{if .RunSteps}}
@@ -305,13 +310,21 @@
     <section role="tabpanel" id="tab-seo" data-tab="seo">
       <h3>Onsite SEO is Cursor</h3>
       <ol class="recipe">
-        <li>Open the GitHub repo on Card in Cursor. Copy <code>.cursor/rules/onsite-seo.mdc</code> from this office if that repo does not have it yet.</li>
-        <li>Walk the live page in source: quotable facts, then FAQ, then schema, then title/meta and body. The visible page is the source of truth. Organization is TheMobileProf Technologies.</li>
+        <li>Open the GitHub repo on Card in Cursor. Copy <code>.cursor/rules/onsite-seo.mdc</code> and <code>.cursor/rules/traffic.mdc</code> from this office if they are missing. Copy <code>TRAFFIC.md</code> to the repo root (skeleton: office <code>guide/TRAFFIC.md</code>).</li>
+        <li>Keep <code>TRAFFIC.md</code> in the same diffs as new pages or GA4 events. Paste the Funnel line onto Card. Walk cite → FAQ → schema → title/meta from the designed page.</li>
         <li>Offsite listings you already have belong on Delivery as ordinary tasks. Search Console and GA4 ids stay on Defaults.</li>
       </ol>
       {{template "page-reads" (guideReads "seo")}}
       {{if .Project.URL}}<p class="hint">Public URL: <a class="quiet" href="{{.Project.URL}}">{{.Project.URL}}</a></p>{{end}}
       {{if .Project.GitRepo}}<p class="hint">Repo: {{.Project.GitRepo}}</p>{{end}}
+      {{if .Project.FunnelSteps}}<p class="hint">Funnel (Card): <code>{{.Project.FunnelSteps}}</code></p>{{end}}
+      <form method="post" action="/admin/projects/{{.Project.ID}}/funnel" class="settings">
+        <label>Funnel steps
+          <span class="hint">Paste the Funnel line from TRAFFIC.md. Same field as Card.</span>
+          <input name="funnel_steps" value="{{.Project.FunnelSteps}}" placeholder="Session:session_start, Landing:page_view">
+        </label>
+        <button type="submit">Save funnel</button>
+      </form>
       <p class="hint"><a class="quiet" href="/admin/docs/seo">SEO sheet</a> · <a class="quiet" href="/admin/settings?tab=seo">Search Console / GA4</a></p>
     </section>
 
@@ -340,6 +353,53 @@
       {{end}}
     </section>
 
+    <section role="tabpanel" id="tab-ads" data-tab="ads">
+      {{template "ads-ga4" .}}
+      <h3>Search ads</h3>
+      <p class="hint">The clerk still uses the Growth LLM (<code>LLM_PROVIDER</code> / <code>DEEPSEEK_API_KEY</code>). To <strong>Place</strong> after Accept: n8n credential <strong>Google Ads</strong> (OAuth, adwords scope), <code>GOOGLE_ADS_DEVELOPER_TOKEN</code> in the VM <code>.env</code> for n8n, and the customer id on Defaults → Ads. Meta: n8n credential <strong>Facebook Ads</strong>, ad account id and Page id on Defaults. Place is conservative: platform-minimum daily from remaining funds, exact match, Google Search only. Optional daily ceiling on Defaults. Go never holds those tokens. Campaigns start <strong>PAUSED</strong> unless you set ENABLED.</p>
+      <ol class="recipe">
+        <li>Chat Growth Google Search RSA copy from this Card — geo and keyword tests, not age or gender. One company. Campaign name is the bet slug.</li>
+        <li>Accept, then <strong>Place on Google Search</strong> or <strong>Place on Meta</strong>. n8n probes at the platform minimum for a week of Lagos hours. A morning job then cuts wasted cells and dayparts. Chat cannot spend.</li>
+        <li>Search the Pexels queries yourself. Download stills and <code>/file</code> them under <strong>product</strong>. Do not generate faces. <strong>Turn away</strong> if a city or claim is invented.</li>
+      </ol>
+      {{template "ads-walk" .}}
+      {{if .AdsDecks}}
+      {{range .AdsDecks}}
+      {{if or (not $.LiveAds) (ne .ID $.LiveAds.ID)}}
+      <section class="proposal">
+        <p class="kicker">{{.KindLabel}}</p>
+        <div class="doc-card-head">
+          <h3>{{.Title}}</h3>
+          <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
+        </div>
+        {{if .PackPath}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a> · <a href="{{.PackPath}}">URL for Cursor</a></p>{{else}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a></p>{{end}}
+        {{if .Approved}}
+        {{if .Ads.PlaceReady}}
+        <p class="hint">Place needs {{.Ads.PlaceReady}}.</p>
+        {{else}}
+        <p class="hint">Place is a cheap probe: platform-minimum daily, exact match, Search only, one experiment per cell, all Lagos hours for a week. 07:00 Lagos then cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED.</p>
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+            <input type="hidden" name="channel" value="google">
+            <input type="hidden" name="next" value="/admin/projects/{{.ProjectID}}?tab=ads">
+            <input type="hidden" name="step" value="ads">
+            <button type="submit">{{if .Ads.PlacedOn "google"}}Place again on Google Search{{else}}Place on Google Search{{end}}</button>
+          </form>
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+            <input type="hidden" name="channel" value="meta">
+            <input type="hidden" name="next" value="/admin/projects/{{.ProjectID}}?tab=ads">
+            <input type="hidden" name="step" value="ads">
+            <button class="ghost" type="submit">{{if .Ads.PlacedOn "meta"}}Place again on Meta{{else}}Place on Meta{{end}}</button>
+          </form>
+        </div>
+        {{end}}
+        {{end}}
+      </section>
+      {{end}}
+      {{end}}
+      {{end}}
+    </section>
+
     <section role="tabpanel" id="tab-card" data-tab="card">
       <form method="post" action="/admin/projects/{{.Project.ID}}" class="settings">
         <label>Name
@@ -356,8 +416,12 @@
           <input name="url" value="{{.Project.URL}}" placeholder="https://">
         </label>
         <label>GitHub repo
-          <span class="hint">Optional. Cursor opens this repo for onsite SEO. This office does not push PRs.</span>
+          <span class="hint">Optional. Cursor opens this repo for onsite SEO. Copy TRAFFIC.md into that repo. This office does not push PRs.</span>
           <input name="git_repo" value="{{.Project.GitRepo}}" placeholder="themobileprof/academy">
+        </label>
+        <label>Funnel steps
+          <span class="hint">Paste the Funnel line from TRAFFIC.md in the bet repo. Two or more Label:event (or Label:/path).</span>
+          <input name="funnel_steps" value="{{.Project.FunnelSteps}}" placeholder="Session:session_start, Landing:page_view">
         </label>
         <label>Stage
           <select name="stage">

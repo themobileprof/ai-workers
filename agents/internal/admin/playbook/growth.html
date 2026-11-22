@@ -1,9 +1,10 @@
-<p class="lede">Front office. Answers customers, writes social copy, and walks a pitch deck on the bet when you ask. It does not send mail or WhatsApp itself. Inbound <code>info@</code> is CRM.</p>
+<p class="lede">Front office. Answers customers, writes social copy, walks a pitch deck on the bet, and drafts Google Search ads you Accept then Place. It does not send mail or WhatsApp, and chat cannot spend. Inbound <code>info@</code> is CRM.</p>
 
 <ol class="steps">
-  <li>WhatsApp 1:1 with no prefix → growth (sales). Customer WhatsApp is not the deck walk.</li>
-  <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code> or <code>/growth Pitch deck for HomeGauge. Ada is in the room.</code></li>
+  <li>WhatsApp 1:1 with no prefix → growth (sales). Customer WhatsApp is not the deck walk or the ads pack.</li>
+  <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code>, <code>/growth Pitch deck for HomeGauge. Ada is in the room.</code>, or <code>/growth Search ads for HomeGauge</code>.</li>
   <li>Desk: open a project → <strong>Deck</strong> → Start session. Chat each Kawasaki slide. The pack URL updates every turn. Accept on <a href="/admin/growth">Growth</a> when the ten are right. Chat never Accepts.</li>
+  <li>Desk: open a project → <strong>Ads</strong> → Start ads session. Chat URL, cells, keywords, headlines, descriptions, then Pexels queries. Accept, then Place on Google Search or Meta. n8n holds the tokens. Chat cannot spend.</li>
   <li>A mail to <code>info@themobileprof.com</code> is filed by CRM, not drafted here.</li>
   <li>Manual smoke in n8n: <strong>Smoke: growth HTTP</strong> (<code>smkGrwthHttp0001</code>).</li>
 </ol>
@@ -61,9 +62,31 @@
   <p class="expect"><code>action</code> session. Continues the same job if a pack already exists. Accept on the Growth book. Customer WhatsApp cannot run this session.</p>
 </section>
 
+<section class="specimen">
+  <p class="spec-no">Specimen 06 · Search ads session</p>
+  <p class="you-say">Projects → HomeGauge → Ads → Start ads session.</p>
+  <pre class="json">{
+  "task_description": "Start a Google Search ads pack for HomeGauge (homegauge). Work step 1 first. Use only Card facts. Do not spend. Do not invent a city. Pexels queries are for a human to search.",
+  "context_data": {
+    "channel": "desk",
+    "action": "ads",
+    "current_step": 1,
+    "cannot_send": true,
+    "cannot_spend": true,
+    "project": { "slug": "homegauge", "url": "https://homegauge.themobileprof.com", "one_liner": "Salaried Nigerian homebuyers get mortgage help." }
+  }
+}</pre>
+  <p class="expect"><code>task_type</code> ads, <code>cannot_send</code> and <code>cannot_spend</code> true. Chat is the current step plus one question. Test cells are geo + keyword theme from the Card — not age or gender. Funnel events come from Card <code>funnel_steps</code> (<code>TRAFFIC.md</code>) — do not invent a checkout. Go drops a city or keyword that is not on the Card and records it on the pack. Pexels is a search URL a human opens. Accept on the Growth book, then Place. n8n probes at the platform minimum (exact match, Google Search only) and runs all Lagos hours for a week so weekday vs weekend can show. 07:00 Lagos then cuts wasted cells and dayparts. Place stamps UTM. GA4 last 7 days of paid sessions and the funnel land on this book. After the morning pull, a proposed glance job quotes those numbers and does not Place. Campaign name is the bet slug. Customer WhatsApp cannot run this session.</p>
+</section>
+
 <section class="later">
   <p class="stamp dark">Not this worker · send the deck</p>
   <p>Copy from the pack today. The clerk never emails a deck or a business plan. Paste into <code>/legal</code> if you need a claims review. Legal does not write this document.</p>
+</section>
+
+<section class="later">
+  <p class="stamp dark">Not this worker · spend from chat</p>
+  <p>Chat never Places and never fetches Pexels. After Accept, Place on the Growth book. n8n holds the Ads tokens and probes at the platform minimum. Search the Pexels queries yourself. Do not generate faces.</p>
 </section>
 
 <section class="later">

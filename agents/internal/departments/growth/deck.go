@@ -47,6 +47,7 @@ type Spec struct {
 func Specs() []Spec {
 	return []Spec{
 		{ID: "session", Label: "Deck session", Help: "Chat each Kawasaki slide. The pack updates every turn. Chat never Accepts."},
+		{ID: "ads", Label: "Search ads", Help: "Google Search RSA from the Card. Accept, then Place. Pexels queries for a human. Chat does not spend."},
 		{ID: "plan", Label: "Business plan", Help: "Longer outline with the same ten headings. Legal flags claims; it does not write this."},
 		{ID: "audience", Label: "Audience", Help: "Who sits in the room. Named from notes, Face, or CRM."},
 		{ID: "beats", Label: "Beats", Help: "Guy Kawasaki’s 10 slides from the Card."},
@@ -93,6 +94,9 @@ func Lookup(id string) (Spec, bool) {
 
 func LooksLike(data map[string]any, task string) bool {
 	if strings.EqualFold(strings.TrimSpace(str(data["channel"])), "whatsapp") {
+		return false
+	}
+	if strings.EqualFold(str(data["ref_kind"]), "growth_ads") || LooksLikeAds(data, task) {
 		return false
 	}
 	if strings.EqualFold(str(data["ref_kind"]), "growth_deck") {

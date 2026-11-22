@@ -26,11 +26,13 @@ func guideReads(kind string) []DeskLink {
 	case "seo":
 		out = append(out,
 			DeskLink{Href: "/admin/settings?tab=seo", Label: "Search Console / GA4", Why: "Property ids n8n uses for the daily pulls. ga4-read must be a Viewer on GA4 and a user on Search Console."},
-			DeskLink{Href: "/admin/projects", Label: "Projects", Why: "Public URL and GitHub repo on Card. Cursor opens that repo."},
+			DeskLink{Href: "/admin/projects", Label: "Projects", Why: "Public URL, GitHub repo, and Funnel line (TRAFFIC.md) on Card. Cursor opens that repo."},
 		)
 	case "growth":
 		out = append(out,
 			DeskLink{Href: "/admin/growth", Label: "Growth book", Why: "Accept lives here. Download the deck pack or give Cursor the URL."},
+			DeskLink{Href: "/admin/settings?tab=ads", Label: "Ads + funnel", Why: "Account ids, optional daily ceiling, and company-wide funnel fallback. Prefer the Funnel line on each bet Card (TRAFFIC.md). GA4 property id is on Traffic."},
+			DeskLink{Href: "/admin/settings?tab=seo", Label: "GA4 property", Why: "Same ga4-read Viewer used for paid sessions and the funnel."},
 		)
 	case "delivery":
 		out = append(out,

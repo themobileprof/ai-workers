@@ -1,6 +1,9 @@
 package admin
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestProjectRunMarksNowAndMust(t *testing.T) {
 	p := Project{ID: 7, Name: "Apex Clerk", OneLiner: "Who pays, for what.", Stage: "idea"}
@@ -69,5 +72,31 @@ func TestProjectRunLabel(t *testing.T) {
 	}
 	if full.RunLabel() != "" {
 		t.Fatalf("full kit label %q", full.RunLabel())
+	}
+}
+
+func TestProjectRunAdsStep(t *testing.T) {
+	p := Project{ID: 7, Name: "HomeGauge", OneLiner: "Who pays, for what.", URL: "https://homegauge.themobileprof.com"}
+	steps := projectRun(runInput{Project: p, CanGrowth: true})
+	var ads *RunStep
+	for i := range steps {
+		if steps[i].ID == "ads" {
+			ads = &steps[i]
+		}
+	}
+	if ads == nil || ads.Done || !strings.Contains(ads.Href, "tab=ads") {
+		t.Fatalf("%+v", ads)
+	}
+	done := projectRun(runInput{
+		Project: p, CanGrowth: true,
+		Decks: []GrowthDeck{{Kind: "ads", Status: "proposed"}, {Kind: "session", Status: "proposed"}},
+	})
+	for _, s := range done {
+		if s.ID == "ads" && !s.Done {
+			t.Fatalf("ads pack should mark ads done: %+v", s)
+		}
+		if s.ID == "deck" && !s.Done {
+			t.Fatalf("pitch pack should mark deck done: %+v", s)
+		}
 	}
 }

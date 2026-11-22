@@ -59,7 +59,7 @@ var (
 )
 
 func mustGuideFiles() error {
-	for _, name := range []string{"guide/handbook.md", "guide/faq.md", "guide/onsite-seo.md"} {
+	for _, name := range []string{"guide/handbook.md", "guide/faq.md", "guide/onsite-seo.md", "guide/TRAFFIC.md"} {
 		if _, err := guideFS.ReadFile(name); err != nil {
 			return err
 		}

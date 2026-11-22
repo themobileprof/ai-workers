@@ -8,31 +8,33 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 	"github.com/samuel/ai-workers/agents/internal/journeys"
 )
 
 // Project is one incubated bet under TheMobileProf Technologies.
 // It is not a second CAC company. Books, Legal, and parent workers stay on TMP.
 type Project struct {
-	ID         int64
-	Name       string
-	Slug       string
-	OneLiner   string
-	Stage      string
-	URL        string
-	GitRepo    string
-	Notes      string
-	Hypothesis string
-	Mission    string
-	MissionDue string
-	BurnNGN    string
-	Journey    string
-	Gate       string
-	Proposal   *Proposal
-	Members    []ProjectMember
-	NextEvent  *ProjectEvent
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID          int64
+	Name        string
+	Slug        string
+	OneLiner    string
+	Stage       string
+	URL         string
+	GitRepo     string
+	FunnelSteps string
+	Notes       string
+	Hypothesis  string
+	Mission     string
+	MissionDue  string
+	BurnNGN     string
+	Journey     string
+	Gate        string
+	Proposal    *Proposal
+	Members     []ProjectMember
+	NextEvent   *ProjectEvent
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // Proposal is an uncommitted placement. Only a human Accept/Amend writes the stamp.
@@ -168,6 +170,7 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission_due DATE;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS burn_ngn TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_repo TEXT NOT NULL DEFAULT '';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS funnel_steps TEXT NOT NULL DEFAULT '';
 `)
 	return err
 }
@@ -223,7 +226,7 @@ func (s *Store) ListProjects(ctx context.Context) ([]Project, error) {
 	rows, err := s.pool.Query(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
 FROM projects ORDER BY
   CASE stage
     WHEN 'selling' THEN 0
@@ -265,7 +268,7 @@ func (s *Store) GetProject(ctx context.Context, id int64) (Project, error) {
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
 FROM projects WHERE id = $1
 `, id)
 	p, err := scanProject(row)
@@ -288,7 +291,7 @@ func (s *Store) GetProjectBySlug(ctx context.Context, slug string) (Project, err
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
 FROM projects WHERE slug = $1
 `, slug)
 	p, err := scanProject(row)
@@ -311,7 +314,7 @@ func scanProject(row projectScanner) (Project, error) {
 	var p Project
 	var raw []byte
 	err := row.Scan(&p.ID, &p.Name, &p.Slug, &p.OneLiner, &p.Stage, &p.URL, &p.Notes, &p.Journey, &p.Gate, &raw, &p.CreatedAt, &p.UpdatedAt,
-		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN, &p.GitRepo)
+		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN, &p.GitRepo, &p.FunnelSteps)
 	if err != nil {
 		return Project{}, err
 	}
@@ -377,6 +380,18 @@ WHERE id=$9
 
 func (s *Store) SetProjectGitRepo(ctx context.Context, id int64, repo string) error {
 	_, err := s.pool.Exec(ctx, `UPDATE projects SET git_repo = $2, updated_at = now() WHERE id = $1`, id, strings.TrimSpace(repo))
+	if err != nil {
+		return friendlyDBErr(err)
+	}
+	return nil
+}
+
+func (s *Store) SetProjectFunnelSteps(ctx context.Context, id int64, raw string) error {
+	raw = strings.TrimSpace(raw)
+	if raw != "" && !growth.AdsFunnelLineOK(raw) {
+		return errors.New("funnel needs two steps, like Session:session_start, Landing:page_view")
+	}
+	_, err := s.pool.Exec(ctx, `UPDATE projects SET funnel_steps = $2, updated_at = now() WHERE id = $1`, id, raw)
 	if err != nil {
 		return friendlyDBErr(err)
 	}

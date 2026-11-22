@@ -2,12 +2,12 @@
 <aside class="now" aria-label="What to do">
   <div>
     <p class="do">Growth · {{statusCount .Decks "proposed"}} waiting</p>
-    <h2>Chat the slides, then hand over the pack</h2>
+    <h2>Chat the pack, then Place</h2>
     <ol class="recipe">
-      <li>Pick a bet. Start a session. Chat each Kawasaki slide until the copy is right.</li>
-      <li>The pack URL updates every turn. Download it, or give Cursor the URL. You paste into Slides. Export a PDF and <code>/file</code> it under <strong>product</strong>.</li>
-      <li><strong>Turn away</strong> if a fact is invented. The clerk cannot send the deck or invent traction.</li>
-      <li>Paste into <code>/legal</code> if you need a claims review. Legal does not write this document.</li>
+      <li>Pick a bet. Start a pitch session (Kawasaki slides) or a Search ads session (RSA copy, geo/keyword cells, Pexels queries).</li>
+      <li>The pack URL updates every turn. Download it, or give Cursor the URL. Pitch: you paste into Slides. Ads: Accept, then Place on Google Search or Meta. <code>/file</code> the PDF or Pexels stills under <strong>product</strong>.</li>
+      <li><strong>Turn away</strong> if a fact is invented. The clerk cannot send or invent traction. Place talks to n8n — Go never holds Ads tokens.</li>
+      <li>Paste a pitch pack into <code>/legal</code> if you need a claims review. Legal does not write this document.</li>
     </ol>
     {{template "page-reads" (guideReads "growth")}}
   </div>
@@ -16,6 +16,7 @@
     <a class="ghost" href="/admin/docs/growth">Growth sheet</a>
   </div>
 </aside>
+{{template "worker-does" (workerDoes "growth")}}
 <div class="tabset" data-tabs data-default="proposed">
   <nav class="tabs" role="tablist" aria-label="Growth decks">
     <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .Decks "proposed"}}</span></button>
@@ -28,7 +29,7 @@
       {{range .Decks}}
       {{if .Proposed}}
       <section class="proposal">
-        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab={{if .IsAds}}ads{{else}}deck{{end}}">{{.ProjectName}}</a> · {{.KindLabel}}</p>
         <div class="doc-card-head">
           <h3>{{.Title}}</h3>
           <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
@@ -40,6 +41,7 @@
         <div class="actions">
           <form class="inline" method="post" action="/admin/growth/{{.ID}}/approve">
             <input type="hidden" name="next" value="/admin/growth">
+            {{if .IsAds}}<input type="hidden" name="step" value="ads">{{end}}
             <button type="submit">Accept</button>
           </form>
           <form class="inline" method="post" action="/admin/growth/{{.ID}}/reject">
@@ -51,11 +53,11 @@
       {{end}}
       {{end}}
       {{else}}
-      <p class="hint">Nothing waiting. Open a <a class="quiet" href="/admin/projects">project</a> → Deck → Start session, or send Telegram <code>/growth Pitch deck for HomeGauge</code>.</p>
+      <p class="hint">Nothing waiting. Open a <a class="quiet" href="/admin/projects">project</a> → Deck or Ads → Start session, or send Telegram <code>/growth Pitch deck for HomeGauge</code> or <code>/growth Search ads for HomeGauge</code>.</p>
       {{end}}
       {{if not .Project}}
       <form method="get" action="/admin/growth" class="person add">
-        <p class="hint">Pick a bet whose Card has a one-liner. Then start or continue the session.</p>
+        <p class="hint">Pick a bet whose Card has a one-liner (and a public URL for Ads). Then start or continue the session.</p>
         <div class="fields">
           <label>Bet
             <select name="project_id" required>
@@ -72,19 +74,42 @@
       </form>
       {{end}}
       {{template "deck-walk" .}}
+      {{template "ads-walk" .}}
     </section>
     <section role="tabpanel" id="tab-accepted" data-tab="accepted">
+      {{template "ads-ga4" .}}
       {{if statusCount .Decks "approved"}}
       {{range .Decks}}
       {{if eq .Status "approved"}}
       <section class="proposal">
-        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab={{if .IsAds}}ads{{else}}deck{{end}}">{{.ProjectName}}</a> · {{.KindLabel}}</p>
         <div class="doc-card-head">
           <h3>{{.Title}}</h3>
           <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
         </div>
         {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
         <p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a>{{if .PackPath}} · <a href="{{.PackPath}}">URL for Cursor</a>{{end}}</p>
+        {{if and .IsAds .Approved}}
+        {{if .Ads.PlaceReady}}
+        <p class="hint">Place needs {{.Ads.PlaceReady}}.</p>
+        {{else}}
+        <p class="hint">Place is a cheap probe: platform-minimum daily, exact match, Search only, one experiment per cell, all Lagos hours for a week. 07:00 Lagos then cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED.</p>
+        <div class="actions">
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+            <input type="hidden" name="channel" value="google">
+            <input type="hidden" name="next" value="/admin/growth">
+            <input type="hidden" name="step" value="ads">
+            <button type="submit">{{if .Ads.PlacedOn "google"}}Place again on Google Search{{else}}Place on Google Search{{end}}</button>
+          </form>
+          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+            <input type="hidden" name="channel" value="meta">
+            <input type="hidden" name="next" value="/admin/growth">
+            <input type="hidden" name="step" value="ads">
+            <button class="ghost" type="submit">{{if .Ads.PlacedOn "meta"}}Place again on Meta{{else}}Place on Meta{{end}}</button>
+          </form>
+        </div>
+        {{end}}
+        {{end}}
       </section>
       {{end}}
       {{end}}
@@ -97,7 +122,7 @@
       {{range .Decks}}
       {{if eq .Status "rejected"}}
       <section class="proposal">
-        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab=deck">{{.ProjectName}}</a> · {{.KindLabel}}</p>
+        <p class="kicker"><a class="quiet" href="/admin/projects/{{.ProjectID}}?tab={{if .IsAds}}ads{{else}}deck{{end}}">{{.ProjectName}}</a> · {{.KindLabel}}</p>
         <div class="doc-card-head">
           <h3>{{.Title}}</h3>
           <span class="stamp {{.StatusStamp}}">{{.Status}}</span>

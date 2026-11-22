@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -155,16 +156,66 @@ func (s *Server) fileRewardFail(ctx context.Context, rd RewardDay, why string) {
 	})
 }
 
-func (s *Server) dailyEngage(ctx context.Context) map[string]any {
+func (s *Server) dailyEngage(ctx context.Context, beat string) map[string]any {
+	beat = dailyEngageBeat(beat)
 	now := time.Now().In(lagosLocation())
 	yesterday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, lagosLocation()).AddDate(0, 0, -1)
 	existing, _ := s.store.GetRewardDay(ctx, yesterday)
-	if existing.AnnouncedAt != nil {
-		return map[string]any{"ok": true, "skipped": true, "day": yesterday.Format("2006-01-02"), "stage": existing.Stage}
+	if beat == "checkin" && existing.CheckedInAt != nil {
+		return map[string]any{"ok": true, "skipped": true, "beat": beat, "day": yesterday.Format("2006-01-02"), "stage": existing.Stage}
 	}
+	if beat == "airtime" && existing.AnnouncedAt != nil {
+		return map[string]any{"ok": true, "skipped": true, "beat": beat, "day": yesterday.Format("2006-01-02"), "stage": existing.Stage}
+	}
+	groups, err := s.mandateTelegramGroups(ctx)
+	if err != nil {
+		return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
+	}
+	groupID := ""
+	if len(groups) > 0 {
+		groupID = groups[0]
+	}
+	rd := existing
+	if rd.Day.IsZero() {
+		rd = RewardDay{Day: yesterday, GroupChatID: groupID, Amount: s.rewardNaira(), Stage: "none"}
+	}
+	if rd.GroupChatID == "" {
+		rd.GroupChatID = groupID
+	}
+	if rd.Amount <= 0 {
+		rd.Amount = s.rewardNaira()
+	}
+	if beat == "airtime" && (rd.WinnerID == "" && rd.Stage == "none") {
+		picked, err := s.pickDailyWinner(ctx, yesterday, now)
+		if err != nil {
+			return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
+		}
+		rd = picked
+		rd.Day = yesterday
+		if rd.GroupChatID == "" {
+			rd.GroupChatID = groupID
+		}
+	}
+	if err := s.store.UpsertRewardDay(ctx, rd); err != nil {
+		return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
+	}
+	has := rd.Stage != "none" && rd.WinnerID != ""
+	return s.announceDailyGroup(ctx, rd, has, groups, beat)
+}
+
+func dailyEngageBeat(beat string) string {
+	switch strings.ToLower(strings.TrimSpace(beat)) {
+	case "airtime", "reward":
+		return "airtime"
+	default:
+		return "checkin"
+	}
+}
+
+func (s *Server) mandateTelegramGroups(ctx context.Context) ([]string, error) {
 	list, err := s.store.ListCommunityMandates(ctx)
 	if err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
+		return nil, err
 	}
 	var groups []string
 	seen := map[string]bool{}
@@ -176,19 +227,13 @@ func (s *Server) dailyEngage(ctx context.Context) map[string]any {
 		seen[id] = true
 		groups = append(groups, id)
 	}
-	groupID := ""
-	if len(groups) > 0 {
-		groupID = groups[0]
-	}
-	if !existing.Day.IsZero() {
-		if existing.GroupChatID == "" {
-			existing.GroupChatID = groupID
-		}
-		return s.announceDailyGroup(ctx, existing, existing.Stage != "none" && existing.WinnerID != "", groups)
-	}
+	return groups, nil
+}
+
+func (s *Server) pickDailyWinner(ctx context.Context, yesterday, now time.Time) (RewardDay, error) {
 	scores, err := s.store.RankEngagement(ctx, yesterday)
 	if err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
+		return RewardDay{}, err
 	}
 	staff := map[string]bool{}
 	if users, err := s.store.ListUsers(ctx); err == nil {
@@ -200,28 +245,31 @@ func (s *Server) dailyEngage(ctx context.Context) map[string]any {
 	}
 	recent, _ := s.store.RecentAirtimeWinners(ctx, now.AddDate(0, 0, -7))
 	winner, has := pickWinner(scores, staff, recent)
-	amount := s.rewardNaira()
-	rd := RewardDay{Day: yesterday, GroupChatID: groupID, Amount: amount, Stage: "none"}
-	if has {
-		st, _ := s.store.LookupCommunityStudent(ctx, winner.TelegramID)
-		name := displayName(st, winner.Name)
-		rd.WinnerID = winner.TelegramID
-		rd.WinnerName = name
-		rd.CommunityPts = winner.Community
-		rd.AcademyPts = winner.Academy
-		rd.ReferralPts = winner.Referral
-		rd.Phone, rd.Network = st.Phone, st.Network
-		rd.Stage = "await_phone"
+	rd := RewardDay{Day: yesterday, Amount: s.rewardNaira(), Stage: "none"}
+	if !has {
+		return rd, nil
 	}
-	if err := s.store.UpsertRewardDay(ctx, rd); err != nil {
-		return map[string]any{"ok": false, "error": err.Error()}
-	}
-	return s.announceDailyGroup(ctx, rd, has, groups)
+	st, _ := s.store.LookupCommunityStudent(ctx, winner.TelegramID)
+	rd.WinnerID = winner.TelegramID
+	rd.WinnerName = displayName(st, winner.Name)
+	rd.CommunityPts = winner.Community
+	rd.AcademyPts = winner.Academy
+	rd.ReferralPts = winner.Referral
+	rd.Phone, rd.Network = st.Phone, st.Network
+	rd.Stage = "await_phone"
+	return rd, nil
 }
 
-func (s *Server) announceDailyGroup(ctx context.Context, rd RewardDay, has bool, groups []string) map[string]any {
-	out := map[string]any{"ok": true, "day": rd.Day.In(lagosLocation()).Format("2006-01-02"), "winner": rd.WinnerName, "stage": rd.Stage}
-	groupText := s.dailyGroupText(ctx, rd, has)
+func (s *Server) announceDailyGroup(ctx context.Context, rd RewardDay, has bool, groups []string, beat string) map[string]any {
+	beat = dailyEngageBeat(beat)
+	out := map[string]any{"ok": true, "beat": beat, "day": rd.Day.In(lagosLocation()).Format("2006-01-02"), "winner": rd.WinnerName, "stage": rd.Stage}
+	posts := s.dailyGroupPosts(ctx, rd, has, beat)
+	out["hook"] = posts.Hook
+	out["llm"] = posts.FromLLM
+	text := posts.Opener
+	if beat == "airtime" {
+		text = posts.Airtime
+	}
 	if len(groups) == 0 {
 		out["ok"] = false
 		out["error"] = "no Telegram class on the mandate"
@@ -232,9 +280,14 @@ func (s *Server) announceDailyGroup(ctx context.Context, rd RewardDay, has bool,
 		out["error"] = "academy telegram is not configured"
 		return out
 	}
+	if strings.TrimSpace(text) == "" {
+		out["ok"] = false
+		out["error"] = "empty " + beat
+		return out
+	}
 	var sendErr error
 	for _, id := range groups {
-		if err := s.academySend(ctx, id, groupText); err != nil {
+		if err := s.academySend(ctx, id, text); err != nil {
 			log.Printf("academy daily group: %v", err)
 			sendErr = err
 		}
@@ -244,56 +297,24 @@ func (s *Server) announceDailyGroup(ctx context.Context, rd RewardDay, has bool,
 		out["error"] = sendErr.Error()
 		return out
 	}
-	if err := s.store.MarkRewardAnnounced(ctx, rd.Day); err != nil {
-		log.Printf("academy daily announced: %v", err)
-	}
-	if has {
-		dm := s.askRewardPhone(rd)
-		if err := s.acadBot.Send(ctx, rd.WinnerID, dm); err != nil {
-			log.Printf("academy daily dm: %v", err)
-			_ = s.academySend(ctx, groups[0], rd.WinnerName+", open a private chat with me and send a hello so I can send the airtime.")
+	if beat == "checkin" {
+		if err := s.store.MarkRewardCheckedIn(ctx, rd.Day); err != nil {
+			log.Printf("academy daily checkin: %v", err)
+		}
+	} else {
+		if err := s.store.MarkRewardAnnounced(ctx, rd.Day); err != nil {
+			log.Printf("academy daily announced: %v", err)
+		}
+		if has {
+			dm := s.askRewardPhone(rd)
+			if err := s.acadBot.Send(ctx, rd.WinnerID, dm); err != nil {
+				log.Printf("academy daily dm: %v", err)
+				_ = s.academySend(ctx, groups[0], rd.WinnerName+", open a private chat with me and send a hello so I can send the airtime.")
+			}
 		}
 	}
 	out["posted"] = true
 	return out
-}
-
-func (s *Server) dailyGroupText(ctx context.Context, rd RewardDay, has bool) string {
-	naira := fmt.Sprintf("₦%d", rd.Amount)
-	if rd.Amount <= 0 {
-		naira = "₦500"
-	}
-	invite := s.personalJoinURL("")
-	how := "How to be in the running:\n" +
-		"1. Ask a lesson or workshop question here (or in a private chat with me).\n" +
-		"2. Talk in this class — share one thing you learned.\n" +
-		"3. Bring a friend: type /invite and I send you a link. They create their Academy account on that page, then join this class from there."
-	var b strings.Builder
-	b.WriteString("Morning class.\n\n")
-	if has {
-		b.WriteString("Yesterday ")
-		b.WriteString(rd.WinnerName)
-		b.WriteString(" showed up most. ")
-		b.WriteString(rd.WinnerName)
-		b.WriteString(", I just wrote you privately for the ")
-		b.WriteString(naira)
-		b.WriteString(" airtime.\n\nEveryone else: ")
-		b.WriteString(naira)
-		b.WriteString(" is still on tomorrow. ")
-		b.WriteString(how)
-		b.WriteString("\n\nShare: ")
-		b.WriteString(invite)
-	} else {
-		b.WriteString("I have ")
-		b.WriteString(naira)
-		b.WriteString(" airtime to give out. Nobody earned yesterday's card — it is still here today.\n\n")
-		b.WriteString(how)
-		b.WriteString("\n\nThe person who shows up most today gets ")
-		b.WriteString(naira)
-		b.WriteString(" tomorrow morning.\n\nShare: ")
-		b.WriteString(invite)
-	}
-	return b.String()
 }
 
 func (s *Server) internalDailyEngagePOST(w http.ResponseWriter, r *http.Request) {
@@ -301,5 +322,13 @@ func (s *Server) internalDailyEngagePOST(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	writeJSON(w, s.dailyEngage(r.Context()))
+	var body struct {
+		Beat string `json:"beat"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	beat := body.Beat
+	if beat == "" {
+		beat = r.URL.Query().Get("beat")
+	}
+	writeJSON(w, s.dailyEngage(r.Context(), beat))
 }

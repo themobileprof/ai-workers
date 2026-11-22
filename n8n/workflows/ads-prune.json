@@ -1,0 +1,934 @@
+{
+  "id": "adsPrune00000001",
+  "name": "Ads prune",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "adsPrune00000001trig",
+      "name": "07:00 Lagos"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agents:8000/internal/v1/ads/placements",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        0
+      ],
+      "id": "adsPrune00000001list",
+      "name": "Fetch placements"
+    },
+    {
+      "parameters": {
+        "jsCode": "function tooNew(days) {\n  const n = Number(days);\n  return Number.isFinite(n) && n < 7;\n}\nconst body = $input.first().json || {};\nconst googleCustomer = String(body.google_customer_id || '').replace(/\\D/g, '');\nconst googleLogin = String(body.google_login_customer_id || '').replace(/\\D/g, '') || googleCustomer;\nconst list = Array.isArray(body.placements) ? body.placements : [];\nconst rows = [];\nfor (const pl of list) {\n  const channel = String(pl.channel || '').toLowerCase();\n  const campaignId = String(pl.campaign_id || '').replace(/\\D/g, '');\n  if (!campaignId || tooNew(pl.age_days)) continue;\n  const customerId = String(pl.customer_id || '').replace(/\\D/g, '') || googleCustomer;\n  rows.push({ json: {\n    skip: false,\n    channel,\n    deck_id: pl.deck_id,\n    id: String(pl.id || ''),\n    campaign_id: campaignId,\n    customer_id: customerId,\n    login_customer_id: googleLogin,\n    age_days: Number(pl.age_days) || 0,\n    dropped: Array.isArray(pl.dropped) ? pl.dropped : [],\n    metrics_query: \"SELECT ad_group.id, ad_group.resource_name, ad_group.name, ad_group.status, campaign.resource_name, campaign.status, segments.hour, segments.day_of_week, metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros FROM ad_group WHERE campaign.id = \" + campaignId + \" AND ad_group.status = 'ENABLED' AND segments.date DURING LAST_7_DAYS\",\n    schedule_query: \"SELECT campaign_criterion.resource_name, campaign.resource_name, campaign_criterion.ad_schedule.day_of_week, campaign_criterion.ad_schedule.start_hour, campaign_criterion.ad_schedule.end_hour FROM campaign_criterion WHERE campaign.id = \" + campaignId + \" AND campaign_criterion.type = 'AD_SCHEDULE' AND campaign_criterion.status != 'REMOVED'\"\n  } });\n}\nreturn rows.length ? rows : [{ json: { skip: true } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "adsPrune00000001exp",
+      "name": "Each placement"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPrune00000001skpc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "adsPrune00000001skp",
+      "name": "Skip empty"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        -180
+      ],
+      "id": "adsPrune00000001idle",
+      "name": "Idle"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "adsPrune00000001swg",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "google",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "google"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "adsPrune00000001swm",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "meta",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "meta"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        860,
+        80
+      ],
+      "id": "adsPrune00000001swch",
+      "name": "Channel"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:search' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $json.metrics_query, pageSize: 10000 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        -40
+      ],
+      "id": "adsPrune00000001gmet",
+      "name": "GET Google metrics",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Each placement').item.json.customer_id + '/googleAds:search' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $('Each placement').item.json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $('Each placement').item.json.schedule_query, pageSize: 200 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1320,
+        -40
+      ],
+      "id": "adsPrune00000001gsch",
+      "name": "GET Google schedules",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function flattenSearch(res) {\n  if (Array.isArray(res)) return res.flatMap((chunk) => chunk.results || []);\n  if (res && Array.isArray(res.results)) return res.results;\n  return [];\n}\nfunction num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }\nconst p = $('Each placement').item.json;\nconst idle = { skip: true, channel: 'google', id: p.id, customer_id: p.customer_id, login_customer_id: p.login_customer_id, note: '', dropped: p.dropped || [] };\nconst metrics = flattenSearch($('GET Google metrics').item.json || {});\nconst schedRows = flattenSearch($input.first().json || {});\nif (!metrics.length) return [{ json: idle }];\nconst camp = metrics[0].campaign || {};\nif (String(camp.status || '').toUpperCase() === 'PAUSED') return [{ json: idle }];\nconst campaignResource = String(camp.resourceName || camp.resource_name || '');\nconst rows = [];\nfor (const row of metrics) {\n  const ag = row.adGroup || row.ad_group || {};\n  const key = String(ag.resourceName || ag.resource_name || '');\n  if (!key) continue;\n  const seg = row.segments || {};\n  const m = row.metrics || {};\n  rows.push({\n    key,\n    name: String(ag.name || ''),\n    hour: num(seg.hour),\n    day_of_week: String(seg.dayOfWeek || seg.day_of_week || ''),\n    cost: num(m.costMicros || m.cost_micros) / 1e6,\n    clicks: num(m.clicks),\n    conversions: num(m.conversions),\n    impressions: num(m.impressions)\n  });\n}\nconst schedules = [];\nfor (const row of schedRows) {\n  const c = row.campaignCriterion || row.campaign_criterion || {};\n  const ad = c.adSchedule || c.ad_schedule || {};\n  const rn = String(c.resourceName || c.resource_name || '');\n  if (!rn) continue;\n  schedules.push({\n    resource_name: rn,\n    day_of_week: String(ad.dayOfWeek || ad.day_of_week || ''),\n    start_hour: num(ad.startHour || ad.start_hour),\n    end_hour: num(ad.endHour || ad.end_hour)\n  });\n}\nreturn [{ json: {\n  skip: false,\n  channel: 'google',\n  id: p.id,\n  customer_id: p.customer_id,\n  login_customer_id: p.login_customer_id,\n  campaign_id: p.campaign_id,\n  campaign_resource: campaignResource,\n  age_days: p.age_days,\n  dropped: p.dropped || [],\n  rows,\n  schedules\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -40
+      ],
+      "id": "adsPrune00000001gpk",
+      "name": "Pack Google"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "GET",
+        "url": "={{ 'https://graph.facebook.com/v21.0/' + $json.campaign_id + '/insights' }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "adset"
+            },
+            {
+              "name": "date_preset",
+              "value": "last_7d"
+            },
+            {
+              "name": "time_increment",
+              "value": "1"
+            },
+            {
+              "name": "fields",
+              "value": "adset_id,adset_name,impressions,clicks,spend,actions,campaign_id,date_start"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        240
+      ],
+      "id": "adsPrune00000001mdaily",
+      "name": "GET Meta daily",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "facebookAdsOAuth001",
+          "name": "Facebook Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "GET",
+        "url": "={{ 'https://graph.facebook.com/v21.0/' + $('Each placement').item.json.campaign_id + '/insights' }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "adset"
+            },
+            {
+              "name": "date_preset",
+              "value": "last_7d"
+            },
+            {
+              "name": "breakdowns",
+              "value": "hourly_stats_aggregated_by_advertiser_time_zone"
+            },
+            {
+              "name": "fields",
+              "value": "adset_id,adset_name,impressions,clicks,spend,actions,campaign_id"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1320,
+        240
+      ],
+      "id": "adsPrune00000001mhour",
+      "name": "GET Meta hourly",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "facebookAdsOAuth001",
+          "name": "Facebook Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }\nfunction conversions(row) {\n  let n = 0;\n  for (const a of (row.actions || [])) {\n    const t = String(a.action_type || '');\n    if (t.includes('purchase') || t === 'lead' || t.includes('complete_registration')) n += num(a.value);\n  }\n  return n;\n}\nfunction hourFrom(row) {\n  const raw = row.hourly_stats_aggregated_by_advertiser_time_zone || row.hourly_stats_aggregated_by_audience_time_zone || '';\n  const m = String(raw).match(/(\\d{1,2})/);\n  if (!m) return null;\n  const h = Number(m[1]);\n  return Number.isFinite(h) ? h : null;\n}\nfunction listOf(raw) {\n  if (Array.isArray(raw.data)) return raw.data;\n  if (Array.isArray(raw)) return raw;\n  return [];\n}\nconst p = $('Each placement').item.json;\nconst idle = { skip: true, channel: 'meta', id: p.id, note: '', dropped: p.dropped || [] };\nconst dailyRaw = $('GET Meta daily').item.json || {};\nconst hourlyRaw = $input.first().json || {};\nif (dailyRaw.error && hourlyRaw.error) return [{ json: idle }];\nconst rows = [];\nfor (const row of listOf(dailyRaw)) {\n  const id = String(row.adset_id || '');\n  if (!id) continue;\n  rows.push({\n    key: id,\n    name: String(row.adset_name || id),\n    date: String(row.date_start || row.date || ''),\n    cost: num(row.spend),\n    clicks: num(row.clicks),\n    conversions: conversions(row),\n    impressions: num(row.impressions)\n  });\n}\nfor (const row of listOf(hourlyRaw)) {\n  const id = String(row.adset_id || '');\n  const h = hourFrom(row);\n  if (!id || h === null) continue;\n  rows.push({\n    key: id,\n    name: String(row.adset_name || id),\n    hour: h,\n    cost: num(row.spend),\n    clicks: num(row.clicks),\n    conversions: conversions(row),\n    impressions: num(row.impressions)\n  });\n}\nif (!rows.length) return [{ json: idle }];\nreturn [{ json: {\n  skip: false,\n  channel: 'meta',\n  id: p.id,\n  age_days: p.age_days,\n  dropped: p.dropped || [],\n  rows\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        240
+      ],
+      "id": "adsPrune00000001mpk",
+      "name": "Pack Meta"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/internal/v1/ads/placements/decide",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1760,
+        80
+      ],
+      "id": "adsPrune00000001dec",
+      "name": "POST Decide"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPrune00000001dskc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        80
+      ],
+      "id": "adsPrune00000001dsk",
+      "name": "Skip decide"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPrune00000001isc",
+              "leftValue": "={{ $json.channel }}",
+              "rightValue": "google",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        80
+      ],
+      "id": "adsPrune00000001isg",
+      "name": "Is Google"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:mutate' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "developer-token",
+              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
+            },
+            {
+              "name": "login-customer-id",
+              "value": "={{ $json.login_customer_id }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.google_body) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2420,
+        -40
+      ],
+      "id": "adsPrune00000001gmut",
+      "name": "POST Google mutate",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "googleAdsOAuth001",
+          "name": "Google Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('POST Decide').item.json;\nconst res = $input.first().json || {};\nif (res.error) {\n  return [{ json: { skip: true, channel: p.channel, id: p.id, note: '', dropped: p.dropped || [] } }];\n}\nreturn [{ json: { skip: false, channel: p.channel, id: p.id, note: p.note, dropped: p.dropped || [] } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        -40
+      ],
+      "id": "adsPrune00000001gstp",
+      "name": "Stamp google"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ batch: $json.batch }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2420,
+        200
+      ],
+      "id": "adsPrune00000001mpause",
+      "name": "POST Meta mutate",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "facebookAdsOAuth001",
+          "name": "Facebook Ads"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('POST Decide').item.json;\nconst res = $input.first().json || {};\nif (res.error) {\n  return [{ json: { skip: true, channel: p.channel, id: p.id, note: '', dropped: p.dropped || [] } }];\n}\nreturn [{ json: { skip: false, channel: p.channel, id: p.id, note: p.note, dropped: p.dropped || [] } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        200
+      ],
+      "id": "adsPrune00000001mstp",
+      "name": "Stamp meta"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { skip: true } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        440
+      ],
+      "id": "adsPrune00000001fal",
+      "name": "Fallback"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "adsPrune00000001rskc",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2860,
+        80
+      ],
+      "id": "adsPrune00000001rsk",
+      "name": "Skip record"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agents:8000/internal/v1/ads/placements/pruned",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "={{ $env.INTERNAL_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $json.channel, id: $json.id, note: $json.note, dropped: $json.dropped || [] }) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3080,
+        160
+      ],
+      "id": "adsPrune00000001ok",
+      "name": "Record prune"
+    }
+  ],
+  "connections": {
+    "07:00 Lagos": {
+      "main": [
+        [
+          {
+            "node": "Fetch placements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch placements": {
+      "main": [
+        [
+          {
+            "node": "Each placement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Each placement": {
+      "main": [
+        [
+          {
+            "node": "Skip empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip empty": {
+      "main": [
+        [
+          {
+            "node": "Idle",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channel": {
+      "main": [
+        [
+          {
+            "node": "GET Google metrics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Meta daily",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Google metrics": {
+      "main": [
+        [
+          {
+            "node": "GET Google schedules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Google schedules": {
+      "main": [
+        [
+          {
+            "node": "Pack Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack Google": {
+      "main": [
+        [
+          {
+            "node": "POST Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Meta daily": {
+      "main": [
+        [
+          {
+            "node": "GET Meta hourly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Meta hourly": {
+      "main": [
+        [
+          {
+            "node": "Pack Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack Meta": {
+      "main": [
+        [
+          {
+            "node": "POST Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Decide": {
+      "main": [
+        [
+          {
+            "node": "Skip decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip decide": {
+      "main": [
+        [
+          {
+            "node": "Idle",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Google": {
+      "main": [
+        [
+          {
+            "node": "POST Google mutate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST Meta mutate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Google mutate": {
+      "main": [
+        [
+          {
+            "node": "Stamp google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp google": {
+      "main": [
+        [
+          {
+            "node": "Skip record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Meta mutate": {
+      "main": [
+        [
+          {
+            "node": "Stamp meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp meta": {
+      "main": [
+        [
+          {
+            "node": "Skip record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip record": {
+      "main": [
+        [
+          {
+            "node": "Idle",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record prune",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "executionTimeout": 120,
+    "timezone": "Africa/Lagos"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": []
+}

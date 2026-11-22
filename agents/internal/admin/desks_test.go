@@ -44,6 +44,23 @@ func TestAllDesksUnique(t *testing.T) {
 	}
 }
 
+func TestWorkerDoesCoversEveryDesk(t *testing.T) {
+	for _, d := range AllDesks() {
+		if d.Does() == "" {
+			t.Fatalf("%s empty does", d.Slug)
+		}
+	}
+	g := workerDoes("growth")
+	for _, want := range []string{"Search ads", "cannot spend", "LLM", ".env", "Pexels", "pitch"} {
+		if !strings.Contains(g, want) {
+			t.Fatalf("growth does missing %q in %s", want, g)
+		}
+	}
+	if workerDoes("files") == "" || !strings.Contains(workerDoes("accounts"), "VAT") {
+		t.Fatal("files and accounts does")
+	}
+}
+
 func TestDeskGuideLinksPointAtSheet(t *testing.T) {
 	for _, d := range AllDesks() {
 		if d.Help == "" {
@@ -189,6 +206,12 @@ func TestShouldFileInboundJob(t *testing.T) {
 	}
 	if !shouldFileInboundJob("growth", map[string]any{"channel": "telegram"}, map[string]any{"save_deck": true, "task_type": "deck"}) {
 		t.Fatal("ops Telegram deck")
+	}
+	if !shouldFileInboundJob("growth", map[string]any{"channel": "telegram"}, map[string]any{"save_deck": true, "task_type": "ads"}) {
+		t.Fatal("ops Telegram ads")
+	}
+	if shouldFileInboundJob("growth", map[string]any{"channel": "whatsapp"}, map[string]any{"save_deck": true, "task_type": "ads"}) {
+		t.Fatal("customer WhatsApp must not file ads")
 	}
 	if !shouldFileInboundJob("product-dev", map[string]any{"channel": "telegram"}, map[string]any{"save_memory": true, "card_hypothesis": "shops pay"}) {
 		t.Fatal("product card proposal")

@@ -126,8 +126,15 @@ func (s *Server) projectEditGET(w http.ResponseWriter, r *http.Request) {
 	if flash == "" {
 		flash = filesFlash(okq)
 	}
-	if flash == "" && r.URL.Query().Get("tab") == "deck" {
-		flash = growthFlash(okq, r.URL.Query().Get("step"))
+	if flash == "" {
+		tab := r.URL.Query().Get("tab")
+		if tab == "deck" || tab == "ads" {
+			step := r.URL.Query().Get("step")
+			if tab == "ads" && step == "" {
+				step = "ads"
+			}
+			flash = growthFlash(okq, step)
+		}
 	}
 	s.render(w, "projects", s.projectView(r.Context(), u, p, roster, "", flash))
 }
@@ -159,6 +166,7 @@ func (s *Server) projectsPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = s.store.SetProjectGitRepo(r.Context(), p.ID, r.FormValue("git_repo"))
+	_ = s.store.SetProjectFunnelSteps(r.Context(), p.ID, r.FormValue("funnel_steps"))
 	http.Redirect(w, r, projectURL(p.ID, "run", ""), http.StatusSeeOther)
 }
 
@@ -187,6 +195,11 @@ func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = s.store.SetProjectMemory(r.Context(), p.ID, r.FormValue("hypothesis"), r.FormValue("mission"), r.FormValue("mission_due"), r.FormValue("burn_ngn"))
 	_ = s.store.SetProjectGitRepo(r.Context(), p.ID, r.FormValue("git_repo"))
+	if err := s.store.SetProjectFunnelSteps(r.Context(), p.ID, r.FormValue("funnel_steps")); err != nil {
+		roster, _ := s.store.ListUsers(r.Context())
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
+		return
+	}
 	http.Redirect(w, r, projectURL(p.ID, "card", ""), http.StatusSeeOther)
 }
 
@@ -209,6 +222,27 @@ func (s *Server) projectMemoryPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, projectURL(p.ID, "card", ""), http.StatusSeeOther)
+}
+
+func (s *Server) projectFunnelPOST(w http.ResponseWriter, r *http.Request) {
+	if !sameOrigin(w, r) {
+		return
+	}
+	u := s.requireAdmin(w, r)
+	if u == nil {
+		return
+	}
+	p, ok := s.loadProject(w, r)
+	if !ok {
+		return
+	}
+	_ = r.ParseForm()
+	if err := s.store.SetProjectFunnelSteps(r.Context(), p.ID, r.FormValue("funnel_steps")); err != nil {
+		roster, _ := s.store.ListUsers(r.Context())
+		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
+		return
+	}
+	http.Redirect(w, r, projectURL(p.ID, "seo", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectDelete(w http.ResponseWriter, r *http.Request) {
@@ -402,7 +436,7 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		Drafts:         drafts,
 		LegalTemplates: legal.Specs(),
 		CanGrowth:      s.growthReady(),
-		Decks:          decks,
+		Decks:          pitchDecks(decks),
 		DeckKinds:      growth.Specs(),
 		WorkItems:      items,
 		DeliveryBets:   []DeliveryBet{{Project: p, Engagement: eng, Open: open, Slots: slots}},
@@ -414,10 +448,13 @@ func (s *Server) projectView(ctx context.Context, u *User, p Project, roster []U
 		RunLeft:        runMustLeft(steps),
 		DeckWalk:       deckWalk(decks, p),
 		DeckSeed:       loadDeckSeed(p, decks),
+		AdsDecks:       adsDecks(decks),
 		Error:          errMsg,
 		Flash:          flash,
 	}
 	s.attachLiveDeck(ctx, &data, decks)
+	s.attachLiveAds(ctx, &data, decks)
+	s.attachAdsGA4(ctx, &data)
 	return data
 }
 

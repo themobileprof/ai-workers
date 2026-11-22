@@ -1,0 +1,58 @@
+{{define "ads-ga4"}}
+{{if .AdsGA4}}
+<section class="proposal">
+  <p class="kicker">GA4 · last 7 days · paid</p>
+  <h3>Did the click become a session?</h3>
+  <p class="hint">Place stamps <code>utm_campaign</code> to the bet slug and <code>utm_content</code> to the cell. Link Google Ads to this GA4 property (auto-tagging) if Search is on. Funnel steps are events that already fire — the bet Card (from <code>TRAFFIC.md</code>) first, else Defaults → Ads. A lead step stays 0 until that event exists on the site.</p>
+  {{if .AdsGA4.FetchedAt}}<p class="hint">Pulled {{.AdsGA4.FetchedAt}}</p>{{end}}
+  {{if .AdsGA4.Note}}<p class="hint">{{.AdsGA4.Note}}</p>{{end}}
+  {{if .AdsGA4.Funnel}}
+  <ol class="recipe">
+    {{range .AdsGA4.Funnel}}
+    <li><strong>{{.Name}}</strong> · {{printf "%.0f" .Users}} users{{if .ShowKeep}} · kept {{.KeepLabel}}{{end}}</li>
+    {{end}}
+  </ol>
+  {{end}}
+  {{if .AdsGA4.Paid}}
+  <div class="ledger">
+  <table class="roster">
+    <thead>
+      <tr>
+        <th>Source</th>
+        <th>Campaign</th>
+        <th>Cell</th>
+        <th>Sessions</th>
+        <th>Engaged</th>
+        <th>Bounce</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .AdsGA4.Paid}}
+      <tr>
+        <td>{{.SourceMedium}}</td>
+        <td>{{.Campaign}}</td>
+        <td>{{if .Content}}{{.Content}}{{else}}<span class="hint">—</span>{{end}}</td>
+        <td>{{printf "%.0f" .Sessions}}</td>
+        <td>{{printf "%.0f" .Engaged}}</td>
+        <td>{{.BounceLabel}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{else}}
+  <p class="hint">No paid sessions in the last 7 days (or UTM has not landed yet).</p>
+  {{end}}
+  {{if .AdsGA4.ByCampaign}}
+  <p class="hint">Funnel by campaign name (bet slug when Place stamped UTM).</p>
+  <ul>
+    {{range .AdsGA4.ByCampaign}}
+    <li><strong>{{.Campaign}}</strong>
+      {{range .Steps}} · {{.Name}} {{printf "%.0f" .Users}}{{end}}
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+</section>
+{{end}}
+{{end}}

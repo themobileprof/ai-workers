@@ -2,6 +2,10 @@
 
 Durable answers. Add a `##` question when real people ask something this file does not cover. Live asks sit in Postgres until someone folds them here.
 
+## Where is the full how-to for these workers?
+
+Docs → **How you run this office** (`/admin/docs/howto`). Same map in the repo: `HOW_YOU_RUN.md`. Seat sheets stay under How you fit. Help? never Accepts.
+
 ## How do I start or run a project?
 
 Every bet uses the same base kit. **Run** walks it in order.
@@ -95,9 +99,13 @@ Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wai
 
 Tick Growth. Write the Card one-liner first. Open the project → Deck → Start session, or `/growth Pitch deck for HomeGauge` on ops Telegram. Chat each Kawasaki slide until the copy is right. The markdown pack updates every turn — download it or give Cursor the URL. You paste into Slides. Export a PDF and `/file` it under **product**. The clerk cannot send or invent traction. Chat never Accepts. Paste into `/legal` if you need a claims review — Legal does not write the plan. Customer WhatsApp cannot run this session.
 
+## How do I ask for Search ads?
+
+Tick Growth. Write the Card one-liner and a public URL first. Open the project → Ads → Start ads session, or `/growth Search ads for HomeGauge` on ops Telegram. Chat the six steps: final URL, geo/keyword test cells, keywords, headlines (≤30), descriptions (≤90), then Pexels queries. Accept on Growth, then **Place** on Google Search or Meta. n8n holds the tokens (`GOOGLE_ADS_DEVELOPER_TOKEN` in `.env` for n8n, credentials Google Ads and Facebook Ads) and Place is a cheap probe — platform-minimum daily, exact match, Google Search only, one experiment per cell, all Lagos hours for a week so weekday vs weekend and morning/evening can show. 07:00 Lagos then pauses a cell that spent with 0 clicks, and turns off dayparts that wasted while another daypart got clicks. Conversions wait two weeks, and only if a conversion already exists. Place stamps UTM. GA4 last 7 days of paid sessions and a funnel of events that already fire land on the Growth book (property id on Defaults → Traffic; funnel from the bet Card / `TRAFFIC.md`, else Defaults → Ads). After the morning pull, a proposed **Paid traffic glance** job quotes those numbers — it does not Place. Go drops a city or keyword that is not on the Card. Ask `/growth How are the HomeGauge ads doing in GA4?` for the same read-only note. Account ids live on Defaults → Ads; a daily ceiling there is optional unless the account does not report remaining funds. Go never holds those tokens. Campaigns start paused unless you set ENABLED. Chat never Places and cannot invent a city. Test cells are named places plus query themes already on the Card — not age or gender. Search the Pexels phrases yourself and `/file` stills under **product**. Do not generate faces. Customer WhatsApp cannot run this session.
+
 ## How do I ask for SEO copy?
 
-There is no SEO worker. Put the public URL and GitHub repo on the project Card. Open that repo in Cursor. Copy `.cursor/rules/onsite-seo.mdc` from this office if it is missing. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Offsite listings you already have: add a Delivery task. Do not invent ChatGPT citations. GA4 and Search Console last-28-days arrive from n8n; quote only those snapshots. `/seo` on ops Telegram says the worker is gone. Customer WhatsApp still refuses the prefix.
+There is no SEO worker. Put the public URL and GitHub repo on the project Card. Open that repo in Cursor. Copy `.cursor/rules/onsite-seo.mdc` and `.cursor/rules/traffic.mdc` from this office if they are missing. Copy `TRAFFIC.md` to the repo root (skeleton: office `guide/TRAFFIC.md`) — that file coordinates SEO phrases, the ads landing, and GA4 funnel events while Cursor builds the site. Paste the Funnel line onto Card. Walk cite → FAQ → schema → title/meta from the designed page. The visible page is the source of truth. Offsite listings you already have: add a Delivery task. Do not invent ChatGPT citations. GA4 and Search Console last-28-days arrive from n8n; quote only those snapshots. `/seo` on ops Telegram says the worker is gone. Customer WhatsApp still refuses the prefix.
 
 ## Why can’t I see the Board?
 

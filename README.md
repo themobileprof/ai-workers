@@ -3,9 +3,11 @@
 One Lagos company, [TheMobileProf Technologies](https://workers.themobileprof.com). n8n is the public door. A Go process holds the workers and the **desk**. Humans Accept. Workers propose.
 
 Live desk: `https://workers.themobileprof.com/admin/`  
-Hand someone a sheet (signed in): `/admin/docs` — start at **How you fit**, then the page that matches their People card. Worker specimens stay below that.
+**How to use the workers:** [`HOW_YOU_RUN.md`](HOW_YOU_RUN.md) (same sheet signed in: `/admin/docs/howto`). Then **How you fit** and the page that matches the People card. Worker JSON specimens stay below that.
 
 ## How to use it
+
+The short map is below. The full click-paths (ads Place, `TRAFFIC.md`, Community ₦500, Books, clocks) are in [`HOW_YOU_RUN.md`](HOW_YOU_RUN.md).
 
 ### Company desk (owner / BDM)
 
@@ -98,6 +100,10 @@ Internal JSON for n8n (`X-Internal-Token`). Same header on `POST /departments/{n
 | POST | `/internal/v1/jobs` |
 | GET | `/internal/v1/jobs/due` |
 | POST | `/internal/v1/jobs/{id}/apply` · `/internal/v1/jobs/stop-auto` |
+| GET | `/internal/v1/ads/placements` |
+| POST | `/internal/v1/ads/placements/decide` · `/internal/v1/ads/placements/pruned` |
+| GET | `/internal/v1/ads/ga4-query` · `/internal/v1/ads/ga4` |
+| POST | `/internal/v1/ads/ga4` |
 
 See Desk → Docs → How to call a worker.
 

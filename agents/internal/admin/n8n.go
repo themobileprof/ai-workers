@@ -17,6 +17,7 @@ import (
 const (
 	n8nBooksPath  = "/webhook/books-write"
 	n8nOutboxPath = "/webhook/email-outbox"
+	n8nAdsPath    = "/webhook/ads-place"
 )
 
 type n8nClient struct {

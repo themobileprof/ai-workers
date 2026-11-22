@@ -38,15 +38,27 @@ func (s *Server) growthReady() bool {
 }
 
 func growthFlash(ok, step string) string {
+	ads := strings.EqualFold(step, "ads")
 	switch ok {
 	case "drafted":
+		if ads {
+			return "Session started. Chat this Search step. Accept, then Place. Chat cannot spend. Chat never Accepts."
+		}
 		return "Session started. Chat the copy for this slide. The pack URL updates every turn. Chat never Accepts."
 	case "chat":
+		if ads {
+			return "Worker replied. The pack updated. Tighter, next, or skip. Accept when the six steps are right. The clerk cannot spend."
+		}
 		return "Worker replied. The pack updated. Chat a tighter line, say next, or skip. Accept when the ten slides are right."
 	case "deck_ok":
+		if ads {
+			return "Accepted. Place on Google Search or Meta from this book. Search the Pexels queries and /file stills under product. Chat does not spend."
+		}
 		return "Accepted. The pack was already live. The clerk does not email the deck."
 	case "deck_no":
 		return "Turned away. The pack URL is unpublished."
+	case "placed":
+		return "Placed conservatively: platform-minimum daily, exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED."
 	default:
 		return ""
 	}
@@ -76,11 +88,14 @@ func (s *Server) growthGET(w http.ResponseWriter, r *http.Request) {
 			data.DeckWalk = deckWalk(owned, p)
 			data.DeckSeed = loadDeckSeed(p, owned)
 			s.attachLiveDeck(r.Context(), &data, owned)
+			s.attachLiveAds(r.Context(), &data, owned)
+			data.AdsDecks = adsDecks(owned)
 		}
 	}
 	if err != nil {
 		data.Error = err.Error()
 	}
+	s.attachAdsGA4(r.Context(), &data)
 	s.render(w, "growth", data)
 }
 
@@ -138,13 +153,18 @@ func growthNext(r *http.Request, fallback string) string {
 		}
 	}
 	if strings.Contains(out, "/admin/projects/") {
-		return withQuery(out, "tab", "deck")
+		if strings.Contains(out, "tab=ads") || strings.Contains(r.FormValue("next"), "tab=ads") || strings.EqualFold(r.FormValue("step"), "ads") {
+			out = withQuery(out, "tab", "ads")
+		} else {
+			out = withQuery(out, "tab", "deck")
+		}
+	} else if strings.Contains(fallback, "ok=deck_no") {
+		out = withQuery(out, "tab", "rejected")
+	} else if strings.Contains(fallback, "ok=deck_ok") || strings.Contains(fallback, "ok=placed") {
+		out = withQuery(out, "tab", "accepted")
 	}
-	if strings.Contains(fallback, "ok=deck_no") {
-		return withQuery(out, "tab", "rejected")
-	}
-	if strings.Contains(fallback, "ok=deck_ok") {
-		return withQuery(out, "tab", "accepted")
+	if strings.EqualFold(r.FormValue("step"), "ads") {
+		out = withQuery(out, "step", "ads")
 	}
 	return out
 }
@@ -166,7 +186,14 @@ func (s *Server) growthAskPOST(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "growth", pageData{Title: "Growth", Nav: "growth", User: u, Decks: decks, Projects: projects, DeckKinds: growth.Specs(), CanGrowth: true, Error: "pick a project"})
 		return
 	}
-	saved, opener, err := s.runDeckAsk(r.Context(), p, deckAskFromForm(r))
+	form := deckAskFromForm(r)
+	var saved GrowthDeck
+	var opener string
+	if strings.EqualFold(form.Action, "ads") {
+		saved, opener, err = s.runAdsAsk(r.Context(), p, form)
+	} else {
+		saved, opener, err = s.runDeckAsk(r.Context(), p, form)
+	}
 	if err != nil {
 		decks, _ := s.store.ListGrowthDecks(r.Context(), 0)
 		projects, _ := s.store.ListProjects(r.Context())
@@ -201,6 +228,9 @@ func (s *Server) projectDeck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) runDeckAsk(ctx context.Context, p Project, form deckAskForm) (GrowthDeck, string, error) {
+	if strings.EqualFold(form.Action, "ads") {
+		return s.runAdsAsk(ctx, p, form)
+	}
 	if !cardHasDeckFacts(p) {
 		return GrowthDeck{}, "", errors.New("write the Card one-liner first")
 	}
@@ -364,9 +394,13 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 		return req
 	}
 	data := contract.ContextObject(req.ContextData)
-	if id := int64Val(data["ref_id"]); id > 0 && strings.EqualFold(strVal(data["ref_kind"]), "growth_deck") {
+	if id := int64Val(data["ref_id"]); id > 0 && (strings.EqualFold(strVal(data["ref_kind"]), "growth_ads") || strings.EqualFold(strVal(data["ref_kind"]), "growth_deck")) {
 		if d, err := s.store.GetGrowthDeck(ctx, id); err == nil {
-			s.attachDeckSession(ctx, data, d)
+			if d.Kind == "ads" || strings.EqualFold(strVal(data["ref_kind"]), "growth_ads") {
+				s.attachAdsSession(ctx, data, d)
+			} else {
+				s.attachDeckSession(ctx, data, d)
+			}
 			raw, _ := json.Marshal(data)
 			req.ContextData = raw
 			return req
@@ -377,7 +411,32 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 	if !ok {
 		return req
 	}
+	if growth.LooksLikeGlance(data, req.TaskDescription) {
+		attachProductProject(data, p)
+		s.attachAdsGA4Glance(ctx, data, p)
+		data["cannot_send"] = true
+		data["cannot_spend"] = true
+		raw, _ := json.Marshal(data)
+		req.ContextData = raw
+		return req
+	}
 	decks, _ := s.store.ListGrowthDecks(ctx, p.ID)
+	if growth.LooksLikeAds(data, req.TaskDescription) {
+		if live := liveProposedAds(decks); live.ID > 0 {
+			s.attachAdsSession(ctx, data, live)
+		} else {
+			attachProductProject(data, p)
+			data["action"] = "ads"
+			data["ads"] = growth.SeedAds(p.URL)
+			data["current_step"] = 1
+			data["ads_steps"] = growth.AdsSteps()
+			data["cannot_send"] = true
+			data["cannot_spend"] = true
+		}
+		raw, _ := json.Marshal(data)
+		req.ContextData = raw
+		return req
+	}
 	live := liveProposedSession(decks)
 	if !growth.LooksLike(data, req.TaskDescription) && live.ID == 0 {
 		return req
@@ -416,6 +475,10 @@ func (s *Server) attachDeckSession(ctx context.Context, data map[string]any, d G
 
 func (s *Server) applyDeckResponse(ctx context.Context, req contract.Request, resp contract.Response) {
 	if s == nil || s.store == nil || resp.StructuredData == nil {
+		return
+	}
+	if strVal(resp.StructuredData["task_type"]) == "ads" || strVal(resp.StructuredData["action"]) == "ads" {
+		s.applyAdsResponse(ctx, req, resp)
 		return
 	}
 	if !boolVal(resp.StructuredData["save_deck"]) && growth.ParseSlides(resp.StructuredData["slides"]) == nil {
@@ -485,6 +548,9 @@ func (s *Server) ensureDeckJob(ctx context.Context, d GrowthDeck, opener string)
 func deckOpener(d GrowthDeck, output string) string {
 	if s := strings.TrimSpace(output); s != "" {
 		return s
+	}
+	if d.Kind == "ads" {
+		return d.AdsStepLabel() + "\n\nTighter, next, or skip? Chat never Accepts. This pack does not spend."
 	}
 	cur := d.Current()
 	var b strings.Builder

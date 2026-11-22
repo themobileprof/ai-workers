@@ -150,6 +150,7 @@ func attachProductProject(data map[string]any, p Project) {
 		"stage":             p.Stage,
 		"committed_journey": p.Journey,
 		"committed_gate":    p.Gate,
+		"funnel_steps":      p.FunnelSteps,
 	}
 }
 

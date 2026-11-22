@@ -43,6 +43,9 @@ func nextDeckWalkLabel(after string) string {
 
 func resolveDeckAction(action string, decks []GrowthDeck) string {
 	action = strings.ToLower(strings.TrimSpace(action))
+	if action == "ads" {
+		return "session"
+	}
 	if action == "" || action == "walk" || action == "next" {
 		if next := nextDeckWalkAction(decks); next != "" {
 			return next
@@ -116,6 +119,9 @@ func liveProposedSession(decks []GrowthDeck) GrowthDeck {
 		}
 	}
 	for _, d := range decks {
+		if d.Kind == "ads" {
+			continue
+		}
 		if d.Status == "proposed" && len(d.Slides) > 0 {
 			return d
 		}

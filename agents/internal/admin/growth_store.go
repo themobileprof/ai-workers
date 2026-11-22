@@ -23,6 +23,7 @@ type GrowthDeck struct {
 	Rationale    string
 	PackToken    string
 	Slides       []growth.DeckSlide
+	Ads          growth.AdsPack
 	CurrentSlide int
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -47,12 +48,13 @@ CREATE INDEX IF NOT EXISTS growth_decks_project_idx ON growth_decks (project_id,
 CREATE UNIQUE INDEX IF NOT EXISTS growth_decks_pack_token_idx ON growth_decks (pack_token) WHERE pack_token <> '';
 ALTER TABLE growth_decks ADD COLUMN IF NOT EXISTS slides JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE growth_decks ADD COLUMN IF NOT EXISTS current_slide INT NOT NULL DEFAULT 1;
+ALTER TABLE growth_decks ADD COLUMN IF NOT EXISTS ads JSONB NOT NULL DEFAULT '{}'::jsonb;
 `)
 	return err
 }
 
 const growthDeckSelect = `
-SELECT d.id, d.project_id, p.name, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), d.created_at, d.updated_at
+SELECT d.id, d.project_id, p.name, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), COALESCE(d.ads, '{}'::jsonb), d.created_at, d.updated_at
 FROM growth_decks d
 JOIN projects p ON p.id = d.project_id
 `
@@ -121,7 +123,8 @@ func (s *Store) GetGrowthDeckByPackToken(ctx context.Context, token string) (Gro
 func scanGrowthDeck(row projectScanner) (GrowthDeck, error) {
 	var d GrowthDeck
 	var slides []byte
-	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &d.CreatedAt, &d.UpdatedAt)
+	var ads []byte
+	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &ads, &d.CreatedAt, &d.UpdatedAt)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
@@ -131,7 +134,18 @@ func scanGrowthDeck(row projectScanner) (GrowthDeck, error) {
 			d.Slides = growth.ParseSlides(raw)
 		}
 	}
-	if d.CurrentSlide < 1 {
+	if len(ads) > 0 {
+		var raw any
+		if json.Unmarshal(ads, &raw) == nil {
+			d.Ads = growth.ParseAds(raw)
+		}
+	}
+	if d.Kind == "ads" {
+		d.CurrentSlide = growth.ClampAdsStep(d.Ads.Current)
+		if d.Ads.Current < 1 {
+			d.Ads.Current = d.CurrentSlide
+		}
+	} else if d.CurrentSlide < 1 {
 		d.CurrentSlide = 1
 	}
 	return d, nil
@@ -148,25 +162,41 @@ func (s *Store) InsertGrowthDeck(ctx context.Context, d GrowthDeck) (GrowthDeck,
 	if d.Title == "" {
 		d.Title = d.KindLabel()
 	}
-	if d.CurrentSlide < 1 {
-		d.CurrentSlide = 1
-	}
-	if len(d.Slides) == 0 {
-		d.Slides = growth.EmptySlides()
-	}
-	if strings.TrimSpace(d.Body) == "" {
-		d.Body = growth.SlidesMarkdown(d.Slides)
+	if d.Kind == "ads" {
+		d.Ads = growth.ClipAds(d.Ads)
+		if d.Ads.Current < 1 {
+			d.Ads.Current = 1
+		}
+		d.CurrentSlide = d.Ads.Current
+		d.Slides = nil
+		if strings.TrimSpace(d.Body) == "" {
+			d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, "")
+		}
+	} else {
+		if d.CurrentSlide < 1 {
+			d.CurrentSlide = 1
+		}
+		if len(d.Slides) == 0 {
+			d.Slides = growth.EmptySlides()
+		}
+		if strings.TrimSpace(d.Body) == "" {
+			d.Body = growth.SlidesMarkdown(d.Slides)
+		}
 	}
 	raw, err := json.Marshal(d.Slides)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
+	adsRaw, err := json.Marshal(d.Ads)
+	if err != nil {
+		return GrowthDeck{}, err
+	}
 	var id int64
 	err = s.pool.QueryRow(ctx, `
-INSERT INTO growth_decks (project_id, kind, audience, title, body, status, rationale, slides, current_slide)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9)
+INSERT INTO growth_decks (project_id, kind, audience, title, body, status, rationale, slides, current_slide, ads)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10::jsonb)
 RETURNING id
-`, d.ProjectID, d.Kind, strings.TrimSpace(d.Audience), d.Title, d.Body, d.Status, d.Rationale, raw, d.CurrentSlide).Scan(&id)
+`, d.ProjectID, d.Kind, strings.TrimSpace(d.Audience), d.Title, d.Body, d.Status, d.Rationale, raw, d.CurrentSlide, adsRaw).Scan(&id)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
@@ -228,20 +258,125 @@ func (s *Store) UpdateGrowthDeckDraft(ctx context.Context, d GrowthDeck) (Growth
 	if d.Title == "" {
 		d.Title = cur.Title
 	}
-	d.Slides = growth.MergeSlides(cur.Slides, d.Slides)
-	if d.CurrentSlide < 1 {
-		d.CurrentSlide = cur.CurrentSlide
+	if cur.Kind == "ads" || d.Kind == "ads" {
+		d.Kind = "ads"
+		d.Ads = growth.MergeAds(cur.Ads, d.Ads)
+		d.CurrentSlide = d.Ads.Current
+		d.Slides = cur.Slides
+		d.Body = growth.AdsMarkdown(d.Ads, firstNonEmpty(d.ProjectName, cur.ProjectName), "")
+	} else {
+		d.Slides = growth.MergeSlides(cur.Slides, d.Slides)
+		if d.CurrentSlide < 1 {
+			d.CurrentSlide = cur.CurrentSlide
+		}
+		d.CurrentSlide = growth.ClampSlide(d.CurrentSlide)
+		d.Body = growth.SlidesMarkdown(d.Slides)
 	}
-	d.CurrentSlide = growth.ClampSlide(d.CurrentSlide)
-	d.Body = growth.SlidesMarkdown(d.Slides)
 	raw, err := json.Marshal(d.Slides)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
+	adsRaw, err := json.Marshal(d.Ads)
+	if err != nil {
+		return GrowthDeck{}, err
+	}
 	_, err = s.pool.Exec(ctx, `
-UPDATE growth_decks SET audience=$2, title=$3, body=$4, rationale=$5, slides=$6::jsonb, current_slide=$7, updated_at=now()
+UPDATE growth_decks SET audience=$2, title=$3, body=$4, rationale=$5, slides=$6::jsonb, current_slide=$7, ads=$8::jsonb, updated_at=now()
 WHERE id=$1 AND status='proposed'
-`, d.ID, strings.TrimSpace(d.Audience), d.Title, d.Body, d.Rationale, raw, d.CurrentSlide)
+`, d.ID, strings.TrimSpace(d.Audience), d.Title, d.Body, d.Rationale, raw, d.CurrentSlide, adsRaw)
+	if err != nil {
+		return GrowthDeck{}, err
+	}
+	return s.GetGrowthDeck(ctx, d.ID)
+}
+
+type AdsPlacementRow struct {
+	DeckID     int64    `json:"deck_id"`
+	Channel    string   `json:"channel"`
+	ID         string   `json:"id"`
+	CustomerID string   `json:"customer_id,omitempty"`
+	CampaignID string   `json:"campaign_id"`
+	At         string   `json:"at,omitempty"`
+	AgeDays    float64  `json:"age_days"`
+	Dropped    []string `json:"dropped,omitempty"`
+}
+
+func (s *Store) ListAdsPlacements(ctx context.Context) ([]AdsPlacementRow, error) {
+	decks, err := s.ListGrowthDecks(ctx, 0)
+	if err != nil {
+		return nil, err
+	}
+	var out []AdsPlacementRow
+	for _, d := range decks {
+		if d.Kind != "ads" || !d.Approved() {
+			continue
+		}
+		for _, pl := range d.Ads.Placements {
+			if strings.TrimSpace(pl.ID) == "" {
+				continue
+			}
+			cust, camp := growth.AdsCampaignIDs(pl.Channel, pl.ID)
+			if camp == "" {
+				continue
+			}
+			out = append(out, AdsPlacementRow{
+				DeckID: d.ID, Channel: pl.Channel, ID: pl.ID,
+				CustomerID: cust, CampaignID: camp, At: pl.At,
+				AgeDays: growth.AdsAgeDays(pl.At), Dropped: pl.Dropped,
+			})
+		}
+	}
+	return out, nil
+}
+
+func (s *Store) RecordAdsPrune(ctx context.Context, channel, id, note string, dropped []string) error {
+	channel = strings.ToLower(strings.TrimSpace(channel))
+	id = strings.TrimSpace(id)
+	note = strings.TrimSpace(note)
+	if channel == "" || id == "" || note == "" {
+		return nil
+	}
+	decks, err := s.ListGrowthDecks(ctx, 0)
+	if err != nil {
+		return err
+	}
+	for _, d := range decks {
+		if d.Kind != "ads" {
+			continue
+		}
+		found := false
+		for _, pl := range d.Ads.Placements {
+			if pl.Channel == channel && pl.ID == id {
+				found = true
+				break
+			}
+		}
+		if !found {
+			continue
+		}
+		d.Ads = d.Ads.WithPrune(channel, note, dropped)
+		if _, err := s.RecordAdsPlacement(ctx, d); err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
+
+func (s *Store) RecordAdsPlacement(ctx context.Context, d GrowthDeck) (GrowthDeck, error) {
+	if d.ID <= 0 || d.Kind != "ads" {
+		return GrowthDeck{}, errors.New("ads pack is required")
+	}
+	d.Ads = growth.ClipAds(d.Ads)
+	d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, "")
+	adsRaw, err := json.Marshal(d.Ads)
+	if err != nil {
+		return GrowthDeck{}, err
+	}
+	_, err = s.pool.Exec(ctx, `
+UPDATE growth_decks SET ads=$2::jsonb, body=$3, updated_at=now()
+WHERE id=$1 AND kind='ads'
+`, d.ID, adsRaw, d.Body)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
@@ -249,12 +384,35 @@ WHERE id=$1 AND status='proposed'
 }
 
 func (d GrowthDeck) SlideLabel() string {
+	if d.Kind == "ads" {
+		return d.AdsStepLabel()
+	}
 	cur := d.Current()
 	if cur.Title == "" {
 		return "Slide " + strconv.Itoa(cur.N)
 	}
 	return "Slide " + strconv.Itoa(cur.N) + " · " + cur.Title
 }
+
+func (d GrowthDeck) AdsStepLabel() string {
+	n := growth.ClampAdsStep(d.Ads.Current)
+	for _, s := range growth.AdsSteps() {
+		if s.N == n {
+			return "Step " + strconv.Itoa(n) + " · " + s.Title
+		}
+	}
+	return "Step " + strconv.Itoa(n)
+}
+
+func (d GrowthDeck) IsAds() bool { return d.Kind == "ads" }
+
+func (d GrowthDeck) Approved() bool { return d.Status == "approved" }
+
+func (d GrowthDeck) CanPlaceAds() bool {
+	return d.IsAds() && d.Approved() && d.Ads.PlaceReady() == ""
+}
+
+func (d GrowthDeck) AdsWalk() []growth.AdsWalkStep { return d.Ads.Walk() }
 
 func (d GrowthDeck) Current() growth.DeckSlide {
 	n := growth.ClampSlide(d.CurrentSlide)

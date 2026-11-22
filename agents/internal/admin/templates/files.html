@@ -15,6 +15,7 @@
     <a class="ghost" href="/admin/docs/files">Files sheet</a>
   </div>
 </aside>
+{{template "worker-does" (workerDoes "files")}}
 <div class="tabset" data-tabs data-default="proposed">
   <nav class="tabs" role="tablist" aria-label="Filings">
     <button type="button" role="tab" data-tab="proposed" aria-controls="tab-proposed">Proposed <span class="count">{{statusCount .Filings "proposed"}}</span></button>

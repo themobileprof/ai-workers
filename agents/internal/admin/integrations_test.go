@@ -53,7 +53,7 @@ func claimedCreds(t *testing.T) map[string]bool {
 }
 
 func isVendorEnv(name string) bool {
-	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_", "PAGESPEED_", "TELEGRAM_", "LMS_", "CLUBKONNECT_"} {
+	for _, p := range []string{"PAYSTACK_", "DEEPSEEK_", "GEMINI_", "OPENAI_", "ANTHROPIC_", "LLM_", "FATHOM_", "PAGESPEED_", "TELEGRAM_", "LMS_", "CLUBKONNECT_", "GOOGLE_ADS_"} {
 		if strings.HasPrefix(name, p) || name == strings.TrimSuffix(p, "_") {
 			return true
 		}
@@ -166,6 +166,9 @@ func TestCaddyfileAllowlistsN8n(t *testing.T) {
 	s := string(raw)
 	if !strings.Contains(s, "handle @n8nui") {
 		t.Fatal("Caddyfile must proxy the n8n editor through @n8nui, not a catch-all")
+	}
+	if !strings.Contains(s, "handle /webhook/ads-place*") {
+		t.Fatal("Caddyfile must 404 ads-place on the public host")
 	}
 	if strings.Contains(s, "handle {\n\t\treverse_proxy 127.0.0.1:5678") {
 		t.Fatal("Caddyfile must not catch-all to n8n")

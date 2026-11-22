@@ -174,6 +174,15 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		if !strings.Contains(buf.String(), tc.want) {
 			t.Fatalf("%s missing %q", tc.name, tc.want)
 		}
+		switch tc.page {
+		case "desks", "growth", "legal", "files", "delivery":
+			if !strings.Contains(buf.String(), "What this worker does") {
+				t.Fatalf("%s missing worker does", tc.name)
+			}
+		}
+		if tc.page == "projects" && tc.data.Project != nil && !strings.Contains(buf.String(), "GOOGLE_ADS_DEVELOPER_TOKEN") {
+			t.Fatalf("%s missing ads env hint", tc.name)
+		}
 		if strings.Contains(buf.String(), "/admin/integrations") {
 			t.Fatalf("%s still links to the removed Tools page", tc.name)
 		}

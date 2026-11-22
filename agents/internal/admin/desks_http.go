@@ -419,7 +419,11 @@ func deskChatNext(r *http.Request, fallback string) string {
 	}
 	out := withQuery(next, "ok", "chat")
 	if strings.Contains(next, "/admin/projects/") {
-		out = withQuery(out, "tab", "deck")
+		if strings.Contains(next, "tab=ads") {
+			out = withQuery(out, "tab", "ads")
+		} else {
+			out = withQuery(out, "tab", "deck")
+		}
 	}
 	return out
 }

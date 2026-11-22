@@ -134,12 +134,24 @@ func TestGuideDockOnSignedInLayout(t *testing.T) {
 	}
 }
 
+func TestDeskChatNextKeepsAdsTab(t *testing.T) {
+	r := httptest.NewRequest(http.MethodPost, "/admin/desks/growth/jobs/1/chat", strings.NewReader("next=/admin/projects/7%3Ftab%3Dads"))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if err := r.ParseForm(); err != nil {
+		t.Fatal(err)
+	}
+	got := deskChatNext(r, "/admin/desks/growth")
+	if !strings.Contains(got, "tab=ads") || strings.Contains(got, "tab=deck") {
+		t.Fatal(got)
+	}
+}
+
 func TestPlaybookCatalog(t *testing.T) {
 	if err := mustPlaybookFiles(); err != nil {
 		t.Fatal(err)
 	}
 	page, ok := lookupDoc("growth")
-	if !ok || page.Path != "POST /departments/growth" || page.Prev == nil || page.Next == nil || !strings.Contains(string(page.Body), "pitch deck") {
+	if !ok || page.Path != "POST /departments/growth" || page.Prev == nil || page.Next == nil || !strings.Contains(string(page.Body), "pitch deck") || !strings.Contains(string(page.Body), "cannot_spend") {
 		t.Fatalf("growth page %+v ok=%v", page.DocMeta, ok)
 	}
 	if _, ok := lookupDoc("missing"); ok {
@@ -147,6 +159,10 @@ func TestPlaybookCatalog(t *testing.T) {
 	}
 	if first := allDocs()[0]; first.Slug != "you" || !first.Player() || !first.Live() {
 		t.Fatalf("first page %s kind=%s", first.Slug, first.Kind)
+	}
+	howto, ok := lookupDoc("howto")
+	if !ok || !howto.Player() || !strings.Contains(string(howto.Body), "TRAFFIC.md") || !strings.Contains(string(howto.Body), "Place") {
+		t.Fatal("howto operator manual")
 	}
 	contract, ok := lookupDoc("contract")
 	if !ok || contract.Player() || !contract.Worker() {

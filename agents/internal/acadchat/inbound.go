@@ -165,7 +165,7 @@ func HelpText() string {
 		"Stuck on a workshop? Just say so — I will ask you what I need, one thing at a time, then tell you exactly what to type.",
 		"I stay quiet when you are just chatting.",
 		"Payment or your own billing: DM me the email on your LMS account (https://lms.themobileprof.com). I will not quote receipts in the group.",
-		"Bring a friend: type /invite and I send you a link to share. Each morning I post in the class: ₦500 airtime is on offer for whoever showed up most — lesson questions, this room, and invites — even if nobody earned it yesterday.",
+		"Bring a friend: type /invite and I send you a link to share. Each morning I check in — a greeting, where you are in the course, or an open ask for lesson/workshop/quiz questions — then ₦500 airtime for whoever showed up most, even if nobody earned it yesterday.",
 	}, "\n")
 }
 

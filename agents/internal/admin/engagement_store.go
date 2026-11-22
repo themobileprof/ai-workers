@@ -40,6 +40,7 @@ type RewardDay struct {
 	CommunityPts int
 	AcademyPts   int
 	ReferralPts  int
+	CheckedInAt  *time.Time
 	AnnouncedAt  *time.Time
 }
 
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS community_reward_days (
   academy_pts INT NOT NULL DEFAULT 0,
   referral_pts INT NOT NULL DEFAULT 0,
   announced_at TIMESTAMPTZ,
+  checked_in_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,
   verified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -95,6 +97,7 @@ CREATE TABLE IF NOT EXISTS community_join_hits (
   user_agent TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE community_reward_days ADD COLUMN IF NOT EXISTS checked_in_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS community_join_hits_code_idx ON community_join_hits (code, created_at DESC);
 CREATE TABLE IF NOT EXISTS community_lms_signups (
   email TEXT PRIMARY KEY,
@@ -340,7 +343,7 @@ func (s *Store) GetRewardDay(ctx context.Context, day time.Time) (RewardDay, err
 	d := day.In(lagosLocation()).Format("2006-01-02")
 	row := s.pool.QueryRow(ctx, `
 SELECT day, winner_telegram_id, winner_name, group_chat_id, stage, amount, phone, network,
-       request_id, order_id, club_status, community_pts, academy_pts, referral_pts, announced_at
+       request_id, order_id, club_status, community_pts, academy_pts, referral_pts, announced_at, checked_in_at
 FROM community_reward_days WHERE day = $1::date`, d)
 	rd, err := scanRewardDay(row.Scan)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -356,7 +359,7 @@ func (s *Store) OpenRewardFor(ctx context.Context, telegramID string) (RewardDay
 	}
 	row := s.pool.QueryRow(ctx, `
 SELECT day, winner_telegram_id, winner_name, group_chat_id, stage, amount, phone, network,
-       request_id, order_id, club_status, community_pts, academy_pts, referral_pts, announced_at
+       request_id, order_id, club_status, community_pts, academy_pts, referral_pts, announced_at, checked_in_at
 FROM community_reward_days
 WHERE winner_telegram_id = $1 AND stage IN ('await_phone','await_confirm','sent')
 ORDER BY day DESC
@@ -409,8 +412,18 @@ WHERE day = $1::date
 	return err
 }
 
+func (s *Store) MarkRewardCheckedIn(ctx context.Context, day time.Time) error {
+	d := day.In(lagosLocation()).Format("2006-01-02")
+	_, err := s.pool.Exec(ctx, `
+UPDATE community_reward_days
+SET checked_in_at = COALESCE(checked_in_at, now()), updated_at = now()
+WHERE day = $1::date
+`, d)
+	return err
+}
+
 func scanRewardDay(scan func(dest ...any) error) (RewardDay, error) {
 	var rd RewardDay
-	err := scan(&rd.Day, &rd.WinnerID, &rd.WinnerName, &rd.GroupChatID, &rd.Stage, &rd.Amount, &rd.Phone, &rd.Network, &rd.RequestID, &rd.OrderID, &rd.ClubStatus, &rd.CommunityPts, &rd.AcademyPts, &rd.ReferralPts, &rd.AnnouncedAt)
+	err := scan(&rd.Day, &rd.WinnerID, &rd.WinnerName, &rd.GroupChatID, &rd.Stage, &rd.Amount, &rd.Phone, &rd.Network, &rd.RequestID, &rd.OrderID, &rd.ClubStatus, &rd.CommunityPts, &rd.AcademyPts, &rd.ReferralPts, &rd.AnnouncedAt, &rd.CheckedInAt)
 	return rd, err
 }

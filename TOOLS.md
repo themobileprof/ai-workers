@@ -124,7 +124,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `caddy`
 - **URL:** https://caddyserver.com/
-- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook/telegram-ops*` and `/webhook/telegram-academy*` → agents. `/webhook/books-write*` and `/webhook/email-outbox*` 404. Other `/webhook*` `/form*` → n8n. Editor allowlist `/home*` `/signin*` `/rest*` `/assets*` `/static*` `/types*` → n8n. `/n8n/` redirects to `/home`. No catch-all to n8n. `/departments` and `/internal` stay unpublished.
+- **Role:** TLS on 443. `/` and `/site*` plus `/admin*` → agents. `/webhook/telegram-ops*` and `/webhook/telegram-academy*` → agents. `/webhook/books-write*`, `/webhook/email-outbox*`, and `/webhook/ads-place*` 404. Other `/webhook*` `/form*` → n8n. Editor allowlist `/home*` `/signin*` `/rest*` `/assets*` `/static*` `/types*` → n8n. `/n8n/` redirects to `/home`. No catch-all to n8n. `/departments` and `/internal` stay unpublished.
 - **Where:** Native on the host. Site block in `Caddyfile` (repo) → `/etc/caddy/conf.d/workers.caddy`. `/etc/caddy/Caddyfile` only imports `conf.d` so `enterprisellm.ng` can share the VM.
 - **Secrets:** None in git. ACME via the public hostname.
 
@@ -162,11 +162,11 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 
 - **Id:** `google-analytics`
 - **URL:** https://analytics.google.com/
-- **Role:** Organic traffic for your GA4 property. Free API. n8n pulls last 28 days as the `ga4-read` service account. Quote that snapshot; onsite SEO is Cursor in the bet repo.
-- **Where:** n8n workflow SEO GA4 pull (`googleApi` service account, not person OAuth). Property id on desk Defaults (`seo.ga4_property_id`). Snapshot on `POST /internal/v1/seo/ga4`. The Go worker never holds the JSON key.
+- **Role:** Your GA4 property. Organic last-28-days for SEO. Paid last-7-days (sessions, engagement, key events) plus a funnel report to evaluate Place. Funnel steps are events that already fire on the site — not an invented checkout.
+- **Where:** n8n SEO GA4 pull and Ads GA4 pull (`googleApi` service account, not person OAuth). Property id on desk Defaults (`seo.ga4_property_id`). Funnel steps: prefer the Funnel line on the bet Card (`TRAFFIC.md` in the site repo); company-wide fallback is Defaults → Ads (`ads.funnel_steps`). Snapshots on `POST /internal/v1/seo/ga4` and `POST /internal/v1/ads/ga4`. The Go worker never holds the JSON key.
 - **Secrets:** Service account JSON in n8n credential Google Analytics. Never git, never `.env`, never the Go worker.
 - **n8n credentials:** `Google Analytics`
-- **Desk keys:** `seo.ga4_property_id`
+- **Desk keys:** `seo.ga4_property_id`, `ads.funnel_steps`
 
 ### PageSpeed Insights
 
@@ -176,6 +176,36 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Where:** Go agents when `PAGESPEED_API_KEY` is set. Key in the VM `.env`.
 - **Secrets:** `PAGESPEED_API_KEY` on the VM `.env` → agents container. Never git.
 - **Env:** `PAGESPEED_API_KEY`
+
+### Google Ads
+
+- **Id:** `google-ads`
+- **URL:** https://ads.google.com/
+- **Role:** One company account. Growth drafts Search RSA (headlines ≤30, descriptions ≤90, geo + keyword test cells). After Accept, Place reads remaining funds and stays conservative: platform-minimum daily (never more than remaining/90), exact match only, Google Search network only, one ad group per cell. Place stamps utm_campaign to the bet slug so GA4 can score the ads. Campaigns start PAUSED unless Defaults → Ads says ENABLED.
+- **Where:** Go `POST http://n8n:5678/webhook/ads-place` (`X-Internal-Token`). Caddy 404s that path on the public host. n8n reads `account_budget` then `googleAds:mutate` (v21). Each morning `ads-prune` waits a full week, then pauses dead cells and turns off Lagos hours/days that spent with 0 clicks. `ads-ga4` at 06:20 Lagos pulls paid sessions and the funnel. Customer id, MCC login id, optional daily ceiling, and status on desk Defaults. Funnel: bet Card first (`TRAFFIC.md`), else `ads.funnel_steps`. Chat never Places. The Go worker never holds Ads tokens.
+- **Secrets:** OAuth tokens in n8n credential Google Ads (adwords scope). `GOOGLE_ADS_DEVELOPER_TOKEN` on the VM `.env` → n8n container. Never git. Never the Go worker.
+- **Env:** `GOOGLE_ADS_DEVELOPER_TOKEN`
+- **n8n credentials:** `Google Ads`
+- **Desk keys:** `ads.google_customer_id`, `ads.google_login_customer_id`, `ads.daily_cap`, `ads.campaign_status`, `ads.funnel_steps`
+
+### Facebook Ads
+
+- **Id:** `facebook-ads`
+- **URL:** https://www.facebook.com/business/ads
+- **Role:** One company ad account. Place on Meta after Accept reads remaining funds (balance or spend cap) and uses Meta’s minimum daily as the campaign budget (never more than remaining/90), with an ad set per geo/keyword cell so spend can shift to what works. Each cell link gets UTM (facebook / cpc / bet slug / cell). Nigeria geo. Campaigns start PAUSED unless Defaults → Ads says ENABLED.
+- **Where:** Same Go webhook `/webhook/ads-place` with `channel=meta`. n8n Graph API campaign → ad set → creative → ad. Each morning `ads-prune` waits a full week, then pauses dead ad sets and turns off wasted hours/days per cell. Ad account id and Page id on desk Defaults. Chat never Places. The Go worker never holds Ads tokens.
+- **Secrets:** OAuth tokens in n8n credential Facebook Ads (`ads_management`). Never `.env`, never the Go worker.
+- **n8n credentials:** `Facebook Ads`
+- **Desk keys:** `ads.meta_ad_account_id`, `ads.meta_page_id`, `ads.daily_cap`, `ads.campaign_status`
+
+### Pexels
+
+- **Id:** `pexels`
+- **URL:** https://www.pexels.com/
+- **Role:** Stock stills a human searches from Growth’s suggested queries (objects and places, not generated faces). Download and `/file` under the bet’s **product** folder.
+- **Where:** Browser. The clerk prints `pexels.com/search/{query}` links. No Pexels API key. No image generation.
+- **Needs:** None in `.env`. A human searches and `/file`s stills.
+- **Secrets:** None.
 
 ### Google Drive
 

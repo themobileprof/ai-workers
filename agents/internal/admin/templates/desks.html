@@ -33,6 +33,7 @@
     <a class="ghost" href="/admin/docs/{{.Desk.Slug}}">{{.Desk.Title}} sheet</a>
   </div>
 </aside>
+{{template "worker-does" .Desk.Does}}
 
 <div class="tabset" data-tabs data-default="{{if .Job}}job{{else if statusCount .Jobs "proposed"}}jobs{{else}}ask{{end}}">
   <nav class="tabs" role="tablist" aria-label="{{.Desk.Title}} desk">

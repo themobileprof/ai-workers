@@ -29,6 +29,9 @@ func TestResolveDeckActionWalk(t *testing.T) {
 	if resolveDeckAction("plan", nil) != "plan" {
 		t.Fatal("named kind")
 	}
+	if resolveDeckAction("ads", nil) != "session" {
+		t.Fatal("ads is not a pitch walk")
+	}
 }
 
 func TestDeckWalkNowStamp(t *testing.T) {
@@ -80,6 +83,34 @@ func TestCardBeatsKawasaki(t *testing.T) {
 	}
 	if strings.Contains(got, "MAU") {
 		t.Fatal("must not invent MAU")
+	}
+}
+
+func TestGrowthPackAdsDoesNotSpend(t *testing.T) {
+	pack := growth.SeedAds("https://homegauge.themobileprof.com")
+	pack.Cells = []growth.AdsCell{{Geo: "Lagos", Theme: "mortgage help"}}
+	body := growthPackMarkdown(GrowthDeck{ID: 4, Kind: "ads", Title: "HomeGauge Search ads", Status: "proposed", Ads: pack, Body: growth.AdsMarkdown(pack, "HomeGauge", "homegauge")},
+		Project{Name: "HomeGauge", Slug: "homegauge", OneLiner: "Salaried buyers get mortgage help.", URL: "https://homegauge.themobileprof.com"},
+		nil)
+	for _, want := range []string{"Place", "Pexels", "homegauge", "TheMobileProf Technologies", "Lagos"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("missing %q in %s", want, body)
+		}
+	}
+	if strings.Contains(strings.ToLower(body), "waitlist") || strings.Contains(body, "Guy Kawasaki") {
+		t.Fatal(body)
+	}
+}
+
+func TestLiveProposedSessionSkipsAds(t *testing.T) {
+	if live := liveProposedSession([]GrowthDeck{{Kind: "ads", Status: "proposed", Ads: growth.SeedAds("https://x.test")}}); live.ID != 0 || live.Kind == "ads" {
+		t.Fatalf("ads must not steal the pitch session: %+v", live)
+	}
+	if live := liveProposedAds([]GrowthDeck{
+		{ID: 2, Kind: "session", Status: "proposed"},
+		{ID: 3, Kind: "ads", Status: "proposed"},
+	}); live.ID != 3 {
+		t.Fatalf("%+v", live)
 	}
 }
 

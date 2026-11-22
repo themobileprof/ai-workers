@@ -1,0 +1,29 @@
+---
+description: Copy into each public site repo (set alwaysApply true there). TRAFFIC.md coordinates SEO phrases, the ads landing, and GA4 funnel events for this bet.
+globs: TRAFFIC.md
+alwaysApply: false
+---
+
+# Traffic brief (this bet)
+
+`TRAFFIC.md` at the repo root is the brief while you build pages, events, and ads landings. The office desk does not invent a second funnel.
+
+## Same diff
+
+When you add or change a public URL, a primary CTA, a title/H1, or a GA4 / gtag event, update `TRAFFIC.md` in that diff. Do not list an event the code does not fire. Do not add a city or product the visible page does not already show.
+
+## Funnel
+
+Steps are GA4 event names that already fire, or a page path (`Waitlist:/waitlist`). Default is `Session:session_start, Landing:page_view`. A third step only when that event exists on this site.
+
+Paste the Funnel line onto the project Card (`funnel_steps`) so Place / GA4 on the office desk match this file. Do not call Google APIs from this repo.
+
+## SEO
+
+Follow `.cursor/rules/onsite-seo.mdc`. One primary phrase per URL, from the designed page. `TRAFFIC.md` names which URL owns which phrase so ads keywords and titles do not drift.
+
+## Do not
+
+- Invent rankings, volume, or a checkout the site does not have.
+- Treat `TRAFFIC.md` as live Analytics numbers. Those snapshots live on the office desk.
+- Publish, merge, or spend. Humans review the diff.

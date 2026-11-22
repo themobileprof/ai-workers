@@ -75,7 +75,7 @@ func Decide(in Inbound, currentDesk string) Decision {
 		return Decision{Kind: KindHelp}
 	}
 	if seoGoneRe.MatchString(text) {
-		return Decision{Kind: KindNote, Reply: "Onsite SEO is Cursor in the bet repo. Copy .cursor/rules/onsite-seo.mdc into that repo and walk cite → FAQ → schema → title/meta from the designed page. Offsite listings are Delivery tasks you add. Search Console and GA4 still land on Defaults. There is no SEO worker."}
+		return Decision{Kind: KindNote, Reply: "Onsite SEO is Cursor in the bet repo. Copy .cursor/rules/onsite-seo.mdc and traffic.mdc, keep TRAFFIC.md at the repo root, and walk cite → FAQ → schema → title/meta from the designed page. Offsite listings are Delivery tasks you add. Search Console and GA4 still land on Defaults. There is no SEO worker."}
 	}
 	if act := outboxAction(text); act != "" {
 		return Decision{Kind: KindOutbox, Action: act}

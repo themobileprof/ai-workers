@@ -22,6 +22,12 @@ When sales_support is talking to a real person (not a copywriting hypothetical) 
 
 func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contract.Response, error) {
 	data := contract.ContextObject(req.ContextData)
+	if LooksLikeGlance(data, req.TaskDescription) {
+		return handleGlance(ctx, c, req, data)
+	}
+	if LooksLikeAds(data, req.TaskDescription) {
+		return handleAds(ctx, c, req, data)
+	}
 	if LooksLike(data, req.TaskDescription) {
 		return handleDeck(ctx, c, req, data)
 	}

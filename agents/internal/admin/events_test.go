@@ -94,8 +94,8 @@ func TestUpcomingEventJSON(t *testing.T) {
 	}
 	next := ProjectEvent{
 		Title: "UNILAG", Status: "planned", ProjectName: "Academy",
-		StartsOn: time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC),
-		EndsOn:   time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC),
+		StartsOn: time.Now().UTC().AddDate(0, 0, 2),
+		EndsOn:   time.Now().UTC().AddDate(0, 0, 4),
 	}
 	done := ProjectEvent{Title: "done", Status: "delivered", StartsOn: time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)}
 	got := upcomingEventJSON([]ProjectEvent{past, next, done})

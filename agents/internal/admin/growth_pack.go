@@ -79,6 +79,10 @@ func growthPackMarkdown(d GrowthDeck, p Project, siblings []GrowthDeck) string {
 		b.WriteString("Spend this month (Card): " + p.BurnNGN + "\n\n")
 	}
 	b.WriteString("Kind: " + kind + " · status: " + d.Status + " · updated: " + d.UpdatedAt.UTC().Format(time.RFC3339) + "\n\n")
+	if d.Kind == "ads" {
+		b.WriteString(growth.AdsMarkdown(d.Ads, name, p.Slug))
+		return b.String()
+	}
 	b.WriteString("Guy Kawasaki 10-slide pitch (10/20/30). Ten slides, twenty minutes, thirty-point when you paste. Do not add an 11th slide.\n\n")
 	b.WriteString("This pack does not send, email, or invent waitlist / MAU / burn. Missing facts stay [TO BE COMPLETED]. After Accept, export a PDF and `/file` it under this bet’s **product** folder. Paste into `/legal` if you need a claims review.\n\n")
 	if aud := firstNonEmpty(d.Audience, latestLiveDeck(siblings, "audience").Body); aud != "" {

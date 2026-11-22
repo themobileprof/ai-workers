@@ -1,0 +1,103 @@
+{{define "ads-walk"}}
+{{if .Project}}
+<h3>Session · chat each Search step</h3>
+<ol class="recipe">
+  <li>Start a session. Growth proposes Google Search RSA copy for the current step, then asks one question. Same LLM as the rest of Growth. Ads OAuth stays in n8n, not this process.</li>
+  <li>Reply: tighter, next, skip, or rewrite a line. The pack URL updates every turn. Chat never Accepts. Chat cannot spend.</li>
+  <li>Facts stay on the Card. No age or gender cells. Accept, then Place — cheap probe per cell, all Lagos hours for a week, then a morning job cuts wasted cells and dayparts. Place stamps UTM so GA4 can score paid sessions and the funnel. Pexels queries are for you to search — do not generate faces.</li>
+</ol>
+{{if .LiveAds}}
+<p class="hint">Now: <strong>{{.LiveAds.AdsStepLabel}}</strong>{{if .LiveAds.PackPath}} · <a href="{{.LiveAds.PackPath}}">pack URL</a>{{end}} · <a href="{{.LiveAds.PackDownloadPath}}">download</a></p>
+<ol class="run">
+  {{range .LiveAds.AdsWalk}}
+  <li class="{{if eq .N $.LiveAds.CurrentSlide}}waiting{{else if eq .Status "agreed"}}done{{end}}">
+    <div class="doc-card-head">
+      <p class="kicker">Step {{.N}}</p>
+      <span class="stamp {{.StampClass}}">{{.StampLabel}}</span>
+    </div>
+    <h3>{{.Title}}</h3>
+    {{if .Body}}<pre class="legal-body">{{.Body}}</pre>{{end}}
+    {{if and .Card (eq .N $.LiveAds.CurrentSlide)}}<p class="hint">{{.Card}}</p>{{end}}
+  </li>
+  {{end}}
+</ol>
+{{if .LiveAds.Ads.Pexels}}
+<p class="hint">Pexels — search these yourself, download, <code>/file</code> under <strong>product</strong>.</p>
+<ul>
+  {{range .LiveAds.Ads.Pexels}}
+  <li><a class="quiet" href="{{.SearchURL}}">{{.Query}}</a>{{if .Avoid}} — skip: {{.Avoid}}{{end}}</li>
+  {{end}}
+</ul>
+{{if .LiveAds.Ads.Avoid}}<p class="hint">Do not download: {{.LiveAds.Ads.Avoid}}</p>{{end}}
+{{end}}
+{{if .AdsJob}}
+<div class="thread">
+  {{range .AdsMessages}}
+  <article class="bubble {{if .Handler}}handler{{else if .Worker}}worker{{else}}system{{end}}">
+    <p class="kicker">{{if .AuthorName}}{{.AuthorName}}{{else}}{{.AuthorKind}}{{end}}</p>
+    <pre class="legal-body">{{.Body}}</pre>
+  </article>
+  {{else}}
+  <p class="hint">Session is open. Send a first note below.</p>
+  {{end}}
+</div>
+{{if .AdsJob.Proposed}}
+<form method="post" action="/admin/desks/growth/jobs/{{.AdsJob.ID}}/chat" class="person">
+  {{if eq .Nav "growth"}}
+  <input type="hidden" name="next" value="/admin/growth?project_id={{.Project.ID}}&step=ads">
+  {{else}}
+  <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=ads">
+  {{end}}
+  <label>Reply to Growth
+    <textarea name="body" rows="3" required placeholder="Tighter, next, skip, or rewrite the line. This does not Accept or spend."></textarea>
+  </label>
+  <div class="actions">
+    <button type="submit">Send to Growth</button>
+  </div>
+</form>
+{{if .LiveAds.Proposed}}
+<div class="actions">
+  <form class="inline" method="post" action="/admin/growth/{{.LiveAds.ID}}/approve">
+    {{if eq .Nav "growth"}}
+    <input type="hidden" name="next" value="/admin/growth">
+    {{else}}
+    <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=ads">
+    {{end}}
+    <input type="hidden" name="step" value="ads">
+    <button type="submit">Accept</button>
+  </form>
+  <form class="inline" method="post" action="/admin/growth/{{.LiveAds.ID}}/reject">
+    {{if eq .Nav "growth"}}
+    <input type="hidden" name="next" value="/admin/growth">
+    {{else}}
+    <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=ads">
+    {{end}}
+    <button class="ghost" type="submit">Turn away</button>
+  </form>
+</div>
+{{end}}
+{{else}}
+<p class="hint">This session is closed. Start another if you need a new pack.</p>
+{{end}}
+{{end}}
+{{else if .CanGrowth}}
+{{if not .Project.URL}}
+<p class="hint">Write a public URL on Card first. Search ads need a final URL the clerk must not invent.</p>
+{{else}}
+<form method="post" action="{{if eq .Nav "growth"}}/admin/growth/ask{{else}}/admin/projects/{{.Project.ID}}/ads{{end}}" class="person add">
+  {{if eq .Nav "growth"}}<input type="hidden" name="project_id" value="{{.Project.ID}}">{{end}}
+  <input type="hidden" name="action" value="ads">
+  <label>Opening note
+    <textarea name="human_feedback" rows="2" placeholder="Optional. Named places already on the Card. The clerk cannot spend."></textarea>
+  </label>
+  <div class="actions">
+    <button type="submit">Start ads session</button>
+    <button type="button" class="ghost" data-help="Ask Search ads">Help? walk this</button>
+  </div>
+</form>
+{{end}}
+{{else}}
+<p class="hint">Growth clerk is off until the LLM env is set, or this person is not ticked for the Growth desk.</p>
+{{end}}
+{{end}}
+{{end}}

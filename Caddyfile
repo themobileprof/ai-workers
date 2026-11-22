@@ -29,11 +29,14 @@ workers.themobileprof.com {
 		reverse_proxy 127.0.0.1:8000
 	}
 
-	# Go → n8n on the Docker network. Do not publish Books or outbox to the internet.
+	# Go → n8n on the Docker network. Do not publish Books, outbox, or ads Place to the internet.
 	handle /webhook/books-write* {
 		respond 404
 	}
 	handle /webhook/email-outbox* {
+		respond 404
+	}
+	handle /webhook/ads-place* {
 		respond 404
 	}
 
