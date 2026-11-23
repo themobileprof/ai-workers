@@ -108,7 +108,7 @@
         </div>
       </details>
       {{end}}
-      <a class="nav-link{{if or (eq .Nav "docs") (eq .Nav "guide")}} on{{end}}" href="/admin/docs">
+      <a class="nav-link{{if or (eq .Nav "docs") (eq .Nav "guide") (eq .Nav "episodes")}} on{{end}}" href="/admin/docs">
         <svg class="ico"><use href="#i-docs"/></svg>
         <span>Docs</span>
       </a>
@@ -145,6 +145,7 @@
     <a href="/admin/docs" {{if and (eq .Nav "docs") (not .Doc)}}class="on"{{end}}>Index</a>
     {{if .CanOffice}}
     <a href="/admin/guide" {{if eq .Nav "guide"}}class="on"{{end}}>Asked</a>
+    <a href="/admin/episodes" {{if eq .Nav "episodes"}}class="on"{{end}}>Episodes</a>
     {{end}}
     <p class="rail-label">Your sheet</p>
     {{range .Docs}}{{if .Player}}

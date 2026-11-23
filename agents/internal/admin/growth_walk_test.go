@@ -92,7 +92,7 @@ func TestGrowthPackAdsDoesNotSpend(t *testing.T) {
 	body := growthPackMarkdown(GrowthDeck{ID: 4, Kind: "ads", Title: "HomeGauge Search ads", Status: "proposed", Ads: pack, Body: growth.AdsMarkdown(pack, "HomeGauge", "homegauge")},
 		Project{Name: "HomeGauge", Slug: "homegauge", OneLiner: "Salaried buyers get mortgage help.", URL: "https://homegauge.themobileprof.com"},
 		nil)
-	for _, want := range []string{"Place", "Pexels", "homegauge", "TheMobileProf Technologies", "Lagos"} {
+	for _, want := range []string{"Place", "Pexels", "homegauge", "TheMobileProf Technologies", "Lagos", "Book it yourself", "ads.google.com"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("missing %q in %s", want, body)
 		}

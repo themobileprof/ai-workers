@@ -8,7 +8,7 @@
     <ol class="recipe">
       <li>Read the worker’s reply on <strong>This job</strong>.</li>
       <li>If it is wrong, type a fix and click <strong>Send to worker</strong>.</li>
-      <li>When it is right, click <strong>Accept</strong>. Click <strong>Turn away</strong> if you do not want it.</li>
+      <li>When it is right, click <strong>Accept</strong>. Click <strong>Turn away</strong> if you do not want it. An optional reason is stored so the next draft on that bet can avoid the same mistake.</li>
     </ol>
     {{else if statusCount .Jobs "proposed"}}
     <h2>Open a waiting job</h2>
@@ -90,7 +90,8 @@
           <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/accept">
             <button type="submit">Accept</button>
           </form>
-          <form class="inline" method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/reject">
+          <form method="post" action="/admin/desks/{{.Desk.Slug}}/jobs/{{.Job.ID}}/reject" class="turn-away">
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
             <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>

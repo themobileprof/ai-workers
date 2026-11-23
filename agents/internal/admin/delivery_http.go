@@ -300,7 +300,8 @@ func (s *Server) deliveryAskPOST(w http.ResponseWriter, r *http.Request) {
 	overlay["department"] = "delivery"
 	overlay["action"] = "plan"
 	raw, _ := json.Marshal(overlay)
-	resp, err := fn(r.Context(), contract.Request{TaskDescription: task, ContextData: raw})
+	req := contract.Request{TaskDescription: task, ContextData: raw}
+	resp, err := fn(r.Context(), req)
 	if err != nil || resp.Status != contract.StatusSuccess {
 		msg := resp.OutputText
 		if msg == "" && err != nil {
@@ -318,6 +319,7 @@ func (s *Server) deliveryAskPOST(w http.ResponseWriter, r *http.Request) {
 	if resp.OutputText != "" {
 		_, _ = s.store.InsertJobMessage(r.Context(), JobMessage{JobID: job.ID, AuthorKind: "worker", Body: resp.OutputText})
 	}
+	s.openStaffEpisode(r.Context(), job, req, resp)
 	http.Redirect(w, r, "/admin/desks/delivery?job="+strconv.FormatInt(job.ID, 10)+"&ok=asked", http.StatusSeeOther)
 }
 

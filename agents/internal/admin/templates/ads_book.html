@@ -1,0 +1,99 @@
+{{define "ads-book"}}
+{{if and .IsAds .Approved}}
+{{if .Ads.PlaceReady}}
+<p class="hint">The pack is not ready to book: {{.Ads.PlaceReady}}.</p>
+{{else}}
+<p class="hint">After Accept, pick <strong>one path per channel</strong>. Book it yourself in the Google Ads or Meta UI from the steps below, or click Place so n8n books the same conservative probe. Do not do both for the same channel, or you pay twice. Chat never spends.</p>
+<div class="ads-book split">
+  <section class="person">
+    <p class="kicker">Manual</p>
+    <h3>Book it yourself</h3>
+    <p class="hint">Follow these clicks in the Ads UI. Paste the same copy, geos, exact keywords, and UTM URLs. Start paused unless Defaults → Ads says ENABLED.</p>
+    <h4>Google Ads</h4>
+    {{if eq (.AdsBookedHow "google") "place"}}
+    <p class="hint">n8n already placed Google Search. Do not also create this campaign in ads.google.com.</p>
+    {{else}}
+    <ol class="run">
+      {{range .AdsManualGoogle}}
+      <li>
+        <div class="doc-card-head">
+          <p class="kicker">Step {{.N}}</p>
+        </div>
+        <h3>{{.Title}}</h3>
+        <pre class="legal-body">{{.Body}}</pre>
+      </li>
+      {{end}}
+    </ol>
+    <form method="post" action="/admin/growth/{{.ID}}/book" class="person add">
+      <input type="hidden" name="channel" value="google">
+      <input type="hidden" name="next" value="{{.AdsReturnPath}}">
+      <input type="hidden" name="step" value="ads">
+      <label>Google campaign id
+        <input name="campaign_id" maxlength="80" placeholder="Digits from the URL after /campaigns/" value="{{.AdsManualCampaignID "google"}}">
+      </label>
+      <div class="actions">
+        <button type="submit">{{if eq (.AdsBookedHow "google") "manual"}}Update Google booking{{else}}I booked it myself on Google Search{{end}}</button>
+      </div>
+    </form>
+    {{end}}
+    <h4>Meta</h4>
+    {{if eq (.AdsBookedHow "meta") "place"}}
+    <p class="hint">n8n already placed Meta. Do not also create this campaign in Ads Manager.</p>
+    {{else}}
+    <ol class="run">
+      {{range .AdsManualMeta}}
+      <li>
+        <div class="doc-card-head">
+          <p class="kicker">Step {{.N}}</p>
+        </div>
+        <h3>{{.Title}}</h3>
+        <pre class="legal-body">{{.Body}}</pre>
+      </li>
+      {{end}}
+    </ol>
+    <form method="post" action="/admin/growth/{{.ID}}/book" class="person add">
+      <input type="hidden" name="channel" value="meta">
+      <input type="hidden" name="next" value="{{.AdsReturnPath}}">
+      <input type="hidden" name="step" value="ads">
+      <label>Meta campaign id
+        <input name="campaign_id" maxlength="80" placeholder="Campaign id from Ads Manager" value="{{.AdsManualCampaignID "meta"}}">
+      </label>
+      <div class="actions">
+        <button class="ghost" type="submit">{{if eq (.AdsBookedHow "meta") "manual"}}Update Meta booking{{else}}I booked it myself on Meta{{end}}</button>
+      </div>
+    </form>
+    {{end}}
+  </section>
+  <section class="person">
+    <p class="kicker">Automated</p>
+    <h3>Place</h3>
+    <p class="hint">n8n holds Google Ads and Facebook Ads OAuth. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential. Place is a cheap probe: platform-minimum daily, exact match, Search only, one experiment per cell, all Lagos hours for a week. 07:00 Lagos then cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED.</p>
+    {{if eq (.AdsBookedHow "google") "manual"}}
+    <p class="hint">Google Search is already booked in the Ads UI. Place on Google Search is off so you do not pay twice.</p>
+    {{end}}
+    {{if eq (.AdsBookedHow "meta") "manual"}}
+    <p class="hint">Meta is already booked in the Ads UI. Place on Meta is off so you do not pay twice.</p>
+    {{end}}
+    <div class="actions">
+      {{if ne (.AdsBookedHow "google") "manual"}}
+      <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+        <input type="hidden" name="channel" value="google">
+        <input type="hidden" name="next" value="{{.AdsReturnPath}}">
+        <input type="hidden" name="step" value="ads">
+        <button type="submit">{{if .Ads.PlacedOn "google"}}Place again on Google Search{{else}}Place on Google Search{{end}}</button>
+      </form>
+      {{end}}
+      {{if ne (.AdsBookedHow "meta") "manual"}}
+      <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
+        <input type="hidden" name="channel" value="meta">
+        <input type="hidden" name="next" value="{{.AdsReturnPath}}">
+        <input type="hidden" name="step" value="ads">
+        <button class="ghost" type="submit">{{if .Ads.PlacedOn "meta"}}Place again on Meta{{else}}Place on Meta{{end}}</button>
+      </form>
+      {{end}}
+    </div>
+  </section>
+</div>
+{{end}}
+{{end}}
+{{end}}

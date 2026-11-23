@@ -41,6 +41,9 @@ func TestAdsMarkdownNoSpend(t *testing.T) {
 	if !strings.Contains(md, "Place") || !strings.Contains(md, "Pexels") || !strings.Contains(md, "homegauge") || !strings.Contains(md, "experiment") {
 		t.Fatal(md)
 	}
+	if !strings.Contains(md, "Book it yourself") || !strings.Contains(md, "ads.google.com") {
+		t.Fatal(md)
+	}
 	if strings.Contains(strings.ToLower(md), "waitlist") || strings.Contains(md, "MAU") {
 		t.Fatal(md)
 	}
@@ -269,9 +272,59 @@ func TestAdsPlaceReady(t *testing.T) {
 	if p.PlaceReady() != "" {
 		t.Fatal(p.PlaceReady())
 	}
-	p = p.WithPlacement(AdsPlacement{Channel: "google", ID: "customers/1/campaigns/2", At: "2026-11-21"})
+	p = p.WithPlacement(AdsPlacement{Channel: "google", ID: "customers/1/campaigns/2", Mode: "place", At: "2026-11-21"})
 	if !p.PlacedOn("google") || p.PlacedOn("meta") {
 		t.Fatalf("%+v", p.Placements)
+	}
+	if p.BookedHow("google") != "place" {
+		t.Fatalf("place mode %+v", p.Placements)
+	}
+}
+
+func TestAdsBookConflictExclusive(t *testing.T) {
+	manual := SeedAds("https://homegauge.themobileprof.com").WithPlacement(AdsPlacement{Channel: "google", ID: "manual", Mode: "manual"})
+	if AdsBookConflict(manual, "google", "place") == "" {
+		t.Fatal("manual must block Place")
+	}
+	if AdsBookConflict(manual, "google", "manual") != "" {
+		t.Fatal("updating a manual campaign id is allowed")
+	}
+	placed := SeedAds("https://homegauge.themobileprof.com").WithPlacement(AdsPlacement{Channel: "google", ID: "customers/1/campaigns/2", Mode: "place"})
+	if AdsBookConflict(placed, "google", "manual") == "" {
+		t.Fatal("Place must block booking the same cells in the UI")
+	}
+	if AdsBookConflict(placed, "meta", "manual") != "" {
+		t.Fatal("the other channel stays free")
+	}
+}
+
+func TestAdsManualGoogleListsExactAndUTM(t *testing.T) {
+	p := ClipAds(AdsPack{
+		FinalURL:     "https://homegauge.themobileprof.com",
+		Cells:        []AdsCell{{Geo: "Lagos", Theme: "mortgage help"}},
+		Keywords:     []string{"mortgage help Lagos"},
+		Headlines:    []AdsLine{{Text: "Mortgage help in Lagos"}},
+		Descriptions: []AdsLine{{Text: "Salaried buyers get a desk that quotes today."}, {Text: "Named places on the Card only."}},
+	})
+	md := AdsManualMarkdown(p, "HomeGauge", "homegauge")
+	for _, want := range []string{
+		"Book it yourself",
+		"Place automatically",
+		"ads.google.com",
+		"[mortgage help Lagos]",
+		"homegauge",
+		"utm_campaign=homegauge",
+		"Paused",
+		"pay twice",
+		"adsmanager.facebook.com",
+	} {
+		if !strings.Contains(md, want) {
+			t.Fatalf("missing %q in %s", want, md)
+		}
+	}
+	steps := AdsManualGoogle(p, "HomeGauge", "homegauge")
+	if len(steps) < 10 {
+		t.Fatalf("google steps %d", len(steps))
 	}
 }
 

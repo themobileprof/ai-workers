@@ -15,6 +15,7 @@ type GrowthDeck struct {
 	ID           int64
 	ProjectID    int64
 	ProjectName  string
+	ProjectSlug  string
 	Kind         string
 	Audience     string
 	Title        string
@@ -54,7 +55,7 @@ ALTER TABLE growth_decks ADD COLUMN IF NOT EXISTS ads JSONB NOT NULL DEFAULT '{}
 }
 
 const growthDeckSelect = `
-SELECT d.id, d.project_id, p.name, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), COALESCE(d.ads, '{}'::jsonb), d.created_at, d.updated_at
+SELECT d.id, d.project_id, p.name, p.slug, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), COALESCE(d.ads, '{}'::jsonb), d.created_at, d.updated_at
 FROM growth_decks d
 JOIN projects p ON p.id = d.project_id
 `
@@ -124,7 +125,7 @@ func scanGrowthDeck(row projectScanner) (GrowthDeck, error) {
 	var d GrowthDeck
 	var slides []byte
 	var ads []byte
-	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &ads, &d.CreatedAt, &d.UpdatedAt)
+	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.ProjectSlug, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &ads, &d.CreatedAt, &d.UpdatedAt)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
@@ -170,7 +171,7 @@ func (s *Store) InsertGrowthDeck(ctx context.Context, d GrowthDeck) (GrowthDeck,
 		d.CurrentSlide = d.Ads.Current
 		d.Slides = nil
 		if strings.TrimSpace(d.Body) == "" {
-			d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, "")
+			d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, d.ProjectSlug)
 		}
 	} else {
 		if d.CurrentSlide < 1 {
@@ -263,7 +264,7 @@ func (s *Store) UpdateGrowthDeckDraft(ctx context.Context, d GrowthDeck) (Growth
 		d.Ads = growth.MergeAds(cur.Ads, d.Ads)
 		d.CurrentSlide = d.Ads.Current
 		d.Slides = cur.Slides
-		d.Body = growth.AdsMarkdown(d.Ads, firstNonEmpty(d.ProjectName, cur.ProjectName), "")
+		d.Body = growth.AdsMarkdown(d.Ads, firstNonEmpty(d.ProjectName, cur.ProjectName), firstNonEmpty(d.ProjectSlug, cur.ProjectSlug))
 	} else {
 		d.Slides = growth.MergeSlides(cur.Slides, d.Slides)
 		if d.CurrentSlide < 1 {
@@ -358,6 +359,7 @@ func (s *Store) RecordAdsPrune(ctx context.Context, channel, id, note string, dr
 		if _, err := s.RecordAdsPlacement(ctx, d); err != nil {
 			return err
 		}
+		_ = s.NoteEpisodeOutcome(ctx, "growth_deck", d.ID, note)
 		return nil
 	}
 	return nil
@@ -368,7 +370,17 @@ func (s *Store) RecordAdsPlacement(ctx context.Context, d GrowthDeck) (GrowthDec
 		return GrowthDeck{}, errors.New("ads pack is required")
 	}
 	d.Ads = growth.ClipAds(d.Ads)
-	d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, "")
+	slug := strings.TrimSpace(d.ProjectSlug)
+	name := strings.TrimSpace(d.ProjectName)
+	if p, err := s.GetProject(ctx, d.ProjectID); err == nil {
+		if slug == "" {
+			slug = p.Slug
+		}
+		if name == "" {
+			name = p.Name
+		}
+	}
+	d.Body = growth.AdsMarkdown(d.Ads, name, slug)
 	adsRaw, err := json.Marshal(d.Ads)
 	if err != nil {
 		return GrowthDeck{}, err
@@ -413,6 +425,37 @@ func (d GrowthDeck) CanPlaceAds() bool {
 }
 
 func (d GrowthDeck) AdsWalk() []growth.AdsWalkStep { return d.Ads.Walk() }
+
+func (d GrowthDeck) AdsManualGoogle() []growth.AdsManualStep {
+	return growth.AdsManualGoogle(d.Ads, d.ProjectName, d.ProjectSlug)
+}
+
+func (d GrowthDeck) AdsManualMeta() []growth.AdsManualStep {
+	return growth.AdsManualMeta(d.Ads, d.ProjectName, d.ProjectSlug)
+}
+
+func (d GrowthDeck) AdsReturnPath() string {
+	if d.ProjectID <= 0 {
+		return "/admin/growth"
+	}
+	return "/admin/projects/" + strconv.FormatInt(d.ProjectID, 10) + "?tab=ads"
+}
+
+func (d GrowthDeck) AdsBookedHow(channel string) string { return d.Ads.BookedHow(channel) }
+
+func (d GrowthDeck) AdsManualCampaignID(channel string) string {
+	channel = strings.ToLower(strings.TrimSpace(channel))
+	for _, pl := range d.Ads.Placements {
+		if pl.Channel != channel || pl.Mode != "manual" {
+			continue
+		}
+		if pl.ID == "" || pl.ID == "manual" {
+			return ""
+		}
+		return pl.ID
+	}
+	return ""
+}
 
 func (d GrowthDeck) Current() growth.DeckSlide {
 	n := growth.ClampSlide(d.CurrentSlide)

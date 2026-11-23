@@ -26,7 +26,53 @@ CREATE TABLE IF NOT EXISTS ops_chat_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS ops_chat_messages_chat_idx ON ops_chat_messages (chat_id, id DESC);
+ALTER TABLE ops_chats ADD COLUMN IF NOT EXISTS pending_job_id BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE ops_chats ADD COLUMN IF NOT EXISTS await_reject BOOLEAN NOT NULL DEFAULT false;
 `)
+	return err
+}
+
+type OpsChatState struct {
+	Desk        string
+	PendingJob  int64
+	AwaitReject bool
+}
+
+func (s *Store) OpsChatState(ctx context.Context, chatID string) OpsChatState {
+	chatID = strings.TrimSpace(chatID)
+	if chatID == "" || s == nil || s.pool == nil {
+		return OpsChatState{}
+	}
+	var st OpsChatState
+	err := s.pool.QueryRow(ctx, `
+SELECT department, pending_job_id, await_reject FROM ops_chats WHERE chat_id = $1
+`, chatID).Scan(&st.Desk, &st.PendingJob, &st.AwaitReject)
+	if err != nil {
+		return OpsChatState{}
+	}
+	st.Desk = strings.TrimSpace(st.Desk)
+	return st
+}
+
+func (s *Store) SetOpsChatPending(ctx context.Context, chatID string, jobID int64) error {
+	chatID = strings.TrimSpace(chatID)
+	if chatID == "" || s == nil || s.pool == nil {
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+UPDATE ops_chats SET pending_job_id=$2, await_reject=false, updated_at=NOW() WHERE chat_id=$1
+`, chatID, jobID)
+	return err
+}
+
+func (s *Store) SetOpsChatAwaitReject(ctx context.Context, chatID string, on bool) error {
+	chatID = strings.TrimSpace(chatID)
+	if chatID == "" || s == nil || s.pool == nil {
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+UPDATE ops_chats SET await_reject=$2, updated_at=NOW() WHERE chat_id=$1
+`, chatID, on)
 	return err
 }
 

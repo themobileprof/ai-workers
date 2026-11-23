@@ -55,11 +55,17 @@ func (s *Server) filesStamp(status string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
+		reason := formReason(r)
 		if err := s.store.SetFileFilingStatus(r.Context(), id, status); err != nil {
 			rows, _ := s.store.ListFileFilings(r.Context(), 0, "")
 			s.render(w, "files", pageData{Title: "Files", Nav: "files", User: u, Filings: rows, Error: err.Error()})
 			return
 		}
+		mapped := "accepted"
+		if status == "rejected" {
+			mapped = "rejected"
+		}
+		s.stampStaffEpisodeRef(r.Context(), "file_filing", id, mapped, reason)
 		ok := "file_ok"
 		if status == "rejected" {
 			ok = "file_no"
@@ -113,6 +119,7 @@ func (s *Server) EnrichFiles(ctx context.Context, req contract.Request) contract
 	data["folders_company"] = company
 	data["folders_project"] = bets
 	data["cannot_file"] = true
+	s.attachEpisodeLessons(ctx, data)
 	raw, _ := json.Marshal(data)
 	req.ContextData = raw
 	return req
@@ -144,6 +151,12 @@ func (s *Server) applyFilesResponse(ctx context.Context, req contract.Request, r
 	saved, err := s.store.InsertFileFiling(ctx, d)
 	if err != nil {
 		return
+	}
+	if boolVal(sd["unsure"]) {
+		s.openStaffEpisode(ctx, DeskJob{
+			Desk: "files", Title: saved.Path, Status: "proposed", Source: firstNonEmpty(strVal(data["channel"]), "inbound"),
+			Summary: saved.Rationale, RefKind: "file_filing", RefID: saved.ID, Payload: sd,
+		}, req, resp)
 	}
 	if !boolVal(sd["unsure"]) {
 		if err := s.store.SetFileFilingStatus(ctx, saved.ID, "accepted"); err == nil {

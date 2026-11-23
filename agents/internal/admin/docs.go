@@ -63,7 +63,7 @@ var docCatalog = []DocMeta{
 		Kind:     "player",
 		Path:     "Desk · ops Telegram · clocks",
 		Wire:     "live",
-		Summary:  "How to run each worker in complete sentences: when to Accept, when to Place, when to use Cursor, Lagos clocks, TRAFFIC.md, Community airtime, and Books. Chat never Accepts.",
+		Summary:  "How to run each worker in complete sentences: when to Accept, when to Place, when to use Cursor, Lagos clocks, TRAFFIC.md, Community airtime, and Books. An optional Turn-away reason feeds the next draft. Chat never Accepts.",
 		Prefixes: []string{"Accept", "Place", "TRAFFIC.md", "ops Telegram"},
 	},
 	{
@@ -149,8 +149,8 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat, marketing copy, a pitch-deck session, and Search ads you Accept then Place. Go drops cities not on the Card. Morning GA4 glance proposes; it does not Place. Every customer WhatsApp DM files Office → CRM. The worker cannot send or spend.",
-		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ads · Place"},
+		Summary:  "Sales chat, marketing copy, a pitch-deck session, and Search ads you Accept then either book yourself or Place. Go drops cities not on the Card. Morning GA4 glance proposes; it does not Place. Every customer WhatsApp DM files Office → CRM. The worker cannot send or spend.",
+		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ads · Book it yourself or Place"},
 	},
 	{
 		Slug:     "community",

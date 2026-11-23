@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "jsCode": "function digits(s) { return String(s || '').replace(/\\D/g, ''); }\nfunction clip(s, n) { return String(s || '').trim().slice(0, n); }\nconst j = $input.first().json || {};\nconst channel = String(j.channel || '').toLowerCase();\nconst slug = clip(j.slug || j.name || 'campaign', 80) || 'campaign';\nconst statusIn = String(j.campaign_status || 'PAUSED').toUpperCase();\nconst googleStatus = statusIn === 'ENABLED' ? 'ENABLED' : 'PAUSED';\nconst metaStatus = googleStatus === 'ENABLED' ? 'ACTIVE' : 'PAUSED';\nconst capN = Number(j.daily_cap);\nconst cap = Number.isFinite(capN) && capN > 0 ? capN : 0;\nconst finalUrl = String(j.final_url || '').trim();\nconst headlines = (Array.isArray(j.headlines) ? j.headlines : []).map((h) => clip(h, 30)).filter(Boolean).slice(0, 15);\nconst descriptions = (Array.isArray(j.descriptions) ? j.descriptions : []).map((d) => clip(d, 90)).filter(Boolean).slice(0, 4);\nconst keywords = (Array.isArray(j.keywords) ? j.keywords : []).map((k) => clip(k, 80)).filter(Boolean).slice(0, 20);\nconst cells = (Array.isArray(j.cells) ? j.cells : []).map((c) => ({ geo: clip(c && c.geo, 80), theme: clip(c && c.theme, 80), why: clip(c && c.why, 120) })).filter((c) => c.geo || c.theme).slice(0, 5);\nif (!finalUrl || headlines.length < 3 || descriptions.length < 2 || !keywords.length) {\n  return [{ json: { skip: true, status: 'error', audit_text: 'Pack needs a final URL, three headlines, two descriptions, and a keyword.' } }];\n}\nconst experiments = (cells.length ? cells : [{ geo: 'Nigeria', theme: 'search' }]).map((c) => ({\n  geo: c.geo || 'Nigeria',\n  theme: c.theme || 'search',\n  name: clip([slug, c.geo || 'Nigeria', c.theme || 'search'].filter(Boolean).join(' \u00b7 '), 100),\n  url: clip(c.url || finalUrl, 500)\n}));\nconst geoNames = [...new Set(experiments.map((e) => e.geo).filter(Boolean))];\nif (!geoNames.includes('Nigeria')) geoNames.push('Nigeria');\nconst geoQuery = \"SELECT geo_target_constant.resource_name, geo_target_constant.name, geo_target_constant.canonical_name, geo_target_constant.country_code, geo_target_constant.target_type FROM geo_target_constant WHERE geo_target_constant.status = 'ENABLED' AND geo_target_constant.name IN (\" + geoNames.map((g) => \"'\" + String(g).replace(/'/g, '') + \"'\").join(', ') + \")\";\nconst base = { skip: false, slug, cap, google_status: googleStatus, meta_status: metaStatus, final_url: finalUrl, headlines, descriptions, keywords, experiments, geo_query: geoQuery };\nif (channel === 'google') {\n  const cid = digits(j.google_customer_id);\n  const login = digits(j.google_login_customer_id) || cid;\n  const token = String($env.GOOGLE_ADS_DEVELOPER_TOKEN || '').trim();\n  if (!cid) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Google Ads customer id on Defaults \u2192 Ads.' } }];\n  if (!token) return [{ json: { skip: true, status: 'error', audit_text: 'GOOGLE_ADS_DEVELOPER_TOKEN is missing on n8n.' } }];\n  return [{ json: { ...base, channel: 'google', customer_id: cid, login_customer_id: login, funds_query: \"SELECT account_budget.approved_spending_limit_micros, account_budget.approved_spending_limit_type, account_budget.amount_served_micros, account_budget.total_adjustments_micros, account_budget.status FROM account_budget WHERE account_budget.status = 'APPROVED'\" } }];\n}\nif (channel === 'meta') {\n  let act = String(j.meta_ad_account_id || '').trim();\n  if (act.toLowerCase().startsWith('act_')) act = act.slice(4);\n  act = digits(act);\n  const pageId = digits(j.meta_page_id);\n  if (!act || !pageId) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Meta ad account id and Page id on Defaults \u2192 Ads.' } }];\n  return [{ json: { ...base, channel: 'meta', act_id: act, page_id: pageId } }];\n}\nreturn [{ json: { skip: true, status: 'error', audit_text: 'Pick Google Search or Meta.' } }];\n"
+        "jsCode": "function digits(s) { return String(s || '').replace(/\\D/g, ''); }\nfunction clip(s, n) { return String(s || '').trim().slice(0, n); }\nconst j = $input.first().json || {};\nconst channel = String(j.channel || '').toLowerCase();\nconst slug = clip(j.slug || j.name || 'campaign', 80) || 'campaign';\nconst statusIn = String(j.campaign_status || 'PAUSED').toUpperCase();\nconst googleStatus = statusIn === 'ENABLED' ? 'ENABLED' : 'PAUSED';\nconst metaStatus = googleStatus === 'ENABLED' ? 'ACTIVE' : 'PAUSED';\nconst capN = Number(j.daily_cap);\nconst cap = Number.isFinite(capN) && capN > 0 ? capN : 0;\nconst finalUrl = String(j.final_url || '').trim();\nconst headlines = (Array.isArray(j.headlines) ? j.headlines : []).map((h) => clip(h, 30)).filter(Boolean).slice(0, 15);\nconst descriptions = (Array.isArray(j.descriptions) ? j.descriptions : []).map((d) => clip(d, 90)).filter(Boolean).slice(0, 4);\nconst keywords = (Array.isArray(j.keywords) ? j.keywords : []).map((k) => clip(k, 80)).filter(Boolean).slice(0, 20);\nconst cells = (Array.isArray(j.cells) ? j.cells : []).map((c) => ({ geo: clip(c && c.geo, 80), theme: clip(c && c.theme, 80), why: clip(c && c.why, 120) })).filter((c) => c.geo || c.theme).slice(0, 5);\nif (!finalUrl || headlines.length < 3 || descriptions.length < 2 || !keywords.length) {\n  return [{ json: { skip: true, status: 'error', audit_text: 'Pack needs a final URL, three headlines, two descriptions, and a keyword.' } }];\n}\nconst experiments = (cells.length ? cells : [{ geo: 'Nigeria', theme: 'search' }]).map((c) => ({\n  geo: c.geo || 'Nigeria',\n  theme: c.theme || 'search',\n  name: clip([slug, c.geo || 'Nigeria', c.theme || 'search'].filter(Boolean).join(' \u00b7 '), 100),\n  url: clip(c.url || finalUrl, 500)\n}));\nconst geoNames = [...new Set(experiments.map((e) => e.geo).filter(Boolean))];\nif (!geoNames.includes('Nigeria')) geoNames.push('Nigeria');\nconst geoQuery = \"SELECT geo_target_constant.resource_name, geo_target_constant.name, geo_target_constant.canonical_name, geo_target_constant.country_code, geo_target_constant.target_type FROM geo_target_constant WHERE geo_target_constant.status = 'ENABLED' AND geo_target_constant.name IN (\" + geoNames.map((g) => \"'\" + String(g).replace(/'/g, '') + \"'\").join(', ') + \")\";\nconst base = { skip: false, slug, cap, google_status: googleStatus, meta_status: metaStatus, final_url: finalUrl, headlines, descriptions, keywords, experiments, geo_query: geoQuery };\nif (channel === 'google') {\n  const cid = digits(j.google_customer_id);\n  const login = digits(j.google_login_customer_id) || cid;\n  if (!cid) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Google Ads customer id on Defaults \u2192 Ads.' } }];\n  return [{ json: { ...base, channel: 'google', customer_id: cid, login_customer_id: login, funds_query: \"SELECT account_budget.approved_spending_limit_micros, account_budget.approved_spending_limit_type, account_budget.amount_served_micros, account_budget.total_adjustments_micros, account_budget.status FROM account_budget WHERE account_budget.status = 'APPROVED'\" } }];\n}\nif (channel === 'meta') {\n  let act = String(j.meta_ad_account_id || '').trim();\n  if (act.toLowerCase().startsWith('act_')) act = act.slice(4);\n  act = digits(act);\n  const pageId = digits(j.meta_page_id);\n  if (!act || !pageId) return [{ json: { skip: true, status: 'error', audit_text: 'Paste the Meta ad account id and Page id on Defaults \u2192 Ads.' } }];\n  return [{ json: { ...base, channel: 'meta', act_id: act, page_id: pageId } }];\n}\nreturn [{ json: { skip: true, status: 'error', audit_text: 'Pick Google Search or Meta.' } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -193,14 +193,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $('Prepare pack').item.json.login_customer_id }}"
@@ -239,14 +235,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $('Prepare pack').item.json.customer_id + '/googleAds:search' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $('Prepare pack').item.json.login_customer_id }}"
@@ -333,14 +325,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:mutate' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $json.customer_id + '/googleAds:mutate' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $json.login_customer_id }}"

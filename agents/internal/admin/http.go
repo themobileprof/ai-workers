@@ -108,6 +108,7 @@ type pageData struct {
 	AdsDecks       []GrowthDeck
 	AdsGA4         *AdsGA4View
 	GuideAsks      []GuideAsk
+	Episodes       []DeskEpisode
 	Events         []ProjectEvent
 	EventKinds     []stageSpec
 	Filings        []FileFiling
@@ -146,10 +147,10 @@ func New(store *Store, internalToken string) (*Server, error) {
 		"workerDoes":   workerDoes,
 	}
 	pages := map[string]*template.Template{}
-	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "growth", "guide", "files", "grants", "crm"} {
+	for _, name := range []string{"login", "home", "users", "settings", "workflows", "docs", "docs_page", "projects", "legal", "hr", "desks", "community", "delivery", "growth", "guide", "episodes", "files", "grants", "crm"} {
 		files := []string{"templates/layout.html", "templates/" + name + ".html"}
 		if name == "growth" || name == "projects" {
-			files = append(files, "templates/deck_walk.html", "templates/ads_walk.html", "templates/ads_ga4.html")
+			files = append(files, "templates/deck_walk.html", "templates/ads_walk.html", "templates/ads_ga4.html", "templates/ads_book.html")
 		}
 		t, err := template.New(name).Funcs(funcMap).ParseFS(embedded, files...)
 		if err != nil {
@@ -251,6 +252,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/growth/{id}/approve", s.growthStamp("approved"))
 	mux.HandleFunc("POST /admin/growth/{id}/reject", s.growthStamp("rejected"))
 	mux.HandleFunc("POST /admin/growth/{id}/place", s.growthPlace)
+	mux.HandleFunc("POST /admin/growth/{id}/book", s.growthBookManual)
 	mux.HandleFunc("GET /site/deck/{token}", s.growthPackPublic)
 	mux.HandleFunc("POST /admin/projects/{id}/deck", s.projectDeck)
 	mux.HandleFunc("POST /admin/projects/{id}/ads", s.projectAds)
@@ -299,6 +301,8 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/guide", s.guideGET)
 	mux.HandleFunc("GET /admin/guide/asked.md", s.guideAskedMarkdown)
 	mux.HandleFunc("POST /admin/guide/ask", s.guideAskPOST)
+	mux.HandleFunc("GET /admin/episodes", s.episodesGET)
+	mux.HandleFunc("GET /admin/episodes/episodes.md", s.episodesMarkdown)
 	mux.HandleFunc("GET /internal/v1/community/mandate", s.internalCommunityMandate)
 	mux.HandleFunc("GET /internal/v1/community/mandates", s.internalCommunityMandates)
 	mux.HandleFunc("POST /internal/v1/community/daily-engage", s.internalDailyEngagePOST)

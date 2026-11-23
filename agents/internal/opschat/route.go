@@ -2,6 +2,7 @@ package opschat
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,7 @@ const (
 	KindNote   = "note"
 	KindWork   = "work"
 	KindOutbox = "outbox"
+	KindStamp  = "stamp"
 )
 
 // Decision is how one inbound message is handled. Department is empty when KindWork needs Classify.
@@ -22,6 +24,8 @@ type Decision struct {
 	Action     string
 	Prefixed   bool
 	Reply      string
+	JobID      int64
+	Reason     string
 }
 
 var prefixCommands = []struct {
@@ -54,7 +58,9 @@ func HelpText(who string, prefixes []string) string {
 	}
 	lines := []string{
 		"Office bot for " + who + ".",
-		"Say the work. I pick one desk and do it in this chat. Chat never Accepts — that stays on the desk.",
+		"Say the work. I pick one desk and do it in this chat.",
+		"When a draft needs your yes, tap Accept or Turn away under that message. /yes also Accepts. /no invented Ikeja Turns away with a reason the next draft can see.",
+		"The clerk never Accepts. /approve still only sends a pending info@ draft.",
 	}
 	if len(prefixes) > 0 {
 		lines = append(lines, "Shortcuts if you want: "+strings.Join(prefixes, ", ")+".")
@@ -79,6 +85,19 @@ func Decide(in Inbound, currentDesk string) Decision {
 	}
 	if act := outboxAction(text); act != "" {
 		return Decision{Kind: KindOutbox, Action: act}
+	}
+	if in.CallbackData != "" {
+		if yes, id, ok := ParseJobCallback(in.CallbackData); ok {
+			act := "rejected"
+			if yes {
+				act = "accepted"
+			}
+			return Decision{Kind: KindStamp, Action: act, JobID: id}
+		}
+		return Decision{Kind: KindNote, Reply: "That button is stale. Ask the desk again."}
+	}
+	if d, ok := parseStampCommand(text); ok {
+		return d
 	}
 
 	for _, cmd := range prefixCommands {
@@ -143,6 +162,63 @@ func Decide(in Inbound, currentDesk string) Decision {
 
 func helpCmd(text string) bool {
 	return regexp.MustCompile(`^/(start|help)(?:@\w+)?\b`).MatchString(text)
+}
+
+func parseStampCommand(text string) (Decision, bool) {
+	text = strings.TrimSpace(text)
+	if regexp.MustCompile(`^/(yes|accept)(?:@\w+)?\b`).MatchString(text) {
+		return Decision{Kind: KindStamp, Action: "accepted"}, true
+	}
+	if re := regexp.MustCompile(`^/(no|away|reject)(?:@\w+)?\b\s*`); re.MatchString(text) {
+		reason := strings.TrimSpace(re.ReplaceAllString(text, ""))
+		return Decision{Kind: KindStamp, Action: "rejected", Reason: reason}, true
+	}
+	return Decision{}, false
+}
+
+func ParseJobCallback(data string) (yes bool, jobID int64, ok bool) {
+	data = strings.TrimSpace(data)
+	parts := strings.Split(data, ":")
+	if len(parts) != 3 || parts[0] != "j" {
+		return false, 0, false
+	}
+	id, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil || id <= 0 {
+		return false, 0, false
+	}
+	switch parts[1] {
+	case "y":
+		return true, id, true
+	case "n":
+		return false, id, true
+	default:
+		return false, 0, false
+	}
+}
+
+func JobCallback(yes bool, jobID int64) string {
+	if jobID <= 0 {
+		return ""
+	}
+	kind := "n"
+	if yes {
+		kind = "y"
+	}
+	return "j:" + kind + ":" + strconv.FormatInt(jobID, 10)
+}
+
+func JobKeyboard(jobID int64) [][]InlineButton {
+	if jobID <= 0 {
+		return nil
+	}
+	return [][]InlineButton{{
+		{Text: "Accept", Data: JobCallback(true, jobID)},
+		{Text: "Turn away", Data: JobCallback(false, jobID)},
+	}}
+}
+
+func StampFooter() string {
+	return "This is proposed. You Accept — the clerk does not."
 }
 
 func outboxAction(text string) string {

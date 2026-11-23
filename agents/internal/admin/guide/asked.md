@@ -9,3 +9,5 @@ When you come back to Cursor with real questions:
 3. If the playbook was wrong, fix `playbook/*.html` and this handbook too — the bot embeds those files.
 
 Do not paste production names into git unless the founder wants them there. Durable how-to belongs in `faq.md`.
+
+Staff Accept and Turn away sit on Docs → Episodes (`/admin/episodes/episodes.md`). Fold a repeating Turn-away reason the same way. Academy Telegram and customer WhatsApp are not in that file.

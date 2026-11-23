@@ -42,7 +42,7 @@ func growthFlash(ok, step string) string {
 	switch ok {
 	case "drafted":
 		if ads {
-			return "Session started. Chat this Search step. Accept, then Place. Chat cannot spend. Chat never Accepts."
+			return "Session started. Chat this Search step. Accept, then book it yourself or Place. Chat cannot spend. Chat never Accepts."
 		}
 		return "Session started. Chat the copy for this slide. The pack URL updates every turn. Chat never Accepts."
 	case "chat":
@@ -52,13 +52,15 @@ func growthFlash(ok, step string) string {
 		return "Worker replied. The pack updated. Chat a tighter line, say next, or skip. Accept when the ten slides are right."
 	case "deck_ok":
 		if ads {
-			return "Accepted. Place on Google Search or Meta from this book. Search the Pexels queries and /file stills under product. Chat does not spend."
+			return "Accepted. Book it yourself from the pack instructions, or Place on Google Search or Meta. Do not do both for the same channel. Search the Pexels queries and /file stills under product. Chat does not spend."
 		}
 		return "Accepted. The pack was already live. The clerk does not email the deck."
 	case "deck_no":
 		return "Turned away. The pack URL is unpublished."
 	case "placed":
-		return "Placed conservatively: platform-minimum daily, exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED."
+		return "Placed conservatively: platform-minimum daily, exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED. Do not also create this campaign in the Ads UI."
+	case "booked":
+		return "Marked as booked in the Ads UI. Paste the campaign id when you have it so prune can score it. Do not also Place this channel."
 	default:
 		return ""
 	}
@@ -113,6 +115,7 @@ func (s *Server) growthStamp(status string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
+		reason := formReason(r)
 		if err := s.store.SetGrowthDeckStatus(r.Context(), id, status); err != nil {
 			decks, _ := s.store.ListGrowthDecks(r.Context(), 0)
 			projects, _ := s.store.ListProjects(r.Context())
@@ -133,6 +136,10 @@ func (s *Server) growthStamp(status string) http.HandlerFunc {
 			mapped = "rejected"
 		}
 		_ = s.store.StampJobsByRef(r.Context(), "growth_deck", id, mapped)
+		s.stampStaffEpisodeRef(r.Context(), "growth_deck", id, mapped, reason)
+		if mapped == "rejected" && reason != "" {
+			s.recordAdsTurnAway(r.Context(), id, reason)
+		}
 		ok := "deck_ok"
 		if status == "rejected" {
 			ok = "deck_no"
@@ -150,6 +157,10 @@ func growthNext(r *http.Request, fallback string) string {
 			out = withQuery(out, "ok", "deck_no")
 		} else if strings.Contains(fallback, "ok=deck_ok") {
 			out = withQuery(out, "ok", "deck_ok")
+		} else if strings.Contains(fallback, "ok=placed") {
+			out = withQuery(out, "ok", "placed")
+		} else if strings.Contains(fallback, "ok=booked") {
+			out = withQuery(out, "ok", "booked")
 		}
 	}
 	if strings.Contains(out, "/admin/projects/") {
@@ -160,7 +171,7 @@ func growthNext(r *http.Request, fallback string) string {
 		}
 	} else if strings.Contains(fallback, "ok=deck_no") {
 		out = withQuery(out, "tab", "rejected")
-	} else if strings.Contains(fallback, "ok=deck_ok") || strings.Contains(fallback, "ok=placed") {
+	} else if strings.Contains(fallback, "ok=deck_ok") || strings.Contains(fallback, "ok=placed") || strings.Contains(fallback, "ok=booked") {
 		out = withQuery(out, "tab", "accepted")
 	}
 	if strings.EqualFold(r.FormValue("step"), "ads") {
@@ -401,24 +412,20 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 			} else {
 				s.attachDeckSession(ctx, data, d)
 			}
-			raw, _ := json.Marshal(data)
-			req.ContextData = raw
-			return req
+			return s.withLessons(ctx, req, data)
 		}
 	}
 	projects, _ := s.store.ListProjects(ctx)
 	p, ok := matchProject(projects, data, req.TaskDescription)
 	if !ok {
-		return req
+		return s.withLessons(ctx, req, data)
 	}
 	if growth.LooksLikeGlance(data, req.TaskDescription) {
 		attachProductProject(data, p)
 		s.attachAdsGA4Glance(ctx, data, p)
 		data["cannot_send"] = true
 		data["cannot_spend"] = true
-		raw, _ := json.Marshal(data)
-		req.ContextData = raw
-		return req
+		return s.withLessons(ctx, req, data)
 	}
 	decks, _ := s.store.ListGrowthDecks(ctx, p.ID)
 	if growth.LooksLikeAds(data, req.TaskDescription) {
@@ -433,13 +440,11 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 			data["cannot_send"] = true
 			data["cannot_spend"] = true
 		}
-		raw, _ := json.Marshal(data)
-		req.ContextData = raw
-		return req
+		return s.withLessons(ctx, req, data)
 	}
 	live := liveProposedSession(decks)
 	if !growth.LooksLike(data, req.TaskDescription) && live.ID == 0 {
-		return req
+		return s.withLessons(ctx, req, data)
 	}
 	if live.ID > 0 {
 		s.attachDeckSession(ctx, data, live)
@@ -451,6 +456,11 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 		data["kawasaki"] = growth.KawasakiSlides()
 		data["cannot_send"] = true
 	}
+	return s.withLessons(ctx, req, data)
+}
+
+func (s *Server) withLessons(ctx context.Context, req contract.Request, data map[string]any) contract.Request {
+	s.attachEpisodeLessons(ctx, data)
 	raw, _ := json.Marshal(data)
 	req.ContextData = raw
 	return req

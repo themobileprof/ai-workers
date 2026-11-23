@@ -142,6 +142,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 	if err := s.migrateGuide(ctx); err != nil {
 		return err
 	}
+	if err := s.migrateEpisodes(ctx); err != nil {
+		return err
+	}
 	if err := s.migrateTelegram(ctx); err != nil {
 		return err
 	}

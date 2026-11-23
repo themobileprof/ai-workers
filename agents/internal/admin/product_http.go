@@ -28,6 +28,7 @@ func (s *Server) EnrichProduct(ctx context.Context, req contract.Request) contra
 	if p, ok := matchProject(projects, data, req.TaskDescription); ok {
 		attachProductProject(data, p)
 	}
+	s.attachEpisodeLessons(ctx, data)
 	raw, _ := json.Marshal(data)
 	req.ContextData = raw
 	return req

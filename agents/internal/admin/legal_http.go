@@ -66,6 +66,7 @@ func (s *Server) legalStamp(status string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
+		reason := formReason(r)
 		if err := s.store.SetLegalStatus(r.Context(), id, status); err != nil {
 			drafts, _ := s.store.ListLegalDrafts(r.Context(), 0)
 			s.render(w, "legal", pageData{
@@ -84,6 +85,7 @@ func (s *Server) legalStamp(status string) http.HandlerFunc {
 			mapped = "rejected"
 		}
 		_ = s.store.StampJobsByRef(r.Context(), "legal_draft", id, mapped)
+		s.stampStaffEpisodeRef(r.Context(), "legal_draft", id, mapped, reason)
 		ok := "legal_ok"
 		if status == "rejected" {
 			ok = "legal_no"

@@ -1,0 +1,38 @@
+{{define "content"}}
+<div class="doc-split">
+  {{template "doc-rail" .}}
+  <div class="playbook">
+    <aside class="now" aria-label="What to do">
+      <div>
+        <p class="do">Docs · {{len .Episodes}} episodes</p>
+        <h2>Read what you Accepted</h2>
+        <ol class="recipe">
+          <li>These rows are staff Ask → proposal → Accept or Turn away. Academy Telegram and customer WhatsApp are not stored here.</li>
+          <li>Download <strong>episodes.md</strong> when a Turn-away reason keeps repeating.</li>
+          <li>In Cursor, fold that lesson into <code>faq.md</code> or a Go checker. Chat still never Accepts.</li>
+        </ol>
+      </div>
+      <div class="actions now-go">
+        <a class="ghost fill" href="/admin/episodes/episodes.md">episodes.md</a>
+        <a class="ghost" href="/admin/guide">Asked</a>
+      </div>
+    </aside>
+    {{if .Episodes}}
+    {{range .Episodes}}
+    <section class="proposal">
+      <p class="kicker">{{.CreatedAt.Format "2 Jan 15:04"}} · {{.Desk}}{{if .ProjectSlug}} · {{.ProjectSlug}}{{end}}{{if .TaskType}} · {{.TaskType}}{{end}}</p>
+      <div class="doc-card-head">
+        <h3>{{if .Title}}{{.Title}}{{else}}Untitled{{end}}</h3>
+        <span class="stamp {{.StatusStamp}}">{{.ActLabel}}</span>
+      </div>
+      {{if .Reason}}<p class="hint">Reason: {{.Reason}}</p>{{end}}
+      {{if .Outcome}}<p class="hint">Later: {{.Outcome}}</p>{{end}}
+      {{if and (eq .JobID 0) (not .Reason) (not .Outcome)}}<p class="hint">Proposed. Accept or Turn away still belongs to a human.</p>{{end}}
+    </section>
+    {{end}}
+    {{else}}
+    <p class="hint">No staff episodes yet. Ask a worker on a desk, then Accept or Turn away. Optional Turn-away reasons feed the next draft on that bet.</p>
+    {{end}}
+  </div>
+</div>
+{{end}}

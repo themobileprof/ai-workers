@@ -27,7 +27,7 @@ n8n is the public door for WhatsApp, inbound email, and cron. A Go process holds
 
 1. You Ask on the desk, you send a prefixed ops Telegram message, or (on ops 1:1) you send plain text.
 2. The worker proposes: copy, a job, a draft, a week plan, or an ads pack.
-3. You click **Accept** or **Turn away** on the desk. Typing in chat does not Accept.
+3. You click **Accept** or **Turn away** on the desk. Typing in chat does not Accept. When you Turn away, you may type a short reason. That reason is stored on a staff episode and shown to the next draft on the same desk and bet. It does not train the model, and Chat still never Accepts.
 
 Workers never hire anyone, never send WhatsApp, Telegram, or email themselves, never publish a web page, and never write Google Drive except when a catalog match files itself. They never stamp a project **stage**, never compute VAT, never invent emails or phones, and never spend ads from chat.
 
@@ -83,7 +83,7 @@ On ops Telegram, send `/growth Write a LinkedIn post about…` when you want cop
 
 Write the Card one-liner first so the clerk has facts. Open the project → **Deck** → Start session, or send `/growth Pitch deck for HomeGauge` on ops Telegram. Chat Guy Kawasaki’s ten slides from the Card; the markdown pack URL updates every turn. Accept the pack on `/admin/growth`. You paste the markdown into Slides, export a PDF, and `/file` it under **product**. Missing facts stay `[TO BE COMPLETED]`. The clerk must not invent MAU, waitlist counts, or a competitor grid.
 
-### Search ads, then Place
+### Search ads, then book or Place
 
 Put a public URL on the Card before you start. Test cells are named places plus query themes that already appear on the Card — not age or gender.
 
@@ -91,9 +91,11 @@ Open the project → **Ads** → Start ads session, or send `/growth Search ads 
 
 After the clerk drafts, Go drops a city, keyword, or Pexels line whose words are not on the Card, and records that drop on the pack under **Looked**.
 
-Accept on Growth, then click **Place** (Google Search or Meta) on the Growth book. Chat never Places. Place is a cheap probe: the platform-minimum daily budget, never more than remaining funds divided by 90, an optional ceiling on Defaults, exact match only, and Google Search only (no partner network). Each geo/keyword cell is its own experiment. Place stamps `utm_campaign` to the bet slug and `utm_content` to the cell.
+Accept on Growth. Then pick **one path per channel**. **Book it yourself** prints numbered Google Ads and Meta clicks from the pack (campaign name is the bet slug, exact match, Google Search only, platform-minimum daily, start paused). When you finish, click **I booked it myself** and paste the campaign id so prune can score it. **Place** asks n8n to book the same conservative probe. Chat never Places. Do not follow the sheet and also Place for the same channel, or you pay twice.
 
-n8n holds the Ads tokens. Account ids live on Defaults → Ads. `GOOGLE_ADS_DEVELOPER_TOKEN` stays in the VM `.env` for n8n, not on the Go worker.
+Place is a cheap probe: the platform-minimum daily budget, never more than remaining funds divided by 90, an optional ceiling on Defaults, exact match only, and Google Search only (no partner network). Each geo/keyword cell is its own experiment. Place stamps `utm_campaign` to the bet slug and `utm_content` to the cell.
+
+n8n holds the Ads OAuth tokens. Account ids live on Defaults → Ads. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential. Enable the Google Ads API there and apply for Explorer (or higher) so production accounts work. Go never holds those tokens.
 
 ### Evaluate ads without spending
 
@@ -172,7 +174,7 @@ After another desk answers on ops Telegram, Legal **watch** flags labour, CAC, N
 | Lives on Defaults (`/admin/settings`) | Lives in the VM `.env` or n8n Credentials |
 | --- | --- |
 | Zoho org and chart-of-accounts ids, Paystack bank id, Shared Drive id | Zoho, Paystack, and Drive OAuth tokens |
-| Ads customer and Page ids, optional daily cap, PAUSED or ENABLED | Google Ads OAuth, `GOOGLE_ADS_DEVELOPER_TOKEN`, Facebook Ads |
+| Ads customer and Page ids, optional daily cap, PAUSED or ENABLED | Google Ads OAuth, Facebook Ads |
 | `seo.ga4_property_id`, Search Console property, company-wide `ads.funnel_steps` fallback | Google Analytics service account JSON (`ga4-read`) |
 | | ClubKonnect keys for airtime |
 
@@ -191,12 +193,13 @@ Saving one Defaults tab does not wipe the others. Use **Amend this group** on th
 | File a PDF | Ops Telegram `/file` |
 | Titles, phrases, and the ads funnel for a public site | Cursor in the bet repo, `TRAFFIC.md`, then the Funnel field on Card |
 | Walk a pitch | Project → **Deck** |
-| Draft ads and then spend | Project → **Ads** → Accept → **Place** |
+| Draft ads and then spend | Project → **Ads** → Accept → **Book it yourself** or **Place** |
 | See whether ads became sessions | The GA4 block on the Growth book, or the morning glance job |
 | Send class ₦500 | Mandates plus the 16:00 clock. Do not Ask Community from customer WhatsApp to “send airtime” |
 | Book a receipt | Ops Telegram `/accounts` |
 | See today’s work | Delivery, or the 08:30 Telegram card |
 | Get unstuck on a page | Help? (it never Accepts) |
+| See what you Accepted or Turned away, and fold a repeating reason into FAQ | Docs → **Episodes** (`/admin/episodes`). Owner and BDM only. Academy Telegram and customer WhatsApp are not stored there. |
 
 ---
 

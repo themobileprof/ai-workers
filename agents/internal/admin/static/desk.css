@@ -282,6 +282,19 @@ main.canvas {
 .why p { margin: 0 0 1rem; opacity: 0.88; }
 .why p:last-child { margin-bottom: 0; }
 .actions { margin-top: 1.4rem; display: flex; gap: 0.55rem; flex-wrap: wrap; align-items: center; }
+form.turn-away {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  flex: 1 1 16rem;
+}
+form.turn-away input[name="reason"] {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+  margin: 0;
+}
+form.turn-away button { margin: 0; }
 .ghost.fill {
   background: var(--brass);
   color: #04202b;
@@ -722,6 +735,10 @@ a.ghost:hover, .ghost:hover { border-color: var(--brass); }
   border-radius: 999px;
 }
 .split { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 1.25rem; align-items: start; }
+.ads-book { margin-top: 1rem; }
+.ads-book h4 { margin: 1rem 0 0.4rem; font-size: 0.95rem; }
+.ads-book .run { margin: 0 0 1rem; }
+.ads-book .person.add { margin-top: 0.6rem; }
 .person {
   border: 1px solid var(--line);
   padding: 1rem;

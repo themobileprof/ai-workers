@@ -41,9 +41,10 @@
             <input type="hidden" name="next" value="/admin/legal">
             <button type="submit">Accept</button>
           </form>
-          <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+          <form method="post" action="/admin/legal/{{.ID}}/reject" class="turn-away">
             <input type="hidden" name="next" value="/admin/legal">
-            <button class="ghost" type="submit">Reject</button>
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
+            <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>
       </section>

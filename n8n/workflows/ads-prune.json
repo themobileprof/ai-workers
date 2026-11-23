@@ -185,14 +185,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:search' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $json.customer_id + '/googleAds:search' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $json.login_customer_id }}"
@@ -231,14 +227,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $('Each placement').item.json.customer_id + '/googleAds:search' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $('Each placement').item.json.customer_id + '/googleAds:search' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $('Each placement').item.json.login_customer_id }}"
@@ -495,14 +487,10 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "={{ 'https://googleads.googleapis.com/v21/customers/' + $json.customer_id + '/googleAds:mutate' }}",
+        "url": "={{ 'https://googleads.googleapis.com/v26/customers/' + $json.customer_id + '/googleAds:mutate' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "developer-token",
-              "value": "={{ $env.GOOGLE_ADS_DEVELOPER_TOKEN }}"
-            },
             {
               "name": "login-customer-id",
               "value": "={{ $json.login_customer_id }}"

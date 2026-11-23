@@ -36,7 +36,7 @@ Do this, in order:
 
 - Path: `/admin/desks/{slug}` after the owner ticked that slug on your card.
 - Accounts `/accounts` — Books classifier. n8n posts to Zoho Books and Paystack. Go never computes VAT.
-- Growth `/growth` — sales copy, replies, a pitch-deck session, and a Google Search ads pack on the bet when you ask. Chat slides on Deck or RSA steps on Ads. Ask on `/admin/growth` issues a markdown URL. Pitch: paste into Slides. Ads: Accept, then Place (n8n holds the tokens). The clerk cannot send or spend from chat. Bare 1:1 chat is Growth (sales). Inbound info@ is CRM.
+- Growth `/growth` — sales copy, replies, a pitch-deck session, and a Google Search ads pack on the bet when you ask. Chat slides on Deck or RSA steps on Ads. Ask on `/admin/growth` issues a markdown URL. Pitch: paste into Slides. Ads: Accept, then either follow Book it yourself in the Ads UI or Place (n8n holds the OAuth tokens). The clerk cannot send or spend from chat. Bare 1:1 chat is Growth (sales). Inbound info@ is CRM.
 - Community `/cm` `/community` — Academy Telegram rooms. Mandates at `/admin/community`. Cloud API WhatsApp cannot join ordinary groups.
 - CRM `/crm` — Office → CRM is the conversion book. WhatsApp, info@, calls, and `/crm` file a timeline on the person. `/crm follow up Apex` proposes the next step from that story. The 08:30 Telegram card lists due dates to owner/BDM. Won stays for a later upsell. It does not send.
 - Legal `/legal` — NDA and contract proposals. Accept on `/admin/legal`. The worker cannot send. Telegram watch flags labour/CAC/NDPR/CBN after another worker answers. Caution and stop also file a Legal job.
@@ -51,6 +51,7 @@ Do this, in order:
 - `/admin/docs` — on the rail for everyone signed in. Start at How you fit, then **How you run this office** (`/admin/docs/howto`) for ads Place, `TRAFFIC.md`, Community clocks, and Books. Then the sheet that matches the People card. Worker specimens sit below the player sheets. Same map in git: `HOW_YOU_RUN.md`.
 - Print from the browser. If the card and the sheet disagree, amend People or the Face tab — do not invent a second company.
 - Asked `/admin/guide` (owner / BDM, on the Docs rail) — questions people asked Help?. Download `/admin/guide/asked.md` and fold durable answers into `faq.md` in Cursor.
+- Episodes `/admin/episodes` (owner / BDM, on the Docs rail) records staff Ask, the clerk’s proposal, and your Accept or Turn away. An optional Turn-away reason is shown to the next draft on that bet. Download `/admin/episodes/episodes.md` and fold a repeating mistake into `faq.md` or a Go checker. Class rooms and the customer WhatsApp number are not stored there.
 
 ## Office menu (owner / BDM)
 

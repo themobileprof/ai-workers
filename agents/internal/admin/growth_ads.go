@@ -274,6 +274,10 @@ func (s *Server) growthPlace(w http.ResponseWriter, r *http.Request) {
 		s.placeAdsFail(w, r, u, "Pack is not ready: "+gap+".")
 		return
 	}
+	if msg := growth.AdsBookConflict(d.Ads, channel, "place"); msg != "" {
+		s.placeAdsFail(w, r, u, msg)
+		return
+	}
 	body, err := s.adsPlaceBody(r.Context(), d, channel)
 	if err != nil {
 		s.placeAdsFail(w, r, u, err.Error())
@@ -297,6 +301,7 @@ func (s *Server) growthPlace(w http.ResponseWriter, r *http.Request) {
 	d.Ads = d.Ads.WithPlacement(growth.AdsPlacement{
 		Channel: channel,
 		ID:      placedID,
+		Mode:    "place",
 		Audit:   audit,
 		At:      time.Now().UTC().Format(time.RFC3339),
 	})
@@ -305,6 +310,65 @@ func (s *Server) growthPlace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, growthNext(r, "/admin/growth?ok=placed"), http.StatusSeeOther)
+}
+
+func (s *Server) growthBookManual(w http.ResponseWriter, r *http.Request) {
+	if !sameOrigin(w, r) {
+		return
+	}
+	u := s.requireDesk(w, r, "growth")
+	if u == nil {
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	channel := strings.ToLower(strings.TrimSpace(r.FormValue("channel")))
+	d, err := s.store.GetGrowthDeck(r.Context(), id)
+	if err != nil || !d.IsAds() {
+		http.NotFound(w, r)
+		return
+	}
+	if !d.Approved() {
+		s.placeAdsFail(w, r, u, "Accept the pack before you book it in the Ads UI. Chat never spends.")
+		return
+	}
+	if gap := d.Ads.PlaceReady(); gap != "" {
+		s.placeAdsFail(w, r, u, "Pack is not ready: "+gap+".")
+		return
+	}
+	if msg := growth.AdsBookConflict(d.Ads, channel, "manual"); msg != "" {
+		s.placeAdsFail(w, r, u, msg)
+		return
+	}
+	if channel != "google" && channel != "meta" {
+		s.placeAdsFail(w, r, u, "Pick Google Search or Meta.")
+		return
+	}
+	campaignID := strings.TrimSpace(r.FormValue("campaign_id"))
+	if campaignID == "" {
+		campaignID = "manual"
+	}
+	audit := "Handler booked this in the Ads UI from the pack instructions. Do not Place the same cells."
+	if campaignID != "manual" {
+		audit += " Campaign id " + campaignID + "."
+	} else {
+		audit += " Paste the campaign id when you have it so prune can score this placement."
+	}
+	d.Ads = d.Ads.WithPlacement(growth.AdsPlacement{
+		Channel: channel,
+		ID:      campaignID,
+		Mode:    "manual",
+		Audit:   audit,
+		At:      time.Now().UTC().Format(time.RFC3339),
+	})
+	if _, err := s.store.RecordAdsPlacement(r.Context(), d); err != nil {
+		s.placeAdsFail(w, r, u, "Booked, but the pack did not save: "+err.Error())
+		return
+	}
+	http.Redirect(w, r, growthNext(r, "/admin/growth?ok=booked"), http.StatusSeeOther)
 }
 
 func (s *Server) placeAdsFail(w http.ResponseWriter, r *http.Request, u *User, msg string) {
@@ -465,4 +529,23 @@ func (s *Server) internalAdsPrunedPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]any{"ok": true})
+}
+
+func (s *Server) recordAdsTurnAway(ctx context.Context, id int64, reason string) {
+	if s == nil || s.store == nil || id <= 0 {
+		return
+	}
+	reason = clipRunes(strings.TrimSpace(reason), 200)
+	if reason == "" {
+		return
+	}
+	d, err := s.store.GetGrowthDeck(ctx, id)
+	if err != nil || d.Kind != "ads" {
+		return
+	}
+	d.Ads.Looked = append(d.Ads.Looked, "handler turned away: "+reason)
+	d.Ads = growth.ClipAds(d.Ads)
+	if _, err := s.store.RecordAdsPlacement(ctx, d); err != nil {
+		return
+	}
 }

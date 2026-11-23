@@ -156,7 +156,8 @@
           <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/accept">
             <button type="submit">Accept</button>
           </form>
-          <form class="inline" method="post" action="/admin/projects/{{.Project.ID}}/proposal/reject">
+          <form method="post" action="/admin/projects/{{.Project.ID}}/proposal/reject" class="turn-away">
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
             <button class="ghost" type="submit">Reject</button>
           </form>
         </div>
@@ -216,9 +217,10 @@
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=legal">
             <button type="submit">Accept</button>
           </form>
-          <form class="inline" method="post" action="/admin/legal/{{.ID}}/reject">
+          <form method="post" action="/admin/legal/{{.ID}}/reject" class="turn-away">
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}?tab=legal">
-            <button class="ghost" type="submit">Reject</button>
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
+            <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>
         {{else if eq .Status "approved"}}
@@ -294,8 +296,9 @@
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
             <button type="submit">Accept</button>
           </form>
-          <form class="inline" method="post" action="/admin/files/{{.ID}}/reject">
+          <form method="post" action="/admin/files/{{.ID}}/reject" class="turn-away">
             <input type="hidden" name="next" value="/admin/projects/{{$.Project.ID}}">
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
             <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>
@@ -356,10 +359,10 @@
     <section role="tabpanel" id="tab-ads" data-tab="ads">
       {{template "ads-ga4" .}}
       <h3>Search ads</h3>
-      <p class="hint">The clerk still uses the Growth LLM (<code>LLM_PROVIDER</code> / <code>DEEPSEEK_API_KEY</code>). To <strong>Place</strong> after Accept: n8n credential <strong>Google Ads</strong> (OAuth, adwords scope), <code>GOOGLE_ADS_DEVELOPER_TOKEN</code> in the VM <code>.env</code> for n8n, and the customer id on Defaults → Ads. Meta: n8n credential <strong>Facebook Ads</strong>, ad account id and Page id on Defaults. Place is conservative: platform-minimum daily from remaining funds, exact match, Google Search only. Optional daily ceiling on Defaults. Go never holds those tokens. Campaigns start <strong>PAUSED</strong> unless you set ENABLED.</p>
+      <p class="hint">The clerk still uses the Growth LLM (<code>LLM_PROVIDER</code> / <code>DEEPSEEK_API_KEY</code>). After Accept, either follow <strong>Book it yourself</strong> in the Google Ads or Meta UI, or <strong>Place</strong> so n8n books the same probe. Do not do both for the same channel. Place needs n8n credential <strong>Google Ads</strong> (OAuth, adwords scope) on the Cloud project that has the Google Ads API enabled with Explorer (or higher) access, plus the customer id on Defaults → Ads. Meta: n8n credential <strong>Facebook Ads</strong>, ad account id and Page id on Defaults. Place is conservative: platform-minimum daily from remaining funds, exact match, Google Search only. Optional daily ceiling on Defaults. Go never holds those tokens. Campaigns start <strong>PAUSED</strong> unless you set ENABLED.</p>
       <ol class="recipe">
         <li>Chat Growth Google Search RSA copy from this Card — geo and keyword tests, not age or gender. One company. Campaign name is the bet slug.</li>
-        <li>Accept, then <strong>Place on Google Search</strong> or <strong>Place on Meta</strong>. n8n probes at the platform minimum for a week of Lagos hours. A morning job then cuts wasted cells and dayparts. Chat cannot spend.</li>
+        <li>Accept, then either follow the numbered Ads UI steps or <strong>Place on Google Search</strong> / <strong>Place on Meta</strong>. n8n probes at the platform minimum for a week of Lagos hours. A morning job then cuts wasted cells and dayparts. Chat cannot spend.</li>
         <li>Search the Pexels queries yourself. Download stills and <code>/file</code> them under <strong>product</strong>. Do not generate faces. <strong>Turn away</strong> if a city or claim is invented.</li>
       </ol>
       {{template "ads-walk" .}}
@@ -373,27 +376,7 @@
           <span class="stamp {{.StatusStamp}}">{{.Status}}</span>
         </div>
         {{if .PackPath}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a> · <a href="{{.PackPath}}">URL for Cursor</a></p>{{else}}<p class="hint"><a href="{{.PackDownloadPath}}">Download pack</a></p>{{end}}
-        {{if .Approved}}
-        {{if .Ads.PlaceReady}}
-        <p class="hint">Place needs {{.Ads.PlaceReady}}.</p>
-        {{else}}
-        <p class="hint">Place is a cheap probe: platform-minimum daily, exact match, Search only, one experiment per cell, all Lagos hours for a week. 07:00 Lagos then cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED.</p>
-        <div class="actions">
-          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
-            <input type="hidden" name="channel" value="google">
-            <input type="hidden" name="next" value="/admin/projects/{{.ProjectID}}?tab=ads">
-            <input type="hidden" name="step" value="ads">
-            <button type="submit">{{if .Ads.PlacedOn "google"}}Place again on Google Search{{else}}Place on Google Search{{end}}</button>
-          </form>
-          <form class="inline" method="post" action="/admin/growth/{{.ID}}/place">
-            <input type="hidden" name="channel" value="meta">
-            <input type="hidden" name="next" value="/admin/projects/{{.ProjectID}}?tab=ads">
-            <input type="hidden" name="step" value="ads">
-            <button class="ghost" type="submit">{{if .Ads.PlacedOn "meta"}}Place again on Meta{{else}}Place on Meta{{end}}</button>
-          </form>
-        </div>
-        {{end}}
-        {{end}}
+        {{template "ads-book" .}}
       </section>
       {{end}}
       {{end}}

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Inbound is one staff Telegram message after JSON parse.
+// Inbound is one staff Telegram message or callback after JSON parse.
 type Inbound struct {
 	ChatID         string
 	FromID         string
@@ -21,13 +21,25 @@ type Inbound struct {
 	FileMIME       string
 	Group          bool
 	FromBot        bool
+	CallbackID     string
+	CallbackData   string
+	MessageID      int64
 }
 
 type tgUpdate struct {
+	Message        *tgMessage        `json:"message"`
+	CallbackQuery  *tgCallbackQuery  `json:"callback_query"`
+}
+
+type tgCallbackQuery struct {
+	ID      string     `json:"id"`
+	From    tgUser     `json:"from"`
 	Message *tgMessage `json:"message"`
+	Data    string     `json:"data"`
 }
 
 type tgMessage struct {
+	MessageID      int64       `json:"message_id"`
 	From           tgUser      `json:"from"`
 	Chat           tgChat      `json:"chat"`
 	Text           string      `json:"text"`
@@ -61,7 +73,13 @@ type tgDocument struct {
 // ParseUpdate reads a Telegram Update JSON object.
 func ParseUpdate(raw []byte) (Inbound, bool) {
 	var u tgUpdate
-	if json.Unmarshal(raw, &u) != nil || u.Message == nil {
+	if json.Unmarshal(raw, &u) != nil {
+		return Inbound{}, false
+	}
+	if u.CallbackQuery != nil {
+		return parseCallback(u.CallbackQuery)
+	}
+	if u.Message == nil {
 		return Inbound{}, false
 	}
 	m := u.Message
@@ -70,11 +88,12 @@ func ParseUpdate(raw []byte) (Inbound, bool) {
 		text = strings.TrimSpace(m.Caption)
 	}
 	in := Inbound{
-		ChatID:  strconv.FormatInt(m.Chat.ID, 10),
-		FromID:  strconv.FormatInt(m.From.ID, 10),
-		Text:    text,
-		FromBot: m.From.IsBot,
-		Group:   m.Chat.Type == "group" || m.Chat.Type == "supergroup",
+		ChatID:    strconv.FormatInt(m.Chat.ID, 10),
+		FromID:    strconv.FormatInt(m.From.ID, 10),
+		Text:      text,
+		FromBot:   m.From.IsBot,
+		Group:     m.Chat.Type == "group" || m.Chat.Type == "supergroup",
+		MessageID: m.MessageID,
 	}
 	if m.ReplyToMessage != nil {
 		in.ReplyTo = strings.TrimSpace(m.ReplyToMessage.Text)
@@ -96,6 +115,28 @@ func ParseUpdate(raw []byte) (Inbound, bool) {
 		return in, false
 	}
 	if in.Text == "" && !in.HasPhoto && !in.HasDocument {
+		return in, false
+	}
+	return in, true
+}
+
+func parseCallback(q *tgCallbackQuery) (Inbound, bool) {
+	if q == nil || strings.TrimSpace(q.ID) == "" {
+		return Inbound{}, false
+	}
+	in := Inbound{
+		FromID:       strconv.FormatInt(q.From.ID, 10),
+		FromBot:      q.From.IsBot,
+		CallbackID:   strings.TrimSpace(q.ID),
+		CallbackData: strings.TrimSpace(q.Data),
+	}
+	if q.Message != nil {
+		in.ChatID = strconv.FormatInt(q.Message.Chat.ID, 10)
+		in.MessageID = q.Message.MessageID
+		in.Group = q.Message.Chat.Type == "group" || q.Message.Chat.Type == "supergroup"
+		in.Text = strings.TrimSpace(q.Message.Text)
+	}
+	if in.FromBot || in.ChatID == "" || in.FromID == "" || in.CallbackData == "" {
 		return in, false
 	}
 	return in, true

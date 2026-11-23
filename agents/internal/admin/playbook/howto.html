@@ -3,7 +3,7 @@
 <ol class="steps">
   <li>Sign in on the desk. Owner and BDM land on Board. Everyone else lands on the desks ticked on their People card.</li>
   <li>Ask on the desk, or send ops Telegram with a prefix, or send plain 1:1 text so the bot picks one desk. The worker proposes.</li>
-  <li>Accept or Turn away on the desk. <code>/approve</code> only sends a pending info@ draft. That command is not Accept.</li>
+  <li>Accept or Turn away on the desk. When you Turn away, you may type a short reason so the next draft on that bet can avoid the same mistake. <code>/approve</code> only sends a pending info@ draft. That command is not Accept.</li>
 </ol>
 
 <h3>Four doors</h3>
@@ -49,10 +49,10 @@
   <li>A customer WhatsApp 1:1 is a sales conversation. When the message includes a phone number, the desk files that person on Office → CRM. On ops Telegram, <code>/growth</code> drafts social copy, walks a pitch deck, or drafts Search ads; it still cannot spend.</li>
   <li>For a pitch, open the project → Deck → Start session. Chat Guy Kawasaki’s ten slides from the Card. Accept on <a href="/admin/growth">Growth</a>, paste the markdown into Slides yourself, and <code>/file</code> the PDF under <strong>product</strong>.</li>
   <li>For ads, put a public URL on the Card first. Open Ads and walk the six steps (final URL, geo and keyword cells, keywords, headlines ≤30 characters, descriptions ≤90, then Pexels queries). Cells are named places plus themes already on the Card, not age or gender. Go drops a city that is not on the Card.</li>
-  <li>Accept, then click <strong>Place</strong> on Google Search or Meta. Chat never Places. Place is a cheap probe at the platform-minimum daily budget, never more than remaining funds divided by 90, exact match only, Google Search only. The campaign name and <code>utm_campaign</code> are the bet slug.</li>
+  <li>Accept, then either follow <strong>Book it yourself</strong> in the Google Ads or Meta UI from the pack, or click <strong>Place</strong> on Google Search or Meta. Do not do both for the same channel. Chat never Places. Place is a cheap probe at the platform-minimum daily budget, never more than remaining funds divided by 90, exact match only, Google Search only. The campaign name and <code>utm_campaign</code> are the bet slug.</li>
   <li>To evaluate without spending, read the GA4 block on the Growth book, ask <code>/growth How are the HomeGauge ads doing in GA4?</code>, or open the morning glance job. Funnel events must already fire on the site (Card / <code>TRAFFIC.md</code>). Do not invent <code>generate_lead</code>.</li>
 </ol>
-<p class="hint">n8n holds the Ads tokens. Account ids live on <a href="/admin/settings?tab=ads">Defaults → Ads</a>. <code>GOOGLE_ADS_DEVELOPER_TOKEN</code> stays in <code>.env</code> for n8n. Search the Pexels phrases yourself.</p>
+<p class="hint">n8n holds Google Ads and Facebook Ads OAuth. Account ids live on <a href="/admin/settings?tab=ads">Defaults → Ads</a>. Google sunset developer tokens on 9 September 2026; enable the Google Ads API on the Cloud project that owns the credential and apply for Explorer (or higher). Search the Pexels phrases yourself.</p>
 
 <h3>SEO and funnels — Cursor in the bet repo</h3>
 <ol class="steps">
@@ -73,13 +73,16 @@
   <li><strong>Files.</strong> On ops Telegram send <code>/file</code> or drop a PDF. A catalog match files itself. Odd paths wait for Accept. Office papers use the slug <code>themobileprof</code>.</li>
 </ol>
 
+<h3>What the clerk remembers</h3>
+<p>Staff Accept and Turn away write a labeled episode on the desk. An optional Turn-away reason is shown to the next draft on that desk and bet. Owner and BDM read those rows at Docs → <a href="/admin/episodes">Episodes</a>. Academy Telegram and customer WhatsApp are not stored there. The model weights do not change, and Chat still never Accepts.</p>
+
 <h3>Defaults versus secrets</h3>
-<p>Ids (Zoho, Ads customer, GA4 property, Drive) live on <a href="/admin/settings">Defaults</a>. OAuth tokens, the Ads developer token, ClubKonnect keys, and the GA4 JSON key stay in n8n or the VM <code>.env</code>. Saving one tab does not wipe the others.</p>
+<p>Ids (Zoho, Ads customer, GA4 property, Drive) live on <a href="/admin/settings">Defaults</a>. OAuth tokens, ClubKonnect keys, and the GA4 JSON key stay in n8n or the VM <code>.env</code>. Saving one tab does not wipe the others.</p>
 
 <section class="specimen">
   <p class="spec-no">Specimen 01 · ads without spending from chat</p>
-  <p class="you-say">On HomeGauge, open Ads, walk the six steps, Accept on Growth, then Place Google Search.</p>
-  <p class="expect">The pack lands on the Growth book. Place runs in n8n at the platform-minimum daily budget, names the campaign <code>homegauge</code>, and stamps UTM on the landing URL. Chat still cannot spend. Prune at 07:00 waits a full week. The 06:20 GA4 pull may file a glance job. You decide whether to Place again or leave the campaign PAUSED.</p>
+  <p class="you-say">On HomeGauge, open Ads, walk the six steps, Accept on Growth, then either follow Book it yourself or Place Google Search.</p>
+  <p class="expect">The pack lands on the Growth book with numbered Ads UI steps and Place buttons. Place runs in n8n at the platform-minimum daily budget, names the campaign <code>homegauge</code>, and stamps UTM on the landing URL. If you booked it yourself, paste the campaign id so prune can score it. Do not Place and also create the same campaign in the UI. Chat still cannot spend. Prune at 07:00 waits a full week. The 06:20 GA4 pull may file a glance job. You decide whether to Place again or leave the campaign PAUSED.</p>
 </section>
 
 <section class="specimen">

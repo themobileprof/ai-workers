@@ -124,14 +124,14 @@ func settingCatalog() []settingGroupSpec {
 		{
 			ID:       "ads",
 			Title:    "Ads · Google and Meta",
-			Help:     "Account ids only. OAuth and the Google Ads developer token stay in n8n / the VM .env. Go never holds Ads tokens. Place on Growth after Accept.",
+			Help:     "Account ids only. OAuth stays in n8n. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential. Go never holds Ads tokens. After Accept, Book it yourself or Place — not both for the same channel.",
 			DocHref:  "/admin/docs/growth",
 			DocLabel: "Growth sheet",
 			Recipe: []string{
 				"Google Ads customer id is the 10 digits (hyphens optional). Login customer id is the MCC if you use a manager account.",
 				"Meta ad account is act_… or the digits. Page id is the Facebook Page that will sponsor the ad.",
 				"Place is conservative for a self-funded shop: platform-minimum daily probe, never more than remaining/90, exact match on Search, Google Search only (no partner network). Cells are separate experiments. Place runs all hours for a week. A 07:00 Lagos job then pauses a cell that spent with 0 clicks, and turns off Lagos dayparts that wasted while another daypart got clicks. Conversions wait two weeks, and only if a conversion already exists. Daily cap is an optional extra ceiling. Required if the account has no remaining amount (open credit line).",
-				"Campaigns start PAUSED unless you set ENABLED. Click Save. n8n credentials Google Ads and Facebook Ads. GOOGLE_ADS_DEVELOPER_TOKEN stays in .env for n8n.",
+				"Campaigns start PAUSED unless you set ENABLED. Click Save. n8n credentials Google Ads and Facebook Ads. Enable the Google Ads API on the Cloud project that owns the Google Ads OAuth client, then apply for Explorer (or higher) so production accounts work.",
 				"GA4 (same property id on Traffic) scores Place: last 7 days of paid sessions, and a funnel of events that already fire. Prefer the Funnel line on the bet Card (TRAFFIC.md in the site repo). This field is the company-wide fallback. Default Session → Landing. Add a lead event only if that event exists on the site. Link Google Ads to GA4 for auto-tagging. Place also stamps utm_campaign to the bet slug. After the morning pull, a proposed glance job on Growth quotes the snapshot. It does not Place.",
 			},
 			Fields: []SettingField{

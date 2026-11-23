@@ -520,6 +520,10 @@ func (s *Server) projectPlace(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
+	s.openStaffEpisode(r.Context(), DeskJob{
+		Desk: "product-dev", Title: "Placement · " + p.Slug, Source: "desk",
+		RefKind: "project", RefID: p.ID, Payload: resp.StructuredData,
+	}, req, resp)
 	http.Redirect(w, r, projectURL(p.ID, "stamp", "placed"), http.StatusSeeOther)
 }
 
@@ -577,6 +581,11 @@ func (s *Server) proposalAction(w http.ResponseWriter, r *http.Request, ok strin
 		s.render(w, "projects", s.projectView(r.Context(), u, p, roster, err.Error(), ""))
 		return
 	}
+	mapped := ok
+	if ok == "approved" {
+		mapped = "accepted"
+	}
+	s.stampStaffEpisodeRef(r.Context(), "project", p.ID, mapped, formReason(r))
 	http.Redirect(w, r, projectURL(p.ID, "stamp", ok), http.StatusSeeOther)
 }
 

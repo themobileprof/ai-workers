@@ -20,10 +20,11 @@ const adsDescCap = 4
 
 const adsOverlay = `You are the Growth clerk for TheMobileProf Technologies (Lagos), the only CAC-registered company in this office.
 You draft a Google Search text-ad pack (Responsive Search Ads) from the Card. You cannot spend, publish, or log into Google Ads or Meta.
-A human Accepts on the desk, then clicks Place. n8n holds the tokens. Chat never Accepts.
+A human Accepts on the desk, then either follows the pack instructions in the Ads UI or clicks Place. n8n holds the tokens. Chat never Accepts.
 Do not invent waitlist, MAU, GMV, CPC, or a city that is not already on the Card or the public URL.
 Keywords and claims must already appear on the Card one-liner, hypothesis, mission, notes, funnel_steps, or project.url host/path words. If Ikeja is not there, do not put Ikeja in a keyword or Pexels query. Funnel events come from Card funnel_steps (TRAFFIC.md) — do not invent generate_lead if it is not there.
 context_data.looks and context_data.ads_ga4 are already fetched this turn. Quote only those numbers. Do not invent CPC or sessions. Go will drop geo/keywords that are not on the Card.
+If context_data.lessons.turned_away is set, do not repeat those mistakes. If lessons.accepted is set, stay consistent with those packs. Do not invent facts from them.
 Search tests are geo (named place on the Card) plus a query theme (words on the Card). Do not propose age or gender cells — Search will not isolate those.
 Pexels: suggest 3–5 search phrases a human will type on pexels.com. Objects and places only. Never a generated face. Never "happy African woman laptop". Include one avoid line.
 Work ONE step at a time. context_data.ads is the live pack. context_data.current_step is 1–6.
@@ -169,6 +170,7 @@ func (q PexelsQuery) SearchURL() string {
 type AdsPlacement struct {
 	Channel string   `json:"channel"`
 	ID      string   `json:"id"`
+	Mode    string   `json:"mode,omitempty"`
 	Audit   string   `json:"audit"`
 	At      string   `json:"at"`
 	Dropped []string `json:"dropped,omitempty"`
@@ -273,6 +275,10 @@ func ClipAds(p AdsPack) AdsPack {
 	var places []AdsPlacement
 	for _, pl := range p.Placements {
 		pl.Channel = strings.ToLower(strings.TrimSpace(pl.Channel))
+		pl.Mode = strings.ToLower(strings.TrimSpace(pl.Mode))
+		if pl.Mode != "manual" && pl.Mode != "place" {
+			pl.Mode = ""
+		}
 		pl.ID, pl.Audit, pl.At = strings.TrimSpace(pl.ID), strings.TrimSpace(pl.Audit), strings.TrimSpace(pl.At)
 		pl.Dropped = uniqStrings(pl.Dropped)
 		if pl.Channel == "" {
@@ -474,7 +480,7 @@ func AdsMarkdown(p AdsPack, name, slug string) string {
 		b.WriteString("\n\n")
 	}
 	b.WriteString("Legal name: **TheMobileProf Technologies**. One Google Ads account. Campaign name is the bet slug.\n\n")
-	b.WriteString("A human Accepts, then **Place** on the Growth book. n8n reads remaining funds and stays conservative: platform-minimum daily probe, never more than remaining/90, Defaults ceiling if you set one. Each geo/keyword cell is its own experiment. RSA already rotates headlines. Place stamps utm_campaign to the bet slug and utm_content to the cell so GA4 can score paid sessions. Place runs all Lagos hours so weekday vs weekend and morning/midday/evening/night can show. A 07:00 Lagos job waits a full week, then pauses a cell that spent with 0 clicks, and turns off dayparts that spent with 0 clicks while another daypart got clicks. Conversions wait two weeks, and only if some cell already converted. The Growth book shows GA4 last 7 days (paid sessions and a funnel of events that already fire). Google Search RSA, exact match only, Google Search network only; Meta uses one campaign budget at the platform minimum. Campaigns start paused unless Defaults say ENABLED. Pexels stills: search the queries yourself, download, `/file` under **product**. Do not generate faces.\n\n")
+	b.WriteString("A human Accepts, then either follows **Book it yourself** in the Google Ads or Meta UI, or clicks **Place** on the Growth book. Do not do both for the same channel. n8n reads remaining funds and stays conservative: platform-minimum daily probe, never more than remaining/90, Defaults ceiling if you set one. Each geo/keyword cell is its own experiment. RSA already rotates headlines. Place stamps utm_campaign to the bet slug and utm_content to the cell so GA4 can score paid sessions. Place runs all Lagos hours so weekday vs weekend and morning/midday/evening/night can show. A 07:00 Lagos job waits a full week, then pauses a cell that spent with 0 clicks, and turns off dayparts that spent with 0 clicks while another daypart got clicks. Conversions wait two weeks, and only if some cell already converted. The Growth book shows GA4 last 7 days (paid sessions and a funnel of events that already fire). Google Search RSA, exact match only, Google Search network only; Meta uses one campaign budget at the platform minimum. Campaigns start paused unless Defaults say ENABLED. Pexels stills: search the queries yourself, download, `/file` under **product**. Do not generate faces.\n\n")
 	if len(p.Looked) > 0 {
 		b.WriteString("## Looked\n\n")
 		for _, line := range p.Looked {
@@ -548,6 +554,9 @@ func AdsMarkdown(p AdsPack, name, slug string) string {
 		b.WriteString("## Placed\n\n")
 		for _, pl := range p.Placements {
 			b.WriteString("- **" + pl.Channel + "**")
+			if pl.Mode != "" {
+				b.WriteString(" · " + pl.Mode)
+			}
 			if pl.ID != "" {
 				b.WriteString(" `" + pl.ID + "`")
 			}
@@ -558,6 +567,7 @@ func AdsMarkdown(p AdsPack, name, slug string) string {
 		}
 		b.WriteString("\n")
 	}
+	b.WriteString(AdsManualMarkdown(p, name, slug))
 	return b.String()
 }
 

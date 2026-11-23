@@ -4,7 +4,7 @@
 <ol class="recipe">
   <li>Start a session. Growth proposes Google Search RSA copy for the current step, then asks one question. Same LLM as the rest of Growth. Ads OAuth stays in n8n, not this process.</li>
   <li>Reply: tighter, next, skip, or rewrite a line. The pack URL updates every turn. Chat never Accepts. Chat cannot spend.</li>
-  <li>Facts stay on the Card. No age or gender cells. Accept, then Place — cheap probe per cell, all Lagos hours for a week, then a morning job cuts wasted cells and dayparts. Place stamps UTM so GA4 can score paid sessions and the funnel. Pexels queries are for you to search — do not generate faces.</li>
+  <li>Facts stay on the Card. No age or gender cells. Accept, then either follow the pack in the Ads UI or Place — cheap probe per cell, all Lagos hours for a week, then a morning job cuts wasted cells and dayparts. Do not do both for the same channel. Place stamps UTM so GA4 can score paid sessions and the funnel. Pexels queries are for you to search — do not generate faces.</li>
 </ol>
 {{if .LiveAds}}
 <p class="hint">Now: <strong>{{.LiveAds.AdsStepLabel}}</strong>{{if .LiveAds.PackPath}} · <a href="{{.LiveAds.PackPath}}">pack URL</a>{{end}} · <a href="{{.LiveAds.PackDownloadPath}}">download</a></p>
@@ -66,12 +66,13 @@
     <input type="hidden" name="step" value="ads">
     <button type="submit">Accept</button>
   </form>
-  <form class="inline" method="post" action="/admin/growth/{{.LiveAds.ID}}/reject">
+  <form method="post" action="/admin/growth/{{.LiveAds.ID}}/reject" class="turn-away">
     {{if eq .Nav "growth"}}
     <input type="hidden" name="next" value="/admin/growth">
     {{else}}
     <input type="hidden" name="next" value="/admin/projects/{{.Project.ID}}?tab=ads">
     {{end}}
+    <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
     <button class="ghost" type="submit">Turn away</button>
   </form>
 </div>

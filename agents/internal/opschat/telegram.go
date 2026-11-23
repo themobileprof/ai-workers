@@ -60,20 +60,88 @@ func (b *Bot) SetWebhook(ctx context.Context, url string) error {
 	body, _ := json.Marshal(map[string]any{
 		"url":             url,
 		"secret_token":    b.secret,
-		"allowed_updates": []string{"message", "my_chat_member"},
+		"allowed_updates": []string{"message", "callback_query", "my_chat_member"},
 	})
 	return b.post(ctx, "setWebhook", body, nil)
 }
 
 func (b *Bot) Send(ctx context.Context, chatID, text string) error {
+	return b.SendMarkup(ctx, chatID, text, nil)
+}
+
+// InlineButton is one Telegram callback button.
+type InlineButton struct {
+	Text string
+	Data string
+}
+
+func (b *Bot) SendMarkup(ctx context.Context, chatID, text string, rows [][]InlineButton) error {
 	if b == nil {
 		return fmt.Errorf("telegram bot is not configured")
 	}
-	body, _ := json.Marshal(map[string]any{
+	payload := map[string]any{
 		"chat_id": chatID,
 		"text":    ClipText(text),
-	})
+	}
+	if markup := inlineMarkup(rows); markup != nil {
+		payload["reply_markup"] = markup
+	}
+	body, _ := json.Marshal(payload)
 	return b.post(ctx, "sendMessage", body, nil)
+}
+
+func (b *Bot) AnswerCallback(ctx context.Context, callbackID, text string) error {
+	if b == nil {
+		return fmt.Errorf("telegram bot is not configured")
+	}
+	callbackID = strings.TrimSpace(callbackID)
+	if callbackID == "" {
+		return nil
+	}
+	payload := map[string]any{"callback_query_id": callbackID}
+	if t := strings.TrimSpace(text); t != "" {
+		payload["text"] = ClipText(t)
+	}
+	body, _ := json.Marshal(payload)
+	return b.post(ctx, "answerCallbackQuery", body, nil)
+}
+
+func (b *Bot) ClearMarkup(ctx context.Context, chatID string, messageID int64) error {
+	if b == nil || strings.TrimSpace(chatID) == "" || messageID <= 0 {
+		return nil
+	}
+	body, _ := json.Marshal(map[string]any{
+		"chat_id":      chatID,
+		"message_id":   messageID,
+		"reply_markup": map[string]any{},
+	})
+	return b.post(ctx, "editMessageReplyMarkup", body, nil)
+}
+
+func inlineMarkup(rows [][]InlineButton) map[string]any {
+	if len(rows) == 0 {
+		return nil
+	}
+	var kb [][]map[string]string
+	for _, row := range rows {
+		var buttons []map[string]string
+		for _, btn := range row {
+			if strings.TrimSpace(btn.Text) == "" || strings.TrimSpace(btn.Data) == "" {
+				continue
+			}
+			buttons = append(buttons, map[string]string{
+				"text":          btn.Text,
+				"callback_data": btn.Data,
+			})
+		}
+		if len(buttons) > 0 {
+			kb = append(kb, buttons)
+		}
+	}
+	if len(kb) == 0 {
+		return nil
+	}
+	return map[string]any{"inline_keyboard": kb}
 }
 
 func (b *Bot) Username(ctx context.Context) (string, error) {

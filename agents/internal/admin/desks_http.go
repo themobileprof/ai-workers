@@ -190,6 +190,7 @@ func (s *Server) deskAskPOST(w http.ResponseWriter, r *http.Request) {
 	if resp.OutputText != "" {
 		_, _ = s.store.InsertJobMessage(r.Context(), JobMessage{JobID: job.ID, AuthorKind: "worker", Body: resp.OutputText})
 	}
+	s.openStaffEpisode(r.Context(), job, req, resp)
 	http.Redirect(w, r, desk.Path()+"?job="+strconv.FormatInt(job.ID, 10)+"&ok=asked", http.StatusSeeOther)
 }
 
@@ -265,7 +266,7 @@ func (s *Server) deskStamp(status string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		if err := s.applyJobStamp(r.Context(), *u, job, status); err != nil {
+		if err := s.applyJobStamp(r.Context(), *u, job, status, formReason(r)); err != nil {
 			s.deskJobView(w, r, u, desk, id, err.Error(), "")
 			return
 		}
@@ -277,10 +278,11 @@ func (s *Server) deskStamp(status string) http.HandlerFunc {
 	}
 }
 
-func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, status string) error {
+func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, status, reason string) error {
 	if err := s.store.SetDeskJobStatus(ctx, job.ID, status); err != nil {
 		return err
 	}
+	s.stampStaffEpisode(ctx, job, status, reason)
 	switch job.RefKind {
 	case "legal_draft":
 		mapped := "approved"
@@ -334,6 +336,9 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 	text := "Handler accepted this job. The worker did not Accept it."
 	if status == "rejected" {
 		text = "Handler turned this job away. Nothing was sent."
+		if reason != "" {
+			text += " Reason: " + reason
+		}
 	}
 	_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: job.ID, AuthorKind: kind, Body: text})
 	return nil
@@ -381,6 +386,9 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 		}
 		if job.Payload != nil {
 			data["job"] = job.Payload
+			if strVal(data["project_slug"]) == "" {
+				data["project_slug"] = strVal(job.Payload["project_slug"])
+			}
 		}
 	}
 	if len(thread) > 0 {
@@ -398,6 +406,7 @@ func (s *Server) deskRequestFor(rctx context.Context, desk Desk, u *User, task s
 		}
 		data["thread"] = lines
 	}
+	s.attachEpisodeLessons(rctx, data)
 	raw, _ := json.Marshal(data)
 	req := contract.Request{TaskDescription: task, ContextData: raw}
 	if desk.Slug == "product-dev" && s != nil {
@@ -523,6 +532,7 @@ func (s *Server) FileInboundJob(ctx context.Context, dept string, req contract.R
 	if resp.OutputText != "" {
 		_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: job.ID, AuthorKind: "worker", Body: resp.OutputText})
 	}
+	s.openStaffEpisode(ctx, job, req, resp)
 }
 
 func (s *Server) internalJobsPOST(w http.ResponseWriter, r *http.Request) {
@@ -564,6 +574,8 @@ func (s *Server) internalJobsPOST(w http.ResponseWriter, r *http.Request) {
 	if output != "" {
 		_, _ = s.store.InsertJobMessage(r.Context(), JobMessage{JobID: job.ID, AuthorKind: "worker", Body: output})
 	}
+	raw, _ := json.Marshal(map[string]any{"channel": source, "department": desk.Department})
+	s.openStaffEpisode(r.Context(), job, contract.Request{TaskDescription: task, ContextData: raw}, contract.Response{StructuredData: sd, OutputText: output})
 	writeJSON(w, map[string]any{"ok": true, "committed": false, "status": job.Status, "job_id": job.ID})
 }
 
@@ -625,7 +637,7 @@ func (s *Server) internalJobApply(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "no owner", http.StatusBadGateway)
 		return
 	}
-	if err := s.applyJobStamp(r.Context(), actor, job, "accepted"); err != nil {
+	if err := s.applyJobStamp(r.Context(), actor, job, "accepted", ""); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

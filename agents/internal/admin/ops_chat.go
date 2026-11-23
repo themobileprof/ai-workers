@@ -36,6 +36,14 @@ func (s *Server) opsTelegramPOST(w http.ResponseWriter, r *http.Request) {
 	go s.handleOpsTelegram(raw)
 }
 
+type opsOut struct {
+	Text         string
+	JobID        int64
+	CallbackID   string
+	CallbackNote string
+	EditMsgID    int64
+}
+
 func (s *Server) handleOpsTelegram(raw []byte) {
 	in, ok := opschat.ParseUpdate(raw)
 	if !ok {
@@ -169,6 +177,7 @@ func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d o
 		}
 		data["thread"] = lines
 	}
+	s.attachEpisodeLessons(ctx, data)
 	raw, _ := json.Marshal(data)
 	return contract.Request{TaskDescription: d.Task, ContextData: raw}
 }
