@@ -101,6 +101,7 @@ WHERE slug = 'lms' AND (
   OR brief LIKE '%student WhatsApp group%'
   OR brief NOT LIKE '%airtime%'
   OR brief NOT LIKE '%workshop, or quiz%'
+  OR brief NOT LIKE '%quiet class%'
 )
 `, lmsMandateBrief, lmsMandateCatalog)
 	return err
@@ -117,7 +118,7 @@ Your job in this room:
 - Answer study questions from lesson_live and the catalog. Do not invent quiz answers. Do not paste a whole lesson.
 - If they are stuck on a workshop, talk it through: course, then lesson, then which step. One question at a time. When you have the step, say exactly what that prompt expects them to type. Do not lecture the concept.
 - When a scholarship season is ending soon, remind the room daily: finish the Scholarship path and take the lab. Quote the end date. Never post a discount code — course reps give that out. Never name who used a code or who won.
-- Morning (09:30 Lagos): one short check-in — rotate a fun greeting, or ask which course/lesson they are on, or invite questions on a course, lesson, workshop, or quiz. Afternoon (16:00 Lagos): a separate ₦500 note (still available even if nobody earned yesterday), how to be eligible (lesson/workshop questions, talking in this class, /invite), and yesterday's winner if there is one. Never post both in the same burst. Never explain how the ranking is computed. Never mention vendors. Phone numbers for airtime stay in a private chat. Word it freshly; do not paste the same memo every day.
+- Afternoon (16:00 Lagos): a ₦500 note (still available even if nobody earned yesterday), how to be eligible (lesson/workshop questions, talking in this class, /invite), and yesterday's winner if there is one. Morning (09:30 Lagos) is a short check-in only when a student talked in class, asked a lesson question, or confirmed an invite yesterday — rotate a fun greeting, or ask which course/lesson they are on, or invite questions on a course, lesson, workshop, or quiz. When the class was quiet yesterday, skip the morning post so the bot is not the only voice in a quiet class. Never post both in the same burst. Never explain how the ranking is computed. Never mention vendors. Phone numbers for airtime stay in a private chat. Word it freshly; do not paste the same memo every day.
 - Payment or a student's own billing: never quote paid/unpaid in the group. Tell them to DM this bot the email on their LMS account. You may quote public list_price from the live catalog. You cannot see LMS enrolment. Escalate so a human checks.
 - If you do not know — login lock, missing payment, certificate not showing, a course not in the catalog, a complaint — say a human admin will pick it up. Set escalate_to_founder true. Do not invent a reset, a refund, or a course name.
 - Do not pitch other TheMobileProf products. This room is courses and lessons only.

@@ -48,6 +48,20 @@ func TestPickWinnerRecentWinnerNeedsToLead(t *testing.T) {
 	}
 }
 
+func TestSkipCheckinBecauseQuiet(t *testing.T) {
+	if !skipCheckinBecauseQuiet(nil, nil) {
+		t.Fatal("empty class is quiet")
+	}
+	staffOnly := []EngageScore{{TelegramID: "9", Name: "Staff", Total: 12}}
+	if !skipCheckinBecauseQuiet(staffOnly, map[string]bool{"9": true}) {
+		t.Fatal("staff chatter is still a quiet class")
+	}
+	students := []EngageScore{{TelegramID: "1", Name: "Ada", Total: 3}}
+	if skipCheckinBecauseQuiet(students, map[string]bool{"9": true}) {
+		t.Fatal("a student day still gets the morning check-in")
+	}
+}
+
 func TestReferralCodeStable(t *testing.T) {
 	a := referralCodeFor("123")
 	if a != referralCodeFor("123") || len(a) != 6 || a == referralCodeFor("124") {

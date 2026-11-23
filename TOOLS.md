@@ -59,7 +59,7 @@ Secrets stay in the VM `.env` or n8n Credentials, never git. Accounts / Books / 
 - **Id:** `clubkonnect`
 - **URL:** https://www.clubkonnect.com/
 - **Role:** Daily student airtime. Go sends ₦`REWARD_AMOUNT` once a day to yesterday’s most engaged Academy student (room chat + lesson questions + confirmed invites) after they confirm a Nigerian number in a private chat with the Academy host. A student who collected in the last 7 days is scored at half unless they still lead.
-- **Where:** Go `clubkonnect` client on the morning ritual (`POST /internal/v1/community/daily-engage`, n8n 09:30 Lagos). Not n8n. Students never hear the vendor name.
+- **Where:** Go `clubkonnect` client on the 16:00 Lagos airtime beat (`POST /internal/v1/community/daily-engage` with `beat=airtime`, n8n `commEngageAirtime1`). Not n8n. Students never hear the vendor name. The 09:30 check-in does not send airtime, and Go skips that post when yesterday had no student talk.
 - **Secrets:** `CLUBKONNECT_USERID` and `CLUBKONNECT_APIKEY` on the VM `.env` → agents. Never git. Whitelist the VM IP on the ClubKonnect dashboard if sends fail.
 - **Env:** `CLUBKONNECT_USERID`, `CLUBKONNECT_APIKEY`, `REWARD_AMOUNT`
 - **Desk keys:** `community.lms_register`, `community.telegram_invite`, `community.telegram_bot`

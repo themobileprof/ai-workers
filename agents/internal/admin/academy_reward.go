@@ -167,6 +167,25 @@ func (s *Server) dailyEngage(ctx context.Context, beat string) map[string]any {
 	if beat == "airtime" && existing.AnnouncedAt != nil {
 		return map[string]any{"ok": true, "skipped": true, "beat": beat, "day": yesterday.Format("2006-01-02"), "stage": existing.Stage}
 	}
+	if beat == "checkin" {
+		scores, err := s.store.RankEngagement(ctx, yesterday)
+		if err != nil {
+			return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
+		}
+		if skipCheckinBecauseQuiet(scores, s.staffTelegramSet(ctx)) {
+			rd := existing
+			if rd.Day.IsZero() {
+				rd = RewardDay{Day: yesterday, Amount: s.rewardNaira(), Stage: "none"}
+			}
+			if err := s.store.UpsertRewardDay(ctx, rd); err != nil {
+				return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
+			}
+			if err := s.store.MarkRewardCheckedIn(ctx, rd.Day); err != nil {
+				log.Printf("academy daily checkin skip: %v", err)
+			}
+			return map[string]any{"ok": true, "skipped": true, "reason": "quiet", "beat": beat, "day": yesterday.Format("2006-01-02"), "stage": rd.Stage}
+		}
+	}
 	groups, err := s.mandateTelegramGroups(ctx)
 	if err != nil {
 		return map[string]any{"ok": false, "beat": beat, "error": err.Error()}
@@ -210,6 +229,37 @@ func dailyEngageBeat(beat string) string {
 	default:
 		return "checkin"
 	}
+}
+
+// skipCheckinBecauseQuiet is true when no student scored yesterday. Staff on People do not count. An empty class then gets only the 16:00 ₦500, not a second bot post.
+func skipCheckinBecauseQuiet(scores []EngageScore, staff map[string]bool) bool {
+	for _, sc := range scores {
+		id := normalizeTelegramID(sc.TelegramID)
+		if id == "" || staff[id] {
+			continue
+		}
+		if sc.Total > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Server) staffTelegramSet(ctx context.Context) map[string]bool {
+	staff := map[string]bool{}
+	if s == nil || s.store == nil {
+		return staff
+	}
+	users, err := s.store.ListUsers(ctx)
+	if err != nil {
+		return staff
+	}
+	for _, u := range users {
+		if tid := normalizeTelegramID(u.TelegramID); tid != "" {
+			staff[tid] = true
+		}
+	}
+	return staff
 }
 
 func (s *Server) mandateTelegramGroups(ctx context.Context) ([]string, error) {

@@ -48,7 +48,7 @@ These jobs fire on Lagos time whether or not you are at the desk.
 | 08:30 | Today on the desk | Ops Telegram lists today’s Delivery tasks, Coming up dates, and (for owner and BDM) CRM due rows. |
 | 09:00 Monday | Class intro | The Academy bot introduces itself in each mandated room whose linked bet stage allows pings. |
 | 09:15 | Scholarship nudge | A short reminder only when a scholarship season ends within 21 days. It never posts a discount code. |
-| 09:30 | Class check-in | A greeting, a where-are-you, or a lesson question. The host LLM may reword; Go keeps the facts. |
+| 09:30 | Class check-in | A greeting, a where-are-you, or a lesson question, **only** when a student talked, asked a lesson question, or confirmed an invite yesterday. A quiet class gets no morning post. The host LLM may reword; Go keeps the facts. |
 | 16:00 | ₦500 airtime | Community sends ₦500 even when nobody earned it, names yesterday’s winner when there is one, and uses ClubKonnect keys from the VM `.env`. |
 
 New ad campaigns start **PAUSED** unless you set ENABLED on Defaults → Ads.
@@ -129,7 +129,7 @@ Create one **mandate** per student Telegram room at `/admin/community` (brief, c
 
 Students DM the **Academy** bot the email on their LMS account; they must not paste billing in the group. `/invite` is the LMS join landing.
 
-At 09:30 Lagos the host checks in. At 16:00 it sends ₦500 even when nobody earned it, and names yesterday’s winner when there is one.
+At 16:00 Lagos the host sends ₦500 even when nobody earned it, and names yesterday’s winner when there is one. At 09:30 it checks in only when a student talked yesterday, so an empty room is not two bot posts a day.
 
 Campus trainings belong on the project **Dates** tab, not on Community. Customer WhatsApp cannot run `/cm`.
 

@@ -158,7 +158,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Room voice",
 		Path:     "POST /departments/community",
 		Wire:     "live",
-		Summary:  "Mandated Academy Telegram rooms, live LMS catalog, join onboard, DM billing email, /invite landing (LMS + Telegram), Monday intro, daily ₦500 airtime (LLM-worded check-in then facts, even when nobody qualified), /cm. WhatsApp Cloud API cannot join ordinary groups.",
+		Summary:  "Mandated Academy Telegram rooms, live LMS catalog, join onboard, DM billing email, /invite landing (LMS + Telegram), Monday intro, daily ₦500 airtime even when nobody qualified, morning check-in only after a student day, /cm. WhatsApp Cloud API cannot join ordinary groups.",
 		Prefixes: []string{"/cm", "/community", "Academy Telegram group"},
 	},
 	{
