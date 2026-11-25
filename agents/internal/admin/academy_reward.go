@@ -269,9 +269,9 @@ func (s *Server) mandateTelegramGroups(ctx context.Context) ([]string, error) {
 	}
 	var groups []string
 	seen := map[string]bool{}
-	for _, m := range list {
+	for _, m := range collapsePingMandates(list) {
 		id := strings.TrimSpace(m.TelegramChatID)
-		if !m.Active || id == "" || seen[id] {
+		if id == "" || seen[id] {
 			continue
 		}
 		seen[id] = true
@@ -335,16 +335,9 @@ func (s *Server) announceDailyGroup(ctx context.Context, rd RewardDay, has bool,
 		out["error"] = "empty " + beat
 		return out
 	}
-	var sendErr error
-	for _, id := range groups {
-		if err := s.academySend(ctx, id, text); err != nil {
-			log.Printf("academy daily group: %v", err)
-			sendErr = err
-		}
-	}
-	if sendErr != nil {
+	if err := s.academySendEach(ctx, groups, text); err != nil {
 		out["ok"] = false
-		out["error"] = sendErr.Error()
+		out["error"] = err.Error()
 		return out
 	}
 	if beat == "checkin" {

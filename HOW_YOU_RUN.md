@@ -129,7 +129,7 @@ Create one **mandate** per student Telegram room at `/admin/community` (brief, c
 
 Students DM the **Academy** bot the email on their LMS account; they must not paste billing in the group. `/invite` is the LMS join landing.
 
-At 16:00 Lagos the host sends ₦500 even when nobody earned it, and names yesterday’s winner when there is one. At 09:30 it checks in only when a student talked yesterday, so an empty room is not two bot posts a day.
+At 16:00 Lagos the host sends ₦500 even when nobody earned it, and names yesterday’s winner when there is one. At 09:30 it checks in only when a student talked yesterday, so an empty room is not two bot posts a day. Two mandates for the same bet (for example lms and academy-lms) still count as one class. The old Academy group id was upgraded to TheMobileProf Community; posting both ids used to land twice in Community. Scheduled posts now send once to that supergroup.
 
 Campus trainings belong on the project **Dates** tab, not on Community. Customer WhatsApp cannot run `/cm`.
 

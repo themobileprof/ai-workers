@@ -3,7 +3,32 @@ package admin
 import (
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestCollapsePingMandatesOneAcademyRoom(t *testing.T) {
+	old := CommunityMandate{ID: 1, Slug: "lms", Title: "Academy", TelegramChatID: "-5459918440", Active: true}
+	fresh := CommunityMandate{ID: 2, Slug: "academy-lms", Title: "Community", TelegramChatID: "-1003968683203", Active: true, UpdatedAt: old.UpdatedAt.Add(time.Hour)}
+	got := collapsePingMandates([]CommunityMandate{old, fresh})
+	if len(got) != 1 || got[0].TelegramChatID != "-1003968683203" {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestCollapsePingMandatesKeepsOtherBets(t *testing.T) {
+	a := CommunityMandate{Slug: "lms", TelegramChatID: "-1001", Active: true}
+	b := CommunityMandate{Slug: "homegauge", TelegramChatID: "-1002", Active: true}
+	got := collapsePingMandates([]CommunityMandate{a, b})
+	if len(got) != 2 {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestPickTelegramChatPrefersSupergroup(t *testing.T) {
+	if pickTelegramChat([]string{"-5459918440", "-1003968683203"}) != "-1003968683203" {
+		t.Fatal(pickTelegramChat([]string{"-5459918440", "-1003968683203"}))
+	}
+}
 
 func TestCommunitySlug(t *testing.T) {
 	if communitySlug("Academy LMS") != "academy-lms" {

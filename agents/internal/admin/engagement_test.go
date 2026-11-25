@@ -48,6 +48,16 @@ func TestPickWinnerRecentWinnerNeedsToLead(t *testing.T) {
 	}
 }
 
+func TestTelegramDestAfterMigrateCollapsesUpgradedGroup(t *testing.T) {
+	got := telegramDestAfterMigrate("-5459918440", "-1003968683203")
+	if got != "-1003968683203" {
+		t.Fatal(got)
+	}
+	if telegramDestAfterMigrate("-1003968683203", "") != "-1003968683203" {
+		t.Fatal("supergroup stays")
+	}
+}
+
 func TestSkipCheckinBecauseQuiet(t *testing.T) {
 	if !skipCheckinBecauseQuiet(nil, nil) {
 		t.Fatal("empty class is quiet")

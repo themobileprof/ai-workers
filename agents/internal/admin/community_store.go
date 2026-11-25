@@ -41,6 +41,89 @@ func (m CommunityMandate) JSON() map[string]any {
 	}
 }
 
+// collapsePingMandates keeps one scheduled ping per bet. Two Academy mandates
+// (lms and academy-lms) were posting the same copy to TheMobileProf Academy and
+// TheMobileProf Community. A Telegram supergroup id (prefix -100) wins over an
+// older basic group when both point at that bet.
+func collapsePingMandates(list []CommunityMandate) []CommunityMandate {
+	type acc struct {
+		m  CommunityMandate
+		tg []string
+		wa []string
+	}
+	order := make([]string, 0, len(list))
+	by := map[string]*acc{}
+	for _, m := range list {
+		if !m.Active {
+			continue
+		}
+		key := mandateProjectSlug(m.Slug)
+		if key == "" {
+			key = "id:" + strings.TrimSpace(m.Slug)
+			if key == "id:" {
+				continue
+			}
+		}
+		a := by[key]
+		if a == nil {
+			cp := m
+			a = &acc{m: cp}
+			by[key] = a
+			order = append(order, key)
+		} else if m.UpdatedAt.After(a.m.UpdatedAt) {
+			a.m = m
+		}
+		if t := strings.TrimSpace(m.TelegramChatID); t != "" {
+			a.tg = append(a.tg, t)
+		}
+		if w := strings.TrimSpace(m.WhatsAppGroupID); w != "" {
+			a.wa = append(a.wa, w)
+		}
+	}
+	out := make([]CommunityMandate, 0, len(order))
+	for _, k := range order {
+		a := by[k]
+		a.m.TelegramChatID = pickTelegramChat(a.tg)
+		a.m.WhatsAppGroupID = firstFilled(a.wa)
+		out = append(out, a.m)
+	}
+	return out
+}
+
+func pickTelegramChat(ids []string) string {
+	basic, super := "", ""
+	seen := map[string]bool{}
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		if strings.HasPrefix(id, "-100") {
+			if super == "" {
+				super = id
+			}
+			continue
+		}
+		if basic == "" {
+			basic = id
+		}
+	}
+	if super != "" {
+		return super
+	}
+	return basic
+}
+
+func firstFilled(vals []string) string {
+	for _, v := range vals {
+		if s := strings.TrimSpace(v); s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
 func (s *Store) migrateCommunity(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
 CREATE TABLE IF NOT EXISTS community_mandates (

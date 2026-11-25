@@ -134,10 +134,7 @@ func (s *Server) internalCommunityMandates(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	out := make([]map[string]any, 0, len(list))
-	for _, m := range list {
-		if !m.Active {
-			continue
-		}
+	for _, m := range collapsePingMandates(list) {
 		row := m.JSON()
 		slug, _ := row["project_slug"].(string)
 		pings := true

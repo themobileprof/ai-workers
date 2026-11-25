@@ -78,6 +78,52 @@ func (s *Server) academySend(ctx context.Context, chatID, text string) error {
 	return s.acadBot.Send(ctx, to, text)
 }
 
+// telegramDestAfterMigrate is the chat Telegram actually delivered to. A basic
+// group id that was upgraded still sits on the lms mandate; sendMessage then
+// returns migrate_to_chat_id for TheMobileProf Community. Posting that id and
+// the supergroup id in one loop posted the same copy twice in Community.
+func telegramDestAfterMigrate(from, migrateTo string) string {
+	from = strings.TrimSpace(from)
+	to := strings.TrimSpace(migrateTo)
+	if to != "" && to != from {
+		return to
+	}
+	return from
+}
+
+func (s *Server) academySendEach(ctx context.Context, ids []string, text string) error {
+	if s == nil || s.acadBot == nil {
+		return nil
+	}
+	sent := map[string]bool{}
+	var sendErr error
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		if id == "" || sent[id] {
+			continue
+		}
+		err := s.acadBot.Send(ctx, id, text)
+		to := opschat.TelegramMigrateTo(err)
+		dest := telegramDestAfterMigrate(id, to)
+		if to != "" && to != id {
+			_ = s.store.MigrateTelegramChat(ctx, id, to)
+			if sent[dest] {
+				sent[id] = true
+				continue
+			}
+			err = s.acadBot.Send(ctx, dest, text)
+		}
+		if err != nil {
+			log.Printf("academy telegram send: %v", err)
+			sendErr = err
+			continue
+		}
+		sent[dest] = true
+		sent[id] = true
+	}
+	return sendErr
+}
+
 func (s *Server) academyTurn(ctx context.Context, in acadchat.Inbound) (string, error) {
 	if text, ok := s.academyRewardTurn(ctx, in); ok {
 		return text, nil
