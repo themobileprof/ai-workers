@@ -14,10 +14,10 @@ func TestAcademyOnboardTextIsShort(t *testing.T) {
 		Name:      "Ada",
 		JoinNames: []string{"Bola"},
 	})
-	if !strings.Contains(got, "Welcome Bola") || !strings.Contains(got, "Which course") {
+	if !strings.Contains(got, "Welcome Bola") || !strings.Contains(got, "https://lms.themobileprof.com/mini-courses/scholarship") {
 		t.Fatal(got)
 	}
-	if strings.Contains(got, "\n") || strings.Contains(strings.ToLower(got), "billing") || strings.Contains(strings.ToLower(got), "workshop") || strings.Contains(got, "Upcoming") {
-		t.Fatalf("join should be one short line: %s", got)
+	if strings.Contains(strings.ToLower(got), "which course") || strings.Contains(strings.ToLower(got), "billing") || strings.Contains(strings.ToLower(got), "workshop") || strings.Contains(got, "Upcoming") {
+		t.Fatalf("join should welcome then send them to the scholarship mini-course: %s", got)
 	}
 }

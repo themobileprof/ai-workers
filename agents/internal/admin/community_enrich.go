@@ -194,7 +194,7 @@ func (s *Server) EnrichCommunity(ctx context.Context, req contract.Request) cont
 	return req
 }
 
-func (s *Server) applyCommunityStudent(ctx context.Context, fromID, username, name, chatID, email string, resp contract.Response) {
+func (s *Server) applyCommunityStudent(ctx context.Context, fromID, username, name, chatID, email string, resp contract.Response, gatherMissing string) {
 	if s == nil || s.store == nil || strings.TrimSpace(fromID) == "" {
 		return
 	}
@@ -208,14 +208,39 @@ func (s *Server) applyCommunityStudent(ctx context.Context, fromID, username, na
 	if resp.StructuredData != nil {
 		st.CourseTitle = strVal(resp.StructuredData["course_mentioned"])
 		st.LessonNote = strVal(resp.StructuredData["lesson_mentioned"])
-		switch strings.ToLower(strVal(resp.StructuredData["task_type"])) {
-		case "workshop_help":
-			st.LastAsk = "workshop"
-		case "lesson_help":
-			st.LastAsk = "lesson"
-		case "billing":
-			st.LastAsk = "billing"
-		}
+		st.LastAsk = lastAskAfterTurn(strVal(resp.StructuredData["task_type"]), gatherMissing)
 	}
 	_, _ = s.store.UpsertCommunityStudent(ctx, st)
+}
+
+func lastAskAfterTurn(taskType, gatherMissing string) string {
+	task := strings.ToLower(strings.TrimSpace(taskType))
+	miss := strings.ToLower(strings.TrimSpace(gatherMissing))
+	switch task {
+	case "workshop_help":
+		if miss != "" {
+			return "workshop"
+		}
+		return "answered"
+	case "lesson_help":
+		if miss != "" {
+			return "lesson"
+		}
+		return "answered"
+	case "billing":
+		return "billing"
+	case "progress", "faq", "welcome", "onboard":
+		return "answered"
+	default:
+		return ""
+	}
+}
+
+func gatherMissingOf(req contract.Request) string {
+	data := contract.ContextObject(req.ContextData)
+	g, _ := data["gather"].(map[string]any)
+	if g == nil {
+		return ""
+	}
+	return strVal(g["missing"])
 }

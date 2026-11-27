@@ -155,6 +155,67 @@ func TestConversationAsksOneThing(t *testing.T) {
 	}
 }
 
+func TestAnsweredEnquiryStopsFollowUp(t *testing.T) {
+	if !strings.Contains(systemPrompt, "Do not ask a follow-up") || !strings.Contains(systemPrompt, "mini-courses/scholarship") {
+		t.Fatal(systemPrompt)
+	}
+	got := overlayFor(map[string]any{
+		"chat_kind": "group",
+		"gather":    map[string]any{"missing": "", "course": "Linux Navigation", "lesson": "pwd"},
+	})
+	if !strings.Contains(got, "Do not ask a follow-up") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, "Ask ONLY") {
+		t.Fatal(got)
+	}
+}
+
+func TestHandleDropsFollowUpAfterAnswer(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"pwd prints the working directory. Which lesson is next?","structured_data":{"task_type":"faq","speak":true}}`}, contract.Request{
+		TaskDescription: "what does pwd do",
+		ContextData:     []byte(`{"channel":"telegram","chat_kind":"group"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(resp.OutputText, "?") {
+		t.Fatalf("follow-up leaked: %s", resp.OutputText)
+	}
+	if !strings.Contains(resp.OutputText, "pwd prints") {
+		t.Fatalf("%s", resp.OutputText)
+	}
+}
+
+func TestHandleKeepsGatherQuestion(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Which step are you on?","structured_data":{"task_type":"workshop_help","speak":true}}`}, contract.Request{
+		TaskDescription: "I am stuck on the workshop",
+		ContextData:     []byte(`{"channel":"telegram","chat_kind":"group","gather":{"missing":"step","course":"Linux Navigation"}}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp.OutputText, "Which step") {
+		t.Fatalf("%s", resp.OutputText)
+	}
+}
+
+func TestTelegramWelcomePointsAtScholarship(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Welcome Ada. Which course are you on?","structured_data":{"task_type":"welcome","speak":true}}`}, contract.Request{
+		TaskDescription: "Welcome Ada to the Academy Telegram room.",
+		ContextData:     []byte(`{"channel":"telegram","chat_kind":"group"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp.OutputText, "Welcome Ada") || !strings.Contains(resp.OutputText, scholarshipMiniCourseURL) {
+		t.Fatalf("%s", resp.OutputText)
+	}
+	if strings.Contains(resp.OutputText, "Which course") {
+		t.Fatalf("welcome still asked a course: %s", resp.OutputText)
+	}
+}
+
 func TestScholarshipLiveOverlay(t *testing.T) {
 	got := overlayFor(map[string]any{
 		"chat_kind":        "group",

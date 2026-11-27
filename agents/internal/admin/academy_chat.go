@@ -140,7 +140,7 @@ func (s *Server) academyTurn(ctx context.Context, in acadchat.Inbound) (string, 
 		if in.FromBot {
 			return "", nil
 		}
-		s.applyCommunityStudent(ctx, in.FromID, in.Username, in.Name, in.ChatID, "", contract.Response{})
+		s.applyCommunityStudent(ctx, in.FromID, in.Username, in.Name, in.ChatID, "", contract.Response{}, "")
 		s.store.RecordEngagement(ctx, in.FromID, engageCommunity, 1, time.Now())
 		return s.academyOnboardText(ctx, in), nil
 	case acadchat.KindLink:
@@ -175,7 +175,7 @@ func (s *Server) academyTurn(ctx context.Context, in acadchat.Inbound) (string, 
 	if err != nil && strings.TrimSpace(resp.OutputText) == "" {
 		return "", err
 	}
-	s.applyCommunityStudent(ctx, in.FromID, in.Username, in.Name, in.ChatID, "", resp)
+	s.applyCommunityStudent(ctx, in.FromID, in.Username, in.Name, in.ChatID, "", resp, gatherMissingOf(req))
 	s.recordAcademyEngagement(ctx, in, resp)
 	_ = s.store.AppendOpsChat(ctx, "acad:"+in.ChatID+":"+in.FromID, "you", d.Task)
 	text := strings.TrimSpace(resp.OutputText)
@@ -284,7 +284,7 @@ func (s *Server) academyOnboardText(_ context.Context, in acadchat.Inbound) stri
 	if who == "" {
 		who = "there"
 	}
-	return "Welcome " + who + ". Which course are you on?"
+	return "Welcome " + who + ".\n\nStart here: https://lms.themobileprof.com/mini-courses/scholarship"
 }
 
 func (s *Server) academyRequest(_ context.Context, in acadchat.Inbound, d acadchat.Decision, m CommunityMandate, thread []OpsChatLine) contract.Request {

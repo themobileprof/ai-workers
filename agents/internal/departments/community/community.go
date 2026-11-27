@@ -17,12 +17,12 @@ You speak on WhatsApp, Telegram, and similar group/chat channels. You are not sa
 
 Classify the request into exactly one task_type, then do the work:
 
-- welcome: New member or first message. One or two short sentences. Ask which course they are on — only that. Do not dump billing, workshops, LMS how-to, or a training calendar.
+- welcome: New member or first message. Welcome them in one short sentence, then tell them to start https://lms.themobileprof.com/mini-courses/scholarship. Do not ask which course. Do not dump billing, workshops, LMS how-to, or a training calendar.
 - onboard: Same as welcome when they just joined. Two sentences max. Do not repeat the house rules on every join.
 - weekly_intro: Scheduled check-in. Introduce yourself as the room host, explain how to call you, then ask what course and lesson people are on. Always speak. If scholarship_live is approaching, also remind them the season end date and to finish the path — still one ask (which lesson).
 - scholarship_nudge: Daily ping because a scholarship season deadline is close. Always speak. Warm, short, specific: name the season end date and days left from scholarship_live, that finishing the Scholarship path and taking the lab is how they qualify, that the discount name exists but they must ask their course rep for the code (never paste a code). Quote room totals only as aggregates (seats used, tests passed, scholarships given). Do not name a student. Do not lecture. End by asking which lesson they are on.
-- faq: Recurring how-to / what-is / when-is questions. Short answers. If you lack a fact, say so and set escalate_to_founder true.
-- progress: Someone named a course, a lesson, or what they learned. Affirm the behaviour, ask a sharp follow-up, invite the room.
+- faq: Recurring how-to / what-is / when-is questions. Short answers. Stop after the answer. Do not add a follow-up. If you lack a fact, say so and set escalate_to_founder true.
+- progress: Someone named a course, a lesson, or what they learned. Affirm in one short sentence, then stop. Do not ask a follow-up. Do not invite the room with another question.
 - lesson_help: A study question about the lesson write-up. If you do not yet know the course or lesson, ask for the next missing piece (context_data.gather.missing) — one question — then wait. When you have lesson_live, answer ONLY from lesson_live, lesson_cards, catalog_cards, catalog_live, or the mandate catalog. Do not paste the whole lesson. Do not invent a numbered lesson that is not in the outline. If they are stuck on the workshop/exercise, use workshop_help instead.
 - workshop_help: Student is stuck on an LMS workshop. Have a back-and-forth. Ask ONE missing thing from context_data.gather.missing (course, then lesson, then step). Use student.course_title and student.lesson_note; confirm in one short clause, do not re-ask what you already know. If missing is step, use the workshop menu labels only — do not quote commands yet. Only when gather.missing is empty and workshop_live has the full step, restate that step in plain sentences: what to open, exactly what to type, what success looks like. Quote expected_commands. Do NOT lecture the concept. Do NOT invent a command. Do NOT dump every step. If workshop_live is missing after they named a lesson, say you do not have that exercise text.
 - billing: Payment, "did I pay", enrolment, checkout, invoice, receipt. In a group: do not quote status. Tell them to DM this bot the email on their LMS account. In a DM: you may quote public list_price from catalog_cards only. Never invent paid/unpaid, never invent a discount or refund. If context_data.student.email is set, acknowledge that email and set escalate_to_founder true so a human checks the LMS. If no email, ask for it.
@@ -42,6 +42,7 @@ Channel rules:
 - If context_data.upcoming_trainings is set, those dates are from the Academy bet Dates tab. You may name them. Do not invent a training date that is not there.
 - Conversation: never ask for course, lesson, and step in the same message. One question, then wait. context_data.thread is the recent back-and-forth — a short reply (a title, a number, "the second one", "yes") is an answer to your last question, not chatter.
 - If context_data.gather.missing is set, ask only for that. Offer at most four catalog titles when missing is course; use the lesson outline when missing is lesson; use workshop menu labels when missing is step.
+- If context_data.gather.missing is empty (or gather is absent), you already have what you need, or they asked a closed question. Answer it, then stop. Do not ask a follow-up. Do not close with "which lesson", "what did you learn", or "want another step".
 - If context_data.workshop_live is set, or gather.missing is step, or they asked about a workshop / exercise / what to type / they are stuck, task_type MUST be workshop_help.
 - If context_data.billing_in_group is true, task_type MUST be billing. Do not quote paid/unpaid. Tell them to DM this bot the email on their LMS account.
 - If context_data.accounts_denied is true, task_type MUST be access_denied. Ignore the original office request beyond refusing it.
@@ -139,10 +140,20 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	} else if silentTask(resp.StructuredData) {
 		resp.StructuredData["speak"] = false
 		resp.OutputText = ""
+	} else if shouldStopFollowUp(data, resp.StructuredData) {
+		resp.OutputText = dropTrailingQuestions(resp.OutputText)
+	}
+	if telegramWelcome(data, resp.StructuredData) {
+		resp.StructuredData["speak"] = true
+		resp.OutputText = ensureScholarshipWelcome(resp.OutputText)
 	}
 	resp.StructuredData["record_lead"] = false
 	return resp, err
 }
+
+const scholarshipMiniCourseURL = "https://lms.themobileprof.com/mini-courses/scholarship"
+
+const defaultWelcome = "Welcome.\n\nStart here: " + scholarshipMiniCourseURL
 
 const defaultWeeklyIntro = `Morning. I'm the Academy host in this group.
 
@@ -157,6 +168,82 @@ const defaultScholarshipNudge = `Morning. The scholarship season is closing soon
 Finish the Scholarship path on the LMS, then take the lab test — that is how you qualify. Ask your course rep for the discount code; I will not post it here.
 
 Which lesson are you on?`
+
+func telegramWelcome(data, sd map[string]any) bool {
+	if !strings.EqualFold(str(data["channel"]), "telegram") {
+		return false
+	}
+	t := strings.ToLower(strings.TrimSpace(str(sd["task_type"])))
+	return t == "welcome" || t == "onboard"
+}
+
+func ensureScholarshipWelcome(text string) string {
+	text = dropTrailingQuestions(strings.TrimSpace(text))
+	if strings.Contains(text, scholarshipMiniCourseURL) {
+		return text
+	}
+	if text == "" {
+		return defaultWelcome
+	}
+	return text + "\n\nStart here: " + scholarshipMiniCourseURL
+}
+
+func shouldStopFollowUp(data, sd map[string]any) bool {
+	t := strings.ToLower(strings.TrimSpace(str(sd["task_type"])))
+	switch t {
+	case "faq", "progress", "lesson_help", "workshop_help", "welcome", "onboard":
+	default:
+		return false
+	}
+	if g, ok := data["gather"].(map[string]any); ok {
+		if miss := strings.TrimSpace(str(g["missing"])); miss != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func dropTrailingQuestions(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return s
+	}
+	var kept strings.Builder
+	var sent strings.Builder
+	flush := func(question bool) {
+		t := strings.TrimSpace(sent.String())
+		sent.Reset()
+		if t == "" || question {
+			return
+		}
+		if kept.Len() > 0 {
+			kept.WriteByte('\n')
+		}
+		kept.WriteString(t)
+	}
+	for _, r := range s {
+		if r == '?' {
+			flush(true)
+			continue
+		}
+		sent.WriteRune(r)
+		if r == '.' || r == '!' || r == '\n' {
+			flush(false)
+		}
+	}
+	rest := strings.TrimSpace(sent.String())
+	if rest != "" {
+		if kept.Len() > 0 {
+			kept.WriteByte('\n')
+		}
+		kept.WriteString(rest)
+	}
+	out := strings.TrimSpace(kept.String())
+	if out == "" {
+		return s
+	}
+	return out
+}
 
 func weeklyIntro(data map[string]any) bool {
 	return strings.EqualFold(strings.TrimSpace(str(data["action"])), "weekly_intro")
@@ -217,6 +304,8 @@ func overlayFor(data map[string]any) string {
 	if g, ok := data["gather"].(map[string]any); ok {
 		if miss := str(g["missing"]); miss != "" {
 			b.WriteString("Ask ONLY for this next: " + miss + ". One question. Do not ask for the others yet.\n")
+		} else {
+			b.WriteString("The student already answered what you asked. Answer the enquiry now. Do not ask a follow-up question.\n")
 		}
 	}
 	raw, ok := data["mandate"]
