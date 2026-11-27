@@ -201,6 +201,10 @@
         var on = btn.getAttribute("data-tab") === id;
         btn.classList.toggle("on", on);
         btn.setAttribute("aria-selected", on ? "true" : "false");
+        if (on) {
+          var tools = btn.closest("details.project-tools");
+          if (tools) tools.open = true;
+        }
       });
       root.querySelectorAll('[role="tabpanel"]').forEach(function (panel) {
         var match = panel.getAttribute("data-tab") === id;
@@ -216,6 +220,7 @@
         ids.push(btn.getAttribute("data-tab"));
       });
       var want = params.get("tab") || hash || root.getAttribute("data-default") || "";
+      if (want === "run") want = "now";
       if (ids.indexOf(want) < 0) want = ids[0] || "";
       if (want) activate(root, want);
       root.querySelectorAll('[role="tab"]').forEach(function (btn) {

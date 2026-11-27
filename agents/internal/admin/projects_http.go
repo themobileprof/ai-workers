@@ -167,7 +167,7 @@ func (s *Server) projectsPOST(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = s.store.SetProjectGitRepo(r.Context(), p.ID, r.FormValue("git_repo"))
 	_ = s.store.SetProjectFunnelSteps(r.Context(), p.ID, r.FormValue("funnel_steps"))
-	http.Redirect(w, r, projectURL(p.ID, "run", ""), http.StatusSeeOther)
+	http.Redirect(w, r, projectURL(p.ID, "now", ""), http.StatusSeeOther)
 }
 
 func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {

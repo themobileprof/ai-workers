@@ -59,6 +59,25 @@ func TestProjectRunMarksNowAndMust(t *testing.T) {
 	}
 }
 
+func TestProjectNextDo(t *testing.T) {
+	empty := Project{ID: 7, Name: "Apex"}
+	if empty.NextDo() != "Write this week’s line on the Card." || !strings.Contains(empty.NextHref(), "tab=card") {
+		t.Fatalf("%q %s", empty.NextDo(), empty.NextHref())
+	}
+	p := Project{
+		ID: 7, OneLiner: "Who pays", Notes: "Go to the bay",
+		Members:  []ProjectMember{{Name: "Ada"}},
+		Proposal: &Proposal{Journey: "shop_ledger", Gate: "design_partner"},
+	}
+	if !strings.Contains(p.NextDo(), "Decide") || !strings.Contains(p.NextHref(), "tab=stamp") {
+		t.Fatalf("%q %s", p.NextDo(), p.NextHref())
+	}
+	parked := Project{ID: 7, Stage: "parked"}
+	if !parked.Shelved() || !strings.Contains(parked.NextDo(), "Parked") {
+		t.Fatalf("%q", parked.NextDo())
+	}
+}
+
 func TestProjectRunLabel(t *testing.T) {
 	empty := Project{Name: "Apex"}
 	if empty.RunLabel() == "" {

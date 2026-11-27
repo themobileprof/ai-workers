@@ -579,6 +579,47 @@ textarea {
   line-height: 1.55;
 }
 .tabset { margin: 0 0 0.5rem; }
+.project-tools {
+  margin: -0.6rem 0 1.1rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.project-tools > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--room);
+  opacity: 0.75;
+  padding: 0.2rem 0.15rem 0.55rem;
+  list-style: none;
+}
+.project-tools > summary::-webkit-details-marker { display: none; }
+.project-tools[open] > summary { opacity: 1; }
+.tabs-quiet {
+  margin-bottom: 1rem;
+  background: transparent;
+  border-style: dashed;
+}
+.now-step {
+  max-width: 36rem;
+  padding: 1.15rem 1.2rem 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--room) 40%, var(--line));
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--room) 8%, var(--panel));
+}
+.now-step h3 { margin: 0.2rem 0 0.4rem; font-size: 1.35rem; }
+.now-step p { margin: 0; max-width: 34rem; }
+.now-step .actions { margin-top: 0.9rem; }
+.kit {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.kit li { opacity: 0.72; font-size: 0.9rem; }
+.kit li.done { opacity: 0.45; text-decoration: line-through; }
 .tabs {
   display: flex;
   gap: 0.15rem;

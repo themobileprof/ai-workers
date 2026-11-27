@@ -150,9 +150,9 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		want string
 	}{
 		{"home", "home", pageData{Title: "Board", Nav: "home", User: user, Projects: []Project{p}, UserCount: 2}, "Apex Clerk"},
-		{"list", "projects", pageData{Title: "Projects", Nav: "projects", User: user, Projects: []Project{p}, Stages: projectStages()}, "Proposal waiting"},
+		{"list", "projects", pageData{Title: "Projects", Nav: "projects", User: user, Projects: []Project{p}, Stages: projectStages()}, "A placement is waiting"},
 		{"new", "projects", pageData{Title: "Add", Nav: "projects", User: user, Adding: true, Stages: projectStages(), Journeys: journeys.All()}, "consumer_subscription"},
-		{"edit", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true, RunSteps: projectRun(runInput{Project: p}), RunLeft: 4}, "Base kit"},
+		{"edit", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true, RunSteps: projectRun(runInput{Project: p}), RunLeft: 4}, "What is already done"},
 		{"edit-face", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanPlace: true}, "Ada"},
 		{"proposal", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All()}, "You decide"},
 		{"ask-draft", "projects", pageData{Title: "Amend", Nav: "projects", User: user, Project: &p, Roster: []User{*user}, Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), CanLegal: true, LegalTemplates: legal.Specs()}, "Ask draft"},
@@ -186,6 +186,45 @@ func TestTemplatesIncludeProjects(t *testing.T) {
 		if strings.Contains(buf.String(), "/admin/integrations") {
 			t.Fatalf("%s still links to the removed Tools page", tc.name)
 		}
+	}
+}
+
+func TestProjectsListShowsOneNextAction(t *testing.T) {
+	srv, err := New(nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := &User{ID: 1, Name: "Sam", Role: "owner"}
+	p := Project{ID: 7, Name: "Apex Clerk", Slug: "apex-clerk", OneLiner: "Workshops pay for a clerk.", Stage: "testing", Notes: "Five interviews"}
+	p.Proposal = &Proposal{Journey: "shop_ledger", Gate: "design_partner", Mission: "One shop."}
+	var list strings.Builder
+	if err := srv.pages["projects"].ExecuteTemplate(&list, "layout.html", pageData{Title: "Projects", Nav: "projects", User: user, Projects: []Project{p}, Stages: projectStages()}); err != nil {
+		t.Fatal(err)
+	}
+	got := list.String()
+	if strings.Contains(got, "Coming up") {
+		t.Fatal("project list must not repeat Board dates")
+	}
+	if strings.Contains(got, "3 of the base kit") {
+		t.Fatal("wall must not list kit gaps")
+	}
+	if !strings.Contains(got, "A placement is waiting") {
+		t.Fatal(got)
+	}
+	var edit strings.Builder
+	if err := srv.pages["projects"].ExecuteTemplate(&edit, "layout.html", pageData{
+		Title: "Amend", Nav: "projects", User: user, Project: &p,
+		Stages: projectStages(), Seats: projectSeats(), Journeys: journeys.All(), EventKinds: eventKinds(),
+		RunSteps: projectRun(runInput{Project: p}),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	html := edit.String()
+	if strings.Contains(html, `data-tab="run"`) {
+		t.Fatal("Run tab should be Now")
+	}
+	if !strings.Contains(html, `data-tab="now"`) || !strings.Contains(html, "project-tools") {
+		t.Fatal("now + quieter tools")
 	}
 }
 

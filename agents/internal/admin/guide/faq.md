@@ -8,11 +8,11 @@ Open Docs → **How you run this office** (`/admin/docs/howto`). That sheet walk
 
 ## How do I start or run a project?
 
-Every bet uses the same base kit. **Run** walks it in order.
+Every bet uses the same base kit. The project page shows one next action at a time.
 
-1. Open the project (or **Open a project**, then you land on Run).
-2. Do the step marked **now**: Card (who pays + this week), Face, Decide (Ask placement, then Accept), Dates, Work.
-3. After those, Run shows this gate’s mission, then Legal / Files / SEO as needed. **Help? walk this** fills the same form. It never Accepts.
+1. Open the project (or **Open a project**, then you land on Now).
+2. Do the step on Now: Card (who pays + this week), Face, Decide (Ask placement, then Accept), Dates, then Work.
+3. After those, Now shows this gate’s mission. Legal, Files, Deck, Ads, and SEO sit under Face, legal, files, deck, ads, SEO. **Help? walk this** fills the same form. It never Accepts.
 
 Campus trainings are Dates, not Community. Chat never stamps the stage.
 

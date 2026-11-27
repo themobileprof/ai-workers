@@ -254,7 +254,69 @@ func runMustLeft(steps []RunStep) int {
 	return n
 }
 
-// RunLabel is a short gap list for Board and the project wall (no extra queries).
+func (p Project) Shelved() bool {
+	return p.Stage == "parked" || p.Stage == "killed"
+}
+
+func (p Project) NextDo() string {
+	if p.Stage == "killed" {
+		return "Killed. No work until you Accept a new stage."
+	}
+	if p.Stage == "parked" {
+		return "Parked. No work until you Accept a new stage."
+	}
+	if p.Proposal != nil {
+		return "A placement is waiting. Open Decide."
+	}
+	if strings.TrimSpace(p.OneLiner) == "" || strings.TrimSpace(p.Notes) == "" {
+		return "Write this week’s line on the Card."
+	}
+	if len(p.Members) == 0 {
+		return "Seat someone on Face."
+	}
+	if strings.TrimSpace(p.Journey) == "" || strings.TrimSpace(p.Gate) == "" {
+		return "Place this on a journey."
+	}
+	if p.NextEvent != nil {
+		title := strings.TrimSpace(p.NextEvent.Title)
+		when := p.NextEvent.WhenLabel()
+		if when != "" && title != "" {
+			return when + " · " + title
+		}
+		if title != "" {
+			return title
+		}
+	}
+	if notes := strings.TrimSpace(p.Notes); notes != "" {
+		return notes
+	}
+	return "This week is set."
+}
+
+func (p Project) NextHref() string {
+	if p.ID <= 0 {
+		return "/admin/projects"
+	}
+	base := "/admin/projects/" + strconv.FormatInt(p.ID, 10)
+	if p.Shelved() || p.Proposal != nil {
+		return base + "?tab=stamp"
+	}
+	if strings.TrimSpace(p.OneLiner) == "" || strings.TrimSpace(p.Notes) == "" {
+		return base + "?tab=card"
+	}
+	if len(p.Members) == 0 {
+		return base + "?tab=face"
+	}
+	if strings.TrimSpace(p.Journey) == "" || strings.TrimSpace(p.Gate) == "" {
+		return base + "?tab=stamp"
+	}
+	if p.NextEvent != nil {
+		return base + "?tab=dates"
+	}
+	return base + "?tab=now"
+}
+
+// RunLabel is a short gap list for Board (no extra queries).
 func (p Project) RunLabel() string {
 	var gaps []string
 	if strings.TrimSpace(p.OneLiner) == "" || strings.TrimSpace(p.Notes) == "" {

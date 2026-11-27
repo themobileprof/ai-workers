@@ -57,7 +57,7 @@ New ad campaigns start **PAUSED** unless you set ENABLED on Defaults → Ads.
 
 ## 4. Run a bet (Projects)
 
-Every bet uses the same base kit. Open the project and stay on the **Run** tab until the step marked **now** is done.
+Every bet uses the same base kit. Open the project. The page shows one next action. Do that step, then the next one appears.
 
 1. **Card** holds who pays, the one-liner, this week’s mission, the public URL, an optional GitHub repo, the Funnel line copied from `TRAFFIC.md`, ads spend (discovery or mature), and winning Search segments.
 2. **Face** seats a cofounder as the public face of the bet and, when needed, an assistant for field week.

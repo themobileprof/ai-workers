@@ -63,7 +63,7 @@ Customer development is a **human** on Face with this week’s line (“three Ik
 These are the website, not extra agents:
 
 - **Board** — owner/BDM. Cards, Coming up dates, proposal waiting, rollup (tasks, files, grants, spend).
-- **Projects** — bets. Tab **Run** is the wizard: same base kit for every bet. Card holds hypothesis, this week’s mission, and a monthly NGN figure you paste.
+- **Projects** — bets. Each card shows one next action. Open it and do that step. Card holds hypothesis, this week’s mission, and a monthly NGN figure you paste.
 - **People** — roster, hours/week, desk ticks, Telegram id (ops bot).
 - **Delivery** — week board across bets (this is PM, not DevOps). Extra work sits on Backlog. Plans write after a delay unless you Turn away.
 - **Defaults** — one form per vendor tab (Company, Zoho, Paystack, Drive). Secrets stay in `.env` / n8n.
@@ -72,7 +72,7 @@ These are the website, not extra agents:
 - **Docs** — printable sheets. Start at How you fit.
 - **Help?** — bottom-right guide. Fills the same forms as the page. Never Accepts.
 
-**Run** (on each project), in order:
+**Now** (on each project) walks the same kit, one step at a time:
 
 1. Write the card (who pays, this week’s line)
 2. Seat a face
@@ -205,7 +205,7 @@ Do not tell the owner to:
 ## 9. How a week actually runs
 
 1. Owner/BDM opens Board. If a card says proposal waiting → Decide → Accept or Reject.
-2. Open the bet → **Run**. Do the step marked now.
+2. Open the bet. Do the one next action on Now.
 3. If the gate needs the street: write this week’s line, seat an assistant, they bring names.
 4. Optional: `/validate` analyse that evidence. Still a proposal. Human Accepts the stage.
 5. Delivery: Done on today’s tasks, or Ask plan then Accept. Fathom notes file a proposed plan the same way — Accept on Job chat. Calendar titles should name the bet slug. Do not chase this on customer WhatsApp. `/pm` on ops Telegram still pastes notes by hand.
