@@ -213,7 +213,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Project PM",
 		Path:     "POST /departments/delivery",
 		Wire:     "live",
-		Summary:  "Tasks across bets. Stage sets how many; extras sit on the backlog. Pace is hours/week on People. Plans write after a delay unless you Turn away. Fathom notes use the same path. Academy is one bet.",
+		Summary:  "Tasks across bets. Stage sets how many; extras sit on the backlog. Pace is hours/week on People. Plans write after a delay unless you Turn away. Fathom notes use the same path. Ops Telegram field reports log CRM, Dates, Card notes, and spend from the paragraph. Academy is one bet.",
 		Prefixes: []string{"/today", "/pm", "/idea", "Fathom webhook"},
 	},
 	{

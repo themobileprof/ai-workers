@@ -315,7 +315,7 @@ func (s *Server) applyJobStamp(ctx context.Context, actor User, job DeskJob, sta
 		if status == "rejected" {
 			_ = s.store.ClearProposal(ctx, job.RefID)
 		}
-	case "project_memory":
+	case "project_memory", "ads_paid_sense":
 		if status == "accepted" {
 			_ = s.applyProductMemory(ctx, job)
 		}

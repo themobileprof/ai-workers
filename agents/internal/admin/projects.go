@@ -23,6 +23,8 @@ type Project struct {
 	URL         string
 	GitRepo     string
 	FunnelSteps string
+	AdsMode     string
+	AdsSegments string
 	Notes       string
 	Hypothesis  string
 	Mission     string
@@ -171,6 +173,8 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS mission_due DATE;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS burn_ngn TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS git_repo TEXT NOT NULL DEFAULT '';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS funnel_steps TEXT NOT NULL DEFAULT '';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS ads_mode TEXT NOT NULL DEFAULT 'discovery';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS ads_segments TEXT NOT NULL DEFAULT '';
 `)
 	return err
 }
@@ -226,7 +230,8 @@ func (s *Store) ListProjects(ctx context.Context) ([]Project, error) {
 	rows, err := s.pool.Query(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, ''),
+       COALESCE(NULLIF(ads_mode, ''), 'discovery'), COALESCE(ads_segments, '')
 FROM projects ORDER BY
   CASE stage
     WHEN 'selling' THEN 0
@@ -268,7 +273,8 @@ func (s *Store) GetProject(ctx context.Context, id int64) (Project, error) {
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, ''),
+       COALESCE(NULLIF(ads_mode, ''), 'discovery'), COALESCE(ads_segments, '')
 FROM projects WHERE id = $1
 `, id)
 	p, err := scanProject(row)
@@ -291,7 +297,8 @@ func (s *Store) GetProjectBySlug(ctx context.Context, slug string) (Project, err
 	row := s.pool.QueryRow(ctx, `
 SELECT id, name, slug, one_liner, stage, url, notes, journey, gate, proposal, created_at, updated_at,
        COALESCE(hypothesis, ''), COALESCE(mission, ''), COALESCE(to_char(mission_due, 'YYYY-MM-DD'), ''), COALESCE(burn_ngn, ''),
-       COALESCE(git_repo, ''), COALESCE(funnel_steps, '')
+       COALESCE(git_repo, ''), COALESCE(funnel_steps, ''),
+       COALESCE(NULLIF(ads_mode, ''), 'discovery'), COALESCE(ads_segments, '')
 FROM projects WHERE slug = $1
 `, slug)
 	p, err := scanProject(row)
@@ -314,10 +321,11 @@ func scanProject(row projectScanner) (Project, error) {
 	var p Project
 	var raw []byte
 	err := row.Scan(&p.ID, &p.Name, &p.Slug, &p.OneLiner, &p.Stage, &p.URL, &p.Notes, &p.Journey, &p.Gate, &raw, &p.CreatedAt, &p.UpdatedAt,
-		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN, &p.GitRepo, &p.FunnelSteps)
+		&p.Hypothesis, &p.Mission, &p.MissionDue, &p.BurnNGN, &p.GitRepo, &p.FunnelSteps, &p.AdsMode, &p.AdsSegments)
 	if err != nil {
 		return Project{}, err
 	}
+	p.AdsMode = growth.NormalizeAdsMode(p.AdsMode)
 	p.Proposal = decodeProposal(raw)
 	return p, nil
 }
@@ -598,6 +606,23 @@ UPDATE projects
 SET hypothesis=$2, mission=$3, mission_due=$4, burn_ngn=$5, updated_at=now()
 WHERE id=$1
 `, id, strings.TrimSpace(hypothesis), strings.TrimSpace(mission), due, strings.TrimSpace(burn))
+	if err != nil {
+		return friendlyDBErr(err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("project not found")
+	}
+	return nil
+}
+
+func (s *Store) SetProjectAdsSense(ctx context.Context, id int64, mode, segments string) error {
+	mode = growth.NormalizeAdsMode(mode)
+	segments = growth.ClipAdsSegments(segments)
+	tag, err := s.pool.Exec(ctx, `
+UPDATE projects
+SET ads_mode=$2, ads_segments=$3, updated_at=now()
+WHERE id=$1
+`, id, mode, segments)
 	if err != nil {
 		return friendlyDBErr(err)
 	}

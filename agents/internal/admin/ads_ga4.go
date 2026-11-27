@@ -79,7 +79,7 @@ func (v AdsGA4View) ForSlug(slug string) AdsGA4View {
 	out.Paid = paid
 	out.ByCampaign = by
 	if len(paid) == 0 && len(by) == 0 {
-		out.Note = strings.TrimSpace(out.Note + " No paid sessions tagged with this bet slug yet. Place stamps utm_campaign to the slug.")
+		out.Note = strings.TrimSpace(out.Note + " No paid sessions tagged with this bet slug yet. Discovery Place stamps utm_campaign to `{slug}-discovery`; mature Place uses `{slug}`.")
 	}
 	return out
 }
@@ -459,6 +459,7 @@ func (s *Server) internalAdsGA4POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.fileAdsGlanceJob(r.Context(), snap)
+	s.filePaidSenseJobs(r.Context(), snap)
 	writeJSON(w, map[string]any{"ok": true, "ga4": snap})
 }
 
@@ -557,6 +558,152 @@ func (s *Server) fileAdsGlanceJob(ctx context.Context, snap AdsGA4View) {
 		return
 	}
 	_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: job.ID, AuthorKind: "worker", Body: body})
+}
+
+func (s *Server) filePaidSenseJobs(ctx context.Context, snap AdsGA4View) {
+	if s == nil || s.store == nil || !snap.Found || !adsGlanceHasPaid(snap) {
+		return
+	}
+	projects, err := s.store.ListProjects(ctx)
+	if err != nil {
+		return
+	}
+	for _, p := range projects {
+		if strings.TrimSpace(p.Slug) == "" {
+			continue
+		}
+		part := snap.ForSlug(p.Slug)
+		if !adsGlanceHasPaid(part) {
+			continue
+		}
+		s.filePaidSenseJob(ctx, p, part)
+	}
+}
+
+func (s *Server) filePaidSenseJob(ctx context.Context, p Project, snap AdsGA4View) {
+	evidence, segments, body := formatPaidSense(p, snap)
+	if body == "" {
+		return
+	}
+	sum := body
+	if len(sum) > 800 {
+		sum = sum[:797] + "…"
+	}
+	payload := map[string]any{
+		"task_type":          "product_validation",
+		"action":             "analyse_paid_cells",
+		"save_memory":        true,
+		"needs_human":        true,
+		"cannot_spend":       true,
+		"cannot_send":        true,
+		"cannot_write_stamp": true,
+		"project_id":         p.ID,
+		"project_slug":       p.Slug,
+		"project_name":       p.Name,
+		"card_evidence":      evidence,
+		"ads_segments":       segments,
+		"decision":           "CONTINUE_TESTING",
+		"title":              "Paid cells · " + p.Name,
+	}
+	if existing, err := s.store.FindJobByRef(ctx, "product-dev", "ads_paid_sense", p.ID); err == nil && existing.ID > 0 {
+		if strings.TrimSpace(existing.Summary) == sum {
+			return
+		}
+		_ = s.store.UpdateDeskJobContent(ctx, existing.ID, sum, payload)
+		_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: existing.ID, AuthorKind: "worker", Body: body})
+		return
+	}
+	job, err := s.store.InsertDeskJob(ctx, DeskJob{
+		Desk:    "product-dev",
+		Title:   "Paid cells · " + p.Name,
+		Status:  "proposed",
+		Source:  "ga4",
+		Summary: sum,
+		RefKind: "ads_paid_sense",
+		RefID:   p.ID,
+		Payload: payload,
+	})
+	if err != nil {
+		return
+	}
+	_, _ = s.store.InsertJobMessage(ctx, JobMessage{JobID: job.ID, AuthorKind: "worker", Body: body})
+}
+
+func winningPaidCells(rows []AdsGA4PaidRow, n int) []AdsGA4PaidRow {
+	var hits []AdsGA4PaidRow
+	for _, r := range rows {
+		if r.Sessions <= 0 {
+			continue
+		}
+		hits = append(hits, r)
+	}
+	sort.SliceStable(hits, func(i, j int) bool {
+		if hits[i].Sessions != hits[j].Sessions {
+			return hits[i].Sessions > hits[j].Sessions
+		}
+		return hits[i].Engaged > hits[j].Engaged
+	})
+	seen := map[string]bool{}
+	var out []AdsGA4PaidRow
+	for _, r := range hits {
+		key := strings.ToLower(strings.TrimSpace(r.Content))
+		if key == "" {
+			key = strings.ToLower(strings.TrimSpace(r.Campaign))
+		}
+		if key == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, r)
+		if n > 0 && len(out) >= n {
+			break
+		}
+	}
+	return out
+}
+
+func formatPaidSense(p Project, snap AdsGA4View) (evidence, segments, body string) {
+	winners := winningPaidCells(snap.Paid, 3)
+	if len(winners) == 0 {
+		return "", "", ""
+	}
+	var segLines []string
+	var evParts []string
+	for _, r := range winners {
+		label := strings.TrimSpace(r.Content)
+		if label == "" {
+			label = strings.TrimSpace(r.Campaign)
+		}
+		if label == "" {
+			continue
+		}
+		segLines = append(segLines, label)
+		evParts = append(evParts, fmt.Sprintf("%s (%.0f sessions, %.0f engaged)", label, r.Sessions, r.Engaged))
+	}
+	if len(segLines) == 0 {
+		return "", "", ""
+	}
+	segments = strings.Join(segLines, "\n")
+	evidence = "Paid Search cells for " + firstNonEmpty(p.Name, p.Slug) + " last 7 days: " + strings.Join(evParts, "; ") + ". These are geo plus keyword-theme segments, not age or gender. Accept writes them as proposed winning segments. You still mark the Card mature before substantial Place. This job does not Place and does not kill the bet."
+	var b strings.Builder
+	b.WriteString("Paid Search cells for " + firstNonEmpty(p.Name, p.Slug) + " (last 7 days). This is evidence, not Place. Chat cannot spend and cannot mark the Card mature.\n")
+	if n := strings.TrimSpace(snap.Note); n != "" {
+		b.WriteString(n + "\n")
+	}
+	b.WriteString("\nWinning cells (geo plus keyword theme):\n")
+	for _, r := range winners {
+		cell := strings.TrimSpace(r.Content)
+		if cell == "" {
+			cell = "(no cell)"
+		}
+		camp := strings.TrimSpace(r.Campaign)
+		if camp == "" {
+			camp = "(no campaign)"
+		}
+		b.WriteString(fmt.Sprintf("- %s / %s · %.0f sessions, %.0f engaged\n", camp, cell, r.Sessions, r.Engaged))
+	}
+	b.WriteString("\nAccept writes the evidence and these segments onto the Card. Discovery spend stays on `" + growth.AdsCampaignName(p.Slug, p.Name, growth.AdsModeDiscovery) + "`. Substantial spend waits until you set Ads spend to Mature on the Card. Sessions are not payment. Do not KILL from this snapshot.")
+	return evidence, segments, b.String()
 }
 
 func (s *Server) internalAdsGA4GET(w http.ResponseWriter, r *http.Request) {

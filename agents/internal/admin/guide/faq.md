@@ -75,7 +75,7 @@ Stage, Legal send, and money above a cap stay a human click. Catalog-matched Fil
 
 1. Seat the person on the project Face tab (unless they are owner or BDM).
 2. Open Delivery (`/admin/delivery`) → Add a task by hand, or Ask plan. Extra tasks sit on **Backlog** when the stage is full — Promote when a slot opens.
-3. Or WhatsApp `/today` from a People phone. How many tasks you may hold depends on the project’s stage: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling.
+3. Or ops Telegram: write what happened, or `/today` from your People Telegram id. How many tasks you may hold depends on the project’s stage: idea 1, testing 3, selling 5, fundable 4, parked/killed 0. Hours/week on People is the ceiling. Customer WhatsApp cannot run Delivery.
 
 ## How do I onboard someone onto a bet?
 
@@ -85,7 +85,7 @@ Stage, Legal send, and money above a cap stay a human click. Catalog-matched Fil
 
 ## Why was the ops Telegram bot silent when I replied to “Today on the desk”?
 
-A reply to the 08:30 card is Delivery. Other unprefixed text picks one desk and does the work in that chat. Prefixes are optional shortcuts. Chat never Accepts.
+A reply to the 08:30 card is Delivery. A field paragraph (hospital, training, partner, spend) is also Delivery even if the last desk was Accounts or you attached a PDF. Other unprefixed text picks one desk and does the work in that chat. Prefixes are optional shortcuts. Chat never Accepts.
 
 ## What does /approve do?
 
@@ -109,7 +109,7 @@ Tick Growth. Write the Card one-liner first. Open the project → Deck → Start
 
 ## How do I ask for Search ads?
 
-Tick Growth. Write the Card one-liner and a public URL first. Open the project → Ads → Start ads session, or `/growth Search ads for HomeGauge` on ops Telegram. Chat the six steps: final URL, geo/keyword test cells, keywords, headlines (≤30), descriptions (≤90), then Pexels queries. Accept on Growth, then either follow **Book it yourself** in the Google Ads or Meta UI from the pack, or **Place** on Google Search or Meta. Do not do both for the same channel. n8n holds Google Ads and Facebook Ads OAuth. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential (enable the Google Ads API, then apply for Explorer or higher). Place is a cheap probe — platform-minimum daily, exact match, Google Search only, one experiment per cell, all Lagos hours for a week so weekday vs weekend and morning/evening can show. 07:00 Lagos then pauses a cell that spent with 0 clicks, and turns off dayparts that wasted while another daypart got clicks. Conversions wait two weeks, and only if a conversion already exists. Place stamps UTM. GA4 last 7 days of paid sessions and a funnel of events that already fire land on the Growth book (property id on Defaults → Traffic; funnel from the bet Card / `TRAFFIC.md`, else Defaults → Ads). After the morning pull, a proposed **Paid traffic glance** job quotes those numbers — it does not Place. Go drops a city or keyword that is not on the Card. Ask `/growth How are the HomeGauge ads doing in GA4?` for the same read-only note. Account ids live on Defaults → Ads; a daily ceiling there is optional unless the account does not report remaining funds. Go never holds those tokens. Campaigns start paused unless you set ENABLED. Chat never Places and cannot invent a city. Test cells are named places plus query themes already on the Card — not age or gender. Search the Pexels phrases yourself and `/file` stills under **product**. Do not generate faces. Customer WhatsApp cannot run this session.
+Tick Growth. Write the Card one-liner and a public URL first. Open the project → Ads → Start ads session, or `/growth Search ads for HomeGauge` on ops Telegram. Chat the six steps: final URL, geo/keyword test cells, keywords, headlines (≤30), descriptions (≤90), then Pexels queries. Accept on Growth, then either follow **Book it yourself** in the Google Ads or Meta UI from the pack, or **Place** on Google Search or Meta. Do not do both for the same channel. n8n holds Google Ads and Facebook Ads OAuth. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential (enable the Google Ads API, then apply for Explorer or higher). Discovery Place is a cheap probe on campaign `{slug}-discovery` — platform-minimum daily, never more than remaining funds divided by 90, every test cell, exact match, Google Search only, all Lagos hours for a week so weekday vs weekend and morning/evening can show. After paid cells run, a Product job proposes the few winning Search segments (geo plus keyword theme, not age or gender). Accept on Product writes those segments onto the Card; it does not mark the bet mature and it does not Place. When you set Ads spend to Mature on the Card, Place uses a separate campaign `{slug}`, remaining funds divided by 30, and only those cells. 07:00 Lagos then pauses a cell that spent with 0 clicks, and turns off dayparts that wasted while another daypart got clicks. Conversions wait two weeks, and only if a conversion already exists. Place stamps `utm_campaign` to that campaign name. GA4 last 7 days of paid sessions and a funnel of events that already fire land on the Growth book (property id on Defaults → Traffic; funnel from the bet Card / `TRAFFIC.md`, else Defaults → Ads). After the morning pull, a proposed **Paid traffic glance** job quotes those numbers — it does not Place. Go drops a city or keyword that is not on the Card. Ask `/growth How are the HomeGauge ads doing in GA4?` for the same read-only note. Account ids live on Defaults → Ads; a daily ceiling there is optional unless the account does not report remaining funds. Go never holds those tokens. Campaigns start paused unless you set ENABLED. Chat never Places and cannot invent a city. Test cells are named places plus query themes already on the Card — not age or gender. Search the Pexels phrases yourself and `/file` stills under **product**. Do not generate faces. Customer WhatsApp cannot run this session.
 
 ## How do I ask for SEO copy?
 
@@ -145,13 +145,14 @@ Ops Telegram `/pm` still pastes notes by hand if Fathom missed a call. Do not ch
 
 1. Open Delivery (`/admin/delivery`).
 2. Click **Done** on the task (or **Skip**).
-3. Or WhatsApp `/today done …` from your own People phone. Do not use `/approve`.
+3. Or ops Telegram: write what happened in your own words. The clerk matches open tasks by title. Do not say `done 1`. Do not use `/approve`.
 
 ## What should a field person do?
 
 1. Read this week’s mission on the project Card (named place, named people). The this-week line is the short version.
 2. Go to the place. Bring named people back.
-3. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
+3. On ops Telegram, write the visit in your own words. The clerk logs CRM, Dates, Card notes, and spend from that paragraph.
+4. You decide GO / PIVOT / KILL on the project. They often have no login. They are not a director of TheMobileProf.
 
 ## How do I follow up someone on CRM?
 

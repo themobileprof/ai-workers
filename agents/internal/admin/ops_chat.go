@@ -121,9 +121,31 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	if audit := s.maybeBooksWrite(ctx, dept, resp); audit != "" {
 		text = strings.TrimSpace(text + "\n\n" + audit)
 	}
+	if d.Action == "report" && in.HasDocument {
+		if extra := s.fileAlongReport(ctx, u, in, d, thread); extra != "" {
+			text = strings.TrimSpace(text + "\n\n" + extra)
+		}
+	}
 	_ = s.store.AppendOpsChat(ctx, in.ChatID, "assistant", text)
-	_ = s.store.SetOpsChatDesk(ctx, in.ChatID, u.ID, dept)
+	sticky := dept
+	if d.Action == "report" {
+		sticky = "delivery"
+	}
+	_ = s.store.SetOpsChatDesk(ctx, in.ChatID, u.ID, sticky)
 	return text, nil
+}
+
+func (s *Server) fileAlongReport(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, thread []OpsChatLine) string {
+	if s == nil || !in.HasDocument {
+		return ""
+	}
+	fd := opschat.Decision{Kind: opschat.KindWork, Department: "files", Task: d.Task}
+	req := s.opsRequest(ctx, u, in, fd, "files", thread)
+	resp, err := s.callDepartment(ctx, "files", req)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(resp.OutputText)
 }
 
 func displayTask(in opschat.Inbound, task string) string {
@@ -152,7 +174,7 @@ func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d o
 	if d.Action != "" {
 		data["action"] = d.Action
 	} else if dept == "delivery" {
-		data["action"] = "today"
+		data["action"] = "report"
 	}
 	if in.PhotoFileID != "" {
 		data["photo_file_id"] = in.PhotoFileID

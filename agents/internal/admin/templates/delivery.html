@@ -4,7 +4,8 @@
     <p class="do">Delivery · {{statusCount .WorkItems "open"}} open</p>
     <h2>Close today’s list</h2>
     <ol class="recipe">
-      <li>For each open task, click <strong>Done</strong> (or <strong>Skip</strong>).</li>
+      <li>On ops Telegram, write what happened in your own words. The clerk logs CRM, Dates, Card notes, and spend from that paragraph.</li>
+      <li>On this page, click <strong>Done</strong> (or <strong>Skip</strong>) on an open task if you are closing it by hand.</li>
       <li>If Coming up shows a date with no task, open Dates on that project and add one.</li>
       <li>To plan a week: <strong>Ask plan</strong> → wait 15 minutes (or <strong>Accept</strong> now on Job chat). Extra work sits on <strong>Backlog</strong>. Fathom notes land the same way.</li>
     </ol>
@@ -20,6 +21,7 @@
 <div class="tabset" data-tabs data-default="today">
   <nav class="tabs" role="tablist" aria-label="Delivery">
     <button type="button" role="tab" data-tab="today" aria-controls="tab-today">Today <span class="count">{{len .WorkItems}}</span></button>
+    <button type="button" role="tab" data-tab="reports" aria-controls="tab-reports">Reports <span class="count">{{len .DeliveryReports}}</span></button>
     <button type="button" role="tab" data-tab="bets" aria-controls="tab-bets">Bets <span class="count">{{len .DeliveryBets}}</span></button>
     <button type="button" role="tab" data-tab="ask" aria-controls="tab-ask">Ask plan</button>
   </nav>
@@ -110,6 +112,23 @@
           </div>
         </form>
       </details>
+    </section>
+    <section role="tabpanel" id="tab-reports" data-tab="reports">
+      {{if .DeliveryReports}}
+      <ol class="tasks">
+        {{range .DeliveryReports}}
+        <li>
+          <div>
+            <p class="kicker">{{if .ActorName}}{{.ActorName}}{{else}}field{{end}} · {{.WhenLabel}}</p>
+            <h3>{{.Summary}}</h3>
+            <p class="who">{{.Body}}</p>
+          </div>
+        </li>
+        {{end}}
+      </ol>
+      {{else}}
+      <p class="hint">Field reports from ops Telegram land here. Write what happened in your own words. The clerk logs CRM, Dates, Card notes, and spend from the paragraph. You do not number tasks.</p>
+      {{end}}
     </section>
     <section role="tabpanel" id="tab-bets" data-tab="bets">
       {{range .DeliveryBets}}

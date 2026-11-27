@@ -32,7 +32,7 @@ func LooksLikeGlance(data map[string]any, task string) bool {
 func handleGlance(_ context.Context, _ llm.Completer, req contract.Request, data map[string]any) (contract.Response, error) {
 	body := FormatAdsGlance(asStringMap(data["ads_ga4"]))
 	if body == "" {
-		body = "No paid GA4 snapshot on the desk yet. Place stamps utm_campaign to the bet slug. This clerk cannot spend."
+		body = "No paid GA4 snapshot on the desk yet. Discovery Place stamps utm_campaign to `{slug}-discovery`. Mature Place uses `{slug}`. This clerk cannot spend."
 	}
 	looks := looksFrom(data)
 	return contract.Response{

@@ -24,8 +24,52 @@ func TestDecideMorningCardIsDelivery(t *testing.T) {
 		Text:    "done the calculator",
 		ReplyTo: "Today on the desk (Samuel):\n- HomeGauge: calculator",
 	}, "")
-	if d.Kind != KindWork || d.Department != "delivery" || d.Action != "today" {
+	if d.Kind != KindWork || d.Department != "delivery" || d.Action != "report" {
 		t.Fatalf("%+v", d)
+	}
+}
+
+func TestLooksLikeReport(t *testing.T) {
+	ikorodu := "We went to Ikorodu General Hospital yesterday, had a 5 minutes speech with the pregnant women at the ANC, registered names, and left fliers. The HOD said the next opportunity is next Monday."
+	if !LooksLikeReport(ikorodu) {
+		t.Fatal("hospital visit")
+	}
+	sultan := "On Tuesday, Sultan created a discount code THEMOBILEPROF and takes 10% commission. I have asked him to share it with the students he already teaches."
+	if !LooksLikeReport(sultan) {
+		t.Fatal("partner discount")
+	}
+	unilag := "Unilag training the trainer has been postponed. We will wait for the faculty to name a new week."
+	if !LooksLikeReport(unilag) {
+		t.Fatal("postponed training")
+	}
+	spend := "On Monday we spent N20,000 on fuel and N15,000 on fliers for the hospital visits."
+	if !LooksLikeReport(spend) {
+		t.Fatal("spend narrative")
+	}
+	if LooksLikeReport("tighten slide 3") {
+		t.Fatal("growth copy")
+	}
+	if LooksLikeReport("I am stuck on Starting Termux and pkg upgrade will not finish") {
+		t.Fatal("workshop chatter")
+	}
+	if LooksLikeReport("/today") {
+		t.Fatal("prefix")
+	}
+}
+
+func TestDecideReportOverridesStickyAndFile(t *testing.T) {
+	ikorodu := "We went to Ikorodu General Hospital yesterday, had a 5 minutes speech with the pregnant women at the ANC, registered names, and left fliers."
+	d := Decide(Inbound{ChatID: "1", FromID: "1", Text: ikorodu}, "accounts")
+	if d.Department != "delivery" || d.Action != "report" {
+		t.Fatalf("sticky accounts %+v", d)
+	}
+	d = Decide(Inbound{ChatID: "1", FromID: "1", Text: ikorodu, HasDocument: true, Filename: "flier.pdf"}, "")
+	if d.Department != "delivery" || d.Action != "report" {
+		t.Fatalf("document %+v", d)
+	}
+	d = Decide(Inbound{ChatID: "1", FromID: "1", HasPhoto: true, PhotoFileID: "x"}, "accounts")
+	if d.Department != "accounts" {
+		t.Fatalf("bare photo %+v", d)
 	}
 }
 
@@ -62,6 +106,10 @@ func TestDecideKeepsCurrentDesk(t *testing.T) {
 	if d.Department != "growth" || d.Kind != KindWork {
 		t.Fatalf("%+v", d)
 	}
+	d = Decide(Inbound{ChatID: "1", FromID: "1", Text: "tighten slide 3"}, "delivery")
+	if d.Kind != KindWork || d.Department != "" {
+		t.Fatalf("non-report after Delivery must classify %+v", d)
+	}
 }
 
 func TestDecideGreeting(t *testing.T) {
@@ -70,8 +118,8 @@ func TestDecideGreeting(t *testing.T) {
 		t.Fatalf("%+v", d)
 	}
 	d = Decide(Inbound{ChatID: "1", FromID: "1", Text: "hello"}, "delivery")
-	if d.Kind != KindWork || d.Department != "delivery" {
-		t.Fatalf("thread %+v", d)
+	if d.Department == "delivery" {
+		t.Fatalf("short hello after Delivery must not stay trapped %+v", d)
 	}
 }
 

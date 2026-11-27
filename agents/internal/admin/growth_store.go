@@ -25,6 +25,8 @@ type GrowthDeck struct {
 	PackToken    string
 	Slides       []growth.DeckSlide
 	Ads          growth.AdsPack
+	AdsMode      string
+	AdsSegments  string
 	CurrentSlide int
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -55,7 +57,8 @@ ALTER TABLE growth_decks ADD COLUMN IF NOT EXISTS ads JSONB NOT NULL DEFAULT '{}
 }
 
 const growthDeckSelect = `
-SELECT d.id, d.project_id, p.name, p.slug, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), COALESCE(d.ads, '{}'::jsonb), d.created_at, d.updated_at
+SELECT d.id, d.project_id, p.name, p.slug, d.kind, d.audience, d.title, d.body, d.status, d.rationale, COALESCE(d.pack_token, ''), COALESCE(d.slides, '[]'::jsonb), COALESCE(d.current_slide, 1), COALESCE(d.ads, '{}'::jsonb), d.created_at, d.updated_at,
+       COALESCE(NULLIF(p.ads_mode, ''), 'discovery'), COALESCE(p.ads_segments, '')
 FROM growth_decks d
 JOIN projects p ON p.id = d.project_id
 `
@@ -125,7 +128,7 @@ func scanGrowthDeck(row projectScanner) (GrowthDeck, error) {
 	var d GrowthDeck
 	var slides []byte
 	var ads []byte
-	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.ProjectSlug, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &ads, &d.CreatedAt, &d.UpdatedAt)
+	err := row.Scan(&d.ID, &d.ProjectID, &d.ProjectName, &d.ProjectSlug, &d.Kind, &d.Audience, &d.Title, &d.Body, &d.Status, &d.Rationale, &d.PackToken, &slides, &d.CurrentSlide, &ads, &d.CreatedAt, &d.UpdatedAt, &d.AdsMode, &d.AdsSegments)
 	if err != nil {
 		return GrowthDeck{}, err
 	}
@@ -141,6 +144,7 @@ func scanGrowthDeck(row projectScanner) (GrowthDeck, error) {
 			d.Ads = growth.ParseAds(raw)
 		}
 	}
+	d.AdsMode = growth.NormalizeAdsMode(d.AdsMode)
 	if d.Kind == "ads" {
 		d.CurrentSlide = growth.ClampAdsStep(d.Ads.Current)
 		if d.Ads.Current < 1 {
@@ -171,7 +175,7 @@ func (s *Store) InsertGrowthDeck(ctx context.Context, d GrowthDeck) (GrowthDeck,
 		d.CurrentSlide = d.Ads.Current
 		d.Slides = nil
 		if strings.TrimSpace(d.Body) == "" {
-			d.Body = growth.AdsMarkdown(d.Ads, d.ProjectName, d.ProjectSlug)
+			d.Body = growth.AdsMarkdownFor(d.Ads, d.ProjectName, d.ProjectSlug, d.AdsMode)
 		}
 	} else {
 		if d.CurrentSlide < 1 {
@@ -264,7 +268,7 @@ func (s *Store) UpdateGrowthDeckDraft(ctx context.Context, d GrowthDeck) (Growth
 		d.Ads = growth.MergeAds(cur.Ads, d.Ads)
 		d.CurrentSlide = d.Ads.Current
 		d.Slides = cur.Slides
-		d.Body = growth.AdsMarkdown(d.Ads, firstNonEmpty(d.ProjectName, cur.ProjectName), firstNonEmpty(d.ProjectSlug, cur.ProjectSlug))
+		d.Body = growth.AdsMarkdownFor(d.Ads, firstNonEmpty(d.ProjectName, cur.ProjectName), firstNonEmpty(d.ProjectSlug, cur.ProjectSlug), firstNonEmpty(d.AdsMode, cur.AdsMode))
 	} else {
 		d.Slides = growth.MergeSlides(cur.Slides, d.Slides)
 		if d.CurrentSlide < 1 {
@@ -372,6 +376,7 @@ func (s *Store) RecordAdsPlacement(ctx context.Context, d GrowthDeck) (GrowthDec
 	d.Ads = growth.ClipAds(d.Ads)
 	slug := strings.TrimSpace(d.ProjectSlug)
 	name := strings.TrimSpace(d.ProjectName)
+	mode := d.AdsMode
 	if p, err := s.GetProject(ctx, d.ProjectID); err == nil {
 		if slug == "" {
 			slug = p.Slug
@@ -379,8 +384,11 @@ func (s *Store) RecordAdsPlacement(ctx context.Context, d GrowthDeck) (GrowthDec
 		if name == "" {
 			name = p.Name
 		}
+		if mode == "" {
+			mode = p.AdsMode
+		}
 	}
-	d.Body = growth.AdsMarkdown(d.Ads, name, slug)
+	d.Body = growth.AdsMarkdownFor(d.Ads, name, slug, mode)
 	adsRaw, err := json.Marshal(d.Ads)
 	if err != nil {
 		return GrowthDeck{}, err
@@ -427,11 +435,11 @@ func (d GrowthDeck) CanPlaceAds() bool {
 func (d GrowthDeck) AdsWalk() []growth.AdsWalkStep { return d.Ads.Walk() }
 
 func (d GrowthDeck) AdsManualGoogle() []growth.AdsManualStep {
-	return growth.AdsManualGoogle(d.Ads, d.ProjectName, d.ProjectSlug)
+	return growth.AdsManualGoogle(d.Ads, d.ProjectName, d.ProjectSlug, d.AdsMode)
 }
 
 func (d GrowthDeck) AdsManualMeta() []growth.AdsManualStep {
-	return growth.AdsManualMeta(d.Ads, d.ProjectName, d.ProjectSlug)
+	return growth.AdsManualMeta(d.Ads, d.ProjectName, d.ProjectSlug, d.AdsMode)
 }
 
 func (d GrowthDeck) AdsReturnPath() string {

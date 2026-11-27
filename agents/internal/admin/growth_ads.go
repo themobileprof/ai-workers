@@ -90,7 +90,7 @@ func (s *Server) runAdsAsk(ctx context.Context, p Project, form deckAskForm) (Gr
 		Rationale:    strings.TrimSpace(form.Feedback),
 		Ads:          pack,
 		CurrentSlide: 1,
-		Body:         growth.AdsMarkdown(pack, p.Name, p.Slug),
+		Body:         growth.AdsMarkdownFor(pack, p.Name, p.Slug, p.AdsMode),
 	}
 	opener := ""
 	if s.workers != nil {
@@ -101,7 +101,7 @@ func (s *Server) runAdsAsk(ctx context.Context, p Project, form deckAskForm) (Gr
 				if ads := growth.ParseAds(resp.StructuredData["ads"]); ads.Current > 0 || ads.FinalURL != "" {
 					d.Ads = growth.MergeAds(pack, ads)
 					d.CurrentSlide = d.Ads.Current
-					d.Body = growth.AdsMarkdown(d.Ads, p.Name, p.Slug)
+					d.Body = growth.AdsMarkdownFor(d.Ads, p.Name, p.Slug, p.AdsMode)
 				}
 				if t := strVal(resp.StructuredData["title"]); t != "" {
 					d.Title = t
@@ -207,7 +207,7 @@ func (s *Server) applyAdsResponse(ctx context.Context, req contract.Request, res
 		Audience:     firstNonEmpty(strVal(resp.StructuredData["audience"]), existing.Audience),
 		Ads:          pack,
 		CurrentSlide: pack.Current,
-		Body:         growth.AdsMarkdown(pack, p.Name, p.Slug),
+		Body:         growth.AdsMarkdownFor(pack, p.Name, p.Slug, p.AdsMode),
 	}
 	var saved GrowthDeck
 	if existing.ID > 0 {
@@ -417,6 +417,18 @@ func (s *Server) adsPlaceBody(ctx context.Context, d GrowthDeck, channel string)
 		status = "PAUSED"
 	}
 	pack := growth.ClipAds(d.Ads)
+	if d.AdsMode != "" {
+		p.AdsMode = d.AdsMode
+	}
+	if d.AdsSegments != "" && p.AdsSegments == "" {
+		p.AdsSegments = d.AdsSegments
+	}
+	mode := growth.NormalizeAdsMode(p.AdsMode)
+	campaign := growth.AdsCampaignName(p.Slug, p.Name, mode)
+	filtered, err := growth.FilterAdsCells(pack.Cells, mode, p.AdsSegments)
+	if err != nil {
+		return nil, err
+	}
 	heads, descs := []string{}, []string{}
 	for _, h := range pack.Headlines {
 		heads = append(heads, h.Text)
@@ -424,12 +436,15 @@ func (s *Server) adsPlaceBody(ctx context.Context, d GrowthDeck, channel string)
 	for _, x := range pack.Descriptions {
 		descs = append(descs, x.Text)
 	}
-	cells := adsPlaceCells(channel, p.Slug, pack)
+	cells := adsPlaceCells(channel, campaign, pack, filtered)
 	return map[string]any{
 		"action":                   "place",
 		"channel":                  channel,
 		"slug":                     p.Slug,
 		"name":                     p.Name,
+		"campaign":                 campaign,
+		"ads_mode":                 mode,
+		"reserve_div":              growth.AdsReserveDivisor(mode),
 		"final_url":                pack.FinalURL,
 		"headlines":                heads,
 		"descriptions":             descs,
@@ -444,8 +459,7 @@ func (s *Server) adsPlaceBody(ctx context.Context, d GrowthDeck, channel string)
 	}, nil
 }
 
-func adsPlaceCells(channel, slug string, pack growth.AdsPack) []map[string]any {
-	src := pack.Cells
+func adsPlaceCells(channel, campaign string, pack growth.AdsPack, src []growth.AdsCell) []map[string]any {
 	if len(src) == 0 {
 		src = []growth.AdsCell{{Geo: "Nigeria", Theme: "search"}}
 	}
@@ -455,7 +469,7 @@ func adsPlaceCells(channel, slug string, pack growth.AdsPack) []map[string]any {
 			"geo":   c.Geo,
 			"theme": c.Theme,
 			"why":   c.Why,
-			"url":   growth.AdsTrackURL(pack.FinalURL, channel, slug, growth.AdsCellContent(c)),
+			"url":   growth.AdsTrackURL(pack.FinalURL, channel, campaign, growth.AdsCellContent(c)),
 		})
 	}
 	return out

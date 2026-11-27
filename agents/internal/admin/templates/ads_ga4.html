@@ -3,7 +3,7 @@
 <section class="proposal">
   <p class="kicker">GA4 · last 7 days · paid</p>
   <h3>Did the click become a session?</h3>
-  <p class="hint">Place stamps <code>utm_campaign</code> to the bet slug and <code>utm_content</code> to the cell. Link Google Ads to this GA4 property (auto-tagging) if Search is on. Funnel steps are events that already fire — the bet Card (from <code>TRAFFIC.md</code>) first, else Defaults → Ads. A lead step stays 0 until that event exists on the site.</p>
+  <p class="hint">Discovery Place stamps <code>utm_campaign</code> to <code>{slug}-discovery</code>. Mature Place stamps <code>{slug}</code> after a human marks the Card mature. <code>utm_content</code> is the geo plus keyword-theme cell. Link Google Ads to this GA4 property (auto-tagging) if Search is on. Funnel steps are events that already fire — the bet Card (from <code>TRAFFIC.md</code>) first, else Defaults → Ads. A lead step stays 0 until that event exists on the site.</p>
   {{if .AdsGA4.FetchedAt}}<p class="hint">Pulled {{.AdsGA4.FetchedAt}}</p>{{end}}
   {{if .AdsGA4.Note}}<p class="hint">{{.AdsGA4.Note}}</p>{{end}}
   {{if .AdsGA4.Funnel}}

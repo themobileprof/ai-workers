@@ -105,6 +105,31 @@ func TestHandleEvidenceProposesCard(t *testing.T) {
 	}
 }
 
+func TestHandlePaidCellsStripsKillAndMature(t *testing.T) {
+	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Lagos mortgage cells got sessions.","structured_data":{"decision":"KILL","card_evidence":"Lagos mortgage 12 sessions.","segment":"lagos-mortgage","ads_mode":"mature"}}`}, contract.Request{
+		TaskDescription: "Analyse paid Search cells for HomeGauge",
+		ContextData:     []byte(`{"action":"analyse_paid_cells","project_slug":"homegauge"}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StructuredData["decision"] != "CONTINUE_TESTING" {
+		t.Fatalf("kill %v", resp.StructuredData["decision"])
+	}
+	if _, ok := resp.StructuredData["ads_mode"]; ok {
+		t.Fatal("must not set ads_mode")
+	}
+	if resp.StructuredData["cannot_spend"] != true || resp.StructuredData["save_memory"] != true {
+		t.Fatalf("%+v", resp.StructuredData)
+	}
+	if resp.StructuredData["ads_segments"] != "lagos-mortgage" {
+		t.Fatalf("segments %v", resp.StructuredData["ads_segments"])
+	}
+	if resp.StructuredData["project_slug"] != "homegauge" {
+		t.Fatalf("slug %v", resp.StructuredData["project_slug"])
+	}
+}
+
 func TestHandleDecisionDoesNotWriteCard(t *testing.T) {
 	resp, err := Handle(context.Background(), stubLLM{text: `{"status":"success","output_text":"Keep testing.","structured_data":{"decision":"CONTINUE_TESTING"}}`}, contract.Request{
 		TaskDescription: "GO / PIVOT / KILL for Mechazone",

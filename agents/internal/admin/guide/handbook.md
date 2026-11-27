@@ -24,7 +24,7 @@ Do this, in order:
 1. Board `/admin/` — look at each card. Open **Proposal waiting** → **Decide** → Accept or Reject. Open **Coming up** dates.
 2. Projects `/admin/projects` — click a card. **Run** is the wizard: same base kit for every bet (Card, Face, Decide, Dates, Work), then this gate’s mission, then Legal / Files / SEO as needed. Help? can fill a step. Ask placement writes a proposal; Accept on Decide changes the stage. Chat never Accepts. Academy LMS is a bet, not a second company.
 3. Delivery `/admin/delivery` — click Done on today’s tasks. Ask plan writes after a delay unless you Turn away. Extra tasks sit on Backlog. Fathom notes use the same path. How many open: parked/killed 0, idea 1, testing 3, selling 5, fundable 4. Hours/week on People is pace.
-4. Own `/today` check-ins may apply immediately. `/stop` on ops Telegram drops a delayed info@ draft and a delayed Delivery plan. Calendar titles should name the bet slug so notes pin the right card. The 08:30 Telegram ping is one card (tasks, Coming up, CRM due for owner/BDM).
+4. On ops Telegram, write what happened in your own words. The clerk logs CRM, Dates, Card notes, and spend from that paragraph. Your own tasks may close when the titles match. `/stop` drops a delayed info@ draft and a delayed Delivery plan. Calendar titles should name the bet slug so notes pin the right card. The 08:30 Telegram ping is one card (tasks, Coming up, CRM due for owner/BDM).
 
 ## Help? vs worker Ask
 

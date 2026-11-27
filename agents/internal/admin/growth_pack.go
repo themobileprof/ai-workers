@@ -80,7 +80,7 @@ func growthPackMarkdown(d GrowthDeck, p Project, siblings []GrowthDeck) string {
 	}
 	b.WriteString("Kind: " + kind + " · status: " + d.Status + " · updated: " + d.UpdatedAt.UTC().Format(time.RFC3339) + "\n\n")
 	if d.Kind == "ads" {
-		b.WriteString(growth.AdsMarkdown(d.Ads, name, p.Slug))
+		b.WriteString(growth.AdsMarkdownFor(d.Ads, name, p.Slug, p.AdsMode))
 		return b.String()
 	}
 	b.WriteString("Guy Kawasaki 10-slide pitch (10/20/30). Ten slides, twenty minutes, thirty-point when you paste. Do not add an 11th slide.\n\n")

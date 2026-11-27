@@ -191,7 +191,7 @@ func projectRun(in runInput) []RunStep {
 	ads := RunStep{
 		ID: "ads", Kind: "As needed", Title: "Search ads from the Card",
 		Why:  "Chat Growth Google Search RSA copy, geo/keyword test cells, and Pexels queries. Accept, then either follow Book it yourself or Place from the desk. The clerk cannot spend from chat.",
-		How:  []string{"Need a one-liner and a public URL.", "Open Ads. Start a session. Chat URL, cells, keywords, headlines, descriptions, then Pexels queries.", "Accept the pack. Follow the Ads UI steps, or Place on Google Search or Meta — not both for the same channel. n8n probes at the platform minimum for a week of Lagos hours, then cuts wasted cells and dayparts. Search Pexels yourself and /file stills under product."},
+		How:  []string{"Need a one-liner and a public URL.", "Open Ads. Start a session. Chat URL, cells, keywords, headlines, descriptions, then Pexels queries.", "Accept the pack. Follow the Ads UI steps, or Place on Google Search or Meta — not both for the same channel. Discovery Place is a cheap probe on `{slug}-discovery`. Mature Place is `{slug}` after you mark the Card mature with winning Search segments. Search Pexels yourself and /file stills under product."},
 		Href: base + "?tab=ads", Button: "Open Ads",
 		Help: "Ask Search ads for " + name,
 		Done: adsN > 0,

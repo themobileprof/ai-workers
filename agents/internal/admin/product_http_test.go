@@ -44,6 +44,21 @@ func TestMergedCardKeepsBurnAndAppendsEvidence(t *testing.T) {
 	}
 }
 
+func TestMergedCardDoesNotInventMatureMode(t *testing.T) {
+	p := Project{AdsMode: "discovery", AdsSegments: "", Notes: "week"}
+	_, _, _, _, notes, changed := mergedCard(p, map[string]any{
+		"card_evidence": "Lagos mortgage 12 sessions.",
+		"ads_segments":  "lagos-mortgage",
+		"ads_mode":      "mature",
+	})
+	if !changed || !strings.Contains(notes, "Lagos mortgage") {
+		t.Fatalf("notes %q", notes)
+	}
+	if p.AdsMode != "discovery" {
+		t.Fatal("mergedCard must not flip ads_mode")
+	}
+}
+
 func TestJobFromWorkerMemoryRef(t *testing.T) {
 	j := jobFromWorker("product-dev", "telegram", "hypotheses", map[string]any{
 		"save_memory": true, "project_id": int64(7), "title": "Card · hypothesis",

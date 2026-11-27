@@ -12,17 +12,18 @@ import (
 const classifyOverlay = `You route one office Telegram message for TheMobileProf Technologies (Lagos). One CAC company.
 Pick exactly one department. Do the routing only — do not do the desk's work. Do not list options. Do not ask which desk. Do not say "or".
 Departments:
-- delivery — this week's tasks, morning-card check-ins (done / still / blocked)
+- delivery — field reportage and this week's work: hospital visits, trainings, what happened, what is next. Not “done 1”.
 - growth — sales copy, customer replies, Kawasaki pitch-deck slides, Google Search ads pack
 - legal — NDA/contract draft or claims review
-- files — data-room classify
-- accounts — receipt, bill, invoice (Books)
+- files — data-room classify when the message is mainly a file with no field story
+- accounts — receipt, bill, invoice (Books) when the message is mainly money lines
 - internal-ops — grants, mixed ops
-- crm — a person on the conversion book
+- crm — closing or following a named person already on the book (Marialena done), not a new field visit
 - product-dev — Card hypothesis/mission/evidence
 - community — Academy student rooms (usually the other bot)
 - hr — hiring copy (rare)
 If they replied to "Today on the desk", delivery.
+If they narrate a visit, a training, a partner deal, fliers, or what happened yesterday, delivery — even if they also mention spend.
 If they are tightening slide copy or Search ads, growth.
 structured_data MUST include department: one id from the list above.
 output_text: unused, keep short.

@@ -361,8 +361,8 @@
       <h3>Search ads</h3>
       <p class="hint">The clerk still uses the Growth LLM (<code>LLM_PROVIDER</code> / <code>DEEPSEEK_API_KEY</code>). After Accept, either follow <strong>Book it yourself</strong> in the Google Ads or Meta UI, or <strong>Place</strong> so n8n books the same probe. Do not do both for the same channel. Place needs n8n credential <strong>Google Ads</strong> (OAuth, adwords scope) on the Cloud project that has the Google Ads API enabled with Explorer (or higher) access, plus the customer id on Defaults → Ads. Meta: n8n credential <strong>Facebook Ads</strong>, ad account id and Page id on Defaults. Place is conservative: platform-minimum daily from remaining funds, exact match, Google Search only. Optional daily ceiling on Defaults. Go never holds those tokens. Campaigns start <strong>PAUSED</strong> unless you set ENABLED.</p>
       <ol class="recipe">
-        <li>Chat Growth Google Search RSA copy from this Card — geo and keyword tests, not age or gender. One company. Campaign name is the bet slug.</li>
-        <li>Accept, then either follow the numbered Ads UI steps or <strong>Place on Google Search</strong> / <strong>Place on Meta</strong>. n8n probes at the platform minimum for a week of Lagos hours. A morning job then cuts wasted cells and dayparts. Chat cannot spend.</li>
+        <li>Chat Growth Google Search RSA copy from this Card — geo and keyword tests, not age or gender. One company. Discovery spend uses campaign <code>{{.Project.Slug}}-discovery</code>. Mature spend uses <code>{{.Project.Slug}}</code> after you mark Ads spend mature on the Card.</li>
+        <li>Accept, then either follow the numbered Ads UI steps or <strong>Place on Google Search</strong> / <strong>Place on Meta</strong>. Discovery Place is a cheap probe for a week of Lagos hours. A morning Product job then proposes winning segments; you mark the Card mature before substantial Place. Chat cannot spend.</li>
         <li>Search the Pexels queries yourself. Download stills and <code>/file</code> them under <strong>product</strong>. Do not generate faces. <strong>Turn away</strong> if a city or claim is invented.</li>
       </ol>
       {{template "ads-walk" .}}
@@ -438,6 +438,17 @@
         </label>
         <label>Spend this month (NGN)
           <input name="burn_ngn" value="{{.Project.BurnNGN}}" placeholder="From Books. Do not compute VAT here.">
+        </label>
+        <label>Ads spend
+          <span class="hint">Discovery is a cheap probe: campaign <code>{{.Project.Slug}}-discovery</code>, every test cell, remaining funds divided by 90. Mature is substantial spend on the few winning Search segments only: campaign <code>{{.Project.Slug}}</code>, remaining funds divided by 30. A Product job can propose those segments from paid cells. You mark mature here. Chat never Places and never flips this switch.</span>
+          <select name="ads_mode">
+            <option value="discovery" {{if ne .Project.AdsMode "mature"}}selected{{end}}>Discovery — cheap probe, all cells</option>
+            <option value="mature" {{if eq .Project.AdsMode "mature"}}selected{{end}}>Mature — substantial spend on winning segments</option>
+          </select>
+        </label>
+        <label>Winning Search segments
+          <span class="hint">One geo plus keyword theme per line, from paid-cell evidence. Not age or gender. Required before mature Place.</span>
+          <textarea name="ads_segments" rows="3">{{.Project.AdsSegments}}</textarea>
         </label>
         <div class="actions">
           <button type="submit">Save project</button>

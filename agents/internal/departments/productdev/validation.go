@@ -36,6 +36,7 @@ var validationFiles = map[string]string{
 	"update_hypothesis":         "hypothesis_update.md",
 	"recommend_next_experiment": "next_experiment.md",
 	"generate_decision_report":  "decision_report.md",
+	"analyse_paid_cells":        "paid_cells.md",
 	"place_on_journey":          "place_on_journey.md",
 }
 
@@ -52,6 +53,8 @@ func validationAction(data map[string]any, task string) (string, bool) {
 		return "generate_hypotheses", true
 	case strings.Contains(lower, "interview guide"):
 		return "generate_interview_guide", true
+	case strings.Contains(lower, "paid cell") || strings.Contains(lower, "paid search"):
+		return "analyse_paid_cells", true
 	case strings.Contains(lower, "analyse evidence") || strings.Contains(lower, "analyze evidence"):
 		return "analyse_evidence", true
 	case strings.Contains(lower, "decision") || strings.Contains(lower, "go/pivot") || strings.Contains(lower, "kill"):
@@ -141,6 +144,36 @@ func stampCardProposal(sd map[string]any, action string) {
 			sd["card_hypothesis"] = clip(h, 800)
 			sd["save_memory"] = true
 			sd["needs_human"] = true
+		}
+	case "analyse_paid_cells":
+		sd["cannot_spend"] = true
+		sd["needs_human"] = true
+		delete(sd, "ads_mode")
+		ev := strings.TrimSpace(str(sd["card_evidence"]))
+		if ev == "" {
+			ev = strings.TrimSpace(str(sd["summary"]))
+		}
+		if ev != "" {
+			sd["card_evidence"] = clip(ev, 400)
+			sd["save_memory"] = true
+		}
+		segs := strings.TrimSpace(str(sd["ads_segments"]))
+		if segs == "" {
+			segs = strings.TrimSpace(str(sd["segment"]))
+		}
+		if segs != "" {
+			sd["ads_segments"] = clip(segs, 400)
+			sd["save_memory"] = true
+		}
+		dec := strings.ToUpper(strings.TrimSpace(str(sd["decision"])))
+		if dec == "KILL" {
+			dec = "CONTINUE_TESTING"
+			sd["decision"] = dec
+		}
+		if dec != "" {
+			sd["title"] = "Paid cells · " + dec
+		} else {
+			sd["title"] = "Paid cells · evidence"
 		}
 	case "generate_decision_report":
 		sd["needs_human"] = true

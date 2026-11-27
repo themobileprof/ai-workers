@@ -142,18 +142,20 @@ func (s *Server) deliveryView(r *http.Request, u *User, errMsg, flash string) pa
 		bets = append(bets, DeliveryBet{Project: p, Engagement: eng, Open: open, Slots: slots})
 	}
 	events, _ := s.store.ListProjectEvents(r.Context(), 0, true)
+	reports, _ := s.store.ListDeliveryReports(r.Context(), 40)
 	return pageData{
-		Title:        "Delivery",
-		Nav:          "delivery",
-		User:         u,
-		WorkItems:    items,
-		Projects:     projects,
-		Users:        users,
-		DeliveryBets: bets,
-		Events:       events,
-		CanAsk:       s.workers != nil && s.workers["delivery"] != nil,
-		Error:        errMsg,
-		Flash:        flash,
+		Title:           "Delivery",
+		Nav:             "delivery",
+		User:            u,
+		WorkItems:       items,
+		DeliveryReports: reports,
+		Projects:        projects,
+		Users:           users,
+		DeliveryBets:    bets,
+		Events:          events,
+		CanAsk:          s.workers != nil && s.workers["delivery"] != nil,
+		Error:           errMsg,
+		Flash:           flash,
 	}
 }
 
@@ -415,6 +417,11 @@ func (s *Server) applyDeliveryResponse(ctx context.Context, req contract.Request
 	if boolVal(sd["apply_checkin"]) {
 		_, _ = s.store.ApplyCheckins(ctx, u, intIDs(sd["done_ids"]), "done")
 		_, _ = s.store.ApplyCheckins(ctx, u, intIDs(sd["skipped_ids"]), "skipped")
+	}
+	task := strings.ToLower(strVal(sd["task_type"]))
+	action := strings.ToLower(strVal(data["action"]))
+	if task == "report" || action == "report" || action == "today" {
+		s.applyDeliveryReport(ctx, u, req, resp)
 	}
 	s.fileMeetingCRM(ctx, req, resp)
 }

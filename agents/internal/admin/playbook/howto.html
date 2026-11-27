@@ -29,7 +29,7 @@
 <h3>Lagos clocks</h3>
 <ol class="recipe">
   <li>At 06:00 and 06:10, n8n pulls organic GA4 and Search Console for the last 28 days onto Defaults → Traffic. Quote only those snapshots.</li>
-  <li>At 06:20, paid GA4 for the last 7 days and the funnel land on the Growth book. If there were paid sessions, Go files one proposed <strong>Paid traffic glance</strong> job for that Lagos day. The glance does not Place.</li>
+  <li>At 06:20, paid GA4 for the last 7 days and the funnel land on the Growth book. If there were paid sessions, Go files one proposed <strong>Paid traffic glance</strong> job for that Lagos day, and a Product job per bet that got sessions. The glance does not Place. The Product job does not mark the Card mature.</li>
   <li>At 07:00, ads prune runs. After a campaign has run a full week, it pauses a cell that spent with 0 clicks and turns off wasted Lagos dayparts. Conversions wait two weeks, at least 5 clicks, and tracking that already fired.</li>
   <li>At 08:30, ops Telegram lists today’s Delivery tasks, Coming up dates, and (for owner and BDM) CRM due rows.</li>
   <li>At 16:00 the Academy host sends ₦500 even when nobody earned it. At 09:30 it checks in only when a student talked yesterday. Monday 09:00 is the intro, when the linked bet’s stage allows pings.</li>
@@ -39,7 +39,7 @@
 <h3>Run a bet</h3>
 <ol class="steps">
   <li>Open Projects, then the bet, then the <strong>Run</strong> tab. Every bet uses the same kit: Card, Face, Decide, Dates, then Work.</li>
-  <li>The Card holds who pays, this week’s line, the public URL, the GitHub repo, and the Funnel line copied from <code>TRAFFIC.md</code>.</li>
+  <li>The Card holds who pays, this week’s line, the public URL, the GitHub repo, the Funnel line copied from <code>TRAFFIC.md</code>, ads spend (discovery or mature), and winning Search segments.</li>
   <li>Ask placement, then Accept on <strong>Decide</strong> to write the stage. Chat never stamps GO, PIVOT, or KILL.</li>
   <li><code>/validate</code> can propose a hypothesis, mission, and evidence. Accept on Product writes those fields onto the Card. Accept on Decide is still what writes the stage.</li>
 </ol>
@@ -49,7 +49,7 @@
   <li>A customer WhatsApp 1:1 is a sales conversation. Anyone can DM; there is no number allowlist. The clerk answers from every public product Card and, for Academy course questions, from the live LMS catalog. Once they name a product, later messages stay on that product until they name another. When the message includes a phone number, the desk files that person on Office → CRM. On ops Telegram, <code>/growth</code> drafts social copy, walks a pitch deck, or drafts Search ads; it still cannot spend.</li>
   <li>For a pitch, open the project → Deck → Start session. Chat Guy Kawasaki’s ten slides from the Card. Accept on <a href="/admin/growth">Growth</a>, paste the markdown into Slides yourself, and <code>/file</code> the PDF under <strong>product</strong>.</li>
   <li>For ads, put a public URL on the Card first. Open Ads and walk the six steps (final URL, geo and keyword cells, keywords, headlines ≤30 characters, descriptions ≤90, then Pexels queries). Cells are named places plus themes already on the Card, not age or gender. Go drops a city that is not on the Card.</li>
-  <li>Accept, then either follow <strong>Book it yourself</strong> in the Google Ads or Meta UI from the pack, or click <strong>Place</strong> on Google Search or Meta. Do not do both for the same channel. Chat never Places. Place is a cheap probe at the platform-minimum daily budget, never more than remaining funds divided by 90, exact match only, Google Search only. The campaign name and <code>utm_campaign</code> are the bet slug.</li>
+  <li>Accept, then either follow <strong>Book it yourself</strong> in the Google Ads or Meta UI from the pack, or click <strong>Place</strong> on Google Search or Meta. Do not do both for the same channel. Chat never Places. Discovery Place is a cheap probe on campaign <code>{slug}-discovery</code> (all cells, remaining funds divided by 90). Mature Place is a separate campaign <code>{slug}</code> (winning segments only, remaining funds divided by 30) after you mark the Card mature. Exact match only, Google Search only.</li>
   <li>To evaluate without spending, read the GA4 block on the Growth book, ask <code>/growth How are the HomeGauge ads doing in GA4?</code>, or open the morning glance job. Funnel events must already fire on the site (Card / <code>TRAFFIC.md</code>). Do not invent <code>generate_lead</code>.</li>
 </ol>
 <p class="hint">n8n holds Google Ads and Facebook Ads OAuth. Account ids live on <a href="/admin/settings?tab=ads">Defaults → Ads</a>. Google sunset developer tokens on 9 September 2026; enable the Google Ads API on the Cloud project that owns the credential and apply for Explorer (or higher). Search the Pexels phrases yourself.</p>

@@ -33,7 +33,7 @@ A third step only when that event exists, for example `Lead:generate_lead` or a 
 
 ## Ads landing
 
-- Final URL = Card public URL. Place stamps `utm_campaign` to `{slug}` and `utm_content` to the geo/theme cell.
+- Final URL = Card public URL. Discovery Place stamps `utm_campaign` to `{slug}-discovery`. Mature Place stamps `utm_campaign` to `{slug}` after a human marks the Card mature. `utm_content` is the geo/theme cell.
 - Geo and keyword tests use words already in Offer or on the page. Not age or gender.
 
 ## Do not

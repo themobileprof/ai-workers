@@ -238,6 +238,10 @@ RETURNING id
 }
 
 func (s *Store) UpdateDeskJobSummary(ctx context.Context, id int64, summary string) error {
+	return s.UpdateDeskJobContent(ctx, id, summary, nil)
+}
+
+func (s *Store) UpdateDeskJobContent(ctx context.Context, id int64, summary string, payload map[string]any) error {
 	summary = strings.TrimSpace(summary)
 	if id <= 0 || summary == "" {
 		return errors.New("job summary")
@@ -245,7 +249,15 @@ func (s *Store) UpdateDeskJobSummary(ctx context.Context, id int64, summary stri
 	if len(summary) > 800 {
 		summary = summary[:797] + "…"
 	}
-	_, err := s.pool.Exec(ctx, `UPDATE desk_jobs SET summary=$2, updated_at=now() WHERE id=$1`, id, summary)
+	if payload == nil {
+		_, err := s.pool.Exec(ctx, `UPDATE desk_jobs SET summary=$2, updated_at=now() WHERE id=$1`, id, summary)
+		return err
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	_, err = s.pool.Exec(ctx, `UPDATE desk_jobs SET summary=$2, payload=$3::jsonb, updated_at=now() WHERE id=$1`, id, summary, raw)
 	return err
 }
 

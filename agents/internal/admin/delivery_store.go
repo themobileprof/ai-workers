@@ -56,7 +56,10 @@ CREATE TABLE IF NOT EXISTS delivery_pins (
   pinned_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 `)
-	return err
+	if err != nil {
+		return err
+	}
+	return s.migrateDeliveryReports(ctx)
 }
 
 func parsePace(raw string) float64 {
@@ -428,6 +431,25 @@ func (s *Store) deliveryOverlay(ctx context.Context, actor *User, projectSlug st
 		}
 	}
 	out["upcoming_events"] = upcomingEventJSON(filtered)
+	now := time.Now().In(lagosLocation())
+	out["today"] = now.Format("2006-01-02")
+	out["today_weekday"] = now.Weekday().String()
+	contacts, _ := s.ListCRMContacts(ctx)
+	var book []map[string]any
+	for _, c := range contacts {
+		if !c.Open() {
+			continue
+		}
+		if len(book) >= 40 {
+			break
+		}
+		book = append(book, map[string]any{
+			"id": c.ID, "name": c.Name, "company": c.Company,
+			"next_action": c.NextAction, "next_action_by": c.NextActionBy,
+			"notes": clipRunes(c.Notes, 200), "project": c.ProjectName,
+		})
+	}
+	out["existing_contacts"] = book
 	return out
 }
 
@@ -473,7 +495,7 @@ func morningPingText(name string, lines, coming []string, crmText string) string
 		}
 		text += crmText
 	}
-	text += "\n\nReply what you did. I will name Delivery and wait for yes — or /today done 1. Dates live on the bet."
+	text += "\n\nReply in your own words what happened. I log CRM, Dates, Card notes, and spend from the paragraph. You do not number tasks. /today still works if you want the prefix."
 	if len(text) > 3900 {
 		text = text[:3890] + "…"
 	}

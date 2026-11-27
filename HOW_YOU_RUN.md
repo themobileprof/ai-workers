@@ -43,7 +43,7 @@ These jobs fire on Lagos time whether or not you are at the desk.
 | --- | --- | --- |
 | 06:00 | Organic GA4 for the last 28 days | Defaults → Traffic. Quote only this snapshot; do not invent sessions. |
 | 06:10 | Search Console for the last 28 days | The same Traffic tab. |
-| 06:20 | Paid GA4 for the last 7 days, plus the funnel of events that already fire | The Growth book. If there were paid sessions, Go files one **proposed** glance job for that Lagos day. The glance does not Place. |
+| 06:20 | Paid GA4 for the last 7 days, plus the funnel of events that already fire | The Growth book. If there were paid sessions, Go files one **proposed** glance job for that Lagos day, and a Product job per bet that got sessions. The glance does not Place. The Product job proposes evidence and winning Search segments; it does not mark the Card mature and it does not Place. |
 | 07:00 | Ads prune | After a campaign has run a full week, prune pauses a cell that spent with 0 clicks and turns off Lagos dayparts that wasted while another daypart got clicks. Conversions wait 14 days and at least 5 clicks, and only if tracking already fired. |
 | 08:30 | Today on the desk | Ops Telegram lists today’s Delivery tasks, Coming up dates, and (for owner and BDM) CRM due rows. |
 | 09:00 Monday | Class intro | The Academy bot introduces itself in each mandated room whose linked bet stage allows pings. |
@@ -59,7 +59,7 @@ New ad campaigns start **PAUSED** unless you set ENABLED on Defaults → Ads.
 
 Every bet uses the same base kit. Open the project and stay on the **Run** tab until the step marked **now** is done.
 
-1. **Card** holds who pays, the one-liner, this week’s mission, the public URL, an optional GitHub repo, and the Funnel line copied from `TRAFFIC.md`.
+1. **Card** holds who pays, the one-liner, this week’s mission, the public URL, an optional GitHub repo, the Funnel line copied from `TRAFFIC.md`, ads spend (discovery or mature), and winning Search segments.
 2. **Face** seats a cofounder as the public face of the bet and, when needed, an assistant for field week.
 3. **Decide** is where you Ask placement, then Accept, Amend, or Reject. That click writes the stage. Chat never stamps GO, PIVOT, or KILL.
 4. **Dates** holds a campus week, a field week, or a launch until you mark it Delivered. Board shows those rows as Coming up.
@@ -91,15 +91,15 @@ Open the project → **Ads** → Start ads session, or send `/growth Search ads 
 
 After the clerk drafts, Go drops a city, keyword, or Pexels line whose words are not on the Card, and records that drop on the pack under **Looked**.
 
-Accept on Growth. Then pick **one path per channel**. **Book it yourself** prints numbered Google Ads and Meta clicks from the pack (campaign name is the bet slug, exact match, Google Search only, platform-minimum daily, start paused). When you finish, click **I booked it myself** and paste the campaign id so prune can score it. **Place** asks n8n to book the same conservative probe. Chat never Places. Do not follow the sheet and also Place for the same channel, or you pay twice.
+Accept on Growth. Then pick **one path per channel**. **Book it yourself** prints numbered Google Ads and Meta clicks from the pack (exact match, Google Search only, start paused). When you finish, click **I booked it myself** and paste the campaign id so prune can score it. **Place** asks n8n to book the same campaign. Chat never Places. Do not follow the sheet and also Place for the same channel, or you pay twice.
 
-Place is a cheap probe: the platform-minimum daily budget, never more than remaining funds divided by 90, an optional ceiling on Defaults, exact match only, and Google Search only (no partner network). Each geo/keyword cell is its own experiment. Place stamps `utm_campaign` to the bet slug and `utm_content` to the cell.
+Discovery spend and mature spend are different campaigns. Discovery Place is a cheap probe: campaign `{slug}-discovery`, every test cell, the platform-minimum daily budget, never more than remaining funds divided by 90. After paid cells run, a Product job proposes the few winning Search segments (geo plus keyword theme, not age or gender). Accept on Product writes those segments onto the Card. You mark **Ads spend** mature on the Card when those segments are ready for substantial spend. Mature Place then uses campaign `{slug}`, remaining funds divided by 30, and only those cells. It is refused until the Card lists matching segments. Place stamps `utm_campaign` to that campaign name and `utm_content` to the cell.
 
 n8n holds the Ads OAuth tokens. Account ids live on Defaults → Ads. Google sunset developer tokens on 9 September 2026; API access is the Cloud project that owns the Google Ads credential. Enable the Google Ads API there and apply for Explorer (or higher) so production accounts work. Go never holds those tokens.
 
 ### Evaluate ads without spending
 
-The Growth book shows the last seven days of paid sessions and the funnel. After the 06:20 pull, a **Paid traffic glance** job quotes those numbers; Turn away if you do not need it. The glance does not Place.
+The Growth book shows the last seven days of paid sessions and the funnel. After the 06:20 pull, a **Paid traffic glance** job quotes those numbers; Turn away if you do not need it. The glance does not Place. The same pull files a **Paid cells** job on Product for each bet that got sessions. Accept writes evidence and proposed winning segments onto the Card. That Accept does not mark the bet mature and does not Place.
 
 On ops Telegram you can ask `/growth How are the HomeGauge ads doing in GA4?` for the same read-only note.
 
@@ -163,7 +163,7 @@ After another desk answers on ops Telegram, Legal **watch** flags labour, CAC, N
 
 ## 11. Delivery and Files
 
-**Delivery** (`/admin/delivery`) is the week board across every bet. You add a task, Ask a plan, or accept Fathom notes after a recording (put the bet slug in the calendar title). Plans write after a delay unless you Turn away. Your own `/today` check-ins may apply immediately.
+**Delivery** (`/admin/delivery`) is the week board across every bet. You add a task, Ask a plan, or accept Fathom notes after a recording (put the bet slug in the calendar title). Plans write after a delay unless you Turn away. On ops Telegram, write what happened in your own words. The clerk logs CRM, Dates, Card notes, and spend from that paragraph. Your own tasks may close immediately when the titles match.
 
 **Files** is the data room. On ops Telegram send `/file` or drop a PDF. A catalog match files itself and n8n writes Google Drive. Odd paths wait here for Accept. Office papers use the slug `themobileprof`, not a bet name.
 

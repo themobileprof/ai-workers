@@ -40,7 +40,7 @@ var prefixCommands = []struct {
 	{regexp.MustCompile(`^/growth(?:@\w+)?\b\s*`), "growth", ""},
 	{regexp.MustCompile(`^/crm(?:@\w+)?\b\s*`), "crm", ""},
 	{regexp.MustCompile(`^/legal(?:@\w+)?\b\s*`), "legal", ""},
-	{regexp.MustCompile(`^(?:/today|/pm)(?:@\w+)?\b\s*`), "delivery", "today"},
+	{regexp.MustCompile(`^(?:/today|/pm)(?:@\w+)?\b\s*`), "delivery", "report"},
 	{regexp.MustCompile(`^/idea(?:@\w+)?\b\s*`), "delivery", "idea"},
 	{regexp.MustCompile(`^/hr(?:@\w+)?\b\s*`), "hr", ""},
 	{regexp.MustCompile(`^/file(?:@\w+)?\b\s*`), "files", ""},
@@ -58,7 +58,8 @@ func HelpText(who string, prefixes []string) string {
 	}
 	lines := []string{
 		"Office bot for " + who + ".",
-		"Say the work. I pick one desk and do it in this chat.",
+		"Say what happened in your own words. I log the field report onto Delivery, CRM, Dates, and the Card, and I file spend as an Accounts job. You do not number tasks.",
+		"When it is not a field report, I pick one desk and do that work in this chat.",
 		"When a draft needs your yes, tap Accept or Turn away under that message. /yes also Accepts. /no invented Ikeja Turns away with a reason the next draft can see.",
 		"The clerk never Accepts. /approve still only sends a pending info@ draft.",
 	}
@@ -105,13 +106,21 @@ func Decide(in Inbound, currentDesk string) Decision {
 			task := strings.TrimSpace(cmd.re.ReplaceAllString(text, ""))
 			act := cmd.act
 			if cmd.dept == "delivery" && act == "" {
-				act = "today"
+				act = "report"
 			}
 			if task == "" {
 				task = defaultTask(cmd.dept, in)
 			}
 			return Decision{Kind: KindWork, Department: cmd.dept, Task: task, Action: act, Prefixed: true}
 		}
+	}
+
+	if morningCard(in.ReplyTo) || LooksLikeReport(text) {
+		task := text
+		if task == "" {
+			task = "Check in on the morning card."
+		}
+		return Decision{Kind: KindWork, Department: "delivery", Task: task, Action: "report"}
 	}
 
 	if in.HasDocument {
@@ -129,26 +138,18 @@ func Decide(in Inbound, currentDesk string) Decision {
 		return Decision{Kind: KindWork, Department: "accounts", Task: task, Action: "receipt"}
 	}
 
-	if morningCard(in.ReplyTo) {
-		task := text
-		if task == "" {
-			task = "Check in on the morning card."
-		}
-		return Decision{Kind: KindWork, Department: "delivery", Task: task, Action: "today"}
-	}
-
 	if greetRe.MatchString(strings.ToLower(text)) && currentDesk == "" {
 		return Decision{Kind: KindGreet}
 	}
 
-	if currentDesk != "" {
+	if currentDesk != "" && !(currentDesk == "delivery" && text != "" && !LooksLikeReport(text)) {
 		task := text
 		if task == "" {
 			task = defaultTask(currentDesk, in)
 		}
 		act := ""
 		if currentDesk == "delivery" {
-			act = "today"
+			act = "report"
 		}
 		return Decision{Kind: KindWork, Department: currentDesk, Task: task, Action: act}
 	}
@@ -247,7 +248,7 @@ func defaultTask(dept string, in Inbound) string {
 		}
 		return "Read this as books work. Extract fields. Do not invent figures."
 	case "delivery":
-		return "Today's tasks and check-ins."
+		return "What happened on the bets. Log it in your own words."
 	case "community":
 		return "Welcome this person and ask how you can help in the community."
 	default:

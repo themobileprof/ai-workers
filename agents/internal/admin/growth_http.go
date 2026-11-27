@@ -52,13 +52,13 @@ func growthFlash(ok, step string) string {
 		return "Worker replied. The pack updated. Chat a tighter line, say next, or skip. Accept when the ten slides are right."
 	case "deck_ok":
 		if ads {
-			return "Accepted. Book it yourself from the pack instructions, or Place on Google Search or Meta. Do not do both for the same channel. Search the Pexels queries and /file stills under product. Chat does not spend."
+			return "Accepted. Book it yourself from the pack instructions, or Place on Google Search or Meta. Discovery and mature are different campaigns. Do not do both for the same channel. Search the Pexels queries and /file stills under product. Chat does not spend."
 		}
 		return "Accepted. The pack was already live. The clerk does not email the deck."
 	case "deck_no":
 		return "Turned away. The pack URL is unpublished."
 	case "placed":
-		return "Placed conservatively: platform-minimum daily, exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED. Do not also create this campaign in the Ads UI."
+		return "Placed. Discovery is `{slug}-discovery` at remaining/90 on all cells. Mature is `{slug}` at remaining/30 on winning segments after the Card is marked mature. Exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED. Do not also create this campaign in the Ads UI."
 	case "booked":
 		return "Marked as booked in the Ads UI. Paste the campaign id when you have it so prune can score it. Do not also Place this channel."
 	default:

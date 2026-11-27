@@ -112,4 +112,10 @@ func TestMorningPing(t *testing.T) {
 	if !strings.Contains(text, "/today") {
 		t.Fatal("footer")
 	}
+	if strings.Contains(text, "done 1") || strings.Contains(text, "wait for yes") {
+		t.Fatal("botty leftover: " + text)
+	}
+	if !strings.Contains(text, "own words") {
+		t.Fatal("invite a report")
+	}
 }

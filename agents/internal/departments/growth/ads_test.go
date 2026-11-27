@@ -306,23 +306,24 @@ func TestAdsManualGoogleListsExactAndUTM(t *testing.T) {
 		Headlines:    []AdsLine{{Text: "Mortgage help in Lagos"}},
 		Descriptions: []AdsLine{{Text: "Salaried buyers get a desk that quotes today."}, {Text: "Named places on the Card only."}},
 	})
-	md := AdsManualMarkdown(p, "HomeGauge", "homegauge")
+	md := AdsManualMarkdown(p, "HomeGauge", "homegauge", AdsModeDiscovery)
 	for _, want := range []string{
 		"Book it yourself",
 		"Place automatically",
 		"ads.google.com",
 		"[mortgage help Lagos]",
-		"homegauge",
-		"utm_campaign=homegauge",
+		"homegauge-discovery",
+		"utm_campaign=homegauge-discovery",
 		"Paused",
 		"pay twice",
 		"adsmanager.facebook.com",
+		"remaining/90",
 	} {
 		if !strings.Contains(md, want) {
 			t.Fatalf("missing %q in %s", want, md)
 		}
 	}
-	steps := AdsManualGoogle(p, "HomeGauge", "homegauge")
+	steps := AdsManualGoogle(p, "HomeGauge", "homegauge", AdsModeDiscovery)
 	if len(steps) < 10 {
 		t.Fatalf("google steps %d", len(steps))
 	}

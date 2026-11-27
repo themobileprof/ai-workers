@@ -105,6 +105,41 @@ func TestAdsGlanceHasPaidAndDay(t *testing.T) {
 	}
 }
 
+func TestWinningPaidCellsAndSenseCopy(t *testing.T) {
+	snap := AdsGA4View{
+		Found: true,
+		Paid: []AdsGA4PaidRow{
+			{Campaign: "homegauge-discovery", Content: "lagos-mortgage", Sessions: 12, Engaged: 8},
+			{Campaign: "homegauge-discovery", Content: "abuja-rent", Sessions: 3, Engaged: 1},
+			{Campaign: "homegauge-discovery", Content: "quiet", Sessions: 0, Engaged: 0},
+		},
+	}
+	winners := winningPaidCells(snap.Paid, 3)
+	if len(winners) != 2 || winners[0].Content != "lagos-mortgage" {
+		t.Fatalf("%+v", winners)
+	}
+	ev, segs, body := formatPaidSense(Project{Name: "HomeGauge", Slug: "homegauge"}, snap)
+	if !strings.Contains(ev, "lagos-mortgage") || !strings.Contains(segs, "lagos-mortgage") {
+		t.Fatalf("evidence %q segs %q", ev, segs)
+	}
+	if !strings.Contains(body, "homegauge-discovery") || !strings.Contains(strings.ToLower(body), "cannot mark the card mature") {
+		t.Fatal(body)
+	}
+	if strings.Contains(strings.ToLower(body), "kill the bet from chat") {
+		t.Fatal(body)
+	}
+}
+
+func TestForSlugMatchesDiscoveryCampaign(t *testing.T) {
+	snap := AdsGA4View{Found: true, Paid: []AdsGA4PaidRow{
+		{Campaign: "homegauge-discovery", Content: "lagos-mortgage", Sessions: 4},
+	}}
+	got := snap.ForSlug("homegauge")
+	if len(got.Paid) != 1 {
+		t.Fatalf("%+v", got)
+	}
+}
+
 func TestInternalAdsGA4Unauthorized(t *testing.T) {
 	s, err := New(nil, "secret")
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
+	"github.com/samuel/ai-workers/agents/internal/departments/growth"
 )
 
 func (s *Server) EnrichProduct(ctx context.Context, req contract.Request) contract.Request {
@@ -27,6 +28,7 @@ func (s *Server) EnrichProduct(ctx context.Context, req contract.Request) contra
 	data["cannot_write_stamp"] = true
 	if p, ok := matchProject(projects, data, req.TaskDescription); ok {
 		attachProductProject(data, p)
+		s.attachAdsGA4Glance(ctx, data, p)
 	}
 	s.attachEpisodeLessons(ctx, data)
 	raw, _ := json.Marshal(data)
@@ -69,12 +71,21 @@ func (s *Server) applyProductMemory(ctx context.Context, job DeskJob) error {
 	if err != nil {
 		return err
 	}
-	hyp, mission, due, burn, notes, notesChanged := mergedCard(p, job.Payload)
+	sd := job.Payload
+	if sd == nil {
+		sd = map[string]any{}
+	}
+	hyp, mission, due, burn, notes, notesChanged := mergedCard(p, sd)
 	if err := s.store.SetProjectMemory(ctx, p.ID, hyp, mission, due, burn); err != nil {
 		return err
 	}
 	if notesChanged {
-		return s.store.SetProjectNotes(ctx, p.ID, notes)
+		if err := s.store.SetProjectNotes(ctx, p.ID, notes); err != nil {
+			return err
+		}
+	}
+	if segs := growth.ClipAdsSegments(strVal(sd["ads_segments"])); segs != "" {
+		return s.store.SetProjectAdsSense(ctx, p.ID, p.AdsMode, segs)
 	}
 	return nil
 }
@@ -152,6 +163,8 @@ func attachProductProject(data map[string]any, p Project) {
 		"committed_journey": p.Journey,
 		"committed_gate":    p.Gate,
 		"funnel_steps":      p.FunnelSteps,
+		"ads_mode":          growth.NormalizeAdsMode(p.AdsMode),
+		"ads_segments":      p.AdsSegments,
 	}
 }
 

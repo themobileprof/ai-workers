@@ -194,6 +194,7 @@ func (s *Server) projectSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = s.store.SetProjectMemory(r.Context(), p.ID, r.FormValue("hypothesis"), r.FormValue("mission"), r.FormValue("mission_due"), r.FormValue("burn_ngn"))
+	_ = s.store.SetProjectAdsSense(r.Context(), p.ID, r.FormValue("ads_mode"), r.FormValue("ads_segments"))
 	_ = s.store.SetProjectGitRepo(r.Context(), p.ID, r.FormValue("git_repo"))
 	if err := s.store.SetProjectFunnelSteps(r.Context(), p.ID, r.FormValue("funnel_steps")); err != nil {
 		roster, _ := s.store.ListUsers(r.Context())
