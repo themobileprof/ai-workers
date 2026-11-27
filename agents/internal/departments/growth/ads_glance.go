@@ -11,7 +11,7 @@ import (
 
 // LooksLikeGlance is a read-only paid-traffic question, not a new RSA pack.
 func LooksLikeGlance(data map[string]any, task string) bool {
-	if strings.EqualFold(strings.TrimSpace(str(data["channel"])), "whatsapp") {
+	if CustomerChannel(data) {
 		return false
 	}
 	lower := strings.ToLower(task)

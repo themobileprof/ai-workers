@@ -1,7 +1,7 @@
-<p class="lede">Front office. Answers customers, writes social copy, walks a pitch deck on the bet, and drafts Google Search ads you Accept then either book yourself or Place. It does not send mail or WhatsApp, and chat cannot spend. Inbound <code>info@</code> is CRM.</p>
+<p class="lede">Front office. On customer WhatsApp it answers questions about every public product from the project Cards. It also writes social copy, walks a pitch deck on a project, and drafts Google Search ads you Accept then either book yourself or Place. It does not send mail or WhatsApp, and chat cannot spend. Inbound <code>info@</code> is CRM.</p>
 
 <ol class="steps">
-  <li>WhatsApp 1:1 with no prefix → growth (sales). Customer WhatsApp is not the deck walk or the ads pack.</li>
+  <li>WhatsApp 1:1 with no prefix → growth (sales). Anyone can DM; there is no number allowlist. The clerk answers from every public product Card (name, one-liner, URL) and, for Academy course questions, from the live LMS catalog. Once they name a product, later messages stay on that product until they name another. Customers hear product, offer, or project — never bet. Customer WhatsApp is not the deck walk or the ads pack.</li>
   <li>Telegram ops: <code>/growth Write a LinkedIn post about…</code>, <code>/growth Pitch deck for HomeGauge. Ada is in the room.</code>, or <code>/growth Search ads for HomeGauge</code>.</li>
   <li>Desk: open a project → <strong>Deck</strong> → Start session. Chat each Kawasaki slide. The pack URL updates every turn. Accept on <a href="/admin/growth">Growth</a> when the ten are right. Chat never Accepts.</li>
   <li>Desk: open a project → <strong>Ads</strong> → Start ads session. Chat URL, cells, keywords, headlines, descriptions, then Pexels queries. Accept, then either follow Book it yourself in the Ads UI or Place on Google Search or Meta. Do not do both for the same channel. n8n holds the OAuth tokens. Chat cannot spend.</li>
@@ -21,7 +21,24 @@
     "department": "growth"
   }
 }</pre>
-  <p class="expect">You should see a short WhatsApp reply. The desk files Office → CRM with that phone on every successful customer DM. High intent stores a Lagos <code>next_action_by</code>. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+. Never invented emails.</p>
+  <p class="expect">You should see a short WhatsApp reply that uses the product Cards (here Mechazone’s one-liner and URL if that Card exists). The clerk must not invent a price and must not say bet. The desk files Office → CRM with that phone on every successful customer DM, and keeps this product on the person until they name another. High intent stores a Lagos <code>next_action_by</code>. n8n upserts a Zoho Books contact only with an email or once the stage is qualified+. Never invented emails.</p>
+</section>
+
+<section class="specimen">
+  <p class="spec-no">Specimen 01b · same chat, next message</p>
+  <p class="you-say">Same WhatsApp 1:1, later: <q>How much is it?</q></p>
+  <pre class="json">{
+  "task_description": "How much is it?",
+  "context_data": {
+    "channel": "whatsapp",
+    "chat_kind": "dm",
+    "from": "2348012345678",
+    "department": "growth",
+    "project_sticky": true,
+    "project": { "slug": "mechazone", "one_liner": "A bookkeeping assistant for mechanic workshops." }
+  }
+}</pre>
+  <p class="expect">The clerk still answers about Mechazone. It does not ask which product again. A later message that names HomeGauge switches the chat to HomeGauge.</p>
 </section>
 
 <section class="specimen">

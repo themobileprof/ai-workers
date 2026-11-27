@@ -51,7 +51,7 @@ func TestWorkerDoesCoversEveryDesk(t *testing.T) {
 		}
 	}
 	g := workerDoes("growth")
-	for _, want := range []string{"Search ads", "cannot spend", "LLM", ".env", "Pexels", "pitch"} {
+	for _, want := range []string{"Search ads", "cannot spend", "LLM", ".env", "Pexels", "pitch", "public product", "never bet", "name another", "no number allowlist"} {
 		if !strings.Contains(g, want) {
 			t.Fatalf("growth does missing %q in %s", want, g)
 		}

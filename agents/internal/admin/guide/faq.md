@@ -99,6 +99,10 @@ Student rooms are Academy Telegram, not WhatsApp groups (Cloud API cannot join o
 
 Tick Legal on the handler. Workers → Legal → Ask for the draft you need. Wait for the proposed job. Chat a fix. Accept on the job or on `/admin/legal`. Copy the body from the Legal book if you need the document. The worker cannot send it.
 
+## How does customer WhatsApp answer product questions?
+
+The front desk is Growth. Every 1:1 message is sales. Anyone can DM; there is no number allowlist. That turn attaches every public product from the project Cards (name, one-liner, URL) and, when they name one, that product’s Card. Later messages stay on that product until they name another. Academy course questions also get the live LMS catalog. The clerk must not invent a price and must not say “bet”. Customers hear product, offer, or project. WhatsApp still cannot run a pitch-deck or ads session.
+
 ## How do I ask for a pitch deck?
 
 Tick Growth. Write the Card one-liner first. Open the project → Deck → Start session, or `/growth Pitch deck for HomeGauge` on ops Telegram. Chat each Kawasaki slide until the copy is right. The markdown pack updates every turn — download it or give Cursor the URL. You paste into Slides. Export a PDF and `/file` it under **product**. The clerk cannot send or invent traction. Chat never Accepts. Paste into `/legal` if you need a claims review — Legal does not write the plan. Customer WhatsApp cannot run this session.

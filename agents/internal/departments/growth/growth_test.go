@@ -16,13 +16,26 @@ func TestPromptCuts(t *testing.T) {
 	if !strings.Contains(systemPrompt, "next_action_by") {
 		t.Fatal("high intent needs a Lagos date")
 	}
+	if !strings.Contains(salesOverlay, `Never say “bet”`) && !strings.Contains(salesOverlay, `Never say "bet"`) {
+		t.Fatal("WhatsApp front desk must not say bet")
+	}
+	if !strings.Contains(salesOverlay, "context_data.products") {
+		t.Fatal("WhatsApp front desk needs the product list")
+	}
+	if !strings.Contains(salesOverlay, "project_sticky") {
+		t.Fatal("WhatsApp must keep the product they already named")
+	}
 }
 
 type stubLLM struct {
-	text string
+	text   string
+	system *string
 }
 
-func (s stubLLM) Complete(context.Context, llm.Request) (string, error) {
+func (s stubLLM) Complete(_ context.Context, req llm.Request) (string, error) {
+	if s.system != nil {
+		*s.system = req.System
+	}
 	return s.text, nil
 }
 
@@ -52,6 +65,32 @@ func TestWhatsAppIsNotADeck(t *testing.T) {
 	}
 	if resp.StructuredData["task_type"] != "sales_support" {
 		t.Fatalf("%+v", resp)
+	}
+}
+
+func TestWhatsAppFrontDeskUsesSalesOverlay(t *testing.T) {
+	if !CustomerChannel(map[string]any{"channel": "whatsapp"}) {
+		t.Fatal("whatsapp is the customer channel")
+	}
+	var system string
+	_, err := Handle(context.Background(), stubLLM{
+		text:   `{"status":"success","output_text":"HomeGauge helps salaried homebuyers.","structured_data":{"task_type":"sales_support"}}`,
+		system: &system,
+	}, contract.Request{
+		TaskDescription: "What is HomeGauge?",
+		ContextData:     []byte(`{"channel":"whatsapp","products":[{"name":"HomeGauge","one_liner":"Salaried Nigerian homebuyers get mortgage help.","url":"https://homegauge.themobileprof.com"}]}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(system, "front desk") {
+		t.Fatal("WhatsApp must use the front-desk overlay")
+	}
+	if !strings.Contains(system, "product, offer, or project") {
+		t.Fatal("customers hear product, not bet")
+	}
+	if !strings.Contains(system, "Switch only when they clearly named a different product") {
+		t.Fatal("sticky product until they name another")
 	}
 }
 

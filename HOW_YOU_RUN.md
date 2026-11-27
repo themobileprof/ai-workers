@@ -16,7 +16,7 @@ Staff and customers reach this office through four doors. Do not mix them.
 | --- | --- | --- |
 | **Desk** at `/admin/` | Anyone with a People login | This is where you Accept jobs, Place ads, edit project Cards, and amend Defaults. The brass **Help?** button at the bottom right fills the same form as the page you are on; it never Accepts. |
 | **Ops Telegram** | Staff whose People card has a `telegram_id` | Prefixes such as `/growth`, `/accounts`, and `/file` run only if that desk is ticked on your card. Plain 1:1 text lets the bot pick **one** desk and do that work in the chat. `/approve`, `/kill`, and `/stop` apply only to the pending **info@** draft; `/stop` also cancels a delayed Delivery plan. |
-| **Customer WhatsApp** | Anyone who messages the Business number | A 1:1 chat is sales. When the message includes a phone, the desk files the person on Office → CRM. This number refuses office prefixes and cannot join a class or project group. |
+| **Customer WhatsApp** | Anyone who messages the Business number | A 1:1 chat is sales. Anyone can DM; there is no number allowlist. The front desk answers questions about every public product from the project Cards. Once they name a product, later messages stay on that product until they name another. When the message includes a phone, the desk files that person on Office → CRM. This number refuses office prefixes and cannot join a class or project group. Customers hear product or offer, not bet. |
 | **Academy Telegram** | Students in a mandated class room | Community is the host. Do not add the ops bot to a student group. |
 
 n8n is the public door for WhatsApp, inbound email, and cron. A Go process holds the desk and the workers. Tokens for Zoho, Paystack, Ads, GA4, and Drive live in n8n Credentials or the VM `.env`. They never belong in git, and the Go worker never holds those vendor tokens.
@@ -77,7 +77,7 @@ Tick Growth on the handler’s People card. Customer WhatsApp is already Growth 
 
 ### Sales copy and replies
 
-On ops Telegram, send `/growth Write a LinkedIn post about…` when you want copy you will post yourself. On customer WhatsApp, just talk: a 1:1 message is a sales conversation. When the message includes a phone number, the desk files that person on Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the CRM stage is qualified, proposal, or won.
+On ops Telegram, send `/growth Write a LinkedIn post about…` when you want copy you will post yourself. On customer WhatsApp, just talk: a 1:1 message is a sales conversation. Anyone can DM; there is no number allowlist. The clerk answers from the public product list on the Cards (name, one-liner, URL) and, for Academy questions, from the live LMS catalog. Once they name a product, later messages stay on that product until they name another. It must not invent a price. It must not say bet. When the message includes a phone number, the desk files that person on Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the CRM stage is qualified, proposal, or won.
 
 ### Pitch deck
 

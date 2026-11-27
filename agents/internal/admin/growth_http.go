@@ -416,6 +416,14 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 		}
 	}
 	projects, _ := s.store.ListProjects(ctx)
+	attachGrowthCatalog(data, projects)
+	if growth.CustomerChannel(data) {
+		p := s.bindWhatsAppOffer(ctx, data, req.TaskDescription, projects)
+		s.attachGrowthAcademyCatalog(ctx, data, req.TaskDescription, p)
+		data["cannot_send"] = true
+		data["cannot_spend"] = true
+		return s.withLessons(ctx, req, data)
+	}
 	p, ok := matchProject(projects, data, req.TaskDescription)
 	if !ok {
 		return s.withLessons(ctx, req, data)
@@ -444,6 +452,7 @@ func (s *Server) EnrichGrowth(ctx context.Context, req contract.Request) contrac
 	}
 	live := liveProposedSession(decks)
 	if !growth.LooksLike(data, req.TaskDescription) && live.ID == 0 {
+		attachProductProject(data, p)
 		return s.withLessons(ctx, req, data)
 	}
 	if live.ID > 0 {

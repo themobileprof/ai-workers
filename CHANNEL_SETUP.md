@@ -60,7 +60,7 @@ SMTP host in the credential (not in git as a secret): `smtppro.zoho.com:465` SSL
 | `n8n/workflows/ops-telegram.json` | `opsTelegram00001` | no | Retired. Office inbound is Go `POST /webhook/telegram-ops/webhook`. Do not republish — n8n would steal the Telegram webhook. |
 | `n8n/workflows/files-place.json` | `filesPlace0000001` | yes | Every 2 minutes: accepted Files rows → Telegram download → Google Drive `{slug}/{folder}/` |
 | `n8n/workflows/academy-telegram.json` | `acadTelegram00001` | no | Retired inbound. Academy student rooms are Go `POST /webhook/telegram-academy/webhook`. Weekly intro still sends from `commWeeklyPing01`. Do not republish — n8n would steal the Telegram webhook. |
-| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. Every DM with a phone files Office → CRM. Books upsert only with an email or once stage is qualified/proposal/won. Office prefixes refused. No admin-phone allowlist. |
+| `n8n/workflows/customer-whatsapp.json` | `custWhatsApp0001` | yes | Customer WhatsApp 1:1. Growth/CRM. The front desk answers every public product from the Cards. Every DM with a phone files Office → CRM. Books upsert only with an email or once stage is qualified/proposal/won. Office prefixes refused. No admin-phone allowlist. |
 | `n8n/workflows/community-weekly.json` | `commWeeklyPing01` | yes | Monday 09:00 Lagos: intro in each mandated Telegram room whose bet stamp allows pings |
 | `n8n/workflows/community-scholarship-daily.json` | `commScholDaily01` | yes | 09:15 Lagos daily: scholarship deadline nudge when a season ends within 21 days. Silent otherwise. Never posts a discount code. |
 | `n8n/workflows/community-engage-daily.json` | `commEngageDaily01` | yes | 09:30 Lagos: check-in only when a student talked, asked a lesson question, or confirmed an invite yesterday. Quiet class: Go skips the post. LLM rewords. |
@@ -102,7 +102,7 @@ Unprefixed **Academy Telegram** group chat is community. Cloud API WhatsApp cann
 
 Ops Telegram is gated by People `telegram_id` (Go looks up the People card). Unknown ids get the number to paste on People. Prefixes follow that card’s seat and desk ticks. **No prefix (text):** Go picks **one** desk and does the work in that chat. A reply to the 08:30 “Today on the desk” card is Delivery. Chat never Accepts. `/approve` `/kill` `/stop` (owner/BDM) call n8n Email outbox for a pending info@ draft. Receipt photos and `/accounts` `/ops` that classify as accounts then call n8n Books write.
 
-Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, or Delivery. Bare DMs are Growth. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
+Customer WhatsApp is not allowlisted. Anyone can DM. Office prefixes (`/accounts`, `/ops`, `/legal`, `/seo`, `/today`, `/file`, `/approve`) reroute to **community** (`access_denied`) and never reach Books, Legal, or Delivery. Bare DMs are Growth, which answers questions about every public product from the Cards. Every successful customer DM that has a phone files Office → CRM. n8n upserts a Zoho Books contact only when there is an email, or once the stage is qualified, proposal, or won.
 
 Receipt photos: Telegram 1:1 snaps (and `/accounts` `/ops` for staff who may Accounts) are downloaded and OCR’d with Gemini. WhatsApp photos stay growth — not receipts. A failed read must not invent amounts.
 
@@ -125,7 +125,7 @@ Source of truth for **projects**, people (including Telegram ids), and Zoho defa
 
 ### WhatsApp is customers
 
-The Cloud API number is the customer line. Do not allowlist staff phones on it. To add a bookkeeper: People → Telegram id from ops bot `/start` → tick Accounts. Receipts go on Telegram, not WhatsApp. `n8n/allowlists/whatsapp-accounts.json` is leftover documentation only.
+The Cloud API number is the customer line. Do not allowlist staff phones on it. Anyone can DM. To add a bookkeeper: People → Telegram id from ops bot `/start` → tick Accounts. Receipts go on Telegram, not WhatsApp. `n8n/allowlists/whatsapp-accounts.json` is leftover documentation only. `GET /internal/v1/whatsapp-accounts` is leftover and is not used to gate Customer WhatsApp.
 
 ### Zoho Books (not Mail)
 

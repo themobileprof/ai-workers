@@ -94,7 +94,7 @@ func Lookup(id string) (Spec, bool) {
 }
 
 func LooksLike(data map[string]any, task string) bool {
-	if strings.EqualFold(strings.TrimSpace(str(data["channel"])), "whatsapp") {
+	if CustomerChannel(data) {
 		return false
 	}
 	if strings.EqualFold(str(data["ref_kind"]), "growth_ads") || LooksLikeAds(data, task) {

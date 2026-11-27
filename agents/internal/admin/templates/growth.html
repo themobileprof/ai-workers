@@ -4,7 +4,7 @@
     <p class="do">Growth · {{statusCount .Decks "proposed"}} waiting</p>
     <h2>Chat the pack, then book or Place</h2>
     <ol class="recipe">
-      <li>Pick a bet. Start a pitch session (Kawasaki slides) or a Search ads session (RSA copy, geo/keyword cells, Pexels queries).</li>
+      <li>Pick a project. Start a pitch session (Kawasaki slides) or a Search ads session (RSA copy, geo/keyword cells, Pexels queries).</li>
       <li>The pack URL updates every turn. Download it, or give Cursor the URL. Pitch: you paste into Slides. Ads: Accept, then either follow the pack in the Ads UI or Place on Google Search or Meta. Do not do both for the same channel. <code>/file</code> the PDF or Pexels stills under <strong>product</strong>.</li>
       <li><strong>Turn away</strong> if a fact is invented. The clerk cannot send or invent traction. Place talks to n8n — Go never holds Ads tokens.</li>
       <li>Paste a pitch pack into <code>/legal</code> if you need a claims review. Legal does not write this document.</li>
@@ -46,7 +46,7 @@
           </form>
           <form method="post" action="/admin/growth/{{.ID}}/reject" class="turn-away">
             <input type="hidden" name="next" value="/admin/growth">
-            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this bet will see this)">
+            <input name="reason" maxlength="200" placeholder="Optional: why (next draft on this project will see this)">
             <button class="ghost" type="submit">Turn away</button>
           </form>
         </div>
@@ -58,9 +58,9 @@
       {{end}}
       {{if not .Project}}
       <form method="get" action="/admin/growth" class="person add">
-        <p class="hint">Pick a bet whose Card has a one-liner (and a public URL for Ads). Then start or continue the session.</p>
+        <p class="hint">Pick a project whose Card has a one-liner (and a public URL for Ads). Then start or continue the session.</p>
         <div class="fields">
-          <label>Bet
+          <label>Project
             <select name="project_id" required>
               <option value="">Choose…</option>
               {{range .Projects}}

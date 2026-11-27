@@ -149,7 +149,7 @@ var docCatalog = []DocMeta{
 		Kicker:   "Front office",
 		Path:     "POST /departments/growth",
 		Wire:     "live",
-		Summary:  "Sales chat, marketing copy, a pitch-deck session, and Search ads you Accept then either book yourself or Place. Go drops cities not on the Card. Morning GA4 glance proposes; it does not Place. Every customer WhatsApp DM files Office → CRM. The worker cannot send or spend.",
+		Summary:  "On WhatsApp it answers every public product from the Cards. It also writes marketing copy, a pitch-deck session, and Search ads you Accept then either book yourself or Place. Go drops cities not on the Card. Morning GA4 glance proposes; it does not Place. Every customer WhatsApp DM files Office → CRM. The worker cannot send or spend.",
 		Prefixes: []string{"/growth", "1:1 WhatsApp (default)", "desk Ads · Book it yourself or Place"},
 	},
 	{

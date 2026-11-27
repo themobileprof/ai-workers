@@ -81,7 +81,7 @@ Do not give each department its own WhatsApp. One ops Telegram, one Academy Tele
 | `/cm` `/community` | community |
 | `/validate` | product-dev (ops Telegram) |
 | none, 1:1 ops Telegram | office assistant picks one desk and does the work |
-| none, 1:1 WhatsApp | growth (customers; CRM upsert) |
+| none, 1:1 WhatsApp | growth (customers; product questions from the Cards; CRM upsert) |
 | none, group | community (Academy Telegram student rooms) |
 
 `/approve` sends the pending **info@** draft now. `/kill` or `/stop` drops that draft and stops a delayed Delivery plan. They do not Accept Legal, Decide, or SEO.

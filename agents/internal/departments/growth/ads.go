@@ -572,7 +572,7 @@ func AdsMarkdown(p AdsPack, name, slug string) string {
 }
 
 func LooksLikeAds(data map[string]any, task string) bool {
-	if strings.EqualFold(strings.TrimSpace(str(data["channel"])), "whatsapp") {
+	if CustomerChannel(data) {
 		return false
 	}
 	if strings.EqualFold(str(data["ref_kind"]), "growth_ads") {
