@@ -317,7 +317,7 @@ func TestAdsManualGoogleListsExactAndUTM(t *testing.T) {
 		"Paused",
 		"pay twice",
 		"adsmanager.facebook.com",
-		"remaining/90",
+		"remaining/30",
 	} {
 		if !strings.Contains(md, want) {
 			t.Fatalf("missing %q in %s", want, md)

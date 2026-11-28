@@ -431,7 +431,7 @@
           <input name="burn_ngn" value="{{.Project.BurnNGN}}" placeholder="From Books. Do not compute VAT here.">
         </label>
         <label>Ads spend
-          <span class="hint">Discovery is a cheap probe: campaign <code>{{.Project.Slug}}-discovery</code>, every test cell, remaining funds divided by 90. Mature is substantial spend on the few winning Search segments only: campaign <code>{{.Project.Slug}}</code>, remaining funds divided by 30. A Product job can propose those segments from paid cells. You mark mature here. Chat never Places and never flips this switch.</span>
+          <span class="hint">Discovery is a cheap probe: campaign <code>{{.Project.Slug}}-discovery</code>, every test cell, remaining funds divided by 30 (about one month of daily budget — four weekly iterations). Mature is substantial spend on the few winning Search segments only: campaign <code>{{.Project.Slug}}</code>, remaining funds divided by 30. Budgets are in the ads account currency (usually NGN for Nigerian Google Ads). A Product job can propose those segments from paid cells. You mark mature here. Chat never Places and never flips this switch.</span>
           <select name="ads_mode">
             <option value="discovery" {{if ne .Project.AdsMode "mature"}}selected{{end}}>Discovery — cheap probe, all cells</option>
             <option value="mature" {{if eq .Project.AdsMode "mature"}}selected{{end}}>Mature — substantial spend on winning segments</option>

@@ -169,5 +169,5 @@ func adsManualBudgetBody(vendor string, div int, mode string) string {
 	if NormalizeAdsMode(mode) == AdsModeMature {
 		return "Set a daily amount " + vendor + " will accept in this account currency. Never more than remaining funds divided by " + strconv.Itoa(div) + ". This is substantial spend on winning segments, not the discovery probe. If Defaults → Ads has a daily ceiling, do not exceed it."
 	}
-	return "Set the smallest daily amount " + vendor + " will accept in this account currency (often 1). Never more than remaining funds divided by " + strconv.Itoa(div) + ". This is discovery spend, not substantial scale. If Defaults → Ads has a daily ceiling, do not exceed it."
+	return "Set the smallest daily amount " + vendor + " will accept in this account currency (often 1 unit — NGN for Nigerian Google Ads). Never more than remaining funds divided by " + strconv.Itoa(div) + " (about one month of daily budget). This is discovery spend, not substantial scale. If Defaults → Ads has a daily ceiling, do not exceed it."
 }

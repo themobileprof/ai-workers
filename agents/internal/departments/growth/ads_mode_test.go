@@ -12,7 +12,7 @@ func TestAdsCampaignNameSplitsDiscoveryFromMature(t *testing.T) {
 	if got := AdsCampaignName("homegauge-discovery", "", AdsModeDiscovery); got != "homegauge-discovery" {
 		t.Fatalf("already suffixed %q", got)
 	}
-	if AdsReserveDivisor(AdsModeDiscovery) != 90 || AdsReserveDivisor(AdsModeMature) != 30 {
+	if AdsReserveDivisor(AdsModeDiscovery) != 30 || AdsReserveDivisor(AdsModeMature) != 30 {
 		t.Fatal("reserve")
 	}
 }

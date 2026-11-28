@@ -9,7 +9,11 @@ const (
 	AdsModeDiscovery = "discovery"
 	AdsModeMature    = "mature"
 
-	AdsDiscoveryReserve = 90
+	// AdsDiscoveryReserve spreads remaining funds over about one month of daily
+	// budget. A discovery cell needs a full week of Lagos hours; a month is about
+	// four weekly iterations. Nigerian Google Ads accounts are usually NGN, so
+	// remaining and the platform-minimum daily are in naira, not dollars.
+	AdsDiscoveryReserve = 30
 	AdsMatureReserve    = 30
 )
 

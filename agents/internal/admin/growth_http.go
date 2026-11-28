@@ -58,7 +58,7 @@ func growthFlash(ok, step string) string {
 	case "deck_no":
 		return "Turned away. The pack URL is unpublished."
 	case "placed":
-		return "Placed. Discovery is `{slug}-discovery` at remaining/90 on all cells. Mature is `{slug}` at remaining/30 on winning segments after the Card is marked mature. Exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED. Do not also create this campaign in the Ads UI."
+		return "Placed. Discovery is `{slug}-discovery` at remaining/30 on all cells (about one month of daily budget in the account currency, usually NGN). Mature is `{slug}` at remaining/30 on winning segments after the Card is marked mature. Exact match, Search only. Runs all Lagos hours for a week, then 07:00 cuts wasted cells and dayparts. Campaigns start paused unless Defaults → Ads says ENABLED. Do not also create this campaign in the Ads UI."
 	case "booked":
 		return "Marked as booked in the Ads UI. Paste the campaign id when you have it so prune can score it. Do not also Place this channel."
 	default:
