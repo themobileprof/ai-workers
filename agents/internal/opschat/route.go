@@ -59,7 +59,8 @@ func HelpText(who string, prefixes []string) string {
 	lines := []string{
 		"Office bot for " + who + ".",
 		"Say what happened in your own words. I log the field report onto Delivery, CRM, Dates, and the Card, and I file spend as an Accounts job. You do not number tasks.",
-		"When it is not a field report, I pick one desk and do that work in this chat.",
+		"I keep the bet you named sticky, pick the desk for plain English, and when an ask spans desks I list the order and run only the first.",
+		"Accept, Place ads, mark ads mature, Decide stage, People, and Defaults stay on the desk — I send the link. If nothing live covers the ask, I say so and file a gap note.",
 		"When a draft needs your yes, tap Accept or Turn away under that message. /yes also Accepts. /no invented Ikeja Turns away with a reason the next draft can see.",
 		"The clerk never Accepts. /approve still only sends a pending info@ draft.",
 	}

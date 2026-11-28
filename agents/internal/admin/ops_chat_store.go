@@ -28,12 +28,14 @@ CREATE TABLE IF NOT EXISTS ops_chat_messages (
 CREATE INDEX IF NOT EXISTS ops_chat_messages_chat_idx ON ops_chat_messages (chat_id, id DESC);
 ALTER TABLE ops_chats ADD COLUMN IF NOT EXISTS pending_job_id BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE ops_chats ADD COLUMN IF NOT EXISTS await_reject BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE ops_chats ADD COLUMN IF NOT EXISTS project_slug TEXT NOT NULL DEFAULT '';
 `)
 	return err
 }
 
 type OpsChatState struct {
 	Desk        string
+	ProjectSlug string
 	PendingJob  int64
 	AwaitReject bool
 }
@@ -45,12 +47,13 @@ func (s *Store) OpsChatState(ctx context.Context, chatID string) OpsChatState {
 	}
 	var st OpsChatState
 	err := s.pool.QueryRow(ctx, `
-SELECT department, pending_job_id, await_reject FROM ops_chats WHERE chat_id = $1
-`, chatID).Scan(&st.Desk, &st.PendingJob, &st.AwaitReject)
+SELECT department, COALESCE(project_slug, ''), pending_job_id, await_reject FROM ops_chats WHERE chat_id = $1
+`, chatID).Scan(&st.Desk, &st.ProjectSlug, &st.PendingJob, &st.AwaitReject)
 	if err != nil {
 		return OpsChatState{}
 	}
 	st.Desk = strings.TrimSpace(st.Desk)
+	st.ProjectSlug = strings.TrimSpace(st.ProjectSlug)
 	return st
 }
 
@@ -77,29 +80,33 @@ UPDATE ops_chats SET await_reject=$2, updated_at=NOW() WHERE chat_id=$1
 }
 
 func (s *Store) OpsChatDesk(ctx context.Context, chatID string) string {
-	chatID = strings.TrimSpace(chatID)
-	if chatID == "" {
-		return ""
-	}
-	var dept string
-	err := s.pool.QueryRow(ctx, `SELECT department FROM ops_chats WHERE chat_id = $1`, chatID).Scan(&dept)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(dept)
+	return s.OpsChatState(ctx, chatID).Desk
+}
+
+func (s *Store) OpsChatBet(ctx context.Context, chatID string) string {
+	return s.OpsChatState(ctx, chatID).ProjectSlug
 }
 
 func (s *Store) SetOpsChatDesk(ctx context.Context, chatID string, userID int64, dept string) error {
+	return s.SetOpsChatSticky(ctx, chatID, userID, dept, "")
+}
+
+func (s *Store) SetOpsChatSticky(ctx context.Context, chatID string, userID int64, dept, projectSlug string) error {
 	chatID = strings.TrimSpace(chatID)
 	dept = strings.TrimSpace(dept)
+	projectSlug = strings.TrimSpace(strings.ToLower(projectSlug))
 	if chatID == "" {
 		return nil
 	}
 	_, err := s.pool.Exec(ctx, `
-INSERT INTO ops_chats (chat_id, user_id, department, updated_at)
-VALUES ($1, $2, $3, NOW())
-ON CONFLICT (chat_id) DO UPDATE SET user_id = EXCLUDED.user_id, department = EXCLUDED.department, updated_at = NOW()
-`, chatID, userID, dept)
+INSERT INTO ops_chats (chat_id, user_id, department, project_slug, updated_at)
+VALUES ($1, $2, $3, $4, NOW())
+ON CONFLICT (chat_id) DO UPDATE SET
+  user_id = EXCLUDED.user_id,
+  department = CASE WHEN EXCLUDED.department <> '' THEN EXCLUDED.department ELSE ops_chats.department END,
+  project_slug = CASE WHEN EXCLUDED.project_slug <> '' THEN EXCLUDED.project_slug ELSE ops_chats.project_slug END,
+  updated_at = NOW()
+`, chatID, userID, dept, projectSlug)
 	return err
 }
 

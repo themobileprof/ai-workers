@@ -93,7 +93,7 @@ Do not give each worker its own WhatsApp.
 | Channel | Use |
 | --- | --- |
 | Desk website | Accept, Run, Dates, People, long work |
-| Ops Telegram | Private office bot. Staff identified by People Telegram id. Prefixes only within that seat. `/file` for the data room. |
+| Ops Telegram | Private office conductor. Staff identified by People Telegram id. Sticky bet, one desk per turn, multi-desk plan then first worker only, desk deep links for stamps, gap notes when nothing live covers the ask. Prefixes only within that seat. `/file` for the data room. |
 | Customer WhatsApp | One 1:1 number. Bare message is sales (Growth). Every customer DM with a phone upserts CRM. Books/legal/delivery stay on Telegram. Cannot join ordinary groups. |
 | Academy Telegram | Student class rooms only. Not the ops bot. |
 | info@ | Formal mail. CRM files a thread summary. Important pings owner/BDM (and the matching cofounder). Nothing is auto-sent. `/approve` only if a human asked for a draft. |
@@ -229,7 +229,7 @@ Do not tell the owner to:
 | `/crm` | crm |
 | `/cm` `/community` | community |
 | `/validate` | product-dev (ops Telegram) |
-| none, 1:1 ops Telegram | office assistant picks one desk and does the work |
+| none, 1:1 ops Telegram | office conductor: sticky bet, pick one desk (or plan then first), desk link, or gap |
 | none, 1:1 WhatsApp | growth (customers; CRM) |
 | none, group | community (Academy student rooms) |
 

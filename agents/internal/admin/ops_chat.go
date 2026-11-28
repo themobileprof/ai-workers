@@ -72,7 +72,19 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 		return "This bot is the office. Your Telegram id is " + in.FromID + ". Paste it on People.", nil
 	}
 
-	current := s.store.OpsChatDesk(ctx, in.ChatID)
+	st := s.store.OpsChatState(ctx, in.ChatID)
+	bets := s.opsBetRefs(ctx)
+	matchedBet := opschat.MatchBet(in.Text, bets, st.ProjectSlug)
+
+	if desk, ok := opschat.DeskOnly(in.Text, bets, matchedBet); ok {
+		_ = s.store.AppendOpsChat(ctx, in.ChatID, "you", displayTask(in, in.Text))
+		text := opschat.FormatDeskReply(desk)
+		_ = s.store.AppendOpsChat(ctx, in.ChatID, "assistant", text)
+		_ = s.store.SetOpsChatSticky(ctx, in.ChatID, u.ID, st.Desk, desk.ProjectSlug)
+		return text, nil
+	}
+
+	current := st.Desk
 	d := opschat.Decide(in, current)
 	switch d.Kind {
 	case opschat.KindSkip:
@@ -94,11 +106,42 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	}
 
 	dept := d.Department
+	projectSlug := matchedBet
+	var preamble string
 	if dept == "" {
-		dept, err = opschat.Classify(ctx, s.guide, d.Task, in.ReplyTo)
-		if err != nil {
-			return "", err
+		cond, cerr := opschat.ConductRoute(ctx, s.guide, d.Task, in.ReplyTo, st.ProjectSlug, bets)
+		if cerr != nil {
+			return "", cerr
 		}
+		if cond.ProjectSlug != "" {
+			projectSlug = cond.ProjectSlug
+		}
+		switch cond.Intent {
+		case opschat.IntentDesk:
+			_ = s.store.AppendOpsChat(ctx, in.ChatID, "you", displayTask(in, d.Task))
+			text := opschat.FormatDeskReply(cond)
+			_ = s.store.AppendOpsChat(ctx, in.ChatID, "assistant", text)
+			_ = s.store.SetOpsChatSticky(ctx, in.ChatID, u.ID, st.Desk, projectSlug)
+			return text, nil
+		case opschat.IntentGap:
+			_ = s.store.AppendOpsChat(ctx, in.ChatID, "you", displayTask(in, d.Task))
+			text := opschat.FormatGapReply(cond)
+			_ = s.store.InsertGuideAsk(ctx, u.ID, displayTask(in, d.Task), text, "ops-telegram", true)
+			_ = s.store.AppendOpsChat(ctx, in.ChatID, "assistant", text)
+			_ = s.store.SetOpsChatSticky(ctx, in.ChatID, u.ID, st.Desk, projectSlug)
+			return text, nil
+		case opschat.IntentPlan:
+			preamble = opschat.FormatPlanPreamble(cond)
+			dept = cond.Department
+		default:
+			dept = cond.Department
+			if cond.Note != "" {
+				preamble = cond.Note
+			}
+		}
+	}
+	if projectSlug == "" {
+		projectSlug = opschat.MatchBet(d.Task, bets, st.ProjectSlug)
 	}
 	if !opschat.KnownDepartment(dept) {
 		dept = staffDefaultDept(u)
@@ -109,7 +152,7 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 
 	_ = s.store.AppendOpsChat(ctx, in.ChatID, "you", displayTask(in, d.Task))
 	thread, _ := s.store.ListOpsChat(ctx, in.ChatID, 12)
-	req := s.opsRequest(ctx, u, in, d, dept, thread)
+	req := s.opsRequest(ctx, u, in, d, dept, projectSlug, thread)
 	resp, err := s.callDepartment(ctx, dept, req)
 	if err != nil && strings.TrimSpace(resp.OutputText) == "" {
 		return "", err
@@ -118,11 +161,14 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	if text == "" {
 		text = "I heard you. Chat never Accepts — that stays on the desk."
 	}
+	if preamble != "" {
+		text = strings.TrimSpace(preamble + "\n\n" + text)
+	}
 	if audit := s.maybeBooksWrite(ctx, dept, resp); audit != "" {
 		text = strings.TrimSpace(text + "\n\n" + audit)
 	}
 	if d.Action == "report" && in.HasDocument {
-		if extra := s.fileAlongReport(ctx, u, in, d, thread); extra != "" {
+		if extra := s.fileAlongReport(ctx, u, in, d, thread, projectSlug); extra != "" {
 			text = strings.TrimSpace(text + "\n\n" + extra)
 		}
 	}
@@ -131,16 +177,34 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	if d.Action == "report" {
 		sticky = "delivery"
 	}
-	_ = s.store.SetOpsChatDesk(ctx, in.ChatID, u.ID, sticky)
+	_ = s.store.SetOpsChatSticky(ctx, in.ChatID, u.ID, sticky, projectSlug)
 	return text, nil
 }
 
-func (s *Server) fileAlongReport(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, thread []OpsChatLine) string {
+func (s *Server) opsBetRefs(ctx context.Context) []opschat.BetRef {
+	if s == nil || s.store == nil {
+		return nil
+	}
+	list, err := s.store.ListProjects(ctx)
+	if err != nil {
+		return nil
+	}
+	out := make([]opschat.BetRef, 0, len(list))
+	for _, p := range list {
+		if p.Slug == "" {
+			continue
+		}
+		out = append(out, opschat.BetRef{ID: p.ID, Slug: p.Slug, Name: p.Name})
+	}
+	return out
+}
+
+func (s *Server) fileAlongReport(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, thread []OpsChatLine, projectSlug string) string {
 	if s == nil || !in.HasDocument {
 		return ""
 	}
 	fd := opschat.Decision{Kind: opschat.KindWork, Department: "files", Task: d.Task}
-	req := s.opsRequest(ctx, u, in, fd, "files", thread)
+	req := s.opsRequest(ctx, u, in, fd, "files", projectSlug, thread)
 	resp, err := s.callDepartment(ctx, "files", req)
 	if err != nil {
 		return ""
@@ -155,7 +219,7 @@ func displayTask(in opschat.Inbound, task string) string {
 	return task
 }
 
-func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, dept string, thread []OpsChatLine) contract.Request {
+func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d opschat.Decision, dept, projectSlug string, thread []OpsChatLine) contract.Request {
 	data := map[string]any{
 		"channel":     "telegram",
 		"chat_kind":   "dm",
@@ -167,6 +231,14 @@ func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d o
 		"actor_role":  u.Role,
 		"cannot_send": true,
 		"cannot_hire": true,
+	}
+	if projectSlug = strings.TrimSpace(projectSlug); projectSlug != "" {
+		data["project_slug"] = projectSlug
+		data["project"] = projectSlug
+		if p, err := s.store.GetProjectBySlug(ctx, projectSlug); err == nil && p.ID > 0 {
+			data["project_id"] = p.ID
+			data["project_name"] = p.Name
+		}
 	}
 	if in.ReplyTo != "" {
 		data["reply_to"] = in.ReplyTo
