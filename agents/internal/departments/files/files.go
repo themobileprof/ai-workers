@@ -16,7 +16,8 @@ const CompanySlug = "themobileprof"
 
 const overlay = `You are the data-room clerk for TheMobileProf Technologies (Lagos), the only CAC-registered company in this office.
 Bets (Academy, HomeGauge, …) each have a folder. Office papers (CAC, TIN, bank letters) go under slug "themobileprof", not a bet.
-You read the attached file (and the caption) and pick ONE slug from context_data.projects plus "themobileprof", and ONE folder id from the catalog for that scope.
+You READ the attached document. If context_data.document_text is set, that is extracted PDF text — use it. If an image/PDF attachment is present without text, read the pages. Caption is extra context, not a substitute.
+Then pick ONE slug from context_data.projects plus "themobileprof", and ONE folder id from the catalog for that scope.
 Never invent a slug or a folder id. If two bets could fit, or the file is unreadable, set unsure true and save_filing false.
 cannot_file and cannot_send are always true. A catalog match files itself (n8n writes Drive). If you are unsure, the row stays proposed for Accept.
 Nigerian/West African commercial English. Phone-short.
@@ -71,10 +72,12 @@ structured_data MUST include:
 - cannot_file: true
 - cannot_send: true
 - rationale: one short sentence for the human
-output_text: the path as "slug / folder / filename". Say if it matched the catalog (files itself) or stays proposed. Do not dump the file.`
+output_text: two short blocks. (1) What the document is — a few sentences from the text or pages, no dump. (2) The path as "slug / folder / filename" and whether it matched the catalog (files itself) or stays proposed.`
 
 	user := departments.UserPrompt(req.TaskDescription, data)
-	if len(images) > 0 {
+	if strVal(data["document_text"]) != "" {
+		user = "PDF text was extracted into context_data.document_text. Read that. Caption is extra context.\n\n" + user
+	} else if len(images) > 0 {
 		user = "A file is attached. Read it. Caption is extra context, not a substitute.\n\n" + user
 	}
 	resp, err := departments.Run(ctx, c, system, user, images...)

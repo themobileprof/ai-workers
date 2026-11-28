@@ -214,7 +214,7 @@ func (b *Bot) Download(ctx context.Context, fileID string) (b64 string, mime str
 	if resp.StatusCode >= 300 {
 		return "", "", fmt.Errorf("telegram file HTTP %d", resp.StatusCode)
 	}
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 6<<20))
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 12<<20))
 	if err != nil {
 		return "", "", err
 	}

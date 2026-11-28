@@ -50,8 +50,11 @@ func HandleAccounts(ctx context.Context, c llm.Completer, req contract.Request) 
 	data := contract.ContextObject(req.ContextData)
 	images := departments.TakeImages(data)
 	user := departments.UserPrompt(req.TaskDescription, data)
-	if len(images) > 0 {
-		user = "An image is attached (receipt or invoice). Read figures from the image. Do not invent amounts.\n\n" + user
+	docText, _ := data["document_text"].(string)
+	if strings.TrimSpace(docText) != "" {
+		user = "A PDF was extracted into context_data.document_text. Read figures from that text. Do not invent amounts.\n\n" + user
+	} else if len(images) > 0 {
+		user = "An image or PDF is attached (receipt or invoice). Read figures from the attachment. Do not invent amounts.\n\n" + user
 	}
 	resp, err := departments.Run(ctx, c, accountsExtractPrompt, user, images...)
 	if resp.StructuredData == nil {

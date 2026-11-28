@@ -1,9 +1,12 @@
 module github.com/samuel/ai-workers/agents
 
-go 1.23
+go 1.24.1
+
+toolchain go1.24.3
 
 require (
 	github.com/jackc/pgx/v5 v5.7.2
+	github.com/ledongthuc/pdf v0.0.0-20261125152515-e8918f005efa
 	golang.org/x/crypto v0.31.0
 )
 

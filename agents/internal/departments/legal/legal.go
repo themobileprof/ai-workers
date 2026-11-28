@@ -86,7 +86,14 @@ structured_data MUST include:
 - body: the draft text when save_draft is true; omit or empty on review
 output_text: short flags and next human step. Do not paste the full contract into output_text.`
 
-	resp, err := departments.Run(ctx, c, system, departments.UserPrompt(req.TaskDescription, data))
+	images := departments.TakeImages(data)
+	user := departments.UserPrompt(req.TaskDescription, data)
+	if str(data["document_text"]) != "" {
+		user = "A PDF was extracted into context_data.document_text. Review or draft from that text. Do not invent clauses that are not there.\n\n" + user
+	} else if len(images) > 0 {
+		user = "A document or image is attached. Read it. Caption is extra context.\n\n" + user
+	}
+	resp, err := departments.Run(ctx, c, system, user, images...)
 	if resp.StructuredData == nil {
 		resp.StructuredData = map[string]any{}
 	}

@@ -82,8 +82,18 @@ func TestDecidePhotoIsAccounts(t *testing.T) {
 
 func TestDecideDocumentIsFiles(t *testing.T) {
 	d := Decide(Inbound{ChatID: "1", FromID: "1", HasDocument: true, DocumentFileID: "d", Filename: "a.pdf"}, "")
-	if d.Department != "files" {
+	if d.Department != "files" || !strings.Contains(d.Task, "Read this attached") {
 		t.Fatalf("%+v", d)
+	}
+}
+
+func TestDecideDocumentWithCaptionNeedsConduct(t *testing.T) {
+	d := Decide(Inbound{ChatID: "1", FromID: "1", HasDocument: true, DocumentFileID: "d", Filename: "guide.pdf", Text: "What is the AltSchool discount?"}, "")
+	if d.Kind != KindWork || d.Department != "" {
+		t.Fatalf("expected conduct %+v", d)
+	}
+	if !strings.Contains(d.Task, "guide.pdf") || !strings.Contains(d.Task, "AltSchool") {
+		t.Fatalf("%s", d.Task)
 	}
 }
 

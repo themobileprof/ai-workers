@@ -53,5 +53,12 @@ func Handle(ctx context.Context, c llm.Completer, req contract.Request) (contrac
 	if CustomerChannel(data) {
 		prompt = systemPrompt + "\n\n" + salesOverlay
 	}
-	return departments.Run(ctx, c, prompt, departments.UserPrompt(req.TaskDescription, data))
+	images := departments.TakeImages(data)
+	user := departments.UserPrompt(req.TaskDescription, data)
+	if str(data["document_text"]) != "" {
+		user = "A PDF was extracted into context_data.document_text. Answer from that text. Do not invent clauses that are not there.\n\n" + user
+	} else if len(images) > 0 {
+		user = "A document or image is attached. Read it. Caption is extra context.\n\n" + user
+	}
+	return departments.Run(ctx, c, prompt, user, images...)
 }

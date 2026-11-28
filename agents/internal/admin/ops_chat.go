@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/samuel/ai-workers/agents/internal/contract"
 	"github.com/samuel/ai-workers/agents/internal/opschat"
+	"github.com/samuel/ai-workers/agents/internal/pdftext"
 )
 
 func (s *Server) opsTelegramPOST(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +183,16 @@ func (s *Server) opsTurn(ctx context.Context, in opschat.Inbound) (string, error
 	return text, nil
 }
 
+func looksLikePDF(mime, filename string, raw []byte) bool {
+	if strings.Contains(strings.ToLower(mime), "pdf") {
+		return true
+	}
+	if strings.HasSuffix(strings.ToLower(filename), ".pdf") {
+		return true
+	}
+	return len(raw) >= 4 && string(raw[:4]) == "%PDF"
+}
+
 func (s *Server) opsBetRefs(ctx context.Context) []opschat.BetRef {
 	if s == nil || s.store == nil {
 		return nil
@@ -262,6 +274,26 @@ func (s *Server) opsRequest(ctx context.Context, u User, in opschat.Inbound, d o
 		if b64, mime, err := s.opsBot.Download(ctx, in.PhotoFileID); err == nil {
 			data["image_base64"] = b64
 			data["image_mime"] = mime
+		}
+	}
+	if in.HasDocument && in.DocumentFileID != "" && s.opsBot != nil {
+		if b64, mime, err := s.opsBot.Download(ctx, in.DocumentFileID); err == nil {
+			if in.FileMIME != "" {
+				mime = in.FileMIME
+			}
+			data["document_base64"] = b64
+			data["document_mime"] = mime
+			data["file_base64"] = b64
+			data["file_mime"] = mime
+			if raw, decErr := base64.StdEncoding.DecodeString(b64); decErr == nil {
+				if text := pdftext.Extract(raw, 0); text != "" {
+					data["document_text"] = text
+					data["document_read"] = true
+				} else if looksLikePDF(mime, in.Filename, raw) {
+					// Scanned or image-only PDF: vision still gets the bytes via TakeImages.
+					data["document_read"] = false
+				}
+			}
 		}
 	}
 	if len(thread) > 0 {

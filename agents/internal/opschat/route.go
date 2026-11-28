@@ -59,6 +59,7 @@ func HelpText(who string, prefixes []string) string {
 	lines := []string{
 		"Office bot for " + who + ".",
 		"Say what happened in your own words. I log the field report onto Delivery, CRM, Dates, and the Card, and I file spend as an Accounts job. You do not number tasks.",
+		"Drop a PDF and I read it (text layer or pages), summarize, and file it — or answer your caption question on the right desk.",
 		"I keep the bet you named sticky, pick the desk for plain English, and when an ask spans desks I list the order and run only the first.",
 		"Accept, Place ads, mark ads mature, Decide stage, People, and Defaults stay on the desk — I send the link. If nothing live covers the ask, I say so and file a gap note.",
 		"When a draft needs your yes, tap Accept or Turn away under that message. /yes also Accepts. /no invented Ikeja Turns away with a reason the next draft can see.",
@@ -127,9 +128,15 @@ func Decide(in Inbound, currentDesk string) Decision {
 	if in.HasDocument {
 		task := text
 		if task == "" {
-			task = "Classify this file into a project directory from the catalog. Do not invent a folder. Do not write Drive."
+			task = "Read this attached document. Summarize what it is in a few sentences, then classify it into a project directory from the catalog. Do not invent a folder. Do not write Drive."
+			return Decision{Kind: KindWork, Department: "files", Task: task}
 		}
-		return Decision{Kind: KindWork, Department: "files", Task: task}
+		// Caption or question with a file: conductor picks the desk; PDF text is attached in opsRequest.
+		task = "Attached file: " + strings.TrimSpace(in.Filename) + "\n\n" + task
+		if strings.TrimSpace(in.Filename) == "" {
+			task = text
+		}
+		return Decision{Kind: KindWork, Task: task}
 	}
 	if in.HasPhoto {
 		task := text

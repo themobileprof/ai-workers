@@ -141,7 +141,7 @@ var workerDoesText = map[string]string{
 
 	"product-dev": "Product proposes Card work on a bet: hypotheses, this week’s mission, interview guides, evidence, paid Search cells, and journey placement. /validate on ops Telegram, or Ask on this desk. After the 06:20 paid GA4 pull, a proposed job quotes winning geo plus keyword-theme segments. Accept on Product writes those fields onto the Card. You mark Ads spend mature on the Card before substantial Place. Accept on the project Decide tab writes the stage. Chat never stamps GO, PIVOT, or KILL, never marks mature, and never Places. Customer WhatsApp is not this worker.",
 
-	"files": "Files is the data-room clerk. On ops Telegram you send /file or drop a PDF. A catalog match files itself and n8n writes Google Drive. Odd paths wait here for Accept. It cannot upload, share, or invent a folder. Office papers use the slug themobileprof, not a bet. Academy Telegram and customer WhatsApp do not file. Receipt photos without /file still go to Accounts.",
+	"files": "Files is the data-room clerk. On ops Telegram you send /file or drop a PDF. The clerk reads extracted PDF text (or the pages when there is no text layer), summarizes what the document is, then picks a catalog path. A catalog match files itself and n8n writes Google Drive. Odd paths wait here for Accept. It cannot upload, share, or invent a folder. Office papers use the slug themobileprof, not a bet. A caption with a question lets the office conductor pick Growth, Legal, or Accounts instead of only filing. Academy Telegram and customer WhatsApp do not file. Receipt photos without /file still go to Accounts.",
 }
 
 func afterLoginPath(u User) string {

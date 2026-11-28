@@ -168,7 +168,7 @@ Ops Telegram `/pm` still pastes notes by hand if Fathom missed a call. Do not ch
 
 ## How do I file a PDF into the data room?
 
-1. On ops Telegram, send the file with **`/file`**, or drop a PDF in that chat. A caption may name the bet.
+1. On ops Telegram, send the file with **`/file`**, or drop a PDF in that chat. The clerk downloads it, extracts text when the PDF has a text layer (otherwise vision reads the pages), summarizes what it is, then picks a folder. A caption may name the bet. If you ask a question in the caption, the office conductor may send it to Growth, Legal, or Accounts instead of only filing.
 2. A catalog match files itself. Odd paths stay on Office → **Files** for Accept or Turn away.
 3. Chat never writes Drive. Paste the Shared Drive id on Defaults first.
 
